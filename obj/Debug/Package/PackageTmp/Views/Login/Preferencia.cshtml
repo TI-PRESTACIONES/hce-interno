@@ -1,0 +1,307 @@
+﻿@using Region = Ext.Net.Region
+@{
+    ViewBag.Title = "Desktop - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    
+    
+}
+
+@section cabecera
+{ 
+<script>
+    
+    function eventoBeforeIn() {
+   
+            var valido = true;
+            var mensaje = '';
+            if (App.cbCompania.getValue() != null && App.cbCompania.getValue()!= '') {
+                if (App.cbSucursal.getValue() != null && App.cbSucursal.getValue()!= '') {
+                    if (App.cbEstablecimiento.getValue() != null && App.cbEstablecimiento.getValue() != '') {
+                    } else { mensaje = 'El establecimiento'; valido = false; }
+                } else { mensaje = 'la Sucursal'; valido = false; }
+            } else { mensaje = 'la Compañía'; valido = false; }
+            if (valido) {                
+                return true;
+            } else {                
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("showMensajeNotify"))',
+                    params: {
+                        message: 'Debe Seleccionar ' + mensaje,
+                        titulo: 'Advertencia',
+                        tipo: 'WARNING'
+                    }                    
+                });       
+                return false;
+            }
+        };
+  
+    function ingresar() {
+        if (eventoBeforeIn()) {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("Ingresar"))',
+                params: {
+                    cbSucursal: App.cbSucursal.getValue(),
+                    cbEstablecimiento: App.cbEstablecimiento.getValue(),
+                    cbCompania: App.cbCompania.getValue(),
+                    cbModulos: App.cbModulos.getValue()
+                    
+                },
+                eventMask: {
+                    showMask: true,
+                    msg: "Ingresando..."
+                }
+            });
+        } else {           
+        }
+
+    }
+</script>
+}
+
+@section cuerpo
+{
+@(
+ Html.X().Window()
+             .Closable(false)
+                    .CloseAction(CloseAction.Destroy)
+                    .Resizable(false)
+                 
+                    .Icon(Icon.Lock)
+                       .Title("Preferencias - ERP SALUD (Módulo HCE)")
+                    .Draggable(false)
+               
+                    .Modal(false)
+                    
+                    .BodyPadding(5)
+                    .Layout(LayoutType.Fit)
+                
+                .Height(185)
+                .Width(430)
+                //.BodyStyle("background-color: #fff;")                             
+                .Items(
+                
+                 Html.X().FormPanel()
+                    .ID("FormPanel2")
+                   // .Layout(LayoutType.Form)
+                    .Border(false)
+                    .BodyStyle("background-color:transparent;")
+                    .Layout(LayoutType.Column)
+                    .FieldDefaults(fd => {
+                        fd.LabelAlign = LabelAlign.Left;
+                        fd.MsgTarget = MessageTarget.Side;
+                    })
+                    .Items(
+                             Html.X().Image()
+                                 .ID("IMG")
+                                .ImageUrl("~/resources/images/LOGOROYAL.jpg")
+                                    .MarginSpec("0 05 0 05")
+                               // .ApplyStyles("position: relative")
+                                .Width(90)
+                                .Height(100)
+                               ,
+                              Html.X().Container()
+                                        .Layout(LayoutType.VBox)
+                                        .Defaults(d =>
+                                        {
+                                            d.Add(new Parameter("LabelWidth", "85"));
+                                        })
+                            .Items(
+                                Html.X().ComboBox()
+                                                    .ID("cbCompania")
+                                                    .Editable(false)
+                                                    .FieldLabel("Compañia")
+                                                    //.SelectedItems("00000000")
+                                                    .QueryMode(DataLoadMode.Local)
+                                                    .Width(300)
+                                                    .TriggerAction(TriggerAction.All)
+                                                        
+                                                    .EmptyText("Seleccione Compañía")
+                                                     .DisplayField("name")
+                                                     .ValueField("codigo")
+                                                     .EmptyText("Cargando...")
+                                                     .ValueNotFoundText("No cargado...")                                                    
+                                                    .Listeners(ls =>
+                                                        ls.Change.Handler = "App.cbSucursal.clearValue(); App.cbSucursal.getStore().load();"
+                                                     )                                                      
+                                                    //.Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico
+                                                    //.GetComboSeguridadTxt("COMPANIA","","",0).Select(d => new ListItem(d.Name, d.Codigo)))
+                                                    .SimpleSubmit(true)
+                                                     .Store(Html.X().Store()
+                                                           .AutoLoad(true)
+                                                           .Model(Html.X().Model()
+                                                               .IDProperty("Codigo")
+                                                               .Fields(
+                                                                   new ModelField("codigo", ModelFieldType.String) { Mapping = "Codigo" },
+                                                                   new ModelField("name", ModelFieldType.String) { Mapping = "Name" }
+                                                               )
+                                                           )
+                                                           .Proxy(Html.X().AjaxProxy()
+                                                                       .Url(Url.Action("obtenerComboSeguridadTxt"))
+                                                               .Reader(Html.X().JsonReader().Root("data"))
+                                                           )
+                                                           .Parameters(ps =>
+                                                                ps.Add(new
+                                                                {
+                                                                    paramStr01 = "",
+                                                                    paramStr02 = "",
+                                                                    paramInt01 = 0,
+                                                                    usuario = "",
+                                                                    Accion = "COMPANIA"
+                                                                })
+                                                           )
+                                                           .Listeners(ls =>
+                                                                ls.Load.Handler = @"var combo = App.cbCompania;
+                                                                        App.cbCompania.setValue(records[0].get(combo.valueField));"
+                                                                )
+                                                       )                                                                                                                                                                                                                     
+                                                    ,
+                                Html.X().ComboBox()
+                                                    .ID("cbSucursal")
+                                                    .Editable(false)
+                                                    .FieldLabel("Sucursal")
+                                                     //.SelectedItems("LIMA")
+                                                    .QueryMode(DataLoadMode.Local)
+                                                    .TriggerAction(TriggerAction.All)
+                                                        .Width(300)
+                                                    .EmptyText("Seleccione una Sucursal")
+                                                    .DisplayField("name")
+                                                    .ValueField("codigo")
+                                                    .EmptyText("Cargando...")
+                                                    .ValueNotFoundText("No cargado...")
+                                                    //.Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboSeguridadTxt("SUCURSAL").Select(d => new ListItem(d.Name, d.Codigo)))
+                                                    .SimpleSubmit(true)
+                                                   .Listeners(ls =>
+                                                     ls.Change.Handler = "App.cbEstablecimiento.clearValue(); App.cbEstablecimiento.getStore().load();"
+                                                   )  
+                                                  .Store(Html.X().Store()
+                                                       .AutoLoad(false)
+                                                       .Model(Html.X().Model()
+                                                           .IDProperty("Codigo")
+                                                           .Fields(
+                                                               new ModelField("codigo", ModelFieldType.String) { Mapping = "Codigo" },
+                                                               new ModelField("name", ModelFieldType.String) { Mapping = "Name" }
+                                                           )
+                                                       )
+                                                       .Proxy(Html.X().AjaxProxy()
+                                                                   .Url(Url.Action("obtenerComboSeguridadTxt"))
+                                                           .Reader(Html.X().JsonReader().Root("data"))
+                                                       )
+                                                       .Parameters(ps =>
+                                                            ps.Add(new
+                                                            {
+                                                                paramStr01 = JRawValue.From("App.cbCompania.getValue()"),
+                                                                paramStr02 = "",
+                                                                paramInt01 = 0,
+                                                                usuario = "",
+                                                                Accion = "SUCURSAL"
+                                                            })
+                                                       )
+                                                       .Listeners(ls =>
+                                                           ls.Load.Handler = @"var combo = App.cbSucursal;
+                                                                        App.cbSucursal.setValue(records[0].get(combo.valueField));"
+                                                          )
+                                                   )                                                    
+                                                    ,
+                                               
+                                            Html.X().ComboBox()
+                                                        .ID("cbEstablecimiento")
+                                                        .Editable(false)
+                                                        .FieldLabel("Establecimiento")
+                                                        //.SelectedItems("001")
+                                                        .QueryMode(DataLoadMode.Local)
+                                                        .TriggerAction(TriggerAction.All)
+                                                            .Width(300)
+                                                        .EmptyText("Seleccione un Establecimiento")
+                                                        .DisplayField("name")
+                                                        .ValueField("ID")
+                                                        .EmptyText("Cargando...")
+                                                        .ValueNotFoundText("No cargado...")
+
+                                                         //.Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboSeguridadTxt("ESTABLEC").Select(d => new ListItem(d.Name, d.Codigo)))
+                                                        .SimpleSubmit(true)
+                                                      .Store(Html.X().Store()
+                                                           .AutoLoad(false)
+                                                           .Model(Html.X().Model()
+                                                               .IDProperty("ID")
+                                                               .Fields(
+                                                                   new ModelField("ID", ModelFieldType.String) { Mapping = "ID" },
+                                                                   new ModelField("name", ModelFieldType.String) { Mapping = "Name" }
+                                                               )
+                                                           )
+                                                           .Proxy(Html.X().AjaxProxy()
+                                                                       .Url(Url.Action("obtenerComboSeguridadTxt"))
+                                                               .Reader(Html.X().JsonReader().Root("data"))                                                               
+                                                           )                                                           
+                                                           .Parameters(ps =>
+                                                                ps.Add(new
+                                                                {
+                                                                    paramStr01 = JRawValue.From("App.cbCompania.getValue()"),
+                                                                    paramStr02 = JRawValue.From("App.cbSucursal.getValue()"),
+                                                                    paramInt01 = 0,
+                                                                    usuario = "",
+                                                                    Accion = "ESTABLEC"
+                                                                })
+                                                           )
+                                                           .Listeners(ls =>
+                                                               ls.Load.Handler = @"var combo = App.cbEstablecimiento;
+                                                                        App.cbEstablecimiento.setValue(records[0].get(combo.valueField));"
+                                                              )
+                                                       )                                                          
+                                                        ,
+                                                                                                    
+                                 Html.X().ComboBox()
+                                            .ID("cbModulos")
+                                            .Editable(false)
+                                            .FieldLabel("Módulos")
+                                            .SelectedItems("HCE")
+                                                .Width(300)
+                                            //.Select(0)
+                                            .QueryMode(DataLoadMode.Local)
+                                            .TriggerAction(TriggerAction.All)
+                                            .EmptyText("Select a módulo")
+                                            //.Listeners(ls =>
+                                            //           ls.Select.Handler = "App.cbSucursal.clearValue(); App.cbSucursal.getStore().load()"
+                                            //)
+                                            .Items(
+                                                new ListItem("Módulo Historía Clínica (HCE)", "HCE"),
+                                                new ListItem("Módulo Gestión Salud", "MGS")
+                                            )
+                                  )
+                                          
+                          )
+                  )
+                  .Buttons(
+                        Html.X().Button()
+                           .Text("Ingresar")
+                           .Icon(Icon.Accept)
+                           .DirectEvents(de =>
+                           {
+                               de.Click.Action = "Ingresar";
+                               de.Click.Before = "return eventoBeforeIn();";                                    
+                               de.Click.EventMask.ShowMask = true;
+                               de.Click.EventMask.Msg = "Ingresando...";
+                               de.Click.EventMask.MinDelay = 1000;
+                               de.Click.FormID = "#(return this.up('window').down('form');)";
+                           }),
+                           Html.X().Button()
+                                   .Text("Cancelar")
+                                   .Icon(Icon.Cancel)
+                                   .DirectEvents(de =>
+                                   {
+                                       de.Click.Action = "Cancelar";
+                                       de.Click.EventMask.ShowMask = true;
+                                       de.Click.EventMask.Msg = "Verificando...";
+                                       de.Click.EventMask.MinDelay = 1000;                                       
+                                       de.Click.FormID = "#(return this.up('window').down('form');)";
+                                   }) 
+                    )
+               // .Content(c => "This is my first <a target='_blank' href='http://www.ddd.net/'> Ext.NET</a> Window.")
+        )
+
+
+    @(Html.X().KeyNav()
+                .Target("FormPanel2")
+                .Enter(a => a.Handler = "ingresar();")
+    )
+
+    }

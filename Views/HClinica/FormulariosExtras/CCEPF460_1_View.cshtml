@@ -1,0 +1,1046 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_HC_Pre_Operatorio_1_FE
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+
+    var indicaVisiblePrint = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_VISIBLE_IMPRESION;
+    var visibleImpresion = (indicaVisiblePrint == 2/* && Model.Accion == "UPDATE"*/ ? true : false);
+    var isVista = (Model.Accion == "VISTA" ? true : false);
+    var isNuevo = (Model.Accion == "NUEVO" ? true : false);
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VISTA" ? false : false))));
+
+    var idenfermera =(Model.Accion == "NUEVO" ? SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.CODPERSONA:Model.IdEnfermera);
+    var nombreenf = (Model.Accion == "NUEVO" ? Session["NOMBRE_USUARIO_MEDICO"].ToString():Model.NomEnfemera);
+    var COLOER_IND_OBLIGA = AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("COL_BCOBLI");
+    var MENS_NUMERO = "No se permite un valor negativo.";
+    var PAR_FORMATO02 = "999";
+
+
+}
+@section cabecera
+{   <link rel="stylesheet" href="@Url.Content("~/resources/css/main.css")" />
+    <style>
+        html body {
+            padding: 0px;
+            background: none;
+            background: none;
+            background: none;
+            background-attachment: fixed;
+            background-position: center;
+            font-family: tahoma,verdana,sans-serif;
+            background-color: #ffffff;
+        }
+    </style>
+
+    <script>
+        @*function eventoRenderForm() {
+
+            var kk = 195;
+            var scrH = screen.height;
+            var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+            var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+
+            if (southH == 0) {
+                southH = 30;
+            } else if (parent.App.PanelMainSouth.collapsed) {
+                southH = 30;
+            }
+            var dimCentral = (scrH - (northH + southH) - kk);
+            App.formactual.setHeight(545);
+
+            var v = '@isNuevo';
+            if (v == 'True') {
+                App.btnImpresion.setVisible(false);
+                App.btnImpresionHC.setVisible(false);
+            }
+        }*@
+
+    var indicaCambios = false;
+   function setIndicaCambios(value) {
+        indicaCambios = value;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("setIndicaCambiosFormulario"))',
+            params: {
+                indica: (value ? 1 : 0)
+            }
+        });
+
+
+        var val = '@visibleImpresion';
+        var vis = '@isVista';
+        if (vis == 'False') {
+            if (val == 'True') {
+
+                if (value == true) {
+                    App.btnImpresion.setDisabled(true);
+                    App.btnImpresionHC.setDisabled(true);
+                    parent.App.btnGuardarFirma.setDisabled(true);
+                    // parent.App.btnContEpisodio_HCE.setDisabled(true);//A TODOS
+
+                } else {
+                    App.btnImpresion.setDisabled(false);
+                    App.btnImpresionHC.setDisabled(false);
+                    parent.App.btnGuardarFirma.setDisabled(false);
+                    //parent.App.btnContEpisodio_HCE.setDisabled(false);//A TODOS
+                }
+            }
+        }
+    }
+    var count = 0; // a counter for new records
+
+
+
+    var eventoKey = function (tf, e) {
+        if (e.getKey() == '110' || e.getKey() == '190' || e.getKey() == '100') {
+            var str = tf.getRawValue().replace('.', '');
+            tf.setValue(str);
+        } else if (e.getKey() == '109' || e.getKey() == '189') {
+            var str = tf.getRawValue().replace('-', '');
+            tf.setValue(str);
+        }
+    };
+    var eventoOnEditar = function (btn) {
+        App.cmdGuardar.setDisabled(false);
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+
+    };
+
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+            App.conthbIndicaError.setVisible(true);
+            App.taAlerts.focus();
+        } else {
+            App.taAlerts.setVisible(false);
+            App.conthbIndicaError.setVisible(false);
+        }
+
+    };
+
+    var getInvalidFields = function (form) {
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+        });
+        return invalidFields;
+    };
+
+    var beforeSave = function (form) {
+        App.taAlerts.setVisible(false);
+        App.taAlerts.setValue(null);
+        App.conthbIndicaError.setVisible(false);
+        var FieldsInvalidos = getInvalidFields(form);
+        if (FieldsInvalidos.length > 0) {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("addRecursosValidacion"))',
+                params: {
+                    data: FieldsInvalidos,
+                    indica: 'VALIDAR',
+                },
+                success: function (result) { accionMensajes(result.data); }
+            });
+        }
+    };
+
+    var onSuccess = function (data) {
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+
+        var reload = true;
+        if (data != null) {
+            if (data.length > 0) {
+                reload = false
+                App.cmdGuardar.setDisabled(false);
+                if (data[0].TIPOMSG == 'EXCEPTION') {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: data[0].TITULO,
+                            message: data[0].DESCRIPCION,
+                            tipo: 'ERROR'
+                        }
+                    });
+                } else {
+                    accionMensajes(data);
+                }
+            }
+        }
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+        }
+    };
+    var onFailure = function (data) {
+        App.cmdGuardar.setDisabled(false);
+    };
+
+
+    function eventoCancelar(form) {
+        App.bar.setDisabled(true);
+        var reload = true;
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+            // beforeSave(form);
+        }
+    }
+
+    </script>
+    <script>
+
+        var hhValidation = function (h) {
+            str = h.value;
+
+            tempo = "'";
+            str = str.replace('javascript:myFunction(' + tempo, '');
+            str = str.replace('%20', ' ');
+            str = str.replace('%C3%B3', 'ó');
+            str = str.replace('%C3%A1', 'á');
+            str = str.replace('%C3%A9', 'é');
+            str = str.replace('%C3%AD', 'í');
+            str = str.replace('%C3%BA', 'ú');
+            str = str.replace('%C3%B1', 'ñ');
+
+            str = str.replace('%C3%8D', 'Í');
+            str = str.replace('%C3%93', 'Ó');
+            str = str.replace('%C3%81', 'Á');
+            str = str.replace('%C3%91', 'Ñ');
+            str = str.replace('%C3%9A', 'Ú');
+            str = str.replace(tempo + ')', '');
+            h.setValue(str);
+
+        }
+        var mmValidation = function (m) {
+            if (m.getValue() > 59) {
+                m.setValue(59);
+            }
+
+        };
+        function eventoRenderForm() {
+
+            var kk = 195;
+            var scrH = screen.height;
+            var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+            var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+
+            if (southH == 0) {
+                southH = 30;
+            } else if (parent.App.PanelMainSouth.collapsed) {
+                southH = 30;
+            }
+            var dimCentral = (scrH - (northH + southH) - kk);
+            App.formactual.setHeight(545);
+
+            var v = '@isNuevo';
+            if (v == 'True') {
+                App.btnImpresion.setVisible(false);
+                App.btnImpresionHC.setVisible(false);
+            }
+        }
+
+        function eventoVisorReporte(param1) {
+            if(param1=='HC'){
+                window.location.href = '@Url.Action("HCEReportesView_total", "HClinica")';
+            } else {
+                window.location.href = '@Url.Action("HCEReportesView", "HClinica")';
+            }
+        }
+        function seleccionadorEnfermera() {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("seleccionadorPersona","HClinica"))',
+                params: {
+                    accionSeleccion: 'getSeleccionPersonaMaestroEnfermera',
+                    accionListado: 'LISTARPAGSELECUSER'
+                }
+            });
+        };
+        function seleccionadorMedico() {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("seleccionadorPersona","HClinica"))',
+                params: {
+                    accionSeleccion: 'getSeleccionPersonaMaestroMedico',
+                    accionListado: 'LISTARPAGSELECUSER'
+                }
+            });
+        };
+        function seleccionadorOpciones() {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("seleccionadorOpciones"))',
+                params: {
+                    accionSeleccion: 'getSeleccionOpciones',
+                    accionListado: 'LISTARPAG'
+                }
+            });
+        };
+    </script>
+
+    <script>
+        var eventoRadio = function (rd1, pregunta, valor) {
+            var radioAll = rd1.getValue();
+
+            if (radioAll) {
+                if (pregunta == 'R3') {
+                    if (valor == 'S') {
+                        App.TxtEspecificar1.setDisabled(false);
+
+                    } else {
+                        App.TxtEspecificar1.setDisabled(true);
+                    };
+                }
+
+                if (pregunta == 'R4') {
+                    if (valor == 'S') {
+                        App.TxtEspecificar2.setDisabled(false);
+
+                    } else {
+                        App.TxtEspecificar2.setDisabled(true);
+                    };
+                }
+
+            }
+
+        };
+    </script>
+}
+
+
+@section cuerpo
+{
+
+
+    @(Html.X().Viewport().ID("ViewportXD")
+        .Layout(LayoutType.VBox)
+
+        .LayoutConfig(
+            new VBoxLayoutConfig { Align = VBoxAlign.Stretch }
+        )
+        .Listeners(l =>
+        {
+            //l.AfterLayout.BroadcastOnBus = "App.resize";
+            l.AfterLayout.Single = true;
+        })
+        .Items(regions =>
+        {
+
+            regions.Add(Html.X().FormPanel()
+                .ItemID("center")
+                .DefaultAnchor("100%")
+                .AutoScroll(true)
+                .Height(1000)
+               .Header(false)
+               .Border(true)
+                .ID("formactual")
+                .Listeners(l =>
+                {
+                    l.Render.Handler = "eventoRenderForm(); ";
+
+                })
+               .Items(
+                       X.FieldSet()
+                        .ID("fsVigilancia")
+                        .ColumnWidth(0.4).Title("")
+                //.Layout(LayoutType.Fit)
+                        .MarginSpec("05 05 0 05")
+                        .Height(1000)
+                        .Defaults(d =>
+                        {
+                            d.Add(new Parameter("LabelWidth", "180"));
+                            d.Add(new Parameter("DefaultAnchor", "100%"));
+                            d.Add(new Parameter("LabelAlign", "Left"));
+                        })
+                        .FieldDefaults(d => { d.LabelAlign = LabelAlign.Left; })
+                        .Items(
+
+
+
+                            X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                    .Defaults(d => { d.Add(new Parameter("LabelWidth", "280")); })
+                                   .Items(
+                                        X.RadioGroupFor(m => m.TipoCirugia, new List<Radio.Config> {
+                                            new Radio.Config{BoxLabel = "Programada", InputValue = "1", ReadOnly =indicaModoLectura, Width=130  },
+                                            new Radio.Config{BoxLabel = "Emergencia", InputValue = "2", ReadOnly =indicaModoLectura, Width=130  },
+                                            new Radio.Config{BoxLabel = "Ambulatoria", InputValue = "3", ReadOnly =indicaModoLectura, Width=130},
+                                            new Radio.Config{BoxLabel = "Hospitalización", InputValue = "4", ReadOnly =indicaModoLectura, Width=130}
+                                        })
+                                        .Vertical(false)
+                                        .FieldLabel("Tipo de cirugía")
+                                        .Defaults(d =>
+                                        {
+                                            d.Add(new Parameter("LabelWidth", "250"));
+                                            d.Add(new Parameter("DefaultAnchor", "50%"));
+                                        })
+                                        .AnchorVertical("100%")
+                                        .ID("IdRadio22")
+                                        .LabelWidth(200)
+                                        .Width(50)
+
+
+                                     ),
+                                     X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                     .Defaults(d => { d.Add(new Parameter("LabelWidth", "100")); })
+                                                    .Items(
+                                                    X.NumberFieldFor(m => m.IdCirujano).FieldLabel("Cirujano").Width(170).ReadOnly(true)
+                                                       .Listeners(l => l.Change.Handler = "setIndicaCambios(true);"),
+                                                    X.TextFieldFor(m => m.NomCirujano).ID("tfDescMed").Width(200).FieldLabel("").ReadOnly(true),
+                                                    X.Button().ID("btnMed").Text("...").Disabled(indicaModoLectura).Handler("seleccionadorMedico();"),
+
+                                                         X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 05 10")
+                                                            .Defaults(d => { d.Add(new Parameter("LabelWidth", "100")); })
+                                                            .Items(X.NumberFieldFor(m => m.IdEnfermera).FieldLabel("Enfermera").Value(idenfermera).Width(170).ReadOnly(true)
+                                                            .Listeners(l => l.Change.Handler = "setIndicaCambios(true);"),
+                                                                    X.TextFieldFor(m => m.NomEnfemera).ID("tfDescEmp").Width(200).Value(nombreenf).FieldLabel("").ReadOnly(true),
+                                                                    X.Button().ID("btnEnfer").Text("...").Disabled(indicaModoLectura).Handler("seleccionadorEnfermera();")
+                                                                )
+
+                                                        )
+                                                        ,
+                                               X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "500")); })
+                                                .Items(
+                                               X.ComboBoxFor(c => c.Servicio).FieldLabel("Servicio").LabelWidth(50).Width(395)
+                                                .ReadOnly(indicaModoLectura)
+                                                .Editable(false)
+                                                .QueryMode(DataLoadMode.Local)
+                                                .TriggerAction(TriggerAction.All)
+                                                .EmptyText("Seleccione ")
+                                                .Items(
+                                                SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboMiscelaneoLista.GetComboGenericosX("COMBOSGENERICOS", "LISTSERV").Select(d => new ListItem(d.Name, d.ID)))
+                                                , X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 10")
+                                                    .Defaults(d => { d.Add(new Parameter("LabelWidth", "280")); })
+                                                       .Items(
+                                                            X.RadioGroupFor(m => m.Revisado, new List<Radio.Config> {
+                                                                new Radio.Config{BoxLabel = "Pre Ingreso", InputValue = "1", ReadOnly =indicaModoLectura, Width=100  },
+                                                                new Radio.Config{BoxLabel = "Hospitalización", InputValue = "2", ReadOnly =indicaModoLectura, Width=100  },
+                                                                new Radio.Config{BoxLabel = "SOP", InputValue = "3", ReadOnly =indicaModoLectura, Width=100}
+                                                            })
+                                                            .Vertical(false)
+                                                            .FieldLabel("Revisado")
+                                                            .Defaults(d =>
+                                                            {
+                                                                d.Add(new Parameter("LabelWidth", "250"));
+                                                                d.Add(new Parameter("DefaultAnchor", "50%"));
+                                                            })
+                                                            .AnchorVertical("100%")
+                                                            .ID("IdRadio0")
+                                                            .LabelWidth(90)
+                                                            .MarginSpec("00 00 15 00")
+                                                            .Width(480)
+                                                            .Listeners(l => l.Change.Handler = "setIndicaCambios(true);")
+
+                                                         ))
+
+                                , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                                            X.Label().Hidden(false).Border(false).Html("<b><font  size='2.5em'; color='black'>Admisión/Identificación</font></b>")
+
+                                  )
+                            , X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                    .Defaults(d => { d.Add(new Parameter("LabelWidth", "280")); })
+                                   .Items(
+                                        X.RadioGroupFor(m => m.Respuesta1, new List<Radio.Config> {
+                                            new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "NA", InputValue = "3", ReadOnly =indicaModoLectura, Width=70}
+                                        })
+                                        .Vertical(false)
+                                        .FieldLabel("El paciente cuenta con OIQ")
+                                        .Defaults(d =>
+                                        {
+                                            d.Add(new Parameter("LabelWidth", "250"));
+                                            d.Add(new Parameter("DefaultAnchor", "50%"));
+                                        })
+                                        .AnchorVertical("100%")
+                                        .ID("IdRadio1")
+                                        .LabelWidth(600)
+                                        .Width(50)
+
+
+                                     )
+
+                               , X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                    .Defaults(d => { d.Add(new Parameter("LabelWidth", "220")); })
+                                   .Items(
+                                        X.RadioGroupFor(m => m.Respuesta2, new List<Radio.Config> {
+                                            new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "NA", InputValue = "3", ReadOnly =indicaModoLectura, Width=70}
+                                        })
+                                        .Vertical(false)
+                                        .FieldLabel("¿Se colocó el brazalete de identificación?")
+                                        .Defaults(d =>
+                                        {
+                                            d.Add(new Parameter("LabelWidth", "250"));
+                                            d.Add(new Parameter("DefaultAnchor", "50%"));
+                                        })
+                                        .AnchorVertical("100%")
+                                        .ID("IdRadio2")
+                                        .LabelWidth(600)
+                                        .Width(50)
+
+
+                                     )
+                                      , X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                    .Defaults(d => { d.Add(new Parameter("LabelWidth", "220")); })
+                                   .Items(
+                                        X.RadioGroupFor(m => m.Respuesta3, new List<Radio.Config> {
+                                            new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "NA", InputValue = "3", ReadOnly =indicaModoLectura, Width=70}
+                                        })
+                                        .Vertical(false)
+                                        .FieldLabel("Confirmación de la identidad del paciente y cirugía a realizar")
+                                        .Defaults(d =>
+                                        {
+                                            d.Add(new Parameter("LabelWidth", "250"));
+                                            d.Add(new Parameter("DefaultAnchor", "50%"));
+                                        })
+                                        .AnchorVertical("100%")
+                                        .ID("IdRadio3")
+                                        .LabelWidth(600)
+                                        .Width(50)
+
+
+                                     )
+
+                        , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                                            X.Label().Hidden(false).Border(false).Html("<b><font  size='2.5em'; color='black'>Consentimiento informado</font></b>")
+
+                                  )
+
+                        , X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                    .Defaults(d => { d.Add(new Parameter("LabelWidth", "220")); })
+                                   .Items(
+                                        X.RadioGroupFor(m => m.Respuesta4, new List<Radio.Config> {
+                                            new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "NA", InputValue = "3", ReadOnly =indicaModoLectura, Width=70}
+                                        })
+                                        .Vertical(false)
+                                        .FieldLabel("¿Su médico le explico la operación que le van a realizar?")
+                                        .Defaults(d =>
+                                        {
+                                            d.Add(new Parameter("LabelWidth", "250"));
+                                            d.Add(new Parameter("DefaultAnchor", "50%"));
+                                        })
+                                        .AnchorVertical("100%")
+                                        .ID("IdRadio4")
+                                        .LabelWidth(600)
+                                        .Width(50)
+
+
+                                     )
+                                     , X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                    .Defaults(d => { d.Add(new Parameter("LabelWidth", "220")); })
+                                   .Items(
+                                        X.RadioGroupFor(m => m.Respuesta5, new List<Radio.Config> {
+                                            new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "NA", InputValue = "3", ReadOnly =indicaModoLectura, Width=70}
+                                        })
+                                        .Vertical(false)
+                                        .FieldLabel("¿Está bien especificada la operación?")
+                                        .Defaults(d =>
+                                        {
+                                            d.Add(new Parameter("LabelWidth", "250"));
+                                            d.Add(new Parameter("DefaultAnchor", "50%"));
+                                        })
+                                        .AnchorVertical("100%")
+                                        .ID("IdRadio5")
+                                        .LabelWidth(600)
+                                        .Width(50)
+
+
+                                     )
+                                     , X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                    .Defaults(d => { d.Add(new Parameter("LabelWidth", "220")); })
+                                   .Items(
+                                        X.RadioGroupFor(m => m.Respuesta6, new List<Radio.Config> {
+                                            new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "NA", InputValue = "3", ReadOnly =indicaModoLectura, Width=70}
+                                        })
+                                        .Vertical(false)
+                                        .FieldLabel("Si implica lateralidad, está especificada el lado que corresponde en el consentimiento (derecho, izquierdo)")
+                                        .Defaults(d =>
+                                        {
+                                            d.Add(new Parameter("LabelWidth", "250"));
+                                            d.Add(new Parameter("DefaultAnchor", "50%"));
+                                        })
+                                        .AnchorVertical("100%")
+                                        .ID("IdRadio6")
+                                        .LabelWidth(600)
+                                        .Width(50)
+
+
+                                     )
+                                     , X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                    .Defaults(d => { d.Add(new Parameter("LabelWidth", "220")); })
+                                   .Items(
+                                        X.RadioGroupFor(m => m.Respuesta7, new List<Radio.Config> {
+                                            new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "NA", InputValue = "3", ReadOnly =indicaModoLectura, Width=70}
+                                        })
+                                        .Vertical(false)
+                                        .FieldLabel("Consentimiento informado está firmado por el paciente, un testigo y fechado")
+                                        .Defaults(d =>
+                                        {
+                                            d.Add(new Parameter("LabelWidth", "250"));
+                                            d.Add(new Parameter("DefaultAnchor", "50%"));
+                                        })
+                                        .AnchorVertical("100%")
+                                        .ID("IdRadio7")
+                                        .LabelWidth(600)
+                                        .Width(50)
+
+
+                                     )
+                                     , X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                    .Defaults(d => { d.Add(new Parameter("LabelWidth", "220")); })
+                                   .Items(
+                                        X.RadioGroupFor(m => m.Respuesta8, new List<Radio.Config> {
+                                            new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "NA", InputValue = "3", ReadOnly =indicaModoLectura, Width=70}
+                                        })
+                                        .Vertical(false)
+                                        .FieldLabel("El médico firmó y selló el consentimiento quirúrgico")
+                                        .Defaults(d =>
+                                        {
+                                            d.Add(new Parameter("LabelWidth", "250"));
+                                            d.Add(new Parameter("DefaultAnchor", "50%"));
+                                        })
+                                        .AnchorVertical("100%")
+                                        .ID("IdRadio8")
+                                        .LabelWidth(600)
+                                        .Width(50)
+
+
+                                     )
+                                     , X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                    .Defaults(d => { d.Add(new Parameter("LabelWidth", "220")); })
+                                   .Items(
+                                        X.RadioGroupFor(m => m.Respuesta9, new List<Radio.Config> {
+                                            new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "NA", InputValue = "3", ReadOnly =indicaModoLectura, Width=70}
+                                        })
+                                        .Vertical(false)
+                                        .FieldLabel("El médico firmó y selló el consentimiento anestesiológico")
+                                        .Defaults(d =>
+                                        {
+                                            d.Add(new Parameter("LabelWidth", "250"));
+                                            d.Add(new Parameter("DefaultAnchor", "50%"));
+                                        })
+                                        .AnchorVertical("100%")
+                                        .ID("IdRadio9")
+                                        .LabelWidth(600)
+                                        .Width(50)
+
+
+                                     )
+
+
+                           , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                                            X.Label().Hidden(false).Border(false).Html("<b><font  size='2.5em'; color='black'>Historia clínica</font></b>")
+
+                                  )
+
+                          , X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                    .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                   .Items(
+                                        X.RadioGroupFor(m => m.Respuesta10, new List<Radio.Config> {
+                                            new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "NA", InputValue = "3", ReadOnly =indicaModoLectura, Width=70}
+                                        })
+                                        .Vertical(false)
+                                        .FieldLabel("Se realizó Anamnesis, antecedentes, examen físico")
+                                        .Defaults(d =>
+                                        {
+                                            d.Add(new Parameter("LabelWidth", "250"));
+                                            d.Add(new Parameter("DefaultAnchor", "50%"));
+                                        })
+                                        .AnchorVertical("100%")
+                                        .ID("IdRadio10")
+                                        .LabelWidth(600)
+                                        .Width(50)
+
+
+                                     )
+
+                                  , X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                    .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                   .Items(
+                                        X.RadioGroupFor(m => m.Respuesta11, new List<Radio.Config> {
+                                            new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "NA", InputValue = "3", ReadOnly =indicaModoLectura, Width=70}
+                                        })
+                                        .Vertical(false)
+                                        .FieldLabel("Está registrado TALLA y PESO en la hoja de funciones vitales")
+                                        .Defaults(d =>
+                                        {
+                                            d.Add(new Parameter("LabelWidth", "250"));
+                                            d.Add(new Parameter("DefaultAnchor", "50%"));
+                                        })
+                                        .AnchorVertical("100%")
+                                        .ID("IdRadio11")
+                                        .LabelWidth(600)
+                                        .Width(50)
+
+
+                                     )
+
+
+
+
+                                  , X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                    .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                   .Items(
+                                        X.RadioGroupFor(m => m.Respuesta12, new List<Radio.Config> {
+                                            new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura, Width=70  },
+                                            new Radio.Config{BoxLabel = "NA", InputValue = "3", ReadOnly =indicaModoLectura, Width=70}
+                                        })
+                                        .Vertical(false)
+                                        .FieldLabel("Se encuentra la EVALUACIÓN PRE ANESTESICA")
+                                        .Defaults(d =>
+                                        {
+                                            d.Add(new Parameter("LabelWidth", "250"));
+                                            d.Add(new Parameter("DefaultAnchor", "50%"));
+                                        })
+                                        .AnchorVertical("100%")
+                                        .ID("IdRadio12")
+                                        .LabelWidth(600)
+                                        .Width(50)
+
+                        )
+
+                        //, X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                //            .Defaults(d => { d.Add(new Parameter("LabelWidth", "220")); })
+                //           .Items(
+                //                X.Component().Width(0),
+                //                X.TextFieldFor(m => m.Antibiotico).FieldLabel("Piel con lesiones, ¿Cuáles?").LabelWidth(700)
+                //                 .Hidden(false).ID("TxtEspecificar9")
+                //      )
+
+
+
+                    , X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                               .Items(
+
+
+                                                    X.RadioGroupFor(m => m.Respuesta13, new List<Radio.Config> {
+                                                        new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura, Width=70  },
+                                                        new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura, Width=70  },
+                                                        new Radio.Config{BoxLabel = "NA", InputValue = "3", ReadOnly =indicaModoLectura, Width=70}
+                                                    })
+                                                    .Vertical(false)
+                                                    .FieldLabel("Se encuentra el RIESGO QUIRÚRGICO")
+                                                    .Defaults(d =>
+                                                    {
+                                                        d.Add(new Parameter("LabelWidth", "250"));
+                                                        d.Add(new Parameter("DefaultAnchor", "50%"));
+                                                    })
+                                                    .AnchorVertical("100%")
+                                                    .ID("IdRadio13")
+                                                    .LabelWidth(600)
+                                                    .Width(50)
+                )
+
+
+             , X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                               .Items(
+                                                    X.RadioGroupFor(m => m.Respuesta14, new List<Radio.Config> {
+                                                        new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura, Width=70  },
+                                                        new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura, Width=70  },
+                                                        new Radio.Config{BoxLabel = "NA", InputValue = "3", ReadOnly =indicaModoLectura, Width=70}
+                                                    })
+                                                    .Vertical(false)
+                                                    .FieldLabel("Se encuentra el formato LISTA DE SEGURIDAD QUIRÚRUGICA")
+                                                    .Defaults(d =>
+                                                    {
+                                                        d.Add(new Parameter("LabelWidth", "250"));
+                                                        d.Add(new Parameter("DefaultAnchor", "50%"));
+                                                    })
+                                                    .AnchorVertical("100%")
+                                                    .ID("IdRadio14")
+                                                    .LabelWidth(600)
+                                                    .Width(50)
+             )
+             , X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                               .Items(
+                                                    X.RadioGroupFor(m => m.Respuesta15, new List<Radio.Config> {
+                                                        new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura, Width=70  },
+                                                        new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura, Width=70  },
+                                                        new Radio.Config{BoxLabel = "NA", InputValue = "3", ReadOnly =indicaModoLectura, Width=70}
+                                                    })
+                                                    .Vertical(false)
+                                                    .FieldLabel("Están los exámenes de imágenes necesarios para la operación con informe")
+                                                     .Defaults(d =>
+                                                    {
+                                                        d.Add(new Parameter("LabelWidth", "250"));
+                                                        d.Add(new Parameter("DefaultAnchor", "50%"));
+                                                    })
+                                                    .AnchorVertical("100%")
+                                                    .ID("IdRadio15")
+                                                    .LabelWidth(600)
+                                                    .Width(50)
+             ), X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                                            X.Label().Hidden(false).Border(false).Html("<b><font  size='2.5em'; color='black'>Alergias</font></b><BR>")
+                                           ).Height(25),
+
+             X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                               .Items(
+                                                    X.RadioGroupFor(m => m.Respuesta16, new List<Radio.Config> {
+                                                        new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura, Width=70  },
+                                                        new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura, Width=70 },
+                                                        new Radio.Config{BoxLabel = "NA", InputValue = "3", ReadOnly =indicaModoLectura, Width=70}
+                                                    })
+                                                    .Vertical(false)
+                                                    .FieldLabel("Se encuentra el FORMATO DE ALERGIA A MEDICAMENTOS lleno y firmado")
+                                                    .Defaults(d =>
+                                                    {
+                                                        d.Add(new Parameter("LabelWidth", "250"));
+                                                        d.Add(new Parameter("DefaultAnchor", "50%"));
+                                                    })
+                                                    .AnchorVertical("100%")
+                                                    .ID("IdRadio16")
+                                                    .LabelWidth(600)
+                                                    .Width(50)
+             ), X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                                            X.Label().Hidden(false).Border(false).Html("<b><font  size='2.5em'; color='black'>Antecedentes</font></b><BR>")
+                                           ).Height(25),
+             X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                               .Items(
+                                                    X.RadioGroupFor(m => m.Respuesta17, new List<Radio.Config> {
+                                                        new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura, Width=70  },
+                                                        new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura, Width=70 },
+                                                        new Radio.Config{BoxLabel = "NA", InputValue = "3", ReadOnly =indicaModoLectura, Width=70}
+                                                    })
+                                                    .Vertical(false)
+                                                    .FieldLabel("Paciente resfriado")
+                                                    .Defaults(d =>
+                                                    {
+                                                        d.Add(new Parameter("LabelWidth", "250"));
+                                                        d.Add(new Parameter("DefaultAnchor", "50%"));
+                                                    })
+                                                    .AnchorVertical("100%")
+                                                    .ID("IdRadio17")
+                                                    .LabelWidth(600)
+                                                    .Width(50)
+
+               )
+               ,
+             X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                               .Items(
+                                                    X.RadioGroupFor(m => m.Respuesta18, new List<Radio.Config> {
+                                                        new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura, Width=70  },
+                                                        new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura, Width=70 },
+                                                        new Radio.Config{BoxLabel = "NA", InputValue = "3", ReadOnly =indicaModoLectura, Width=70}
+                                                    })
+                                                    .Vertical(false)
+                                                    .FieldLabel("Paciente portador de marcapaso")
+                                                    .Defaults(d =>
+                                                    {
+                                                        d.Add(new Parameter("LabelWidth", "250"));
+                                                        d.Add(new Parameter("DefaultAnchor", "50%"));
+                                                    })
+                                                    .AnchorVertical("100%")
+                                                    .ID("IdRadio18")
+                                                    .LabelWidth(600)
+                                                    .Width(50)
+
+        ),
+             X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                               .Items(
+                                                    X.RadioGroupFor(m => m.Respuesta19, new List<Radio.Config> {
+                                                        new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura, Width=70  },
+                                                        new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura, Width=70 },
+                                                        new Radio.Config{BoxLabel = "NA", InputValue = "3", ReadOnly =indicaModoLectura, Width=70}
+                                                    })
+                                                    .Vertical(false)
+                                                    .FieldLabel("¿Paciente con medicación anticoagulante?")
+                                                    .Defaults(d =>
+                                                    {
+                                                        d.Add(new Parameter("LabelWidth", "250"));
+                                                        d.Add(new Parameter("DefaultAnchor", "50%"));
+                                                    })
+                                                    .AnchorVertical("100%")
+                                                    .ID("IdRadio19")
+                                                    .LabelWidth(600)
+                                                    .Width(50)
+
+        )
+        ,
+             X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                               .Items(
+                                                    X.RadioGroupFor(m => m.Respuesta20, new List<Radio.Config> {
+                                                        new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura, Width=70  },
+                                                        new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura, Width=70 },
+                                                        new Radio.Config{BoxLabel = "NA", InputValue = "3", ReadOnly =indicaModoLectura, Width=70}
+                                                    })
+                                                    .Vertical(false)
+                                                    .FieldLabel("Se ha suspendido los anticoagulantes (Warfarina u otros)")
+                                                    .Defaults(d =>
+                                                    {
+                                                        d.Add(new Parameter("LabelWidth", "250"));
+                                                        d.Add(new Parameter("DefaultAnchor", "50%"));
+                                                    })
+                                                    .AnchorVertical("100%")
+                                                    .ID("IdRadio20")
+                                                    .LabelWidth(600)
+                                                    .Width(50)
+
+        )
+        ,
+             X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                               .Items(
+                                                    X.RadioGroupFor(m => m.Respuesta21, new List<Radio.Config> {
+                                                        new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura, Width=70  },
+                                                        new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura, Width=70 },
+                                                        new Radio.Config{BoxLabel = "NA", InputValue = "3", ReadOnly =indicaModoLectura, Width=70}
+                                                    })
+                                                    .Vertical(false)
+                                                    .FieldLabel("Paciente inmunosuprimido")
+                                                    .Defaults(d =>
+                                                    {
+                                                        d.Add(new Parameter("LabelWidth", "250"));
+                                                        d.Add(new Parameter("DefaultAnchor", "50%"));
+                                                    })
+                                                    .AnchorVertical("100%")
+                                                    .ID("IdRadio21")
+                                                    .LabelWidth(600)
+                                                    .Width(50)
+
+        )
+   ),
+                        X.HiddenFor(m => m.Accion),
+                        X.DateFieldFor(m => m.FechaCreacion).Hidden(true),
+                        X.DateFieldFor(m => m.FechaModificacion).Hidden(true),
+                        X.TextFieldFor(m => m.UsuarioCreacion).Hidden(true),
+                        X.TextFieldFor(m => m.UsuarioModificacion).Hidden(true),
+                        X.TextFieldFor(m => m.Estado).Hidden(true),
+                        X.TextArea().ID("taAlerts")
+                        .Border(false)
+                        .StyleSpec("background:white;border:1px solid gray;")
+                        .FieldStyle("color: red")
+                        .Hidden(true)
+                        .ReadOnly(true)
+
+                     )
+
+                    .TopBar(X.Toolbar().ID("bar").Items(
+                                X.ToolbarSpacer(20),
+                                X.TextField().Width(15).FieldStyle("border-color: " + COLOER_IND_OBLIGA).ReadOnly(true).Hidden(indicaModoLectura),
+                                X.Label().Html("<b><font color='" + COLOER_IND_OBLIGA + "'>Campos Obligatorios</font></b>").Hidden(indicaModoLectura),
+
+                                X.ToolbarSpacer(20)
+                                ,
+                                Html.X().Container().Layout(LayoutType.HBox)
+                                .ID("conthbIndicaError").Hidden(true).Items(
+                                    X.Label().Html("<font  size='1.9em'; color='red'>(</font>"),
+                                    X.Label().Html("<font  size='3.9em'; color='red'><b>&#161;</b></font>"),
+                                    X.Label().Html("<font  size='1.9em'; color='red'>) Verificar los errores presentados</font>")
+                                ),
+                                X.ToolbarFill(),
+                               X.Button()
+                                .Text("Imprimir")
+                                .Icon(Icon.Report)
+                                .Hidden(!visibleImpresion)
+                                .ID("btnImpresion")
+                                .Handler("eventoVisorReporte('');")
+                                ,
+                                X.Button()
+                                .Text("Imprimir todos")
+                                .Icon(Icon.ReportGo)
+                                .Hidden(!visibleImpresion)
+                                .ID("btnImpresionHC")
+                                .Handler("eventoVisorReporte('HC');")
+                                ,
+                                X.ToolbarSpacer().Width(40)
+                                ,
+                            X.Button()
+                                .Text("Guardar")
+                                .Icon(Icon.Disk)
+                                .ID("cmdGuardar").Hidden(indicaModoLectura)
+
+                                .DirectEvents(de =>
+                                {  //Model.ACCION : Posee el MODO ACTUAL
+                                    de.Click.Url = Url.Action("CCEPF460_1_Save_SeguridadCirugia");
+                                    de.Click.EventMask.ShowMask = true;
+                                    de.Click.Before = "" +
+                                            "beforeSave(App.formactual); return App.formactual.getForm().isValid();";
+
+                                    de.Click.Success = "onSuccess(result.data);";
+                                    de.Click.Failure = "onFailure();";
+                                }),
+
+                            X.Button()
+                                .Text("Cancelar")
+                                .ID("btnCancel").Hidden(indicaModoLectura)
+                                .Icon(Icon.Cancel)
+                                .Handler("eventoCancelar(this.up('form'));")
+                                ,
+                            X.Button()
+                                .Text("Editar")
+                                .ID("btnOnEdit")
+                                .Icon(Icon.ApplicationFormEdit)
+                                .Hidden(true)
+                                .Handler("eventoOnEditar(App.btnOnEdit);")
+
+                        ))
+                        .Listeners(l => l.FieldChange
+                            .Handler = "setIndicaCambios(true);"
+                        )
+                );
+        }
+        )
+
+
+    )
+
+}
+

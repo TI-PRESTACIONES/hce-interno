@@ -1,0 +1,111 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_HC_Ubicacion
+
+@{
+    var X = Html.X();
+}
+
+<script>
+    var seleccionActual = null;
+    var seleccionActual2 = null;
+
+    function setSelecciones(param1) {
+        seleccionActual = param1.IdUbicacion;
+        seleccionActual2 = param1.Nombre;
+    };
+
+    function enviarSeleccion(grid) {
+        if (seleccionActual != null) {
+            var status = seleccionActual;
+            var status2 = seleccionActual2;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action(Model.Accion))',
+                params: {
+                    MODO: 'get',
+                    id: status,
+                    descripcion: status2,
+                    idWindow: "WindowSelec"
+                }
+            });
+        } else {
+            Ext.Msg.alert('Debe Seleccionar un elemento.');
+        }
+    };
+
+    function enviarSeleccionDirect(param1) {
+        var status = param1.IdUbicacion;
+        var status2 = param1.Nombre;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action(Model.Accion))',
+            params: {
+                MODO: 'get',
+                id: status,
+                descripcion: status2,
+                idWindow: "WindowSelec"
+            }
+        });
+    };
+
+    var varTipoBuscar = "LOAD";
+    var accionBuscarFiltroUbic = function (tipo) {
+        varTipoBuscar = tipo;
+        App.GridPanel2.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+
+    var eventoCheckFiltro = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+</script>
+
+@(Html.X().Window()
+    .Width(450)
+    .Height(500)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowSelec")
+    .Title("Seleccionar Ubicación")
+    .Padding(4)
+    .TopBar(
+        X.Toolbar().Height(30)
+        .Items(
+            X.Button().Border(true).Text("Buscar").Icon(Icon.Find).Handler("accionBuscarFiltroUbic('FILTRO');"),
+            X.ToolbarFill(),
+            X.Button().Text("Aceptar").Icon(Icon.Accept).Handler("enviarSeleccion(App.GridPanel2.getSelectionSubmit().getSelectionModelField().getValue());"),
+            X.Button().Text("Cancelar").Icon(Icon.Cancel).DirectEvents(de =>{
+                de.Click.Url = Url.Action("cerrarWindow");
+                de.Click.ExtraParams.Add(new Parameter("id", "WindowSelec", ParameterMode.Value));})))
+        .Items(
+            X.GridPanel().Border(false).Scroll(ScrollMode.Both).AutoScroll(true).ID("GridPanel2").Margins("0 0 0 0")
+            .TopBar(
+            X.Toolbar()
+            .Items(
+                X.Checkbox().FieldLabel("Nombre").ID("chkDesc").Checked(true).Handler("eventoCheckFiltro(App.chkDesc,App.tfBuscarDesc);").LabelWidth(70),
+                X.TextField().FieldLabel("").ID("tfBuscarDesc").Disabled(true),
+                X.ToolbarFill())).Store(store => store.Add(
+                    Html.X().Store().ID("Store2").AutoLoad(true).RemoteSort(false).IsPagingStore(true).RemotePaging(true).PageSize(20).Proxy(proxy => proxy.Add(
+                        Html.X().AjaxProxy().Url("getGrillaUbicacion").Reader(reader => reader.Add(
+                            Html.X().JsonReader().Root("data").TotalProperty("total").IDProperty("Persona"))))).Parameters(ps =>ps.Add(new{                                
+                                descripcion = JRawValue.From("App.tfBuscarDesc.getValue()"),
+                                tipoBuscar = JRawValue.From("varTipoBuscar")})).Model(model => model.Add(Html.X().Model().Fields(fields =>{
+                                    fields.Add(Html.X().ModelField().Name("IdUbicacion"));
+                                    fields.Add(Html.X().ModelField().Name("Codigo"));
+                                    fields.Add(Html.X().ModelField().Name("Nombre"));}))))).ColumnModel(columnModel =>{
+                                        columnModel.Columns.Add(Html.X().Column().Text("Id").DataIndex("IdUbicacion").Width(65));
+                                        columnModel.Columns.Add(Html.X().Column().Text("Código").DataIndex("Codigo").Width(80));
+                                        columnModel.Columns.Add(Html.X().Column().Text("Nombre").DataIndex("Nombre").Width(150));})
+                                        .View(Html.X().GridView().TrackOver(false)).Border(false)
+                                        .Listeners(l => l.CellDblClick.Handler = "enviarSeleccionDirect(record.data);")
+                                        .Listeners(l => l.CellClick.Handler = "setSelecciones(record.data);")
+                                        .BottomBar(bar => bar.Add(Html.X().PagingToolbar()))).CloseAction(CloseAction.Destroy))
+@(X.KeyNav().Target("WindowSelec").Enter(a => a.Handler = "accionBuscarFiltroUbic('FILTRO');"))

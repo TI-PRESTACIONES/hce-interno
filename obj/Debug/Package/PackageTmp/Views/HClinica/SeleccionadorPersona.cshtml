@@ -1,0 +1,224 @@
+﻿@model SoluccionSalud.Entidades.Entidades.VW_PERSONAPACIENTE
+
+
+@{
+
+    var X = Html.X();
+}
+
+<script>
+
+    var seleccionActual =null;
+    var seleccion2 = null;
+    var seleccion3 = null;
+    function setSeleccion(param1,param2,param3) {
+        seleccionActual = param1;
+        seleccion2 = param2;
+        seleccion3 = param3;
+    }
+
+
+    var onFailure = function (modo) {
+        Ext.Msg.notify("EVENTO: FAILURE", "MODEL::" + modo);
+    };
+
+    function enviarSeleccion(grid) {
+        if (seleccionActual != null) {
+            var status = seleccionActual;
+            var status2 = seleccion2;
+            var status3 = seleccion3;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action(Model.ACCION))',
+                params: {
+                    MODO: 'get',
+                    persona: status,
+                    servicio: status2,
+                    codigo: status3,
+                    idWindow: "WindowSelecPersona"
+                }
+            });
+        } else {
+            Ext.Msg.alert('Debe Seleccionar un elemento.');
+        }
+
+    }
+
+    function enviarSeleccionDirect(param1,param2,param3) {
+        var status = param1;
+        var status2 = param2;
+        var status3 = param3;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action(Model.ACCION))',
+            params: {
+                MODO: 'get',
+                persona: status,
+                servicio: status2,
+                codigo: status3,
+                idWindow: "WindowSelecPersona"
+            }
+        });
+    }
+    var varTipoBuscar = "LOAD";
+    var accionBuscarFiltroPersona = function (tipo) {
+        varTipoBuscar = tipo;
+        App.GridPanel2.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 'A') {
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        }
+        if (value == 'I') {
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+        }
+    };
+</script>
+
+
+
+@(Html.X().Window()
+    .Width(300)
+    .Height(350)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowSelecPersona")
+    .Title("Seleccionar Persona")
+    .Padding(4)
+        //.X(0)
+        //.Y(0)
+    .TopBar(
+
+                                     X.Toolbar()
+                                     .Height(30)
+                                     .Items(
+                                     X.Button().Border(true).Text("Buscar").Icon(Icon.Find).Handler("accionBuscarFiltroPersona('FILTRO');"),
+                                        X.ToolbarFill(),
+                                        X.Button()
+                                            .Text("Aceptar")
+                                            .Icon(Icon.Accept)
+                                    .Handler("enviarSeleccion(App.GridPanel2.getSelectionSubmit().getSelectionModelField().getValue());")
+
+                                                 ,
+                                        X.Button()
+                                            .Text("Cancelar")
+                                            .Icon(Icon.Cancel)
+                                             .DirectEvents(de =>
+                                              {
+                                                  de.Click.Url = Url.Action("cerrarWindow");
+                                                  //de.Click.EventMask.ShowMask = true;
+                                                  de.Click.ExtraParams.Add(new Parameter(
+                                                        "id", "WindowSelecPersona", ParameterMode.Value));
+                                                  //de.Click.Success = "onSuccess(result.data,'" + Model.ACCION + "');";
+                                                  //de.Click.Failure = "onSuccess(result.data,'"+ Model.ACCION + "');";
+                                              })
+                                         )
+
+    )
+    .Items(
+                      X.GridPanel()
+                            .Border(false)
+                            .Scroll(ScrollMode.Both)
+                            .AutoScroll(true)
+                            .ID("GridPanel2")
+        // .DefaultAnchor("100%")
+        //.Anchor("100% 100%")
+                            .Margins("0 0 0 0")
+                            .TopBar(
+                                        X.Toolbar()
+                                        .Items(
+                                            X.TextField()
+                                                .FieldLabel("Nombre").ID("tfBuscarDesc"),
+                                            X.ToolbarFill()
+                                        )
+                                    )
+
+        ///CONFIGURAR EL STORE
+                            .Store(store => store.Add(
+                                     Html.X().Store()
+                                        .ID("Store2")
+                                         .AutoLoad(true)
+                                         .RemoteSort(false)
+                                         .IsPagingStore(true)
+                                         .RemotePaging(true)
+                                         .PageSize(20)////CAMBIAR DE ACUERDO A ALGÚN UN CRITERIO
+                                         .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                            .Url("getGrillaListadoVwPersonapacienteSeleccionar")
+                                             //.Url("../LPacientes/GrillaListadoPacientes")
+                                             //.Url("../Controllers/Maestros/Usuario/UsuarioController/GrillaListadoPacientes")
+                                                .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                .Root("data")
+                                                .TotalProperty("total")
+                                                .IDProperty("Persona"))))
+                                                )
+                                        .Parameters(ps =>
+                                            //ps.Add(new StoreParameter("grupo", Model.GRUPO, ParameterMode.Value)),
+                                            ps.Add(
+                                                new
+                                                  {
+                                                      persona = 0,
+                                                      nombre = JRawValue.From("App.tfBuscarDesc.getValue()"),
+                                                      tipoBuscar = JRawValue.From("varTipoBuscar") //AUX: para la accion
+                                                  }
+                                            )
+                                        )
+                                //.Reader(reader => reader.Add(Html.X().JsonReader().Root("data").IDProperty("P_ID")))
+                                // .Writer(writer => writer.Add(Html.X().JsonWriter().AllowSingle(true)))
+                                         .Model(model => model.Add(Html.X().Model()
+                                                 .Fields(fields =>
+                                                 {
+                                                     fields.Add(Html.X().ModelField().Name("Persona"));
+                                                     fields.Add(Html.X().ModelField().Name("NombreCompleto"));
+                                                     fields.Add(Html.X().ModelField().Name("Observacion"));
+                                                     fields.Add(Html.X().ModelField().Name("Servicio"));
+                                                     fields.Add(Html.X().ModelField().Name("Estado"));
+                                                     fields.Add(Html.X().ModelField().Name("TarjetaCredito"));
+                                                 }))
+                                                )
+                                              )
+                                   )
+
+                                ///CONFIGURAR LAS COLUMNAS
+                                .ColumnModel(columnModel =>
+                                 {
+                                     columnModel.Columns.Add(Html.X().Column().Text("Código").DataIndex("Persona").Width(65));
+                                     columnModel.Columns.Add(Html.X().Column().Text("Nombre").DataIndex("NombreCompleto").Width(300));
+                                     columnModel.Columns.Add(Html.X().Column().Text("Tipo Trabajador").DataIndex("Observacion").Width(150));
+                                     columnModel.Columns.Add(Html.X().Column().Text("Tipo Trabajador").DataIndex("Servicio").Width(150).Hidden(true));
+                                     columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(100).Renderer("changeEstado"));
+                                     columnModel.Columns.Add(Html.X().Column().Text("Código Usuario").DataIndex("TarjetaCredito").Width(100));
+                                 })
+                                 .View(Html.X().GridView().TrackOver(false))
+        //.View(view => view.Add(Html.X().GridView().TrackOver(false)))
+                                 .Border(false)
+                                 .Listeners(l => l.CellDblClick
+                                                      .Handler = "enviarSeleccionDirect(record.data.Persona,record.data.Servicio,record.data.TarjetaCredito);")
+                                 .Listeners(l => l.CellClick
+                                                      .Handler = "setSeleccion(record.data.Persona,record.data.Servicio,record.data.TarjetaCredito);")
+                                .BottomBar(bar => bar.Add(
+                                    Html.X().PagingToolbar()
+                                    //.DisplayInfo(true)
+                                    //.DisplayMsg("Displaying customers {0} - {1} of {2}"))
+                                ))
+
+                               /*.TopBar(X.Panel()
+                                    .Height(50)
+                                    .Title("Buscador")
+                                    .Border(false)
+                                )   */
+    )
+
+    .CloseAction(CloseAction.Destroy)
+
+)
+
+@(
+ X.KeyNav()
+.Target("WindowSelecPersona")
+.Enter(a => a.Handler = "accionBuscarFiltroPersona('FILTRO');")
+)

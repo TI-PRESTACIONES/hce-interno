@@ -1,0 +1,31 @@
+﻿@model SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL
+@{
+    ViewBag.Title = "Simple TreePanel";
+    Layout = "";
+    var X = Html.X();
+}
+
+ 
+
+@(
+      X.Panel()
+        .ID("Panel1")
+        .Region(Region.Center)
+        .Height(150)
+        .Width(350)
+        .Title("Html")
+        .BodyPadding(5)
+        .Content(c => DateTime.Now.ToLongTimeString())
+        .Buttons(
+            X.Button()
+                .Text("Set Html Property")
+                .DirectEvents(de => {
+                   // de.Click.Url = Url.Action("SetHtmlProperty");
+                    de.Click.ExtraParams.Add(new Parameter("containerId", "Panel1"));
+                })
+        )
+    )
+
+
+
+

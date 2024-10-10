@@ -1,0 +1,147 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_GE_ProcedimientoMedico
+@{
+    var X = Html.X();
+}
+
+<script>
+    var varTipoBuscar = "LOAD";
+    var template = '<span style="color:{0};">{1}</span>';
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+    var seleccionActual = null;
+    var seleccionActualDesc = null;
+    var seleccionActualCod = null;
+
+    var accionBuscarFiltroPrestaciones = function (tipo) {
+        varTipoBuscar = tipo;
+        App.GridPanelSel.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 2)
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+
+    function setSeleccionCPT(param1, param2, param3) {
+        seleccionActual = param1;
+        seleccionActualDesc = param2;
+        seleccionActualCod = param3;
+    };
+
+    function enviarSeleccion(grid) {
+        if (seleccionActual != null) {
+            var status = seleccionActual;
+            var status2 = seleccionActualDesc;
+            var status3 = seleccionActualCod;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action(Model.Accion))',
+                params: {
+                    MODO: 'get',
+                    id: status,
+                    descripcion: status2,
+                    codigo: status3,
+                    idWindow: "WindowSelec"
+                }
+            });
+        } else {
+            Ext.Msg.alert('Debe Seleccionar un elemento.');
+        }
+
+    };
+
+    function enviarSeleccionDirect(param1, param2, param3) {
+        var status = param1;
+        var status2 = param2;
+        var status3 = param3;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action(Model.Accion))',
+            params: {
+                MODO: 'get',
+                id: status,
+                descripcion: status2,
+                codigo: status3,
+                idWindow: "WindowSelec"
+            }
+        });
+    };
+
+    var eventoCheckFiltro = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+</script>
+
+@(Html.X().Window()
+    .Width(480)
+    .Height(400)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowSelec")
+    .Title("Seleccionar Prestaciones")
+    .Padding(4)
+    .TopBar(
+    X.Toolbar().Height(30)
+    .Items(
+        X.Button().Border(true).Text("Buscar").Icon(Icon.Find).Handler("accionBuscarFiltroPrestaciones('FILTRO');"),
+        X.ToolbarFill(),
+        X.Button().Text("Aceptar").Icon(Icon.Accept).Handler("enviarSeleccion(App.GridPanelSel.getSelectionSubmit().getSelectionModelField().getValue());"),
+        X.Button().Text("Cancelar").Icon(Icon.Cancel)
+        .DirectEvents(de =>{
+            de.Click.Url = Url.Action("cerrarWindow");
+            de.Click.ExtraParams.Add(new Parameter("id", "WindowSelec", ParameterMode.Value));}),
+        X.ToolbarSpacer(20)
+        )
+    ).Items(
+        X.GridPanel().TopBar(X.Toolbar()
+            .Items(
+                X.Checkbox().FieldLabel("Nombre").ID("chkDesc").Checked(true).Handler("eventoCheckFiltro(App.chkDesc,App.tfBuscarSeleccDesc);").LabelWidth(70),
+                X.TextField().ID("tfBuscarSeleccDesc").Disabled(true).FieldLabel(""),
+                X.ToolbarFill()
+                )).Border(false).Layout(LayoutType.Fit).Scroll(ScrollMode.Both).AutoScroll(true).ID("GridPanelSel").Margins("0 0 0 0").Store(store => store.Add(
+                    Html.X().Store().ID("StoreSel").AutoLoad(true).RemoteSort(false).IsPagingStore(true).RemotePaging(true).PageSize(10).Proxy(proxy => proxy.Add(
+                        Html.X().AjaxProxy().Url("getGrillaPrestacionCPT").Reader(reader => reader.Add(Html.X().JsonReader().Root("data").TotalProperty("total").IDProperty("IdProcedimiento")))))
+                        .Parameters(ps =>ps.Add(new{
+                            descripcion = JRawValue.From("App.tfBuscarSeleccDesc.getValue()"),
+                            tipoBuscar = JRawValue.From("varTipoBuscar")
+                            })
+                            ).Model(model => model.Add(Html.X().Model()
+                                .Fields(fields =>{
+                                    fields.Add(Html.X().ModelField().Name("IdProcedimiento"));
+                                    fields.Add(Html.X().ModelField().Name("CodigoProcedimiento"));
+                                    fields.Add(Html.X().ModelField().Name("Nombre"));
+                                    fields.Add(Html.X().ModelField().Name("Estado"));
+                                    }))
+                                    )
+                                    )
+                                   )
+                                .ColumnModel(columnModel =>{
+                                    columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("IdProcedimiento").Width(80));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Código CPT").DataIndex("CodigoProcedimiento").Width(150));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Nombre").DataIndex("Nombre").Width(150));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(100).Renderer("changeEstado"));
+                                })
+                                 .View(Html.X().GridView().TrackOver(false)).Border(false)
+                                 .Listeners(l => l.CellDblClick.Handler = "enviarSeleccionDirect(record.data.IdProcedimiento,record.data.Nombre,record.data.CodigoProcedimiento);")
+                                 .Listeners(l => l.CellClick.Handler = "setSeleccionCPT(record.data.IdProcedimiento,record.data.Nombre,record.data.CodigoProcedimiento);")
+                                 .BottomBar(bar => bar.Add(Html.X().PagingToolbar()
+                                ))).CloseAction(CloseAction.Destroy)
+)
+@(
+ X.KeyNav().Target("WindowSelec").Enter(a => a.Handler = "accionBuscarFiltroPrestaciones('FILTRO');")
+)
+
+

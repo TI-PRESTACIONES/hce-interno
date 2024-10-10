@@ -1,0 +1,94 @@
+﻿@using Ext.Net;
+@using Ext.Net.MVC;
+@{
+    Layout = null;
+    var X = Html.X();
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SignalR and Ext.NET MessageBus example</title>
+    @Scripts.Render("~/bundles/modernizr")
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/jquery.signalR")
+    <script src="@Url.Content("~/signalr/hubs")" type="text/javascript"></script>
+</head>
+<body>
+    @(X.ResourceManager())
+    @(X.Viewport().Padding(20).Items()
+
+.Add(X.Button().Icon(Icon.Add).Text("New customer")
+      .DirectClickAction("AddCustomer", "Customers"))
+
+.Add(X.Button().Icon(Icon.Delete).Text("Delete customer")
+      .DirectClickAction("DeleteCustomer", "Customers"))
+
+.Add(X.GridPanel().Title("Customers").MarginSpec("10 0 0 0").Icon(Icon.User)
+      .Store(X.Store()
+              .AutoLoad(true)
+              .Proxy(X.AjaxProxy().Url("/customers/all").Reader(X.JsonReader()))
+              .Model(X.Model()
+                      .Fields(fields =>
+                      {
+                        fields.Add(X.ModelField().Name("Id"));
+                        fields.Add(X.ModelField().Name("Name"));
+                        fields.Add(X.ModelField().Name("Surname"));
+                        fields.Add(X.ModelField().Name("Email"));
+                      })))
+              .ColumnModel(columnModel =>
+              {
+                columnModel.Columns.Add(X.Column().Text("Name").DataIndex("Name").Flex(1));
+                columnModel.Columns.Add(X.Column().Text("Surname").DataIndex("Surname").Flex(1));
+                columnModel.Columns.Add(X.Column().Text("Email").DataIndex("Email").Flex(1));
+              })
+              .MessageBusListeners(new MessageBusListener
+              {
+                 Name = "Customers.*",
+                 Handler = "this.getStore().reload();",
+                 Buffer = 500
+              }))
+
+.Add(X.GridPanel().Title("Events log").MarginSpec("10 0 0 0").Icon(Icon.Report)
+      .Store(X.Store()
+      .Model(X.Model()
+              .Fields(fields =>
+                          {
+                              fields.Add(X.ModelField().Name("EventId"));
+                              fields.Add(X.ModelField().Name("DateTime"));
+                              fields.Add(X.ModelField().Name("Name"));
+                              fields.Add(X.ModelField().Name("Data"));
+                          })))
+                    .ColumnModel(columnModel =>
+                    {
+                        columnModel.Columns.Add(X.Column().Text("EventId").DataIndex("EventId").Flex(1));
+                        columnModel.Columns.Add(X.Column().Text("DateTime").DataIndex("DateTime").Flex(1));
+                        columnModel.Columns.Add(X.Column().Text("Event name").DataIndex("Name").Flex(1));
+                        columnModel.Columns.Add(X.Column().Text("Event data").DataIndex("Data").Flex(1));
+                    })
+                    .MessageBusListeners(new MessageBusListener
+                    {
+                        Name = "Customers.*",
+                        Handler = "this.getStore().add({ EventId: data.Id, DateTime: getFormattedDateTime(),Name: name, Data: \"CustomerId: \" + data.CustomerId });"
+})))
+    <script type="text/javascript">
+        var loadHub = function () {
+            var hubProxy = $.connection.applicationHub;
+            hubProxy.client.publish = function (name, message) {
+                Ext.net.Bus.publish(name, message);
+            };
+            $.connection.hub.start().done(function () {
+                Ext.net.Notification.show({
+                    title: "Info",
+                    iconCls: "#Accept",
+                    html: "SignalR connection is active!"
+                });
+            });
+        };
+
+        $(document).ready(function () {
+            loadHub();
+        });
+
+    </script>
+</body>
+</html>

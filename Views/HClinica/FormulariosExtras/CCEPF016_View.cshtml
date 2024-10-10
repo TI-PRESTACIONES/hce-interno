@@ -1,0 +1,744 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_HC_ValoracionMentalAM_FE
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+    var indicaVisiblePrint = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_VISIBLE_IMPRESION;
+    var visibleImpresion = (indicaVisiblePrint == 2/* && Model.Accion == "UPDATE"*/ ? true : false);
+    var isVista = (Model.Accion == "VISTA" ? true : false);
+    var isNuevo = (Model.Accion == "NUEVO" ? true : false);
+    
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VISTA" ? false : false))));
+
+    var COLOER_IND_OBLIGA = AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("COL_BCOBLI");
+    var MENS_NUMERO = "No se permite un valor negativo.";
+    var PAR_FORMATO02 = "999";
+    var COLOR_GREENPbackg = "#CADCEE";
+
+}
+@section cabecera
+{
+<link rel="stylesheet" href="@Url.Content("~/resources/css/main.css")" />
+<style>
+    html body {
+        padding: 0px;
+        background: none;
+        background: none;
+        background: none;
+        background-attachment: fixed;
+        background-position: center;
+        font-family: tahoma,verdana,sans-serif;
+        background-color: #ffffff;
+    }
+</style>
+
+    <script>
+
+        var indicaCambios = false;
+        function setIndicaCambios(value) {
+            indicaCambios = value;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("setIndicaCambiosFormulario"))',
+                params: {
+                    indica: (value ? 1 : 0)
+                }
+            });
+
+            var val = '@visibleImpresion';
+            var vis = '@isVista';
+
+            if (vis == 'False') {
+                if (val == 'True') {
+
+                    if (value == true) {
+                        App.btnImpresion.setDisabled(true);
+                        App.btnImpresionHC.setDisabled(true);
+                        parent.App.btnGuardarFirma.setDisabled(true);
+                    } else {
+                        App.btnImpresion.setDisabled(false);
+                        App.btnImpresionHC.setDisabled(false);
+                        parent.App.btnGuardarFirma.setDisabled(false);
+                    }
+                }
+            }
+
+        };
+
+    function eventoRenderForm() {
+        var kk = 195;
+        var scrH = screen.height;
+        var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+        var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+
+        if (southH == 0) {
+            southH = 30;
+        } else if (parent.App.PanelMainSouth.collapsed) {
+            southH = 30;
+        }
+        var dimCentral = (scrH - (northH + southH) - kk);
+        App.formactual.setHeight(545);
+
+        var v = '@isNuevo';
+        if (v.toUpperCase() == 'TRUE') {
+            App.btnImpresion.setVisible(false);
+            App.btnImpresionHC.setVisible(false);
+        }
+
+    }
+  
+    var count = 0; // a counter for new records
+
+    var eventoKey = function (tf, e) {
+        if (e.getKey() == '110' || e.getKey() == '190' || e.getKey() == '100') {
+            var str = tf.getRawValue().replace('.', '');
+            tf.setValue(str);
+        } else if (e.getKey() == '109' || e.getKey() == '189') {
+            var str = tf.getRawValue().replace('-', '');
+            tf.setValue(str);
+        }
+    };
+    var eventoOnEditar = function (btn) {
+        App.cmdGuardar.setDisabled(false);
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+
+    };
+
+
+    var accionMensajes = function (data) {
+
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+            App.conthbIndicaError.setVisible(true);
+            App.taAlerts.focus();
+        } else {
+            App.taAlerts.setVisible(false);
+            App.conthbIndicaError.setVisible(false);
+        }
+
+    };
+
+    var getInvalidFields = function (form) {
+
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+
+        fields.filterBy(function (field) {
+
+            if (!field.isValid()) {
+
+
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+
+
+
+        });
+        return invalidFields;
+    };
+
+    var beforeSave = function (form) {
+        App.taAlerts.setVisible(false);
+        App.taAlerts.setValue(null);
+        App.conthbIndicaError.setVisible(false);
+
+        var FieldsInvalidos = getInvalidFields(form);
+
+
+        if (FieldsInvalidos.length > 0) {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("addRecursosValidacion"))',
+                params: {
+                    data: FieldsInvalidos,
+                    indica: 'VALIDAR',
+                },
+                success: function (result) { accionMensajes(result.data); }
+            });
+        }
+    };
+
+   var onSuccess = function (data) {
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+        App.formactual.setDisabled(true);
+        var reload = true;
+        if (data != null) {
+            if (data.length > 0) {
+                reload = false
+                App.cmdGuardar.setDisabled(false);
+                App.formactual.setDisabled(false);
+                if (data[0].TIPOMSG == 'EXCEPTION') {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: data[0].TITULO,
+                            message: data[0].DESCRIPCION,
+                            tipo: 'ERROR'
+                        }
+                    });
+                } else {
+                    accionMensajes(data);
+                }
+            }
+        }
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+        }
+    };
+
+    var onFailure = function (data) {
+        App.cmdGuardar.setDisabled(false);
+    };
+
+    function eventoCancelar(form) {
+        //form.getForm().reset();
+        //App.taAlerts.setVisible(false);
+        //App.conthbIndicaError.setVisible(false);
+        //setIndicaCambios(false);
+
+        App.bar.setDisabled(true);
+        var reload = true;
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+            // beforeSave(form);
+        }
+    };
+
+
+    var valoracion = 0;
+    var valpreg1 = 0;
+    var valpreg2 = 0;
+    var valpreg3 = 0;
+    var valpreg4 = 0;
+    var valpreg5 = 0;
+    var valpreg6 = 0;
+    var valpreg7 = 0;
+    var valpreg8 = 0;
+    var valpreg9 = 0;
+    var valpreg10 = 0;
+
+
+    function eventoValorCognitiva(obj, pregunta) {
+
+        if (pregunta == 'P1' && obj.getValue() != null) { valpreg1 = obj.getValue(); }
+        if (pregunta == 'P2' && obj.getValue() != null) { valpreg2 = obj.getValue(); }
+        if (pregunta == 'P3' && obj.getValue() != null) { valpreg3 = obj.getValue(); }
+        if (pregunta == 'P4' && obj.getValue() != null) {
+            valpreg4 = obj.getValue();
+        }
+
+        if (pregunta == 'P5' && obj.getValue() != null) {
+            valpreg5 = obj.getValue();
+        }
+
+        if (pregunta == 'P6' && obj.getValue() != null) {
+            valpreg6 = obj.getValue();
+        }
+        if (pregunta == 'P7' && obj.getValue() != null) {
+            valpreg7 = obj.getValue();
+        }
+
+        if (pregunta == 'P8' && obj.getValue() != null) {
+            valpreg8 = obj.getValue();
+        }
+
+        if (pregunta == 'P9' && obj.getValue() != null) {
+            valpreg9 = obj.getValue();
+        }
+
+        if (pregunta == 'P10' && obj.getValue() != null) {
+            valpreg10 = obj.getValue();
+        }
+
+
+        valoracion = valpreg1 + valpreg2 + valpreg3 + valpreg4 + valpreg5 + valpreg6 + valpreg7 + valpreg8 + valpreg9 + valpreg10;
+        var v = '@indicaModoLectura';
+        if (v == 'False') {
+            if (valoracion <= 2) {
+                App.TxtValorCognitiva.setValue("No Deterioro Cognitivo");
+            } if (valoracion >= 3 && valoracion <= 4) {
+                App.TxtValorCognitiva.setValue("Deterioro Cognitivo Leve");
+            } if (valoracion >= 5 && valoracion <= 7) {
+                App.TxtValorCognitiva.setValue("Deterioro Cognitivo Moderado");
+            } if (valoracion >= 8 && valoracion <= 10) {
+                App.TxtValorCognitiva.setValue("Deterioro Cognitivo Severo");
+            }
+        }
+    }
+
+
+    var valoracionDepre = 0;
+    var valpregDepre1 = 0;
+    var valpregDepre2 = 0;
+    var valpregDepre3 = 0;
+    var valpregDepre4 = 0;
+    var changetextbox = function (combo, estadonombre, name) {
+
+
+
+        var txtgetvalue = combo.getValue();
+
+
+
+        if (name == 'NameP11') {
+            if (txtgetvalue == 57 && combo.getValue() != null) { valpregDepre1 = 1; }
+            else { valpregDepre1 = 0; }
+        }
+
+        if (name == 'NameP12') {
+            if (txtgetvalue == 57 && combo.getValue() != null) { valpregDepre2 = 1; }
+            else { valpregDepre2 = 0; }
+        }
+
+        if (name == 'NameP13') {
+            if (txtgetvalue == 57 && combo.getValue() != null) { valpregDepre3 = 1; }
+            else { valpregDepre3 = 0; }
+        }
+
+        if (name == 'NameP14' && combo.getValue() != null) {
+            if (txtgetvalue == 57 && combo.getValue() != null) { valpregDepre4 = 1; }
+            else { valpregDepre4 = 0; }
+        }
+
+        valoracionDepre = valpregDepre1 + valpregDepre2 + valpregDepre3 + valpregDepre4;
+
+        if (valoracionDepre <= 1) {
+            estadonombre.setValue("Sin manifestaciones depresivas");
+        } if (valoracionDepre >= 2) {
+            estadonombre.setValue("Con manifestaciones depresivas");
+        }
+
+
+    };
+
+    </script>
+    <script>
+
+        var hhValidation = function (h) {
+            
+            str = h.value;
+
+            tempo = "'";
+            str = str.replace('javascript:myFunction(' + tempo, '');
+            str = str.replace('%20', ' ');
+            str = str.replace('%C3%B3', 'ó');
+            str = str.replace('%C3%A1', 'á');
+            str = str.replace('%C3%A9', 'é');
+            str = str.replace('%C3%AD', 'í');
+            str = str.replace('%C3%BA', 'ú');
+            str = str.replace('%C3%B1', 'ñ');
+
+            str = str.replace('%C3%8D', 'Í');
+            str = str.replace('%C3%93', 'Ó');
+            str = str.replace('%C3%81', 'Á');
+            str = str.replace('%C3%91', 'Ñ');
+            str = str.replace('%C3%9A', 'Ú');
+            str = str.replace(tempo + ')', '');
+            h.setValue(str);
+
+        }
+        var mmValidation = function (m) {
+            
+            if (m.getValue() > 59) {
+                m.setValue(59);
+            }
+
+        };
+
+        function eventoVisorReporte(param1) {
+            if(param1=='HC'){
+                window.location.href = '@Url.Action("HCEReportesView_total", "HClinica")';
+            } else {
+                window.location.href = '@Url.Action("HCEReportesView", "HClinica")';
+            }
+        }
+    </script>
+}
+
+
+@section cuerpo
+{
+
+ @( 
+ Html.X().Viewport().ID("ViewportXD")
+        .Layout(LayoutType.VBox)
+        .LayoutConfig(
+            new VBoxLayoutConfig { Align = VBoxAlign.Stretch }
+          )
+        .Listeners(l =>
+            {
+                l.AfterLayout.BroadcastOnBus = "App.resize";
+                l.AfterLayout.Single = true;
+            })
+        .Items(regions =>
+          {
+
+         regions
+          .Add(
+            Html.X()
+                .FormPanel()
+               
+                .DefaultAnchor("100%")
+                .AutoScroll(true)
+                .Height(450)
+                .Header(false)
+                .Border(true)
+                .ID("formactual")
+                .Listeners(l =>
+                {
+                    l.Render.Handler = "eventoRenderForm(); ";
+
+                })
+               .Items(
+
+                       //F16. 1    
+                       X.FieldSet().Collapsible(true)
+                        .ColumnWidth(0.4).Title("ESTADO COGNITIVO (PFEIFFER) COLOCAR 1 PUNTO POR CADA ERROR")
+                        .Layout(LayoutType.Fit)
+                        .MarginSpec("05 05 0 05")
+                        .Height(380)
+                        .Defaults(d =>
+                            {
+                                d.Add(new Parameter("LabelWidth", "170"));
+                                d.Add(new Parameter("DefaultAnchor", "100%"));
+                                d.Add(new Parameter("LabelAlign", "Left"));                              
+                            })                        
+                        .FieldDefaults(d => 
+                            {
+                                d.LabelAlign = LabelAlign.Left; 
+                            })
+                        .Items(
+
+                               X.Container().Layout(LayoutType.HBox)
+                                .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                .Items(
+
+                                  X.FieldSet().Title("ACTIVIDADES BÁSICAS DE LA VIDA DIARIA (ABVD)").FieldDefaults(d => { d.LabelWidth = 450; d.InputWidth = 60; })
+                                  .Items(
+                                  
+                                    X.NumberFieldFor(c => c.Cualfecha).FieldLabel("¿Cuál es la fecha de hoy? (día, mes, año)").ReadOnly(indicaModoLectura)
+                                    .MinValue(0).NegativeText(MENS_NUMERO)
+                                    .MaxValue(1)
+                                    .EnableKeyEvents(true)
+                                    .Listeners(l =>
+                                        {
+                                            l.Blur.Handler = "eventoValorCognitiva(this, 'P1');";
+                                            l.KeyUp.Fn = "eventoKey";
+                                        }),
+                                    X.NumberFieldFor(c => c.QueDiasemana).FieldLabel("¿Qué día de la semana?").ReadOnly(indicaModoLectura)
+                                    .MinValue(0).NegativeText(MENS_NUMERO)
+                                    .MaxValue(1)
+                                    .EnableKeyEvents(true)
+                                    .Listeners(l =>
+                                        {
+                                            l.Blur.Handler = "eventoValorCognitiva(this, 'P2');";
+                                            l.KeyUp.Fn = "eventoKey";
+                                        }),
+                                    
+                                    X.NumberFieldFor(c => c.EnquelugarEstamos).FieldLabel("¿En qué lugar estamos? (vale cualquier descripción correcta del lugar)").ReadOnly(indicaModoLectura)
+                                    .MinValue(0).NegativeText(MENS_NUMERO)
+                                    .MaxValue(1)
+                                    .EnableKeyEvents(true)
+                                    .Listeners(l =>
+                                        {
+                                            l.Blur.Handler = "eventoValorCognitiva(this, 'P3');";
+                                            l.KeyUp.Fn = "eventoKey";
+                                        }),
+                                    X.NumberFieldFor(c => c.CualNumerotelefono).FieldLabel("¿Cuál es su número de teléfono? Si no tiene ¿Cuál es su dirección completa?").ReadOnly(indicaModoLectura)
+                                    .MinValue(0).NegativeText(MENS_NUMERO)
+                                    .MaxValue(1)
+                                    .EnableKeyEvents(true)
+                                    .Listeners(l =>
+                                    {
+                                        l.Blur.Handler = "eventoValorCognitiva(this, 'P4');";
+                                        l.KeyUp.Fn = "eventoKey";
+                                    }),                                    
+                                    X.NumberFieldFor(c => c.CuantosAniostiene).FieldLabel("¿Cuántos años tiene?").ReadOnly(indicaModoLectura)
+                                    .MinValue(0).NegativeText(MENS_NUMERO)
+                                    .MaxValue(1)
+                                    .EnableKeyEvents(true)
+                                    .Listeners(l =>
+                                    {
+                                        l.Blur.Handler = "eventoValorCognitiva(this, 'P5');";
+                                        l.KeyUp.Fn = "eventoKey";
+                                    }),
+                                    //
+                                    X.NumberFieldFor(c => c.DondeNacio).FieldLabel("¿Dónde nació?").ReadOnly(indicaModoLectura)
+                                    .MaxValue(1)
+                                    .MinValue(0).NegativeText(MENS_NUMERO)
+                                    .EnableKeyEvents(true)
+                                    .Listeners(l =>
+                                    {
+                                        l.Blur.Handler = "eventoValorCognitiva(this, 'P6');";
+                                        l.KeyUp.Fn = "eventoKey";
+                                    }),
+                                    X.NumberFieldFor(c => c.NombrePresidente).FieldLabel("¿Cuál es el nombre del presidente del Perú?").ReadOnly(indicaModoLectura)
+                                    .MaxValue(1)
+                                    .MinValue(0).NegativeText(MENS_NUMERO)
+                                    .EnableKeyEvents(true)
+                                    .Listeners(l =>
+                                    {
+                                        l.Blur.Handler = "eventoValorCognitiva(this, 'P7');";
+                                        l.KeyUp.Fn = "eventoKey";
+                                    }),
+                                    X.NumberFieldFor(c => c.NombrePresidenteAnterior).FieldLabel("¿Cuál es el nombre del presidente anterior del Perú?").ReadOnly(indicaModoLectura)
+                                    .MinValue(0).NegativeText(MENS_NUMERO)
+                                    .MaxValue(1)
+                                    .EnableKeyEvents(true)
+                                    .Listeners(l =>
+                                    {
+                                        l.Blur.Handler = "eventoValorCognitiva(this, 'P8');";
+                                        l.KeyUp.Fn = "eventoKey";
+                                    }),
+                                    X.NumberFieldFor(c => c.ApellidoMadre).FieldLabel("Dígame el primer apellido de su madre").ReadOnly(indicaModoLectura)
+                                    .MaxValue(1)
+                                    .MinValue(0).NegativeText(MENS_NUMERO)
+                                    .EnableKeyEvents(true)
+                                    .Listeners(l =>
+                                    {
+                                        l.Blur.Handler = "eventoValorCognitiva(this, 'P9');";
+                                        l.KeyUp.Fn = "eventoKey";
+                                    }),
+                                    X.NumberFieldFor(c => c.Restar).FieldLabel("Restar de 3 en 3 desde 30 (cualquier error hace errónea la respuesta)").ReadOnly(indicaModoLectura)
+                                    .MaxValue(1)
+                                    .MinValue(0).NegativeText(MENS_NUMERO)
+                                    .EnableKeyEvents(true)
+                                    .Listeners(l =>
+                                    {
+                                        l.Blur.Handler = "eventoValorCognitiva(this, 'P10');";
+                                        l.KeyUp.Fn = "eventoKey";
+                                    })                                   
+                                                                   
+                                  ),
+                                 X.Component().Width(30), 
+                                 Html.X().Container().Layout(LayoutType.HBox)
+                                    .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                    .Items(
+                                        X.FieldSet().Title("LEYENDA").FieldDefaults(d => { d.LabelWidth = 150; d.InputWidth = 250; })
+                                        .Items(
+                                            Html.X().Image()
+                                                 .ID("IMG")
+                                                .ImageUrl("~/resources/images/LeyendaValoracionCongnitivo.JPG")
+                                                    .MarginSpec("0 05 0 05")
+                                                    .ApplyStyles("position: relative")
+                                                .Width(280)
+                                                .Height(300),
+
+                                             X.RadioGroupFor(c => c.ValorCognitiva, new List<Radio.Config> {
+                                                new Radio.Config{InputValue = "N", Checked= (Model.ValorCognitiva=="N"?true:false), ReadOnly = indicaModoLectura, BoxLabel = "Normal" , LabelWidth=60},
+                                                new Radio.Config{InputValue = "DCL", Checked= (Model.ValorCognitiva=="DCL"?false:true), ReadOnly = indicaModoLectura, BoxLabel = "DC Leve",  LabelWidth=60},
+                                                new Radio.Config{InputValue = "DCM", Checked= (Model.ValorCognitiva=="DCM"?true:false), ReadOnly = indicaModoLectura, BoxLabel = "DC Moderado", LabelWidth=60},
+                                                new Radio.Config{InputValue = "DCS", Checked= (Model.ValorCognitiva=="DCS"?true:false), ReadOnly = indicaModoLectura, BoxLabel = "DC Severo", LabelWidth=60}
+                                             })
+                                            .Vertical(true).ColumnsNumber(1)
+                                            .FieldLabel("").AutomaticGrouping(false).Hidden(true)
+                                            .ID("RgfValorCognitiva"),
+
+                                            Html.X().Container().Layout(LayoutType.HBox)
+                                             .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                             .Items(
+                                             X.Label().Html("El resultado es:"),
+                                            X.TextField().ID("TxtValorCognitiva").ReadOnly(true).Hidden(false)//.Width(200)
+                                           .Value(Model.ValorCognitiva == "N" ? "Normal" : Model.ValorCognitiva == "DCL" ? "DC Leve" : Model.ValorCognitiva == "DCM" ? "DC Moderado" : Model.ValorCognitiva == "DCS" ? "DC Severo" : "Normal")
+                                           
+                                            // .Value(Model.ValorCognitiva == "N" ? "Normal" : Model.ValorCognitiva == "DCL" ? "DC Leve" : Model.ValorCognitiva == "DCM" ? "DC Moderado" : "DC Severo")
+                                            .FieldStyle("background: " + COLOR_GREENPbackg + "; border-color: " + COLOER_IND_OBLIGA)
+                                             )//,
+                                            
+                                            
+                                                                                          
+                                            
+                                        )
+                                )                                                                                                                                        
+                              )
+                          ), // FIN F16. 1  
+
+                       //F16. 2    
+                       X.FieldSet().Collapsible(true)
+                        .ColumnWidth(0.4).Title("ESTADO AFECTIVO (ESCALA ABREVIADA DE YESAVAGE)")
+                        .Layout(LayoutType.Fit)
+                        .MarginSpec("05 05 0 05")
+                        .Defaults(d =>
+                            {
+                                d.Add(new Parameter("LabelWidth", "170"));
+                                d.Add(new Parameter("DefaultAnchor", "100%"));
+                                d.Add(new Parameter("LabelAlign", "Left"));                              
+                            })                        
+                        .FieldDefaults(d => 
+                            {
+                                d.LabelAlign = LabelAlign.Left; 
+                            })
+                        .Items(
+
+                               X.Container().Layout(LayoutType.HBox)
+                                .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                .Items(
+
+                                  X.FieldSet().Title("ACTIVIDADES BÁSICAS DE LA VIDA DIARIA (ABVD)").FieldDefaults(d => { d.LabelWidth = 450; d.InputWidth = 50; })
+                                  .Items(
+
+                                    X.ComboBoxFor(c => c.Satisfecho).ReadOnly(indicaModoLectura).Editable(false).EmptyText("Seleccione")
+                                     .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("TABCOLABORACION").Select(d => new ListItem(d.Name, d.ID)))
+                                     .FieldLabel("¿Está satisfecho con su vida?")
+                                     //.ID("CbfP11")
+                                     //.Listeners(ls => ls.Select.Handler = "changetextbox(App.CbfP11, App.TxtEstadoAfectivo,'NameP11');"),                                     
+                                     .Listeners(ls => ls.Select.Handler = "changetextbox(this, App.TxtEstadoAfectivo,'NameP11');"),
+
+                                    X.ComboBoxFor(c => c.Impotente).ReadOnly(indicaModoLectura).Editable(false).EmptyText("Seleccione")
+                                     .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("TABCOLABORACION").Select(d => new ListItem(d.Name, d.ID)))
+                                     .FieldLabel("¿Se siente impotente o indefenso?").SimpleSubmit(true).Hidden(false)
+                                     //.ID("CbfP12")
+                                     //.Listeners(ls => ls.Select.Handler = "changetextbox(App.CbfP12,  App.TxtEstadoAfectivo,'NameP12');"),
+                                     .Listeners(ls => ls.Select.Handler = "changetextbox(this,  App.TxtEstadoAfectivo,'NameP12');"),
+                                    X.ComboBoxFor(c => c.Memoria).ReadOnly(indicaModoLectura).Editable(false).EmptyText("Seleccione")
+                                     .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("TABCOLABORACION").Select(d => new ListItem(d.Name, d.ID)))
+                                     .FieldLabel("¿Tiene problemas de memoria?").SimpleSubmit(true).Hidden(false)
+                                     //.ID("CbfP13")
+                                     //.Listeners(ls => ls.Select.Handler = "changetextbox(App.CbfP13, App.TxtEstadoAfectivo,'NameP13');"),
+                                     .Listeners(ls => ls.Select.Handler = "changetextbox(this, App.TxtEstadoAfectivo,'NameP13');"),
+                                    X.ComboBoxFor(c => c.desgano).ReadOnly(indicaModoLectura).Editable(false).EmptyText("Seleccione")
+                                     .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("TABCOLABORACION").Select(d => new ListItem(d.Name, d.ID)))
+                                     .FieldLabel("¿Siente desgano o se siente imposibilitado respecto a actividades e intereses ?").SimpleSubmit(true).Hidden(false)
+                                     //.ID("CbfP14")
+                                     //.Listeners(ls => ls.Select.Handler = "changetextbox(App.CbfP14, App.TxtEstadoAfectivo,'NameP14');")
+                                     .Listeners(ls => ls.Select.Handler = "changetextbox(this, App.TxtEstadoAfectivo,'NameP14');")       
+                                  ),
+                              X.Component().Width(30), 
+                                 Html.X().Container().Layout(LayoutType.HBox)
+                                    .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                    .Items(
+                                        X.FieldSet().Title("LEYENDA").FieldDefaults(d => { d.LabelWidth = 150; d.InputWidth = 350; })
+                                        .Height(280)
+                                        .Items (
+                                        Html.X().Image()
+                                             .ID("ImgEstado")
+                                            .ImageUrl("~/resources/images/EstadoEfectivoNew.JPG")
+                                                .MarginSpec("0 05 0 05")
+                                                .ApplyStyles("position: relative")
+                                            .Width(350)
+                                            .Height(180),
+                                        X.RadioGroupFor(c => c.EstadoAfectivo, new List<Radio.Config> {
+                                            new Radio.Config{InputValue = "N", Checked= (Model.EstadoAfectivo=="N"?true:false), ReadOnly = indicaModoLectura, BoxLabel = "Sin manifestaciones depresivas" , LabelWidth=60},
+                                            new Radio.Config{InputValue = "S", Checked= (Model.EstadoAfectivo=="S"?false:true), ReadOnly = indicaModoLectura, BoxLabel = "Con manifestaciones depresivas",  LabelWidth=60}                                       
+                                         })
+                                        .Vertical(true).ColumnsNumber(1)
+                                        .FieldLabel("").AutomaticGrouping(false).Hidden(true)
+                                        .ID("RadEstadoAfectivo"),
+
+                                        Html.X().Container().Layout(LayoutType.HBox)
+                                             .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                             .Items(
+                                             X.Label().Html("El resultado es:"),
+                                             X.TextField().ID("TxtEstadoAfectivo").ReadOnly(true).Hidden(false).Width(265)
+                                        .Value(Model.EstadoAfectivo == "N" ? "Sin manifestaciones depresivas" : "Con manifestaciones depresivas")
+                                        .FieldStyle("background: " + COLOR_GREENPbackg + "; border-color: " + COLOER_IND_OBLIGA)                                              
+                                             )//,
+                                        
+                                        
+                                  )
+                                )                                                                                                                                        
+                              )
+                          ) // FIN F16. 2                            
+                                                       
+                        //ADD PARA MSGS
+                        ,
+                                                
+                        X.TextFieldFor(m => m.FechaCreacion).Hidden(true),
+                        X.TextFieldFor(m => m.UsuarioCreacion).Hidden(true),
+
+                        X.TextArea().ID("taAlerts")
+                        .Border(false)
+                        .StyleSpec("background:white;border:1px solid gray;")
+                        .FieldStyle("color: red")
+                        .Hidden(true)
+                        .ReadOnly(true)
+                        //
+                     )  // fin iten Html.X()
+
+                    .TopBar(X.Toolbar().ID("bar")
+                        .Items(
+                                X.ToolbarSpacer(20),
+                                X.TextField().Width(15).FieldStyle("border-color: " + COLOER_IND_OBLIGA).ReadOnly(true).Hidden(indicaModoLectura),
+                                X.Label().Html("<b><font color='" + COLOER_IND_OBLIGA + "'>Campos Obligatorios</font></b>").Hidden(indicaModoLectura),
+
+                                X.ToolbarSpacer(20)
+                                ,
+                                Html.X().Container().Layout(LayoutType.HBox)
+                                .ID("conthbIndicaError").Hidden(true).Items(
+                                    X.Label().Html("<font  size='1.9em'; color='red'>(</font>"),
+                                    X.Label().Html("<font  size='3.9em'; color='red'><b>&#161;</b></font>"),
+                                    X.Label().Html("<font  size='1.9em'; color='red'>) Verificar los errores presentados</font>")
+                                ),
+                                X.ToolbarFill(),
+                               X.Button()
+                                .Text("Imprimir")
+                                .Icon(Icon.Report)
+                                .Hidden(!visibleImpresion)
+                                .ID("btnImpresion")
+                                .Handler("eventoVisorReporte('');")
+                                ,
+                                X.Button()
+                                .Text("Imprimir Todos")
+                                .Icon(Icon.ReportGo)
+                                .Hidden(!visibleImpresion)
+                                .ID("btnImpresionHC")
+                                .Handler("eventoVisorReporte('HC');")
+                                ,
+                                X.ToolbarSpacer().Width(40)
+                                ,
+                            X.Button()
+                                .Text("Guardar")
+                                .Icon(Icon.Disk)
+                                .ID("cmdGuardar").Hidden(indicaModoLectura)
+
+                                .DirectEvents(de =>
+                                {  
+                                    de.Click.Url = Url.Action("CCEPF016_Save_ValoracionMentalAM");
+                                    //de.Click.EventMask.ShowMask = true; //20190308
+                                    de.Click.Before = "beforeSave(App.formactual); return App.formactual.getForm().isValid();";
+                                    //de.Click.Before = "beforeSave(App.formactual);";
+                                    de.Click.Success = "onSuccess(result.data);";
+                                    de.Click.Failure = "onFailure();";
+                                }),
+
+                            X.Button()
+                                .Text("Cancelar")
+                                .ID("btnCancel").Hidden(indicaModoLectura)
+                                .Icon(Icon.Cancel)
+                                .Handler("eventoCancelar(this.up('form'));")
+                                ,
+                            X.Button()
+                                .Text("Editar")
+                                .ID("btnOnEdit")
+                                .Icon(Icon.ApplicationFormEdit)
+                                .Hidden(true)
+                                .Handler("eventoOnEditar(App.btnOnEdit);")
+
+                           ) // fin iten TopBar
+                        )
+                        .Listeners(l => l.FieldChange
+                            .Handler = "setIndicaCambios(true);"
+                        )
+                );  // fin Add
+        }
+       )
+
+
+    )
+
+}
+

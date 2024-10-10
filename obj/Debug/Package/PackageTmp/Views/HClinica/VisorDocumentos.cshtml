@@ -1,0 +1,57 @@
+﻿@model SoluccionSalud.Entidades.Entidades.ENTITY_GENERALHCE
+
+@{
+    var X = Html.X();
+    var idWindow = "winDiaglogoFile";
+}
+
+<script>
+
+     
+</script>
+
+
+@(X.Window()
+        .ID("winDiaglogoFile")
+        .Title("Documento:" +Model.campoStr02)
+        .Maximizable(true)
+        .Icon(Icon.Application)
+        .Y(10)
+        .Height(410)
+        .Width(680)
+        //.BodyStyle("background-color: #fff;")
+        .Layout(LayoutType.Fit)
+        //.BodyPadding(5)
+        .Modal(true)
+            .TopBar(
+                X.Toolbar()
+                .Height(30)
+                .Items(
+                /*X.ToolbarSpacer(),
+                  X.Label().Html("<b><span style='color:" + COLOR_BLUE01_temp + ";'>" +
+                    "Paciente" + ": " + Model.NombreCompleto + "</span> </b>")
+                ,
+                X.ToolbarSpacer(40),
+                  X.Label().Html("<b><span style='color:" + COLOR_BLUE01_temp + ";'>" +
+                        "Código OA" + ": " + Model.UnidadReplicacionEC + "</span> </b>")
+                ,*/
+                    X.ToolbarFill(),
+                    X.Button()
+                        .Text("Cerrar")
+                        .Icon(Icon.Cancel)
+                                .Handler("App.winDiaglogoFile.close();")
+                    )
+              )        
+        .Items(
+             X.FormPanel().ID("BasicForm").Frame(true).Border(false)
+                 .Title(Model.campoStr01)
+                 .Loader(X.ComponentLoader()
+                   .Url(Model.campoStr01)
+                    .Mode(LoadMode.Frame)
+                    .LoadMask(lm => lm.ShowMask = true)
+                )
+        )
+            
+)
+  
+

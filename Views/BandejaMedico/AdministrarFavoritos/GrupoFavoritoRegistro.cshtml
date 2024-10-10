@@ -1,0 +1,127 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_HC_FavoritoNumero
+
+@{
+    var X = Html.X();
+    var modoDesc = (Model.Accion == "NUEVO" ? "Nuevo" :
+                    (Model.Accion == "UPDATE" ? "Modificar" :
+                        (Model.Accion == "DELETE" ? "Eliminar" :
+                            (Model.Accion == "VER" ? "Ver" : "--"))));
+
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VER" ? false : false))));
+
+    var indicaModoLecturaKey = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? false :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VER" ? false : false))));
+
+
+    var STYLE_BACKGROUND_NODEIT = "background: #BBD8D6";
+    var COLOR_BORDER_DEFAULT = "#b5b8c8";
+
+    var STYLE_BORDER_DEF_VALID01 = (Model.IdFavorito != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+    var STYLE_BORDER_DEF_VALID02 = (Model.Descripcion != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+}
+
+<script>
+    var change = function (value, meta) {
+        return value;
+    };
+
+    var onSuccess = function (modo) {
+    };
+
+    var onFailure = function (modo) {
+        App.btnSave.setDisabled(false);
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Un error en el evento ',
+                titulo: "Error",
+                tipo: 'ERROR'
+            }
+        });
+    };
+
+    function cerrarWindow() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Se registró correctamente',
+                Accion: null
+            }
+        });
+    }
+
+    var showResult = function (btn) {
+        Ext.Msg.notify("Aceptar", "You clicked the " + btn + " button");
+    };
+
+    function seleccionadorFavorito() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorFavorito"))',
+            params: {
+                accionSeleccion: 'getSeleccionadorFavorito',
+                accionListado: 'LISTARPAG'
+            }
+        });
+    };
+</script>
+
+@(Html.X().Window().Width(515).Height(390).Maximizable(true).Modal(true).OnEsc("false").AutoScroll(true).Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy).Icon(Icon.ApplicationForm).ID("WindowX").Title("Favorito " + modoDesc).Padding(4)
+    .Items(
+    Html.X().FormPanel().Frame(false).Border(false).AutoScroll(true).Layout(LayoutType.VBox).LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+    .Items(
+    Html.X().FormPanel().Frame(false).Border(false).Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+    .Items(
+    Html.X().FormPanel().Layout(LayoutType.Form).Width(300).FieldDefaults(d => { d.LabelWidth = 100; }).BodyPadding(10).Frame(false).Border(false)
+    .Items(
+    X.TextField().ID("tfFavoritoDesc").FieldLabel("Favorito").ReadOnly(true).RightButtons(
+    X.Button().Text("...").Handler("seleccionadorFavorito();").Disabled(Model.Accion == "NUEVO"?false:true)),
+        X.NumberFieldFor(m => m.IdFavorito).ID("nfFavorito").FieldLabel("Favorito").Hidden(true),
+    X.NumberFieldFor(m => m.NumeroFavorito).ID("nfnROFavorito").FieldLabel("Favorito").Hidden(true),
+    X.TextFieldFor(m => m.Mnemotecnico).FieldLabel("Mnemotécnico").Hidden(false),
+    X.TextFieldFor(m => m.DescripcionExtranjera).FieldLabel("Extran").Hidden(true),
+    X.NumberFieldFor(m => m.IndicadorPorDefecto).FieldLabel("Indicador").Hidden(true),
+    X.TextFieldFor(m => m.Descripcion).ID("tfDesc").FieldLabel("Descripción").ReadOnly(indicaModoLectura),
+    X.RadioGroupFor(m => m.Estado, new List<Radio.Config> {
+        new Radio.Config{BoxLabel = "Activo", InputValue = "2",Checked= ( Model.Accion=="NUEVO"?true:(Model.Estado==2?true:false)),ReadOnly = indicaModoLectura},
+        new Radio.Config{BoxLabel = "Inactivo", InputValue = "1",Checked= ( Model.Accion=="NUEVO"?false:(Model.Estado==1?true:false)),ReadOnly = indicaModoLectura}
+    }).FieldLabel("Estado").AutomaticGrouping(false))
+    ),
+    Html.X().FormPanel().Layout(LayoutType.Form).Width(500).FieldDefaults(d => { d.LabelWidth = 150; }).BodyPadding(10).Frame(false).Border(false)
+    .Items(
+    X.FieldSet().Title("Información Adicional").FieldDefaults(d => { d.LabelWidth = 90; d.InputWidth = 120; })
+    .Items(
+    Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+    .Items(
+    X.TextFieldFor(m => m.UsuarioCreacion).ID("tfUserCrea").FieldLabel("Creación").ReadOnly(true),
+    X.DateFieldFor(m => m.FechaCreacion).ID("dfFechaCrea").Format("dd/MM/yyyy").ReadOnly(true).HideLabel(true),
+    X.TimeFieldFor(m => m.FechaCreacion).ID("dfHoraCrea").Format("H:mm:ss").ReadOnly(true).HideLabel(true)),
+    Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+    .Items(
+    X.TextFieldFor(m => m.UsuarioModificacion).ID("tfUserModif").FieldLabel("Modificación").ReadOnly(true),
+    X.DateFieldFor(m => m.FechaModificacion).ID("dfFechaModif").Format("dd/MM/yyyy").ReadOnly(true).HideLabel(true),
+    X.TimeFieldFor(m => m.FechaModificacion).ID("dfHoraModif").Format("H:mm:ss").ReadOnly(true).HideLabel(true)))
+    )).TopBar(
+    X.Toolbar().Height(30).Items(
+    X.ToolbarFill(),
+    X.Button().Hidden((Model.Accion == "VER" ? true : false)).ID("btnSave").Text((Model.Accion == "DELETE" ? "Eliminar" : "Guardar")).Icon((Model.Accion == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave)).DirectEvents(de =>{
+        de.Click.Url = Url.Action("save_Grupo");de.Click.Before = "App.btnSave.setDisabled(true); ";
+        de.Click.After = "App.btnSave.setDisabled(false); ";
+        de.Click.EventMask.ShowMask = true;
+        de.Click.ExtraParams.Add(new Parameter("MODO", Model.Accion, ParameterMode.Value));
+        de.Click.ExtraParams.Add(new Parameter("idWindow", "WindowX", ParameterMode.Value));
+        de.Click.Success = "onSuccess('" + Model.Accion + "');";
+        de.Click.Failure = "onFailure('" + Model.Accion + "');";}),
+        X.Button().Text((Model.Accion == "VER" ? "Aceptar" : "Cancelar")).Icon((Model.Accion == "VER" ? Icon.Accept : Icon.Cancel)).DirectEvents(de =>{
+            de.Click.Url = Url.Action("cerrarWindow");
+            de.Click.ExtraParams.Add(new Parameter("id", "WindowX", ParameterMode.Value));})))).DirectEvents(de =>{
+                de.Render.Url = Url.Action("postWindowGrupoFavorito");
+                de.Render.ExtraParams.Add(new Parameter("id", "" + Model.IdFavorito, ParameterMode.Value));
+        })
+    .CloseAction(CloseAction.Destroy)
+)

@@ -1,0 +1,2965 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_HC_Partograma_FE
+
+@{
+
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+    var indicaVisiblePrint = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_VISIBLE_IMPRESION;
+    var visibleImpresion = (indicaVisiblePrint == 2/* && Model.Accion == "UPDATE"*/ ? true : false);
+    var isVista = (Model.Accion == "VISTA" ? true : false);
+    //var visibleImpresion = (Model.Accion == "UPDATE" ? true : false);
+    var isNuevo = (Model.Accion == "NUEVO" ? true : false);
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                           (Model.Accion == "UPDATE" ? true :
+                           (Model.Accion == "DELETE" ? false :
+                           (Model.Accion == "VISTA" ? false : false))));
+    var COLOER_IND_OBLIGA = AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("COL_BCOBLI"); ;
+    var DESC_ADD = "Proc. médicos (CIAP -2)";
+    var COLOR_BLUE01 = "#284A89";
+}
+
+@section cabecera
+{
+    <script type="text/javascript" src="@Url.Content("~/resources/jqplot/jquery.min.js")"></script>
+    <script type="text/javascript" src="@Url.Content("~/resources/jqplot/jquery.jqplot.js")"></script>
+    <script type="text/javascript" src="@Url.Content("~/resources/jqplot/plugins/jqplot.canvasTextRenderer.js")"></script>
+    <script type="text/javascript" src="@Url.Content("~/resources/jqplot/plugins/jqplot.canvasAxisLabelRenderer.js")"></script>
+
+    <script type="text/javascript" src="@Url.Content("~/resources/jqplot/plugins/jqplot.BarRenderer.js")"></script>
+    <script type="text/javascript" src="@Url.Content("~/resources/jqplot/plugins/jqplot.canvasOverlay.js")"></script>
+    <script type="text/javascript" src="@Url.Content("~/resources/jqplot/plugins/jqplot.ohlcRenderer.js")"></script>
+    <!--   -->
+
+    <link rel="stylesheet" href="@Url.Content("~/resources/css/main.css")" />
+
+    <link rel="stylesheet" type="text/css" href="@Url.Content("~/resources/jqplot/jquery.jqplot.min.css")" />
+
+
+
+
+
+
+    <style>
+        html body {
+            padding: 0px;
+            background: none;
+            background: none;
+            background: none;
+            background-attachment: fixed;
+            background-position: center;
+            font-family: tahoma,verdana,sans-serif;
+            background-color: #ffffff;
+        }
+
+        table.gridtable {
+            font-family: verdana,arial,sans-serif;
+            font-size: 11px;
+            color: #333333;
+            border-width: 1px;
+            border-color: #666666;
+            border-collapse: collapse;
+        }
+
+            table.gridtable th {
+                border-width: 1px;
+                padding: 8px;
+                border-style: solid;
+                border-color: #666666;
+                background-color: #dedede;
+            }
+
+            table.gridtable td {
+                border-width: 1px;
+                padding: 8px;
+                border-style: solid;
+                border-color: #666666;
+                background-color: #ffffff;
+                width: 50.5px;
+                text-align: center;
+            }
+
+        /******************/
+        table.gridtable2 {
+            font-family: verdana,arial,sans-serif;
+            font-size: 11px;
+            color: #333333;
+            border-width: 1px;
+            border-color: #666666;
+            border-collapse: collapse;
+        }
+
+            table.gridtable2 th {
+                border-width: 1px;
+                padding: 8px;
+                border-style: solid;
+                border-color: #666666;
+                background-color: #dedede;
+            }
+
+            table.gridtable2 td {
+                border-width: 1px;
+                padding: 8px;
+                border-style: solid;
+                border-color: #666666;
+                background-color: #ffffff;
+                width: 47.4px;
+                text-align: center;
+            }
+
+        /*****************/
+        /******************/
+        table.gridtable3 {
+            font-family: verdana,arial,sans-serif;
+            font-size: 11px;
+            color: #333333;
+            border-width: 1px;
+            border-color: #666666;
+            border-collapse: collapse;
+        }
+
+            table.gridtable3 th {
+                border-width: 1px;
+                padding: 8px;
+                border-style: solid;
+                border-color: #666666;
+                background-color: #dedede;
+            }
+
+            table.gridtable3 td {
+                border-width: 1px;
+                padding: 8px;
+                border-style: solid;
+                border-color: #666666;
+                background-color: #ffffff;
+                width: 54px;
+                text-align: center;
+            }
+
+        /*****************/
+        /******************/
+        table.gridtable7 {
+            font-family: verdana,arial,sans-serif;
+            font-size: 11px;
+            color: #333333;
+            /*border-width: 1px;
+            border-color: #666666;
+            border-collapse: collapse;*/
+        }
+
+            table.gridtable7 th {
+                border: 1px solid black;
+                /*padding: 8px;
+                border-style: solid;
+                border-color: #666666;
+                background-color: #dedede;*/
+            }
+
+            table.gridtable7 td {
+                border: 1px solid black;
+                /*padding: 8px;
+                border-style: solid;
+                border-color: #666666;*/
+                background-color: #ffffff;
+                width: 60px;
+                text-align: center;
+            }
+
+        /*****************/
+    </style>
+
+    <script>
+    function eventoValidaRegla() {
+        var APMiscelaneos = new Array();
+        var MA_MiscelaneosDetalle = {
+            ValorEntero1: 1,
+            ACCION: "PO_EXAMENGENICOLO"
+        };
+        APMiscelaneos.push(MA_MiscelaneosDetalle);
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("POSaludControlGinecologia"))',
+            params: {
+                PacienteID: 0,
+                valor: 0,
+                regla: 'POSaludControlGinecologia',
+                arrays: APMiscelaneos
+            },
+            success: function (result) { mostrarAlarma(result.data); }
+        });
+
+
+    };
+    var mostrarAlarma = function (data) {
+
+        if (data[0].ESTADOBOOL) {
+            Ext.Msg.show({
+                title: "Advertencia Motor Reglas",
+                msg: data[0].DESCRIPCION,
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+    }
+    function eventoRenderForm() {
+
+        var kk = 195;
+        var scrH = screen.height;
+        var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+        var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+
+        if (southH == 0) {
+            southH = 30;
+        } else if (parent.App.PanelMainSouth.collapsed) {
+            southH = 30;
+        }
+        var dimCentral = (scrH - (northH + southH) - kk);
+        App.formactual.setHeight(dimCentral);
+
+        var v = '@isNuevo';
+        if (v == 'True') {
+            App.btnImpresion.setVisible(false);
+            App.btnImpresionHC.setVisible(false);
+        }
+    }
+
+    var ALTURADEF = screen.height;
+    var indicaCambios = false;
+    function setIndicaCambios(value) {
+        indicaCambios = value;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("setIndicaCambiosFormulario"))',
+            params: {
+                indica: (value ? 1 : 0)
+            }
+        });
+
+
+        var val = '@visibleImpresion';
+        var vis = '@isVista';
+        if (vis == 'False') {
+            if (val == 'True') {
+
+                if (value == true) {
+                    App.btnImpresion.setDisabled(true);
+                    App.btnImpresionHC.setDisabled(true);
+                    parent.App.btnGuardarFirma.setDisabled(true);
+                    // parent.App.btnContEpisodio_HCE.setDisabled(true);//A TODOS
+
+                } else {
+                    App.btnImpresion.setDisabled(false);
+                    App.btnImpresionHC.setDisabled(false);
+                    parent.App.btnGuardarFirma.setDisabled(false);
+                    //parent.App.btnContEpisodio_HCE.setDisabled(false);//A TODOS
+                }
+            }
+        }
+    }
+    var seleccRecordActual = null;
+    function setSeleccionActual(record) {
+        seleccRecordActual = record;
+    }
+
+    var count = 0;
+    function InsertRow(valor, estado, soloLectura) {
+
+        var fecha_actual = new Date();
+
+        if (soloLectura == '1') {
+            setIndicaCambios(false);
+        } else {
+            if (valor.getValue() != '') {
+
+                var obj = JSON.parse(valor.getValue());
+                var DescripcionLocalVar = obj.DescripcionLocal;
+
+                if (validaDuplicado(DescripcionLocalVar)) {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: 'Advertencia',
+                            message: 'Ya existe registro',
+                            tipo: 'WARNING'
+                        }
+                    });
+                    valor.setValue('');
+                    return;
+                }
+
+                var grid = Ext.getCmp("grillaExamenes");
+                setIndicaCambios(true);
+                grid.store.insert(0, {
+                    CodigoElemento: 'New' + count++,
+                    ValorEntero1: 2,
+                    ValorCodigo1: DescripcionLocalVar,
+                    ValorFecha: new Date(),
+                    /* ValorEntero2:57,*/
+                    ACCION: 'NUEVO'
+                });
+                Ext.Function.defer(function () {
+                    grid.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+                }, 100);
+                valor.setValue('');
+            }
+        }
+    }
+
+    function validaDuplicado(valor) {
+        var estados = false;
+        var valor1
+        var valor2
+
+        App.storeExamenes.each(function (r) {
+            if (trim(r.get('ValorCodigo1')) == trim(valor)) estados = true;
+        });
+
+        return estados;
+    }
+
+    function trim(str) {
+        return str.replace(/^\s+|\s+$/g, "");
+    }
+
+
+
+    function deleteActual(record, grid, tipo) {
+
+
+        seleccRecordActual = record;
+        if (seleccRecordActual != null) {
+
+
+            var store = grid.store;
+
+            setIndicaCambios(true);
+            var par1 = seleccRecordActual.data.ValorCodigo1;
+            var par2 = seleccRecordActual.data.CodigoElemento;
+            store.remove(seleccRecordActual);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("CCEP00F2_addEliminar_SS_HC_Alergia_FE"))',
+                params: {
+                    MODO: 'DELETEDETALLE',
+                    codigo: par1,
+                    secuencia: par2,
+                    tipoRegistro: tipo
+                }
+            });
+
+            seleccRecordActual = null;
+        }
+    };
+    function deleteActualOld(record) {
+
+        seleccRecordActual = record;
+        if (seleccRecordActual != null) {
+
+            setIndicaCambios(true);
+            var store = App.grillaExamenes.store;
+
+            var par1 = seleccRecordActual.data.ValorCodigo1;
+            var par2 = seleccRecordActual.data.CodigoElemento;
+            store.remove(seleccRecordActual);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("CCEP00F2_addEliminar_SS_HC_Alergia_FE"))',
+                params: {
+                    MODO: 'DELETEDETALLE',
+                    codigo: par1,
+                    secuencia: par2
+                }
+            });
+            seleccRecordActual = null;
+        }
+    };
+
+    var onSuccess = function (data) {
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+
+        var reload = true;
+        if (data != null) {
+            if (data.length > 0) {
+                reload = false
+                App.cmdGuardar.setDisabled(false);
+                if (data[0].TIPOMSG == 'EXCEPTION') {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: data[0].TITULO,
+                            message: data[0].DESCRIPCION,
+                            tipo: 'ERROR'
+                        }
+                    });
+                } else {
+                    accionMensajes(data);
+                }
+            }
+        }
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+        }
+    };
+
+    var onFailure = function (data) {
+        App.cmdGuardar.setDisabled(false);
+    };
+
+    var eventoOnEditar = function (btn) {
+        App.cmdGuardar.setDisabled(false);
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+    };
+
+
+   
+
+    function eventoCancelar(form) {
+        App.bar.setDisabled(true);
+        var reload = true;
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+            }
+
+    };
+
+
+
+    function eventoVisorReporte(param1) {
+        if (param1 == 'HC') {
+            window.location.href = '@Url.Action("HCEReportesView_total", "HClinica")';
+        } else {
+            window.location.href = '@Url.Action("HCEReportesView", "HClinica")';
+        }
+    }
+
+
+
+    </script>
+
+    <script>
+    var hhValidation = function (h) {
+        str = h.value;
+        tempo = "'";
+        str = str.replace('javascript:myFunction(' + tempo, '');
+        str = str.replace('%20', ' ');
+        str = str.replace('%C3%B3', 'ó');
+        str = str.replace('%C3%A1', 'á');
+        str = str.replace('%C3%A9', 'é');
+        str = str.replace('%C3%AD', 'í');
+        str = str.replace('%C3%BA', 'ú');
+        str = str.replace('%C3%B1', 'ñ');
+
+        str = str.replace('%C3%8D', 'Í');
+        str = str.replace('%C3%93', 'Ó');
+        str = str.replace('%C3%81', 'Á');
+        str = str.replace('%C3%91', 'Ñ');
+        str = str.replace('%C3%9A', 'Ú');
+        str = str.replace(tempo + ')', '');
+        h.setValue(str);
+    }
+
+    function EnviarData(grid) {
+        beforeSave(App.formactual);
+        if (App.formactual.getForm().isValid()) {
+
+            App.cmdGuardar.setDisabled(true);
+            //source = App.grillaExamenes;
+            //var store = App.storeExamenes;
+            var status = 0;
+            var i = 1;
+            var valores = "";
+            var mensajes = "";
+
+            //var records = App.grillaExamenes.getSelectionModel().getSelection();
+
+            var ArrayRecurso = new Array();
+            App.storeExamenes.each(function (r) {
+
+                var MA_MiscelaneosDetalle = {
+                    CodigoElemento: r.get('CodigoElemento'),
+                    ValorEntero1: r.get('ValorEntero1'),
+                    ValorCodigo1: r.get('ValorCodigo1'),
+                    ValorFecha: r.get('ValorFecha'),
+                    ValorEntero2: r.get('ValorEntero2'),
+                    ValorCodigo2: r.get('ValorCodigo2'),
+                    ACCION: (r.get('ACCION') == 'NUEVO' ? 'DETALLE' : 'UPDATEDETALLE')
+                };
+                ArrayRecurso.push(MA_MiscelaneosDetalle);
+                i = i + 1;
+
+            });
+
+
+            var ArrayManual = new Array();
+            App.storeExamenesManual.each(function (r) {
+                var MA_MiscelaneosDetalle = {
+                    CodigoElemento: r.get('CodigoElemento'),
+                    ValorEntero1: r.get('ValorEntero1'),
+                    ValorCodigo1: r.get('ValorCodigo1'),
+                    ValorFecha: r.get('ValorFecha'),
+                    ValorEntero2: r.get('ValorEntero2'),
+                    ValorCodigo2: r.get('ValorCodigo2'),
+                    ACCION: (r.get('ACCION') == 'NUEVO' ? 'DETALLE' : 'UPDATEDETALLE')
+                };
+                ArrayManual.push(MA_MiscelaneosDetalle);
+                i = i + 1;
+            });
+
+            App.Accion.value = mensajes;
+
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("CCEP00F3_Save_AntecendentesPersonales_Fisiologicos"))',
+                params: {
+                    selectionArray1: ArrayRecurso,
+                    //selectionArray1: "recurso",
+                    selectionArray2: ArrayManual,
+                    //selectionArray2: "Manuela",
+                    text: '0'
+                }
+            });
+            return true;
+
+        } else {
+            App.cmdGuardar.setDisabled(false);
+            return false;
+        }
+    }
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+            App.conthbIndicaError.setVisible(true);
+            App.taAlerts.focus();
+
+        } else {
+            App.taAlerts.setVisible(false);
+            App.conthbIndicaError.setVisible(false);
+        }
+    };
+
+    var getInvalidFields = function (form) {
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+        });
+        return invalidFields;
+    };
+
+    var beforeSave = function (form) {
+        App.taAlerts.setVisible(false);
+        App.taAlerts.setValue(null);
+        App.conthbIndicaError.setVisible(false);
+        var FieldsInvalidos = getInvalidFields(form);
+        if (FieldsInvalidos.length > 0) {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("addRecursosValidacion"))',
+                params: {
+                    data: FieldsInvalidos,
+                    indica: 'VALIDAR',
+                },
+                success: function (result) { accionMensajes(result.data); }
+            });
+        }
+    };
+
+    var indicaCambios = false;
+    function setIndicaCambios(value) {
+        indicaCambios = value;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("setIndicaCambiosFormulario"))',
+            params: {
+                indica: (value ? 1 : 0)
+            }
+        });
+
+
+        var val = '@visibleImpresion';
+        var vis = '@isVista';
+        if (vis == 'False') {
+            if (val == 'True') {
+
+                if (value == true) {
+                    App.btnImpresion.setDisabled(true);
+                    App.btnImpresionHC.setDisabled(true);
+                    parent.App.btnGuardarFirma.setDisabled(true);
+                    // parent.App.btnContEpisodio_HCE.setDisabled(true);//A TODOS
+
+                } else {
+                    App.btnImpresion.setDisabled(false);
+                    App.btnImpresionHC.setDisabled(false);
+                    parent.App.btnGuardarFirma.setDisabled(false);
+                    //parent.App.btnContEpisodio_HCE.setDisabled(false);//A TODOS
+                }
+            }
+        }
+    }
+    var count = 0; // a counter for new records
+
+    var eventoRadioValidacion = function (rd, pregunta, valor) {
+        var varRadio = rd.getValue();
+        //  alert('mmmm');
+        if (varRadio) {
+            if (pregunta == 'Alcohol') {
+                //     alert('ss');
+                if (valor == 'N') {
+                    App.IdEspecificarCantidad.setDisabled(true);
+                    App.IdEspecificarCantidad.focus();
+                    App.IdEspecificarCantidad.setValue('');
+                }
+                else {
+                    App.IdEspecificarCantidad.setDisabled(false);
+
+                }
+            }
+            if (pregunta == 'Tabaco') {
+
+                if (valor == 'N') {
+                    App.IdCigarrosXDia.setDisabled(true);
+                    App.IdTiempoConsumo.setDisabled(true);
+                    App.IdCigarrosXDia.setValue('');
+                    App.IdTiempoConsumo.setValue('');
+                }
+                else {
+                    App.IdCigarrosXDia.setDisabled(false);
+                    App.IdTiempoConsumo.setDisabled(false);
+                    App.IdCigarrosXDia.focus();
+
+                }
+            }
+            if (pregunta == 'Drogas') {
+
+                if (valor == 'N') {
+                    App.IdDrogaEspecificar.setDisabled(true);
+                    App.IdDrogaEspecificar.setValue('');
+                }
+                else {
+                    App.IdDrogaEspecificar.setDisabled(false);
+                    App.IdDrogaEspecificar.focus();
+
+                }
+            }
+            if (pregunta == 'ActividadF') {
+
+                if (valor == 'N') {
+                    App.IdActividadF_Subflag.setDisabled(true);
+                    App.IdActividadF_Subflag.setValue(null);
+                }
+                else {
+                    App.IdActividadF_Subflag.setDisabled(false);
+                }
+            }
+            if (pregunta == 'ConsumoV') {
+                if (valor == 'N') {
+                    App.IdConsumoV_Subflag.setDisabled(true);
+                    App.IdConsumoV_Subflag.setValue(null);
+                }
+                else {
+                    App.IdConsumoV_Subflag.setDisabled(false);
+                }
+            }
+            if (pregunta == 'ConsumoF') {
+                if (valor == 'N') {
+                    App.IdConsumoF_Subflag.setDisabled(true);
+                    App.IdConsumoF_Subflag.setValue(null);
+                }
+                else {
+                    App.IdConsumoF_Subflag.setDisabled(false);
+                }
+            }
+        } else {
+        }
+    };
+
+    var countOtras = 0; // a counter for new records de Otras
+    function addRecord(grid, grupo, IdUnidad) {
+
+        //if ((componenteAdd.getValue() != null) && (componenteAdd.getValue() != '')) {
+
+        //var valorSelec = componenteAdd.getValue();
+        //if (validaDuplicado(grupo, valorSelec)) {
+        //    Ext.Msg.show({
+        //        title: "Advertencia",
+        //        msg: "Ya existe el Registro de Otras Inmunización",
+        //        icon: Ext.Msg.WARNING,
+        //        minWidth: 200,
+        //        buttons: Ext.Msg.OK
+        //    });
+        //} else {
+
+        grid.store.insert(0, {
+            CodigoElemento: 'New' + count++,
+            ValorEntero1: 2,
+            ValorCodigo1: '',
+            ValorFecha: new Date(),
+            /* ValorEntero2:57,*/
+            ACCION: 'NUEVO'
+        }
+                              );
+
+
+        // }
+        //} else {
+        //    Ext.Msg.show({
+        //        title: "Advertencia",
+        //        msg: "Debe Ingresar Otra Inmunización para añadirlo.",
+        //        icon: Ext.Msg.INFO,
+        //        minWidth: 200,
+        //        buttons: Ext.Msg.OK
+        //    });
+        //}
+
+        //App.cmbTipAt.setValue('');
+    };
+
+
+    function addRecordMain(grid) {
+        var SecuenciaMAx = 0;
+        App.storeMed.each(function (r) {
+            var temp = r.get('Secuencia');
+            if (temp > SecuenciaMAx) {
+                SecuenciaMAx = temp;
+            }
+        });
+        var contar = App.storeMed.getCount();
+        App.storeMed.insert(0/*parseInt(contar)*/, { Secuencia: SecuenciaMAx + 1, Accion: 'NUEVO' });
+        Ext.Function.defer(function () {
+            App.grillaMed.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+        }, 100);
+    };
+
+
+    function deleteActualMain(record) {
+
+        seleccRecordActual = record;
+
+        if (seleccRecordActual != null) {
+            setIndicaCambios(true);
+
+            var store1 = 'storeMed';
+
+            var store = Ext.getStore(store1);
+            var par1 = seleccRecordActual.data.Secuencia;
+            var par2 = seleccRecordActual.data.Accion;
+            store.remove(seleccRecordActual);
+
+
+
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("CCEPF404_Eliminar_Med"))',
+                params: {
+                    MODO: 'DELETE',
+                    secuencia: par1,
+                    Accion: par2
+                }
+            });
+            seleccRecordActual = null;
+
+
+        }
+
+
+    };
+
+
+
+
+
+    var keyCode
+    function ReplaceCaracterEspec(e) {
+        /*Capturar tecla pulsada*/
+        if (window.event) keyCode = window.event.keyCode;
+        else if (e) keyCode = e.which;
+        var prueba = keyCode;
+        // alert(keyCode);
+        //
+        if (prueba == 60) {
+            var textactual = e.getValue();
+            e.value = e.setValue(textactual + " ");
+        }
+        var texto = e.getValue();
+        var vacio = "";
+        var cadena = vacio + e.getValue();
+        var recortado = cadena.substr(-1, 1);
+        // alert(recortado + ' antes');
+        if (recortado == "<" || recortado == ">") {
+            //  alert(recortado + ' despues');
+            e.value = e.setValue(texto + " ");
+        }
+
+    };
+
+
+    function eventoVerGrafico(record) {
+
+
+
+        var idRegistro = 1;
+        //var codigo = '' + record.data.Secuencia + '_' + record.data.secuenciaInforme;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("eventoFrecuenciaCardiaca"))',
+            params: {
+                opcion: "Center1"
+            }
+        });
+
+    }
+
+    function EnviarDataServer(grid) {
+
+        var ArrayList0 = new Array();
+        var ArrayList1 = new Array();
+        var reload = true;
+
+
+        var horas = App.FechHoras.getValue();
+
+        var h1 = horas.getHours();
+        var m1 = horas.getMinutes();
+
+        var fecha = App.Fecha.getValue();
+        if (fecha != null) { fecha = fecha.setHours(h1, m1, 0, 0); }
+
+        var newFecha = new Date(fecha);
+
+        var MembranasY;
+        var LiquidoY;
+        var DuracionContraccionesY;
+
+        var MembranasR = App.MembranasX.getChecked();
+        if (MembranasR.length < 1) { MembranasY = null; } else { MembranasY = MembranasR["0"].inputValue; }
+
+        var LiquidoR = App.LiquidoX.getChecked();
+        if (LiquidoR.length < 1) { LiquidoY = null; } else { LiquidoY = LiquidoR["0"].inputValue; }
+
+        //var LiquidoY = LiquidoR["0"].inputValue;
+
+        var DuracionContraccionesR = App.DuracionContraccionesX.getChecked();
+        if (DuracionContraccionesR.length < 1) { DuracionContraccionesY = null; } else { DuracionContraccionesY = DuracionContraccionesR["0"].inputValue; }
+
+        //var DuracionContraccionesY = DuracionContraccionesR["0"].inputValue;
+
+
+        /* alert(newFecha);*/
+
+
+        var SS_HC_Partograma_FE = {
+            Fecha: newFecha,
+            FrecCardiacaFetal: App.FrecCardiacaFetal.getValue(),
+            Membranas: MembranasY,
+            Liquido: LiquidoY,
+            DilatacionCuelloUt: App.DilatacionCuelloUt.getValue(),
+            DescensoCefalico: App.DescensoCefalico.getValue(),
+            TactosVaginales: App.TactosVaginales.getValue(),
+            DuracionContracciones: DuracionContraccionesY,
+
+            ContracTEENmin: App.ContracTEENmin.getValue(),
+            Oxitocina: App.Oxitocina.getValue(),
+            FVPulso: App.FVPulso.getValue(),
+            FVPresionArterial: App.FVPresionArterial.getValue(),
+            FVPresionArterialD: App.FVPresionArterialD.getValue(),
+            FVTemperatura: App.FVTemperatura.getValue(),
+            Proteina: App.Proteina.getValue(),
+
+            Acetona: App.Acetona.getValue(),
+            Volumen: App.Volumen.getValue()
+        };
+        ArrayList0.push(SS_HC_Partograma_FE);
+
+
+
+
+
+        var grid1 = Ext.getCmp('grillaMed');
+        var store = grid1.store;
+
+
+
+        App.storeMed.each(function(r){
+        //grid1.store.each(function (r) {
+
+            var horas2 = App.FechHoras.getValue()
+            var h2 = horas2.getHours();
+            var m2 = horas2.getMinutes();
+
+            var fecha2 = App.Fecha.getValue();
+            fecha2 = fecha2.setHours(h2, m2, 0, 0);
+
+            var newFecha2 = new Date(fecha2);
+            var SS_HC_PartogramaDetalle_FE = {
+                Secuencia: r.get('Secuencia'),
+                Medicamento: r.get('Medicamento'),
+                Hora: newFecha2,
+                Accion: r.get('Accion')
+            };
+            ArrayList1.push(SS_HC_PartogramaDetalle_FE);
+
+            //if (r.get('Hora') == null) {
+            //    alert("mal")
+            //} else {
+
+        });
+        Ext.net.DirectMethod.request({
+            url: '/HClinica/Save_Partograma',
+            params: {
+                selectionArray0: ArrayList0,
+                selectionArray1: ArrayList1,
+                Evento: 'Server',
+                Version: 'CCEPF404' 
+            }
+      , success: function (result) {
+          reload = true;
+      }
+        });
+        App.cmdGuardar.setDisabled(false);
+
+        if (reload) {
+
+            parent.App.txtRecargarX.setValue('RELOAD');
+        }
+
+
+
+
+    }
+
+
+
+
+    function cargar() {
+        Ext.onReady(function () {
+
+            var ajaxDataRenderer = function (url, plot, options) {/**/
+                var ret = [[]];
+                var res = null;
+                $.ajax({
+
+                    async: false,
+                    url: "Partograma_CCEPF404",
+                    data: { 'VALOR': 'G1' },
+                    success: function (data1) {
+
+                        var DATATEMP = (data1.result.slice(1, -1)).split("/");
+
+                        var DATAX = (DATATEMP[0].slice(1, -1)).split(",");
+                        var DATAY = (DATATEMP[1].slice(1, -1)).split(",");
+
+                        for (x = 0; x < DATAY.length; x++) {
+                            ret[0].push([DATAX[x], DATAY[x]]);
+                        }
+                    }
+                });
+
+                return ret;
+
+
+            };
+
+
+            var jsonurl = "./jsondata.txt";
+
+            var plot1 = $.jqplot('chart1', [], {
+                /*title: "AJAX JSON Data Renderer",*/
+                dataRenderer: ajaxDataRenderer,
+                /*,
+                dataRendererOptions: {
+                    unusedOptionalUrl: jsonurl
+                }
+                */
+                animate: true,
+                // Will animate plot on calls to plot1.replot({resetAxes:true})
+                animateReplot: true,
+                cursor: {
+                    show: true,
+                    zoom: true,
+                    looseZoom: true,
+                    showTooltip: false
+                }
+                ,
+                seriesDefaults: {
+                    rendererOptions: {
+                        smooth: true
+                    }
+                }
+               , axesDefaults: {
+                   pad: 0//probar
+                   ,
+                   base: 10
+               }
+                , axes: {
+                    xaxis: {
+                        /*renderer: $.jqplot.DateAxisRenderer,*/
+                        tickInterval: 1,
+                        min: 1,
+                        max: 12,
+                        drawMajorGridlines: false,
+                        drawMinorGridlines: true,
+                        drawMajorTickMarks: false,
+                        rendererOptions: {
+                            tickInset: 0.5,
+                            minorTicks: 1,
+                            forceTickAt0: true, forceTickAt12: true
+                        }
+                        /*, tickOpcions: { formatString: '%d' }*/
+                    }
+                    ,
+                    yaxis: {
+                        tickInterval: 10,
+                        min: 80,
+                        max: 200,
+                        label: 'FCF',
+                        labelRenderer: $.jqplot.CanvasAxisLabelRenderer,
+                        /*drawMajorGridlines: false,
+                        drawMinorGridlines: true,
+                        drawMajorTickMarks: true,*/
+                        rendererOptions: {
+                            tickInset: 0.5,
+                            forceTickAt0: true, forceTickAt200: true
+                        }
+                    }
+                }
+            });
+
+            /*****************/
+            var retD = [[]];
+
+            $.ajax({
+
+                async: false,
+                url: "PartogramaDet_CCEPF404",
+                data: { 'VALOR': 'D1' },
+                success: function (data1) {
+
+                    var DATATEMPD = (data1.result.slice(1, -1)).split("/");
+
+                    var DATADX = (DATATEMPD[0].slice(1, -1)).split(",");
+                    var DATADY = (DATATEMPD[1].slice(1, -1)).split(",");
+
+                    for (x = 0; x < 12; x++) {
+                        /*retD[0].push([DATADX[x], DATADY[x]]);*/
+
+                        var parenttbl = document.getElementById("Row1");
+                        var newel = document.createElement('td');
+                        var elementid = document.getElementsByTagName("td").length
+                        newel.setAttribute('id', elementid);
+
+                        var cont = 0;
+                        for (y = 0; y < DATADY.length; y++) {
+
+                            if (parseInt(DATADX[y]) == (x + 1)) {
+                                newel.innerHTML = String(DATADY[y]).replace(/['"]+/g, '');
+                                parenttbl.appendChild(newel);
+                                cont = 1;
+                            }
+
+
+                        }
+                        if (cont == 0) {
+                            newel.innerHTML = '';
+                            parenttbl.appendChild(newel);
+                        }
+                    }
+                }
+            });
+            /*****************/
+            /*****************/
+            var retD2 = [[]];
+
+            $.ajax({
+
+                async: false,
+                url: "PartogramaDet_CCEPF404",
+                data: { 'VALOR': 'D2' },
+                success: function (data1) {
+
+                    var DATATEMPD = (data1.result.slice(1, -1)).split("/");
+
+                    var DATADX = (DATATEMPD[0].slice(1, -1)).split(",");
+                    var DATADY = (DATATEMPD[1].slice(1, -1)).split(",");
+
+                    for (x = 0; x < 12; x++) {
+                        /*retD[0].push([DATADX[x], DATADY[x]]);*/
+
+                        var parenttbl = document.getElementById("Row2");
+                        var newel = document.createElement('td');
+                        var elementid = document.getElementsByTagName("td").length
+                        newel.setAttribute('id', elementid);
+
+                        var cont = 0;
+                        for (y = 0; y < DATADY.length; y++) {
+
+                            if (parseInt(DATADX[y]) == (x + 1)) {
+                                newel.innerHTML = String(DATADY[y]).replace(/['"]+/g, '');
+                                parenttbl.appendChild(newel);
+                                cont = 1;
+                            }
+
+
+                        }
+                        if (cont == 0) {
+                            newel.innerHTML = '';
+                            parenttbl.appendChild(newel);
+                        }
+
+                        /* if (DATADY[x] != null & DATADY[x] != '' & parseInt(DATADX[x])==(x+1)) {
+                             newel.innerHTML = DATADY[x];
+                         }
+                         else { newel.innerHTML = ''; }*/
+
+
+                    }
+                }
+            });
+            /*****************/
+
+            /*
+            for (x = 0; x < 12; x++)
+            {
+                var parenttbl = document.getElementById("Row1");
+                var newel = document.createElement('td');
+                var elementid = document.getElementsByTagName("td").length
+                newel.setAttribute('id', elementid);
+
+
+
+                newel.innerHTML = "I"
+                parenttbl.appendChild(newel);
+
+
+                var parenttbl2 = document.getElementById("Row2");
+                var newel2 = document.createElement('td');
+                var elementid2 = document.getElementsByTagName("td").length
+                newel2.setAttribute('id', elementid);
+
+
+
+                newel2.innerHTML = ""
+                parenttbl2.appendChild(newel2);
+
+
+
+            }
+
+
+           */
+
+
+
+            /***************/
+        });
+
+    }
+
+    function cargar2() {
+        Ext.onReady(function () {
+
+            /*  var ajaxDataRenderer2 = function (url, plot, options) {*/
+            var ret1 = [];
+            var ret2 = [];
+            var ret3 = [[]];
+            var res = null;
+
+            $.ajax({
+
+                async: false,
+                url: "Partograma_CCEPF404",
+                data: { 'VALOR': 'G2' },
+                success: function (data1) {
+
+                    var DATATEMP = (data1.result.slice(1, -1)).split("/");
+
+                    var DATAX = (DATATEMP[0].slice(1, -1)).split(",");
+                    var DATAY = (DATATEMP[1].slice(1, -1)).split(",");
+
+                    for (x = 0; x < DATAY.length; x++) {
+                        ret1.push([DATAX[x], DATAY[x]]);
+                    }
+                }
+            });
+            $.ajax({
+
+                async: false,
+                url: "Partograma_CCEPF404",
+                data: { 'VALOR': 'G3' },
+                success: function (data1) {
+
+                    var DATATEMP = (data1.result.slice(1, -1)).split("/");
+
+                    var DATAX = (DATATEMP[0].slice(1, -1)).split(",");
+                    var DATAY = (DATATEMP[1].slice(1, -1)).split(",");
+
+                    for (x = 0; x < DATAY.length; x++) {
+                        ret2.push([DATAX[x], DATAY[x]]);
+                    }
+                }
+            });
+            /* ret3 = [ret1, ret2];*/
+            /*  return ret1;*/
+
+
+            /*    };*/
+
+
+            var jsonurl = "./jsondata.txt";
+
+            var plot1 = $.jqplot('chart2', [ret1, ret2], {
+                /*title: "AJAX JSON Data Renderer",
+                 dataRenderer: ajaxDataRenderer2,*/
+                /*,
+                dataRendererOptions: {
+                    unusedOptionalUrl: jsonurl
+                }
+                */
+                animate: true,
+                // Will animate plot on calls to plot1.replot({resetAxes:true})
+                animateReplot: true,
+                cursor: {
+                    show: true,
+                    zoom: true,
+                    looseZoom: true,
+                    showTooltip: false
+                },
+                series: [
+                     {
+
+                         markerOptions: { style: "circle" }
+
+                     },
+                     {
+                         markerOptions: { style: "circle" }
+                          , yaxis: 'y2axis'/**/
+                     }
+                ]
+                , /**/
+                seriesDefaults: {
+                    rendererOptions: {
+                        smooth: true
+                    }
+                }
+               , axesDefaults: {
+                   pad: 0//probar
+                   ,
+                   base: 10
+               }
+                , axes: {
+                    xaxis: {
+
+                        tickInterval: 1,
+                        min: 1,
+                        max: 12,
+                        drawMajorGridlines: false,
+                        drawMinorGridlines: true,
+                        drawMajorTickMarks: false,
+                        rendererOptions: {
+                            tickInset: 0.5,
+                            minorTicks: 1,
+                            forceTickAt0: true, forceTickAt12: true
+                        }
+                        /*, tickOpcions: { formatString: '%d' }*/
+                    }
+                    ,
+                    yaxis: {
+                        tickInterval: 1,
+                        min: 0,
+                        max: 10,
+                        label: 'Dilatación uterina (cm) trazo X',
+                        labelRenderer: $.jqplot.CanvasAxisLabelRenderer,
+                        /*drawMajorGridlines: false,
+                        drawMinorGridlines: true,
+                        drawMajorTickMarks: true,*/
+                        rendererOptions: {
+                            tickInset: 0.5,
+                            forceTickAt0: true, forceTickAt10: true
+                        }
+                    }
+                    ,
+                    y2axis: {
+                        tickInterval: -1,
+                        min: +3,
+                        max: -9,
+                        label: 'Descenso cefálico',
+                        labelRenderer: $.jqplot.CanvasAxisLabelRenderer,
+
+                        rendererOptions: {
+                            tickInset: 0.5,
+                            forceTickAt0: true, forceTickAt10: true
+                        }
+                    }/**/
+                }
+            });
+
+            /*****************/
+
+            $.ajax({
+
+                async: false,
+                url: "PartogramaDet_CCEPF404",
+                data: { 'VALOR': 'D3' },
+                success: function (data1) {
+
+                    var DATATEMPD = (data1.result.slice(1, -1)).split("/");
+
+                    var DATADX = (DATATEMPD[0].slice(1, -1)).split(",");
+                    var DATADY = (DATATEMPD[1].slice(1, -1)).split(",");
+
+                    for (x = 0; x < 12; x++) {
+                        /*retD[0].push([DATADX[x], DATADY[x]]);*/
+
+                        var parenttbl3 = document.getElementById("Row3");
+                        var newel3 = document.createElement('td');
+                        var elementid3 = document.getElementsByTagName("td").length
+                        newel3.setAttribute('id', elementid3);
+
+                        var cont = 0;
+                        for (y = 0; y < DATADY.length; y++) {
+
+                            if (parseInt(DATADX[y]) == (x + 1)) {
+                                /* newel.innerHTML = String(DATADY[y]).replace(/['"]+/g, '');*/
+                                newel3.innerHTML = DATADY[y];
+                                parenttbl3.appendChild(newel3);
+                                cont = 1;
+                            }
+
+
+                        }
+                        if (cont == 0) {
+                            newel3.innerHTML = '';
+                            parenttbl3.appendChild(newel3);
+                        }
+                    }
+                }
+            });
+            /*****************/
+
+        });
+
+    }
+    /****************/
+    function cargar3() {
+        Ext.onReady(function () {
+
+            /* var ajaxDataRenderer3 = function (url, plot, options) {*/
+            var ret1 = [];
+            var ret2 = [];
+            var ret3 = [];
+            var res = null;
+            var ultimo = 0;
+
+            /*  var DATAX1;
+              var DATAX2;
+              var DATAX3;
+
+              var DATAY1;
+              var DATAY2;
+              var DATAY3;*/
+
+
+
+
+            $.ajax({
+
+                async: false,
+                url: "PartogramaUlt_CCEPF404",
+                data: { 'VALOR': 1 },
+                success: function (data0) {
+
+                    /*  var DATATEMP = (data1.result.slice(1, -1)).split("/");
+
+                      var DATAX = (DATATEMP[0].slice(1, -1)).split(",");
+                      var DATAY = (DATATEMP[1].slice(1, -1)).split(",");
+
+                      for (x = 0; x < DATAY.length; x++) {
+                          ret1.push([DATAX[x], DATAY[x]]);
+                      }*/
+
+                    ultimo = parseInt(data0.result);
+                }
+            });
+
+
+            $.ajax({
+
+                async: false,
+                url: "PartogramaCont_CCEPF404",
+                data: { 'VALOR': 1 },
+                success: function (data1) {
+
+                    var DATATEMP = (data1.result.slice(1, -1)).split("/");
+
+                    var DATAX1 = (DATATEMP[0].slice(1, -1)).split(",");
+                    var DATAY1 = (DATATEMP[1].slice(1, -1)).split(",");
+
+                    /* for (x = 0; x < DATAY.length; x++) {
+                         ret1.push([DATAX[x], DATAY[x]]);
+                     }*/
+                    for (x = 0; x < ultimo; x++) {
+
+                        var cont = 0;
+                        for (y = 0; y < DATAX1.length; y++) {
+
+                            if (parseInt(DATAX1[y]) == (x + 1)) {
+                                /*ret1.push([DATAY1[y]]);*/
+                                ret1.push([DATAX1[y], parseInt(DATAY1[y])]);
+                                cont = 1;
+                            }
+
+
+                        }
+                        if (cont == 0) {
+                            /* ret1[0].push([0]);*/
+                            /*ret1.push([0]);*/
+                            ret1.push([x, 0]);
+                        }
+                    }
+
+
+
+
+
+                }
+            });
+            $.ajax({
+
+                async: false,
+                url: "PartogramaCont_CCEPF404",
+                data: { 'VALOR': 2 },
+                success: function (data2) {
+
+                    var DATATEMP = (data2.result.slice(1, -1)).split("/");
+
+                    var DATAX2 = (DATATEMP[0].slice(1, -1)).split(",");
+                    var DATAY2 = (DATATEMP[1].slice(1, -1)).split(",");
+
+                    /* for (x = 0; x < DATAY.length; x++) {
+                         ret2.push([DATAX[x], DATAY[x]]);
+                     }*/
+                    for (x = 0; x < ultimo; x++) {
+
+                        var cont = 0;
+                        for (y = 0; y < DATAX2.length; y++) {
+
+                            if (parseInt(DATAX2[y]) == (x + 1)) {
+                                /* ret2.push([DATAY2[y]]);*/
+                                ret2.push([DATAX2[y], parseInt(DATAY2[y])]);
+                                cont = 1;
+                            }
+
+
+                        }
+                        if (cont == 0) {
+                            /*ret2[0].push([0]);*/
+                            /*ret2.push([0]);*/
+                            ret2.push([x, 0]);
+                        }
+                    }
+                }
+            });
+            $.ajax({
+
+                async: false,
+                url: "PartogramaCont_CCEPF404",
+                data: { 'VALOR': 3 },
+                success: function (data3) {
+
+                    var DATATEMP = (data3.result.slice(1, -1)).split("/");
+
+                    var DATAX3 = (DATATEMP[0].slice(1, -1)).split(",");
+                    var DATAY3 = (DATATEMP[1].slice(1, -1)).split(",");
+
+                    /*  for (x = 0; x < DATAY.length; x++) {
+                          ret2.push([DATAX[x], DATAY[x]]);
+                      }*/
+
+                    for (x = 0; x < ultimo; x++) {
+
+                        var cont = 0;
+                        for (y = 0; y < DATAX3.length; y++) {
+
+                            if (parseInt(DATAX3[y]) == (x + 1)) {
+                                /*ret3.push([DATAY3[y]]);*/
+                                ret3.push([DATAX3[y], parseInt(DATAY3[y])]);
+                                cont = 1;
+                            }
+
+
+                        }
+                        if (cont == 0) {
+                            /*ret3[x].push([0]);*/
+                            /*ret3.push([0]);*/
+                            ret3.push([x, 0]);
+                        }
+                    }
+                }
+            });
+            /* ret3 = [ret1, ret2];*/
+            /*  return ret1;*/
+
+
+            /*    };*/
+
+
+
+            var plot3 = $.jqplot('chart3', [ret1, ret2, ret3], {
+                /*      var plot3 = $.jqplot('chart3', [s1, s2, s3], {*/
+                stackSeries: true,
+                /*title: "AJAX JSON Data Renderer",
+                 dataRenderer: ajaxDataRenderer2,*/
+                /*,
+                dataRendererOptions: {
+                    unusedOptionalUrl: jsonurl
+                }
+                */
+                /* animate: true,
+                 // Will animate plot on calls to plot1.replot({resetAxes:true})
+                 animateReplot: true,*/
+                /*  cursor: {
+                      show: true,
+                      zoom: true,
+                      looseZoom: true,
+                      showTooltip: false
+                  },          */
+                /* */ series: [
+                { label: 'Menor de 20' },
+                { label: 'entre 20 y 40' },
+                { label: 'mayor de 40' }
+
+                ]
+                ,
+                seriesDefaults: {
+                    renderer: $.jqplot.BarRenderer,
+                    rendererOptions: {
+
+                        barWidth: 30
+                        /*  smooth: true*/
+                    },
+                    pointLabels: { show: true }
+                }
+                /* , axesDefaults: {
+                     pad: 0//probar
+                     ,
+                     base: 10
+                 }*/
+                , axes: {
+                    xaxis: {
+
+                        tickInterval: 1,
+                        min: 1,
+                        max: 12,
+                        drawMajorGridlines: false,
+                        drawMinorGridlines: true,
+                        drawMajorTickMarks: false,
+                        rendererOptions: {
+                            tickInset: 0.5,
+                            /**/ minorTicks: 1,
+                            forceTickAt1: true, forceTickAt12: true
+                        }
+                        /*, tickOpcions: { formatString: '%d' }*/
+                    }
+                    ,
+                    yaxis: {
+                        tickInterval: 1,
+                        min: 0,
+                        max: 10,
+                        /* label: 'Dilatación uterina (cm) trazo X',
+                         labelRenderer: $.jqplot.CanvasAxisLabelRenderer,*/
+                        /*drawMajorGridlines: false,
+                        drawMinorGridlines: true,
+                        drawMajorTickMarks: true,*/
+                        rendererOptions: {
+                            /* tickInset: 0.5,*/
+                            forceTickAt0: true, forceTickAt10: true
+                        }
+                    }
+
+                },
+                legend: {
+                    show: true,
+                    location: 'e',
+                    placement: 'outside'
+                }
+            });
+
+            /*****************/
+
+            $.ajax({
+
+                async: false,
+                url: "PartogramaDet_CCEPF404",
+                data: { 'VALOR': 'D4' },
+                success: function (data1) {
+
+                    var DATATEMPD = (data1.result.slice(1, -1)).split("/");
+
+                    var DATADX = (DATATEMPD[0].slice(1, -1)).split(",");
+                    var DATADY = (DATATEMPD[1].slice(1, -1)).split(",");
+
+                    for (x = 0; x < 12; x++) {
+                        /*retD[0].push([DATADX[x], DATADY[x]]);*/
+
+                        var parenttbl3 = document.getElementById("Row5");
+                        var newel3 = document.createElement('td');
+                        var elementid3 = document.getElementsByTagName("td").length
+                        newel3.setAttribute('id', elementid3);
+
+                        var cont = 0;
+                        for (y = 0; y < DATADY.length; y++) {
+
+                            if (parseInt(DATADX[y]) == (x + 1)) {
+                                /* newel.innerHTML = String(DATADY[y]).replace(/['"]+/g, '');*/
+                                newel3.innerHTML = DATADY[y];
+                                parenttbl3.appendChild(newel3);
+                                cont = 1;
+                            }
+
+
+                        }
+                        if (cont == 0) {
+                            newel3.innerHTML = '';
+                            parenttbl3.appendChild(newel3);
+                        }
+                    }
+                }
+            });
+            /*****************/
+
+        });
+
+    }
+    /******************/
+    function cargar4() {
+        Ext.onReady(function () {
+
+            var ajaxDataRenderer4 = function (url, plot, options) {/**/
+                var ret = [[]];
+                var res = null;
+                $.ajax({
+
+                    async: false,
+                    url: "Partograma_CCEPF404",
+                    data: { 'VALOR': 'G5' },
+                    success: function (data1) {
+
+                        var DATATEMP = (data1.result.slice(1, -1)).split("/");
+
+                        var DATAX = (DATATEMP[0].slice(1, -1)).split(",");
+                        var DATAY = (DATATEMP[1].slice(1, -1)).split(",");
+
+                        for (x = 0; x < DATAY.length; x++) {
+                            ret[0].push([DATAX[x], DATAY[x]]);
+                        }
+                    }
+                });
+
+                return ret;
+
+
+            };
+
+            var plot4 = $.jqplot('chart4', [], {
+                /*title: "AJAX JSON Data Renderer",*/
+                dataRenderer: ajaxDataRenderer4,
+                /*,
+                dataRendererOptions: {
+                    unusedOptionalUrl: jsonurl
+                }
+                */
+
+
+                animate: true,
+                // Will animate plot on calls to plot1.replot({resetAxes:true})
+                animateReplot: true,
+                cursor: {
+                    show: true,
+                    zoom: true,
+                    looseZoom: true,
+                    showTooltip: false
+                }
+                ,
+                seriesDefaults: {
+                    rendererOptions: {
+                        smooth: true
+                    }
+                }
+
+               , axesDefaults: {
+                   pad: 0//probar
+                   ,
+                   base: 10/**/
+               }
+                , axes: {
+                    xaxis: {
+                        /*renderer: $.jqplot.DateAxisRenderer,*/
+                        tickInterval: 1,
+                        min: 1,
+                        max: 12,
+                        drawMajorGridlines: false,
+                        drawMinorGridlines: true,
+                        drawMajorTickMarks: false,
+                        rendererOptions: {
+                            tickInset: 0.5,
+                            minorTicks: 1,
+                            forceTickAt0: true, forceTickAt12: true
+                        }
+                        /*, tickOpcions: { formatString: '%d' }*/
+                    }
+                    ,
+                    yaxis: {
+                        tickInterval: 10,
+                        min: 40,
+                        max: 70,
+                        label: 'PULSO',
+                        labelRenderer: $.jqplot.CanvasAxisLabelRenderer,
+                        renderer: $.jqplot.LogAxisRenderer,
+                        tickOptions: {},
+                        tickRenderer: $.jqplot.CanvasAxisTickRenderer,
+                        showTickMarks: true,
+                        showMinorTicks: true,
+                        drawMinorGridlines: true,
+                        drawMajorTickMarks: true,
+                        /*drawMajorGridlines: false,
+                        */
+                        /**/
+                        rendererOptions: {
+                            category: false,
+                            /*tickInset: 2,*/
+                            minorTicks: 4,
+                            baselineWidth: 2,
+                            forceTickAt40: true, forceTickAt70: true
+                        }
+                    }
+                }
+            });
+        });
+    }
+
+    function cargar5() {
+
+        Ext.onReady(function () {
+
+
+
+            var ajaxDataRenderer5 = function (url, plot, options) {
+                var ret5 = [[]];
+                var ret5T = [[]];
+                var res5 = null;
+                var DATAX;
+                var DATAY1;
+                var DATAY2;
+
+                $.ajax({
+
+                    async: false,
+                    url: "Partograma_CCEPF404",
+                    data: { 'VALOR': 'G6' },
+                    success: function (data1) {
+
+                        var DATATEMP = (data1.result.slice(1, -1)).split("/");
+
+                        DATAX = (DATATEMP[0].slice(1, -1)).split(",");
+                        DATAY1 = (DATATEMP[1].slice(1, -1)).split(",");
+
+                        /* for (x = 0; x < DATAY.length; x++) {
+                             ret5T[0].push([DATAX[x], DATAY[x]]);
+                         }*/
+                    }
+                });
+                $.ajax({
+
+                    async: false,
+                    url: "Partograma_CCEPF404",
+                    data: { 'VALOR': 'G6_' },
+                    success: function (data2) {
+
+                        var DATATEMP = (data2.result.slice(1, -1)).split("/");
+
+                        /* DATAX = (DATATEMP[0].slice(1, -1)).split(",");*/
+                        DATAY2 = (DATATEMP[1].slice(1, -1)).split(",");
+
+                        /* for (x = 0; x < DATAY.length; x++) {
+                             ret6[0].push([DATAX[x], DATAY[x]]);
+                         }*/
+                    }
+                });
+
+                if (DATAX.length > 0) {
+                    for (x = 0; x < DATAY1.length; x++) {
+                        ret5[0].push([DATAX[x], DATAY1[x], DATAY1[x], DATAY2[x], DATAY2[x]]);
+
+
+                    }
+
+                }
+
+                return ret5;
+
+
+            };
+
+            var plot5 = $.jqplot('chart5', [], {
+                dataRenderer: ajaxDataRenderer5,
+
+                animate: true,
+                // Will animate plot on calls to plot1.replot({resetAxes:true})
+                animateReplot: true,
+                cursor: {
+                    show: true,
+                    zoom: true,
+                    looseZoom: true,
+                    showTooltip: false
+                }
+                ,
+                seriesDefaults: {
+                    rendererOptions: {
+                        smooth: true
+                    }
+                }
+
+               , axesDefaults: {
+                   pad: 0//probar
+                   ,
+                   base: 10
+               }
+                , axes: {
+                    xaxis: {
+
+                        tickInterval: 1,
+                        min: 1,
+                        max: 12,
+                        drawMajorGridlines: false,
+                        drawMinorGridlines: true,
+                        drawMajorTickMarks: false,
+                        rendererOptions: {
+                            tickInset: 0.5,
+                            minorTicks: 1,
+                            forceTickAt0: true, forceTickAt12: true
+                        }
+
+                    }
+                    ,
+                    yaxis: {
+                        tickInterval: 50,
+                        min: 0,
+                        max: 200,
+                        label: 'PRESION ARTERIAL',
+                        labelRenderer: $.jqplot.CanvasAxisLabelRenderer,
+                        /*renderer: $.jqplot.LogAxisRenderer,*/
+                        tickOptions: {},
+                        tickRenderer: $.jqplot.CanvasAxisTickRenderer,/**/
+                        showTickMarks: true,
+                        showMinorTicks: true,
+                        drawMinorGridlines: true,
+                        drawMajorTickMarks: true,
+                        /* */
+                        rendererOptions: {
+                            category: false,
+
+                            minorTicks: 4,
+                            baselineWidth: 2,
+                            forceTickAt0: true, forceTickAt200: true
+                        }
+                    }
+
+                }
+                ,
+                series: [{ renderer: $.jqplot.OHLCRenderer, rendererOptions: { candleStick: true, bodyWidth: 28 } }]
+
+
+            });
+            /*******FIN PLOT********/
+
+
+        });
+
+    }
+
+    function cargar6() {
+
+        Ext.onReady(function () {
+
+            var grid = {
+                gridLineWidth: 1.5,
+                gridLineColor: 'rgb(235,235,235)',
+                drawGridlines: true
+            };
+
+
+            var ajaxDataRenderer6 = function (url, plot, options) {
+                var ret6 = [[]];
+                var res6 = null;
+                $.ajax({
+
+                    async: false,
+                    url: "Partograma_CCEPF404",
+                    data: { 'VALOR': 'G7' },
+                    success: function (data1) {
+
+                        var DATATEMP = (data1.result.slice(1, -1)).split("/");
+
+                        var DATAX = (DATATEMP[0].slice(1, -1)).split(",");
+                        var DATAY = (DATATEMP[1].slice(1, -1)).split(",");
+
+                        for (x = 0; x < DATAY.length; x++) {
+                            ret6[0].push([DATAX[x], DATAY[x]]);
+                        }
+                    }
+                });
+
+                return ret6;
+
+
+            };
+
+            var plot6 = $.jqplot('chart6', [], {
+                dataRenderer: ajaxDataRenderer6,
+
+                animate: true,
+                // Will animate plot on calls to plot1.replot({resetAxes:true})
+                animateReplot: true,
+                cursor: {
+                    show: true,
+                    zoom: true,
+                    looseZoom: true,
+                    showTooltip: false
+                }
+                ,
+                seriesDefaults: {
+                    rendererOptions: {
+                        smooth: true
+                    }
+                }
+
+               , axesDefaults: {
+                   pad: 0//probar
+                   ,
+                   base: 10
+               }
+                , axes: {
+                    xaxis: {
+
+                        tickInterval: 1,
+                        min: 1,
+                        max: 12,
+                        drawMajorGridlines: false,
+                        drawMinorGridlines: true,
+                        drawMajorTickMarks: false,
+                        rendererOptions: {
+                            tickInset: 0.5,
+                            minorTicks: 1,
+                            forceTickAt0: true, forceTickAt12: true
+                        }
+
+                    }
+                    ,
+                    yaxis: {
+                        tickInterval: 1,
+                        min: 35,
+                        max: 41,
+                        label: 'TEMPERATURA',
+                        labelRenderer: $.jqplot.CanvasAxisLabelRenderer,
+                        /*renderer: $.jqplot.LogAxisRenderer,*/
+                        tickOptions: {},
+                        /* tickRenderer: $.jqplot.CanvasAxisTickRenderer,*/
+                        showTickMarks: true,
+                        showMinorTicks: true,
+                        drawMinorGridlines: true,
+                        drawMajorTickMarks: true,
+
+                        rendererOptions: {
+                            category: false,
+
+                            minorTicks: 4,
+                            baselineWidth: 2,
+                            forceTickAt35: true, forceTickAt41: true
+                        }
+                    }
+                }
+                ,
+                /*grid: grid,*/
+                canvasOverlay: {
+                    show: true,
+                    objects: [
+                        {
+                            dashedHorizontalLine: {
+                                name: 'wilma',
+                                y: 37,
+                                lineWidth: 3,
+                                xOffset: '20',
+                                color: 'rgb(133, 120, 24)',
+                                shadow: false
+                            }
+                        }
+                       /* ,
+                        {
+                            horizontalLine: {
+                                name: 'pebbles',
+                                y: 37,
+                                lineWidth: 3,
+                                color: 'rgb(89, 198, 154)',
+                                shadow: false
+                            }
+                        }*/
+                    ]
+                }
+            });
+            /*******FIN PLOT********/
+
+
+        });
+
+    }
+    /******************/
+    function cargar7() {
+        Ext.onReady(function () {
+
+
+            /*****************/
+            var retD = [[]];
+
+            $.ajax({
+
+                async: false,
+                url: "PartogramaDet_CCEPF404",
+                data: { 'VALOR': 'D6' },
+                success: function (data1) {
+
+                    var DATATEMPD = (data1.result.slice(1, -1)).split("/");
+
+                    var DATADX = (DATATEMPD[0].slice(1, -1)).split(",");
+                    var DATADY = (DATATEMPD[1].slice(1, -1)).split(",");
+
+                    for (x = 0; x < 12; x++) {
+                        /*retD[0].push([DATADX[x], DATADY[x]]);*/
+
+                        var parenttbl = document.getElementById("Row6");
+                        var newel = document.createElement('td');
+                        var elementid = document.getElementsByTagName("td").length
+                        newel.setAttribute('id', elementid);
+
+                        var cont = 0;
+                        for (y = 0; y < DATADY.length; y++) {
+
+                            if (parseInt(DATADX[y]) == (x + 1)) {
+                                newel.innerHTML = String(DATADY[y]).replace(/['"]+/g, '');
+                                parenttbl.appendChild(newel);
+                                cont = 1;
+                            }
+
+
+                        }
+                        if (cont == 0) {
+                            newel.innerHTML = '';
+                            parenttbl.appendChild(newel);
+                        }
+                    }
+                }
+            });
+            /*****************/
+            /*****************/
+            var retD2 = [[]];
+
+            $.ajax({
+
+                async: false,
+                url: "PartogramaDet_CCEPF404",
+                data: { 'VALOR': 'D7' },
+                success: function (data1) {
+
+                    var DATATEMPD = (data1.result.slice(1, -1)).split("/");
+
+                    var DATADX = (DATATEMPD[0].slice(1, -1)).split(",");
+                    var DATADY = (DATATEMPD[1].slice(1, -1)).split(",");
+
+                    for (x = 0; x < 12; x++) {
+                        /*retD[0].push([DATADX[x], DATADY[x]]);*/
+
+                        var parenttbl = document.getElementById("Row7");
+                        var newel = document.createElement('td');
+                        var elementid = document.getElementsByTagName("td").length
+                        newel.setAttribute('id', elementid);
+
+                        var cont = 0;
+                        for (y = 0; y < DATADY.length; y++) {
+
+                            if (parseInt(DATADX[y]) == (x + 1)) {
+                                newel.innerHTML = String(DATADY[y]).replace(/['"]+/g, '');
+                                parenttbl.appendChild(newel);
+                                cont = 1;
+                            }
+
+
+                        }
+                        if (cont == 0) {
+                            newel.innerHTML = '';
+                            parenttbl.appendChild(newel);
+                        }
+
+                        /* if (DATADY[x] != null & DATADY[x] != '' & parseInt(DATADX[x])==(x+1)) {
+                             newel.innerHTML = DATADY[x];
+                         }
+                         else { newel.innerHTML = ''; }*/
+
+
+                    }
+                }
+            });
+            /*****************/
+            $.ajax({
+
+                async: false,
+                url: "PartogramaDet_CCEPF404",
+                data: { 'VALOR': 'D8' },
+                success: function (data1) {
+
+                    var DATATEMPD = (data1.result.slice(1, -1)).split("/");
+
+                    var DATADX = (DATATEMPD[0].slice(1, -1)).split(",");
+                    var DATADY = (DATATEMPD[1].slice(1, -1)).split(",");
+
+                    for (x = 0; x < 12; x++) {
+                        /*retD[0].push([DATADX[x], DATADY[x]]);*/
+
+                        var parenttbl = document.getElementById("Row8");
+                        var newel = document.createElement('td');
+                        var elementid = document.getElementsByTagName("td").length
+                        newel.setAttribute('id', elementid);
+
+                        var cont = 0;
+                        for (y = 0; y < DATADY.length; y++) {
+
+                            if (parseInt(DATADX[y]) == (x + 1)) {
+                                newel.innerHTML = String(DATADY[y])/*.replace(/['"]+/g, '')*/;
+                                parenttbl.appendChild(newel);
+                                cont = 1;
+                            }
+
+
+                        }
+                        if (cont == 0) {
+                            newel.innerHTML = '';
+                            parenttbl.appendChild(newel);
+                        }
+
+                        /* if (DATADY[x] != null & DATADY[x] != '' & parseInt(DATADX[x])==(x+1)) {
+                             newel.innerHTML = DATADY[x];
+                         }
+                         else { newel.innerHTML = ''; }*/
+
+
+                    }
+                }
+            });
+
+
+
+
+            /***************/
+        });
+
+    }
+    </script>
+}
+
+@section cuerpo{
+    @(Html.X().Viewport().ID("ViewportXD")
+         .Layout(LayoutType.VBox)
+
+         .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+         .Listeners(l => { l.AfterLayout.BroadcastOnBus = "App.resize"; l.AfterLayout.Single = true; })
+        .Items(regions =>
+        {
+            regions.Add(Html.X().FormPanel()
+            .DefaultAnchor("100%").AutoScroll(true).Height(340).Header(false)
+            .Border(true).ID("formactual")
+            .Listeners(l =>
+            { l.Render.Handler = "eventoRenderForm();"; })
+            .Items(
+             X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 05"),
+             X.FieldSet().ID("fsAntedecentesFisioloficos")
+             .ColumnWidth(0.4).Title("PARTOGRAMA")/*.Height(500)*/
+             .MarginSpec("05 05 05 05").Defaults(d =>
+                {
+                    d.Add(new Parameter("LabelWidth", "150"));
+                    d.Add(new Parameter("DefaultAnchor", "100%"));
+                    d.Add(new Parameter("LabelAlign", "Left"));
+                })
+            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+            .Items(
+
+
+            X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 0")
+            .Defaults(d => { d.Add(new Parameter("LabelWidth", "150")); })
+                                 .Items
+                                 (
+
+
+                                 X.TextField()
+                                 .Hidden(true),
+
+
+
+
+
+                                 X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 0"),
+                                 X.FieldSet().Border(false)/*.Width(700).AnchorHorizontal("100%")*/.DefaultAnchor("100%")
+                                 .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch })
+                                 .Items(
+                                 X.DateFieldFor(m => m.Fecha).Format("dd/MM/yyyy").FieldLabel("Fecha y Hora").LabelWidth(100).Width(200).ReadOnly(indicaModoLectura).Editable(false),
+
+                                X.TimeField().ID("FechHoras").Format("HH:mm").Value(Model.Fecha).Width(70).ReadOnly(indicaModoLectura).Editable(false)
+
+
+                                 )
+                                 ),
+                //-----
+
+                //2----
+                //3-----
+                    X.Component().Height(10),
+                X.FieldSet().ID("fsVacuna")
+                        .Collapsible(false)
+                        .ColumnWidth(0.4).Title("")
+                        .Layout(LayoutType.VBox)
+                        .MarginSpec("00 05 00 00")
+                        .Height(90)
+                        .Defaults(d =>
+                        {
+                            d.Add(new Parameter("LabelWidth", "150"));
+                            d.Add(new Parameter("DefaultAnchor", "100%"));
+                            d.Add(new Parameter("LabelAlign", "Left"));
+                        })
+                        .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                        .Items(
+                //  X.FieldSet().Border(true)
+                // .Items
+                //  (
+
+
+                X.Container().Layout(LayoutType.VBox).MarginSpec("0 0 0 0").Width(710)
+                               .Defaults(d =>
+                               {
+                                   //    d.Add(new Parameter("LabelWidth", "150"));
+                                   d.Add(new Parameter("DefaultAnchor", "100%"));
+                                   //    d.Add(new Parameter("LabelAlign", "Left"));
+                               })
+                              .Items(
+                                X.Component().Height(4),
+                               X.Container().Layout(LayoutType.HBox).Width(700)
+                /*.Defaults(d => { d.Add(new Parameter("LabelWidth", "100")); })*/
+                              .Items(
+
+                                X.NumberFieldFor(m => m.FrecCardiacaFetal).FieldLabel("Frec. cardiaca fetal").ReadOnly(indicaModoLectura).LabelWidth(120)
+                                .Width(220)
+                                .MinValue(1)
+                /*.MaxValue(150)*/
+                //.NegativeText(MENS_NUMERO)
+                                .EnableKeyEvents(true),
+                                  X.Label().Hidden(false).Border(false).Html("<font  size='2.8em'; color='black'>&nbsp;x min</font>"),
+                                  X.Component().Width(100),
+
+                                 X.RadioGroup().FieldLabel("Membranas").LabelWidth(100).ID("MembranasX")
+                                                     .Items(
+                                                        X.Radio().ID("Radio1").BoxLabel("Integras").InputValue("I").ReadOnly(indicaModoLectura).Checked(Model.Membranas == "I" ? true : false).Width(100)/*.Handler("eventoRadio(this, 1)")*/,
+                                                        X.Radio().ID("Radio2").BoxLabel("Rotas").InputValue("R").ReadOnly(indicaModoLectura).Checked(Model.Membranas == "R" ? true : false).Width(100)/*.Handler("eventoRadio(this, 2)")*/
+
+                                                        )
+
+                               ),
+                                X.Component().Height(3),
+                         X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00").Width(700)
+                              .Defaults(d => { d.Add(new Parameter("LabelWidth", "100")); d.Add(new Parameter("DefaultAnchor", "100%")); })
+                              .Items(
+                                  X.RadioGroup()/*.ColumnsNumber(3)*/.FieldLabel("Líquido").LabelWidth(80).ID("LiquidoX")
+                                                     .Items(
+                                                        X.Radio().ID("Radio3").BoxLabel("Claro").InputValue("C").ReadOnly(indicaModoLectura).Checked(Model.Liquido == "C" ? true : false).Width(100)/*.Handler("eventoRadio(this, 1)")*/,
+                                                        X.Radio().ID("Radio4").BoxLabel("Meconial").InputValue("M").ReadOnly(indicaModoLectura).Checked(Model.Liquido == "M" ? true : false).Width(100)/*.Handler("eventoRadio(this, 2)")*/,
+                                                        X.Radio().ID("Radio5").BoxLabel("Sanguinolento").InputValue("S").ReadOnly(indicaModoLectura).Checked(Model.Liquido == "S" ? true : false).Width(100)/*.Handler("eventoRadio(this, 2)")*/
+
+                                                        )
+                                                        ,
+                                                        X.Component().Width(130),
+                                                        X.Button().Text("Ver Grafico")
+                                                        .Icon(Icon.Application)
+                /* .Handler("eventoVerGrafico(2);")*/
+                .Handler("App.Window1.setPagePosition(50,50,false); App.Window1.show(this);")
+                               )
+                              )
+                //     )  //fin fielset2
+                       ),
+                //3---
+
+               //2---
+
+                //3-----
+                    X.Component().Height(10),
+                X.FieldSet().ID("fsVacuna2")
+                        .Collapsible(false)
+                        .ColumnWidth(0.4).Title("")
+                        .Layout(LayoutType.VBox)
+                        .MarginSpec("00 05 00 00")
+                        .Height(90)
+                        .Defaults(d =>
+                        {
+                            d.Add(new Parameter("LabelWidth", "150"));
+                            d.Add(new Parameter("DefaultAnchor", "100%"));
+                            d.Add(new Parameter("LabelAlign", "Left"));
+                        })
+                        .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                        .Items(
+
+                        X.Component().Height(4),
+                X.Container().Layout(LayoutType.VBox).MarginSpec("0 0 0 0").Width(710)
+                               .Defaults(d =>
+                               {
+                                   //    d.Add(new Parameter("LabelWidth", "150"));
+                                   d.Add(new Parameter("DefaultAnchor", "100%"));
+                                   //    d.Add(new Parameter("LabelAlign", "Left"));
+                               })
+                              .Items(
+
+                               X.Container().Layout(LayoutType.HBox).Width(700)
+                /*.Defaults(d => { d.Add(new Parameter("LabelWidth", "100")); })*/
+                              .Items(
+
+
+                              X.NumberFieldFor(m => m.DilatacionCuelloUt).FieldLabel("Dilatación cuello uterino").Width(220).LabelWidth(140)
+                               ,
+                               X.Component().Width(30),
+                               X.NumberFieldFor(m => m.DescensoCefalico).FieldLabel("Descenso cefálico").Width(210).LabelWidth(130)
+
+                               ),
+                                X.Component().Height(3),
+                         X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00").Width(700)
+                              .Defaults(d => { d.Add(new Parameter("LabelWidth", "100")); d.Add(new Parameter("DefaultAnchor", "100%")); })
+                              .Items(
+                                  X.NumberFieldFor(m => m.TactosVaginales).FieldLabel("N° de tactos vaginales").Width(220).LabelWidth(140)
+                                           ,
+                                            X.Component().Width(130),
+                                            X.Button().Text("Ver Grafico")
+                                            .Icon(Icon.Application)
+                                            .Handler("App.Window2.setPagePosition(50,50,false); App.Window2.show(this);")
+                               )
+                              )
+                //     )  //fin fielset2
+                       ),
+                //3---fin
+                //4-----
+                    X.Component().Height(10),
+                X.FieldSet().ID("fs3")
+                        .Collapsible(false)
+                        .ColumnWidth(0.4).Title("")
+                        .Layout(LayoutType.VBox)
+                        .MarginSpec("00 05 00 00")
+                        .Height(90)
+                        .Defaults(d =>
+                        {
+                            d.Add(new Parameter("LabelWidth", "150"));
+                            d.Add(new Parameter("DefaultAnchor", "100%"));
+                            d.Add(new Parameter("LabelAlign", "Left"));
+                        })
+                        .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                        .Items(
+
+                        X.Component().Height(4),
+                X.Container().Layout(LayoutType.VBox).MarginSpec("0 0 0 0").Width(810)
+                               .Defaults(d =>
+                               {
+                                   //    d.Add(new Parameter("LabelWidth", "150"));
+                                   d.Add(new Parameter("DefaultAnchor", "100%"));
+                                   //    d.Add(new Parameter("LabelAlign", "Left"));
+                               })
+                              .Items(
+
+                               X.Container().Layout(LayoutType.HBox).Width(800)
+                /*.Defaults(d => { d.Add(new Parameter("LabelWidth", "100")); })*/
+                              .Items(
+                              X.RadioGroup()/*.ColumnsNumber(1)*/.FieldLabel("Duración de contracciones").LabelWidth(160).ID("DuracionContraccionesX")
+                                                     .Items(
+                                                        X.Radio().ID("Radio6").BoxLabel("Menor de 20'").InputValue("1").ReadOnly(indicaModoLectura).Checked(Model.DuracionContracciones == 1 ? true : false).Width(120)/*.Handler("eventoRadio(this, 1)")*/,
+                                                        X.Radio().ID("Radio7").BoxLabel("Entre 20' y 40'").InputValue("2").ReadOnly(indicaModoLectura).Checked(Model.DuracionContracciones == 2 ? true : false).Width(120)/*.Handler("eventoRadio(this, 2)")*/,
+                                                        X.Radio().ID("Radio8").BoxLabel("Mayor de 40'").InputValue("3").ReadOnly(indicaModoLectura).Checked(Model.DuracionContracciones == 3 ? true : false).Width(120)/*.Handler("eventoRadio(this, 2)")*/
+
+                                                        )
+                /* ,X.Component().Width(50)
+                       , X.NumberFieldFor(m => m.ContracTEENmin).FieldLabel("Contracciones x cada 10 min").Width(260).LabelWidth(180)
+
+                                   */
+                                                        ),
+
+                                 X.Component().Height(3),
+                                X.Container().Layout(LayoutType.HBox).Width(700)
+                /*.Defaults(d => { d.Add(new Parameter("LabelWidth", "100")); })*/
+                              .Items(
+
+                               X.NumberFieldFor(m => m.ContracTEENmin).FieldLabel("Contracciones x cada 10 min").Width(260).LabelWidth(180),
+                                X.Component().Width(30),
+                               X.NumberFieldFor(m => m.Oxitocina).FieldLabel("Oxitocina (UL)").Width(180).LabelWidth(100)
+                               , X.Component().Width(3)
+                               , X.Label(" gtas. x min")
+                               )
+
+                               ,
+                                  X.Component().Height(10),
+                                 X.Container().Layout(LayoutType.HBox).Width(800)
+                /*.Defaults(d => { d.Add(new Parameter("LabelWidth", "100")); })*/
+                              .Items(
+                               X.Component().Width(60),
+                                            X.Button().Text("Ver Grafico Duración de Contracciones")
+                                            .Icon(Icon.Application)
+                                            .Handler("App.Window3.setPagePosition(50,50,false); App.Window3.show(this);")
+
+
+                              )
+
+
+                               ,
+                                X.Component().Height(3)
+                              )
+                //     )  //fin fielset2
+                       ),
+                //4---
+                //5---
+                    X.Component().Height(10),
+                X.FieldSet().ID("fs4")
+                        .Collapsible(false)
+                        .AutoScroll(true)
+                      
+                .Border(true)
+                        .ColumnWidth(0.4).Title("Medicamentos Administrados:")
+                        .Layout(LayoutType.VBox)
+                        .MarginSpec("00 05 00 00")
+                /*.Height(90)*/
+                        .Defaults(d =>
+                        {
+                            d.Add(new Parameter("LabelWidth", "150"));
+                            d.Add(new Parameter("DefaultAnchor", "100%"));
+                            d.Add(new Parameter("LabelAlign", "Left"));
+                        })
+                        .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                        .Items(
+
+
+
+                         /*        X.Label("Medicamentos Administrados:")
+                           ,X.Component().Width(30)*/
+
+                            //  ,
+                /*****************/
+
+                X.GridPanel()
+                        .ID("grillaMed")
+                        .Border(true)
+                         .AutoScroll(true)
+                        .Store(
+                            Html.X().Store()
+                            .ID("storeMed")
+                            .Model(
+                                Html.X().Model()
+                                .IDProperty("Secuencia")
+                                .Fields(
+                                 new ModelField("Secuencia"),
+                                 new ModelField("Medicamento"),
+                                 new ModelField("Hora", ModelFieldType.Date),
+                                 new ModelField("Accion", ModelFieldType.String)
+
+
+                                /*
+
+                                    Html.X().ModelField().Name("Secuencia"),
+                                    Html.X().ModelField().Name("Medicamento"),
+                                    Html.X().ModelField().Name("Hora", ModelFieldType.Date),
+                                    Html.X().ModelField().Name("Accion")*/
+                                 )
+                              )//.Listeners(l => { l.KeyPress.Handler = "setIndicaCambios(true);"; })
+                //.ID("IdComentario")
+                            .AutoLoad(true)
+                            .RemoteSort(false)
+                            .IsPagingStore(true)
+                            .RemotePaging(true)
+                            .PageSize(5)
+                            .Proxy(proxy => proxy.Add(
+
+                                            Html.X().AjaxProxy()
+                                                .Url("CCEPF404_MEDICAMENTOS")
+                                                .Reader(reader => reader.Add(Html.X().JsonReader()
+
+                                                .Root("data")
+                                                .TotalProperty("total")
+                                                .IDProperty("Secuencia")))
+
+                                                )
+                                )
+                        )
+                        .Listeners(l => { l.Select.Handler = "setIndicaCambios(true);"; })
+                        .ColumnModel(
+
+                            Html.X().ComponentColumn().Editor(true)
+                            .DataIndex("Secuencia").Hidden(true)
+                            .Text("#")
+                            .Width(40).Hidden(true)
+                            .Component(
+                                Html.X().TextField()//.FieldStyle("border-color: red")
+                                .ReadOnly(true)
+                             ),
+
+                            Html.X().ComponentColumn().Editor(true)
+                                                      .DataIndex("Medicamento")
+                                                    .Text("Medicamento")
+                                                    .Width(400)
+                                                    .Component(
+
+                                                        Html.X().TextField()
+                                                      .ReadOnly(indicaModoLectura)
+
+                                                        ),
+                            Html.X().ComponentColumn().Editor(true)
+                                                     .Hidden(false)
+                                                    .DataIndex("Hora")
+                                                    .Text("Hora")
+                                                    .Width(100)
+                                                    .Component(
+
+                                                         Html.X().TimeField().Format("HH:mm")
+                                                      .ReadOnly(indicaModoLectura)
+
+                                                    ),
+                           Html.X().ComponentColumn().Editor(true).Hidden(true)
+                            .DataIndex("Accion")
+                            .Text("Accion")
+                            .Width(40)
+                            .Component(
+                                Html.X().TextField()
+                                .ReadOnly(true)
+                             ),
+
+                            Html.X().CommandColumn().Width(70)
+                                    .Text("Acción")
+                                    .Commands(
+                                        Html.X().GridCommand().Disabled(indicaModoLectura)
+                                                .CommandName("Delete")
+                                                .Icon(Icon.Delete)
+                                            )
+                                    .Listeners(ls => ls.Command.Handler = "deleteActualMain(record);")
+                        )
+                        .SelectionModel(
+                            Html.X().RowSelectionModel().Mode(SelectionMode.Multi)
+                         ).Plugins(Html.X().CellEditing())
+                        .Listeners(l =>
+                        {
+                            l.CellClick.Handler = "setSeleccionActualMain(record);";
+                        })
+                        .TopBar(
+                            Html.X().Toolbar().Hidden(indicaModoLectura)
+                            .Items(
+                                Html.X().ToolbarSeparator()
+                                , Html.X().Label()
+                                .Html("<b><font color='" + COLOR_BLUE01 + "'> Medicamentos Administrados </font></b>")
+                                ,
+                                X.ToolbarFill(),
+                                Html.X().Button().Disabled(indicaModoLectura)
+                                 .Text("Agregar")
+                                 .Icon(Icon.Add)
+                                 .ID("cmdAgregar")
+                                 .Handler("addRecordMain('grid');")
+                            )
+                        )
+
+
+
+
+
+
+                /*******************************/
+
+                //     )  //fin fielset2
+                       ),
+                //5 fin --
+                //6--
+                    X.Component().Height(10),
+                X.FieldSet().ID("fs6")
+                        .Collapsible(false)
+                        .ColumnWidth(0.4).Title("Funciones Vitales")
+                        .Layout(LayoutType.VBox)
+                        .MarginSpec("00 05 00 00")
+                        .Height(90)
+                        .Defaults(d =>
+                        {
+                            d.Add(new Parameter("LabelWidth", "150"));
+                            d.Add(new Parameter("DefaultAnchor", "100%"));
+                            d.Add(new Parameter("LabelAlign", "Left"));
+                        })
+                        .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                        .Items(
+
+                        X.Component().Height(4),
+                X.Container().Layout(LayoutType.VBox).MarginSpec("0 0 0 0").Width(810)
+                               .Defaults(d =>
+                               {
+                                   //    d.Add(new Parameter("LabelWidth", "150"));
+                                   d.Add(new Parameter("DefaultAnchor", "100%"));
+                                   //    d.Add(new Parameter("LabelAlign", "Left"));
+                               })
+                              .Items(
+
+                               X.Container().Layout(LayoutType.HBox).Width(800)
+                /*.Defaults(d => { d.Add(new Parameter("LabelWidth", "100")); })*/
+                              .Items(
+
+                               X.NumberFieldFor(m => m.FVPulso).FieldLabel("Pulso").Width(150).LabelWidth(70)
+                              , X.Component().Width(3)
+                              , X.Label("x min")
+                              , X.Component().Width(30)
+
+                              , X.NumberFieldFor(m => m.FVPresionArterial).FieldLabel("Presion arterial").Width(180).LabelWidth(100)
+                              , X.Component().Width(3)
+                              , X.Label("/")
+                              , X.Component().Width(3)
+                              , X.NumberFieldFor(m => m.FVPresionArterialD).FieldLabel("").Width(80)
+                              , X.Component().Width(3)
+                              , X.Label("mmHg")
+
+                              , X.Component().Width(30)
+
+                              , X.NumberFieldFor(m => m.FVTemperatura).FieldLabel("Temperatura").Width(160).LabelWidth(80)
+                              , X.Component().Width(3)
+                              , X.Label("°C")
+                /*, X.Component().Width(30)*/
+
+
+
+
+
+                                 ),
+                                  X.Component().Height(10),
+                                 X.Container().Layout(LayoutType.HBox).Width(800)
+                /*.Defaults(d => { d.Add(new Parameter("LabelWidth", "100")); })*/
+                              .Items(
+                               X.Component().Width(60),
+                                            X.Button().Text("Ver Grafico Pulso")
+                                            .Icon(Icon.Application)
+                                            .Handler("App.Window4.setPagePosition(50,50,false); App.Window4.show(this);")
+
+                                            ,
+                                            X.Component().Width(130),
+                                            X.Button().Text("Ver Grafico Presion Arterial")
+                                            .Icon(Icon.Application)
+                                            .Handler("App.Window5.setPagePosition(50,50,false); App.Window5.show(this);")
+                                            ,
+                                            X.Component().Width(130),
+                                            X.Button().Text("Ver Grafico Temperatura")
+                                            .Icon(Icon.Application)
+                                            .Handler("App.Window6.setPagePosition(50,50,false); App.Window6.show(this);")
+                              )
+                              )
+                //     )  //fin fielset2
+                       ),
+                //6 fin
+                //7-----------
+
+                    X.Component().Height(10),
+                X.FieldSet().ID("fs7")
+                        .Collapsible(false)
+                        .ColumnWidth(0.4).Title("Orina")
+                        .Layout(LayoutType.VBox)
+                        .MarginSpec("00 05 00 00")
+                        .Height(90)
+                        .Defaults(d =>
+                        {
+                            d.Add(new Parameter("LabelWidth", "150"));
+                            d.Add(new Parameter("DefaultAnchor", "100%"));
+                            d.Add(new Parameter("LabelAlign", "Left"));
+                        })
+                        .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                        .Items(
+
+                        X.Component().Height(4),
+                X.Container().Layout(LayoutType.VBox).MarginSpec("0 0 0 0").Width(810)
+                               .Defaults(d =>
+                               {
+                                   //    d.Add(new Parameter("LabelWidth", "150"));
+                                   d.Add(new Parameter("DefaultAnchor", "100%"));
+                                   //    d.Add(new Parameter("LabelAlign", "Left"));
+                               })
+                              .Items(
+
+                               X.Container().Layout(LayoutType.HBox).Width(800)
+                /*.Defaults(d => { d.Add(new Parameter("LabelWidth", "100")); })*/
+                              .Items(
+
+                               X.NumberFieldFor(m => m.Proteina).FieldLabel("Proteina").Width(150).LabelWidth(70)
+                              , X.Component().Width(3)
+                              , X.Label("mmg")
+                              , X.Component().Width(30)
+
+                              , X.NumberFieldFor(m => m.Acetona).FieldLabel("Acetona").Width(180).LabelWidth(100)
+                              , X.Component().Width(3)
+                              , X.Label("mg/ml")
+
+
+                              , X.Component().Width(30)
+
+                              , X.NumberFieldFor(m => m.Volumen).FieldLabel("Volumen").Width(160).LabelWidth(80)
+                              , X.Component().Width(3)
+                              , X.Label("cc")
+                /*, X.Component().Width(30)*/
+
+
+
+
+
+                                 )
+                                 ,
+                                  X.Component().Height(10),
+                                 X.Container().Layout(LayoutType.HBox).Width(800)
+                /*.Defaults(d => { d.Add(new Parameter("LabelWidth", "100")); })*/
+                              .Items(
+                               X.Component().Width(60),
+                                            X.Button().Text("Ver Grafico")
+                                            .Icon(Icon.Application)
+                                            .Handler("App.Window7.setPagePosition(50,50,false); App.Window7.show(this);")
+
+
+                              )
+                              )
+                //     )  //fin fielset2
+                       ),
+
+             //7 fin-------------------
+                //----------------
+            X.TextArea().ID("taAlerts").Border(false).StyleSpec("background:white;border:1px solid gray;").FieldStyle("color: red").Hidden(true).ReadOnly(true)
+            )  //Cierra ITEM GENERAL
+            ).MinButtonWidth(40).TopBar(
+            X.Toolbar().ID("bar")
+            .Items(
+            X.ToolbarSpacer(20),
+            X.TextField().Width(15).FieldStyle("border-color: " + COLOER_IND_OBLIGA).ReadOnly(indicaModoLectura).Hidden(indicaModoLectura),
+            X.Label().Html("<b><font color='" + COLOER_IND_OBLIGA + "'>Campos Obligatorios</font></b>").Hidden(indicaModoLectura),
+            X.ToolbarSpacer(20)
+                            ,
+                            Html.X().Container().Layout(LayoutType.HBox)
+                            .ID("conthbIndicaError").Hidden(true).Items(
+                                X.Label().Html("<font  size='1.9em'; color='red'>(</font>"),
+                                X.Label().Html("<font  size='3.9em'; color='red'><b>&#161;</b></font>"),
+                                X.Label().Html("<font  size='1.9em'; color='red'>) Verificar los errores presentados</font>")
+                            ),
+
+
+              X.ToolbarFill(),
+                            X.Button()
+                            .Text("Imprimir")
+                            .Icon(Icon.Report)
+                            .Hidden(!visibleImpresion)
+                            .ID("btnImpresion")
+                            .Handler("eventoVisorReporte('');")
+                        , X.Button()
+                         .Text("Imprimir Todos")
+                         .Icon(Icon.ReportGo)
+                         .Hidden(!visibleImpresion)
+                         .ID("btnImpresionHC")
+                         .Handler("eventoVisorReporte('HC');")
+                            ,
+
+            X.ToolbarSpacer().Width(40),
+            X.Button()
+                .Text("Guardar")
+                .ID("cmdGuardar").Hidden(indicaModoLectura)
+                .Icon(Icon.Disk)
+
+                /*.CausesValidation(true)*/
+                .Handler("EnviarDataServer('grid');")
+                /*.DirectEvents(de =>
+                {
+                    de.Click.Url = Url.Action("CCEP00F3_Save_AntecendentesPersonales_Fisiologicos");
+                    de.Click.EventMask.ShowMask = true;
+                    //   de.Click.Before = "return EnviarData('grid');";
+                    //de.Click.Before = "return EnviarData(this.up('grid'));";
+                    de.Click.Success = "onSuccess(result.data);";
+                    de.Click.Failure = "onFailure();";
+                })*/
+                ,
+
+            X.Button().Text("Cancelar").ID("btnCancel").Icon(Icon.Cancel).Handler("eventoCancelar(this.up('form'));").Hidden(indicaModoLectura),
+            X.Button().Text("Editar").ID("btnOnEdit").Icon(Icon.ApplicationFormEdit).Hidden(true).Handler("eventoOnEditar(App.btnOnEdit);"),
+            X.Button().Text("Variados").ID("cmdBuscar").Icon(Icon.Cancel).Hidden(true).OnClientClick("this.up('form').getForm().reset();")
+            )).Listeners(l => { l.FieldChange.Handler = "setIndicaCambios(true);"; })
+            );
+        })
+    )
+
+
+    @(X.Window()
+        .ID("Window1")
+        .Title("Frecuencia Cardiaca Fetal")
+        .Width(900)
+        .Height(450)
+        .Modal(true)
+        .BodyStyle("background-color: #fff;")
+        .Collapsible(true)
+        .Maximizable(true).SetPosition(500, 500, true)
+        .Hidden(true)
+        .Items(
+                X.Panel().ID("Grafico")
+            /*.Title("Line Chart")*/
+                .Layout(LayoutType.Fit)
+                .Width(700)
+                .Height(420)
+                .Html("<div><table><tr><td><div style='width:19px;'></div></td><td><div id='chart1' style='width:670px;'></div></td></tr></table></div><div></div><div id='table1'><table class='gridtable'><tr id='Row1'><td>Membrana</td></tr><tr id='Row2'><td>Liquido</td></tr></table></div>")
+                .Listeners(l => { l.AfterRender.Handler = "cargar();"; })
+              )
+    )
+
+    @(X.Window()
+        .ID("Window2")
+            /*.Title("Frecuencia Cardiaca Fetal")*/
+        .Width(900)
+        .Height(450)
+        .Modal(true)
+        .BodyStyle("background-color: #fff;")
+        .Collapsible(true)
+        .Maximizable(true).SetPosition(500, 500, true)
+        .Hidden(true)
+        .Items(
+                X.Panel().ID("Grafico2")
+            /*.Title("Line Chart")*/
+                .Layout(LayoutType.Fit)
+                .Width(700)
+                .Height(420)
+                        .Html("<div><table><tr><td><div style='width:19px;'></div></td><td><div id='chart2' style='width:670px;'></div></td></tr></table></div><div></div><div id='table2'><table class='gridtable2'><tr id='Row3'><td style='width: 68px;'>N° Tactos</td></tr></table></div>")
+                .Listeners(l => { l.AfterRender.Handler = "cargar2();"; })
+              )
+    )
+    @(X.Window()
+        .ID("Window3")
+            /*.Title("Frecuencia Cardiaca Fetal")*/
+        .Width(855)
+        .Height(450)
+        .Modal(true)
+        .BodyStyle("background-color: #fff;")
+        .Collapsible(true)
+        .Maximizable(true).SetPosition(500, 500, true)
+        .Hidden(true)
+        .Items(
+                X.Panel().ID("Grafico3")
+            /*.Title("Line Chart")*/
+                .Layout(LayoutType.Fit)
+                .Width(850)
+                .Height(420)
+                  .Html("<div><table><tr><td><div style='width:46px;'></div></td><td><div id='chart3' style='width:670px;'></div></td></tr></table></div><div></div><div id='table3'><table  class='gridtable3'><tr id='Row_4'><td>Oxitocina</td></tr><tr id='Row5'><td>Gotas</td></tr></table></div>")
+            .Listeners(l => { l.AfterRender.Handler = "cargar3();"; })/**/
+              )
+    )
+
+
+    @(X.Window()
+        .ID("Window4")
+            /*.Title("Frecuencia Cardiaca Fetal")*/
+        .Width(500)
+        .Height(400)
+        .Modal(true)
+        .BodyStyle("background-color: #fff;")
+        .Collapsible(true)
+        .Maximizable(true).SetPosition(500, 500, true)
+        .Hidden(true)
+        .Items(
+                X.Panel().ID("Grafico4")
+            /*.Title("Line Chart")*/
+                .Layout(LayoutType.Fit)
+                .Width(495)
+                .Height(400)
+                 .Html("<div> <table> <tr> <td> <div style='width:19px;'></div> </td> <td> <div id='chart4' style='width:450px;'></div> </td> <td></td> </tr><tr> <td> <div style='width:19px;'></div> </td> <td> </td> <td> <div style='width:300px;'></div> </td> </tr> </table></div>")
+             .Listeners(l => { l.AfterRender.Handler = "cargar4();"; })/**/
+
+
+
+
+
+              )
+    )
+
+    @(X.Window()
+        .ID("Window5")
+            /*.Title("Frecuencia Cardiaca Fetal")*/
+        .Width(500)
+        .Height(400)
+        .Modal(true)
+        .BodyStyle("background-color: #fff;")
+        .Collapsible(true)
+        .Maximizable(true).SetPosition(500, 500, true)
+        .Hidden(true)
+        .Items(
+
+             X.Panel().ID("Grafico5")
+            /*.Title("Line Chart")*/
+                .Layout(LayoutType.Fit)
+                .Width(495)
+                .Height(400)
+                 .Html("<div> <table> <tr> <td> <div style='width:19px;'></div> </td> <td> <div id='chart5' style='width:450px;'></div> </td> </tr> </table></div>")
+            .Listeners(l => { l.AfterRender.Handler = "cargar5();"; })/**/
+
+
+
+              )
+    )
+
+    @(X.Window()
+        .ID("Window6")
+            /*.Title("Frecuencia Cardiaca Fetal")*/
+        .Width(500)
+        .Height(400)
+        .Modal(true)
+        .BodyStyle("background-color: #fff;")
+        .Collapsible(true)
+        .Maximizable(true).SetPosition(500, 500, true)
+        .Hidden(true)
+        .Items(
+
+             X.Panel().ID("Grafico6")
+            /*.Title("Line Chart")*/
+                .Layout(LayoutType.Fit)
+                .Width(495)
+                .Height(400)
+                 .Html("<div> <table> <tr> <td> <div style='width:19px;'></div> </td> <td> <div id='chart6' style='width:450px;'></div> </td> </tr> </table></div>")
+        .Listeners(l => { l.AfterRender.Handler = "cargar6();"; })
+
+
+
+              )
+    )
+
+    @(X.Window()
+        .ID("Window7")
+            /*.Title("Frecuencia Cardiaca Fetal")*/
+        .Width(805)
+        .Height(300)
+        .Modal(true)
+        .BodyStyle("background-color: #fff;")
+        .Collapsible(true)
+        .Maximizable(true).SetPosition(500, 500, true)
+        .Hidden(true)
+        .Items(
+
+             X.Panel().ID("Grafico7")
+            /*.Title("Line Chart")*/
+                .Layout(LayoutType.Fit)
+                .Width(795)
+                .Height(300)
+                                 .Html("<div style='height:70px;'></div><div id='table9'><table class='gridtable7' style='border:1px;'><tr id='Row6'><td style='border:0px !important; width:150px;'>Proteina(mg)</td></tr><tr id='Row7'><td style='border:0px !important;'>Acetona (mg/ml)</td></tr><tr id='Row8'><td style='border:0px !important;'>Volumen (cc)</td></tr></table></div>")
+                    .Listeners(l => { l.AfterRender.Handler = "cargar7();"; })
+
+
+
+              )
+    )
+
+}

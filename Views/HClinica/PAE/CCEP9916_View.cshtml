@@ -1,0 +1,2576 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_HC_NANDA
+@using Region = Ext.Net.Region
+@using Namespace = Ext.Net.Utilities
+@using SoluccionSalud.Entidades.Entidades
+@using System.Web.Mvc;
+@using Ext.Net.Utilities;
+@using Panel = Ext.Net.Panel;
+
+
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+
+    var indicaVisiblePrint = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_VISIBLE_IMPRESION;
+
+    var visibleImpresion = (indicaVisiblePrint == 2 ? true : false);
+
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VISTA" ? false : false))));
+
+    var DESC_ADD = "Diagnósticos Nanda ";
+    var COLOR_BLUE01 = "#284A89";
+
+
+}
+
+@section cabecera
+{
+    <style>
+        html body {
+            padding: 0px;
+            background: none;
+            background: none;
+            background: none;
+            background-attachment: fixed;
+            background-position: center;
+            font-family: tahoma,verdana,sans-serif;
+            background-color: #ffffff;
+        }
+
+        .icon-add {
+            background-image: url(/icons/add-png/ext.axd);
+            background-repeat: no-repeat;
+        }
+    </style>
+
+    <script type="text/javascript" src="@Url.Content("~/Content/ADD_FACTOR.js")"></script>
+
+    <script>
+        var numeronanda = 1;
+        var numeroNOC = 1;
+        var numeroNIC = 1;
+    function eventoValidaReglaGen(PARAM_ACCION, PARAM_REGLA, numRegla) {
+        var APMiscelaneos = new Array();
+        var MA_MiscelaneosDetalle = {
+            ValorEntero1: 1,
+            ACCION: PARAM_ACCION
+        };
+        APMiscelaneos.push(MA_MiscelaneosDetalle);
+        Ext.net.DirectMethod.request({
+            url: PARAM_REGLA,
+            params: {
+                PacienteID: 0,
+                valor: 0,
+                regla: PARAM_ACCION,
+                arrays: APMiscelaneos
+            },
+            success: function (result) { mostrarAlarmaGen(result.data, PARAM_ACCION, numRegla); }
+        });
+    };
+
+    var mostrarAlarmaGen = function (data, accion, numRegla) {
+        if (data != null) {
+            if (data[0].ESTADOBOOL) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("showMensajeNotifyPosi"))',
+                    params: {
+                        titulo: 'Advertencia Motor Reglas',
+                        message: data[0].DESCRIPCION,
+                        tipo: 'WARNING',
+                        offsety: -650,
+                        offsetx: 0 + ((numRegla - 1) * (-200))
+                    }
+                });
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+    var Valores;
+    var template = '<span style="color:{0};">{1}</span>';
+
+    var change = function (value) {
+        return Ext.String.format(template, (value > 0) ? "green" : "red", value);
+    };
+
+    var pctChange = function (value) {
+        return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+    };
+
+    var cargar = function (data) {
+        var d = data.length;
+       // var Paneles = Ext.getCmp('Paneles');
+        var numero;
+        for (var i = 0; i < d; i++) {
+
+            var myButton = new Ext.Button({
+                id: 'Agregar'+ data[i].IdNanda,
+                text: 'Añadir',
+                iconCls: 'icon-add',
+                handler: this.eventoagregarfactor
+            });
+            var tb = new Ext.Toolbar({
+                id:'tb'+ data[i].IdNanda,
+                items: [myButton
+                ]
+            });
+
+            var panel_f = new Ext.Panel({
+                id: 'Fac_X' + data[i].IdNanda,
+               /* title: "FACTOR RELACIONADO",*/
+               /* tbar: tb,*/
+                /*  html: "<div></div>",   */
+                border: true,
+                hidden:true
+            });
+
+            var panelf = new Ext.Panel({
+                id: 'Fac' + data[i].IdNanda,
+                title: "FACTOR RELACIONADO",
+                tbar: tb,
+              /*  html: "<div>ghggg</div>",   */
+                border: true
+            });
+
+            var myButton2 = new Ext.Button({
+                id: 'AgregarO' + data[i].IdNanda,
+                text: 'Añadir',
+                iconCls: 'icon-add',
+                handler: this.eventoagregarobjetivo
+            });
+            var tb2 = new Ext.Toolbar({
+                id: 'tbO' + data[i].IdNanda,
+                items: [myButton2
+                ]
+            });
+
+
+            var panelX = new Ext.Panel({
+                id: 'X_' + data[i].IdNanda,
+                html: "<div></div>",
+                border: true,
+                hidden: true
+            });
+
+            var panelOBJ = new Ext.Panel({
+                id: 'PanelObj' + data[i].IdNanda,
+               /* title: "OBJETIVOS (NOC)",*/
+              /*  tbar: tb2,*/
+               /* html: "<div></div>",*/
+                border: true,
+                layout: {
+                    type: 'accordion', padding: '10', align: 'stretch'
+                },
+                items: [panelX],
+                autoScroll: true
+            });
+
+            var panelo = new Ext.Panel({
+                id: 'Obj' + data[i].IdNanda,
+                title: "OBJETIVOS (NOC)",
+                tbar: tb2,
+               /* html: "<div>gh</div>",*/
+                items: [panelOBJ],
+                border: true
+            });
+
+            var panel3 = Ext.create('Ext.panel.Panel', {
+                layout: {
+                    type: 'accordion', padding: '10', align: 'stretch'
+                },
+                items: [panel_f,panelf, panelo],
+                autoScroll: true,
+                renderTo: Ext.getBody(),
+                width: '100%',
+                /*height: 350,*/
+                region: 'center',
+                left: '2%',
+                right: '2%',
+                top: 10
+            });
+
+            Ext.getCmp('Paneles').add(Ext.create('Ext.Panel', {
+                id: 'Nanda' + data[i].IdNanda,
+                title: "<table style='width:100%';><col width='70%'><col witdh='30%'><tr><td><span>" + numeronanda + ") " + data[i].Codigo + " - " + data[i].Descripcion + "</span></td><td>Dominio: " + data[i].Version + " Clase: " + data[i].DescripcionCorta + "</td></tr></table>",
+              //  html: "<div class='x-panel x-panel-default' style='height: 400px;width: 96%;left: 2%;right: 2%;top: 10px;' id='SubPanel'><div class='x-toolbar x-docked x-toolbar-default x-docked-top x-toolbar-docked-top x-toolbar-default-docked-top x-box-layout-ct' id='toolbar-1011' style='width: 100%; right: auto; left: 0px; top: 0px;'><div id='toolbar-1011-innerCt' class='x-box-inner ' role='presentation' style='width: 100%x; height: 0px;'><div id='toolbar-1011-targetEl' class='x-box-target' style='width: 665px;'></div></div></div><div id='SubPanel" + data[i].IdNanda + "-body' class='x-panel-body x-panel-body-default x-accordion-layout-ct x-panel-body-default' style='left: 0px; width: 669px; height: 395px; top: 5px;'><div id='SubPanel" + data[i].IdNanda + "-innerCt' class='x-box-inner ' role='presentation' style='height: 393px; width: 667px;'><div id='SubPanel" + data[i].IdNanda + "-targetEl' class='x-box-target' style='width: 667px;'></div></div></div></div>",
+                border: true,
+                items: [panel3]
+            }));
+
+            numeronanda = numeronanda + 1;
+
+            numero = data[i].IdNanda;
+        }
+          cargargrilla(numero);
+
+    };
+
+    var cargarsubpanel = function (numero) {
+        //var d = data.length;
+        var Subpanel = Ext.getCmp('SubPanel');
+
+        var panel_f = new Ext.Panel({
+            //Paneles.add({
+            id: 'N_Fac' + numero,
+            /* title: "FACTOR RELACIONADO",*/
+            html: "<div></div>",
+            border: true,
+            hidden: true
+        });
+        Subpanel.add(panel_f);
+
+        var panelf = new Ext.Panel({
+            //Paneles.add({
+            id: 'Panel_Fac' + numero,
+            title: "FACTOR RELACIONADO",
+            html: "<div></div>",
+            border: true
+        });
+
+        Subpanel.add(panelf);
+        //  Subpanel.doLayout();
+
+        var panelo = new Ext.Panel({
+            //Paneles.add({
+            id: 'Panel_Obj' + numero,
+            title: "OBJETIVOS (NOC)",
+            html: "<div></div>",
+            border: true
+        });
+
+        Subpanel.add(panelo);
+        Subpanel.doLayout();
+    };
+
+    var cargargrilla = function (numero) {
+        //var d = data.length;
+        var nomp = 'Fac' + numero
+        var Subpanel = Ext.getCmp(nomp);
+
+        var grid = Ext.create('Ext.grid.Panel', {
+            id: 'grid' + numero,
+            renderTo: Ext.getBody(),
+            layout: {
+                padding: '10', align: 'stretch'
+            },
+            store: {
+                id: 'store'+numero,
+                model: Ext.define(Ext.id(), {
+                    extend: "Ext.data.Model",
+                    idProperty: 'CodigoElemento',
+                    fields: [
+                    { name: "ValorCodigo2" },
+                        { name: "CodigoElemento" },
+                        { name: "DescripcionLocal" },
+                        { name: "ValorCodigo5" },
+                    ]
+                }),
+                autoLoad: true,
+                proxy: {
+                  /*  data: {
+                        items: [{ test: "0", sss: "0" },
+                    { test: "1", sss: "1" },
+                        ]
+                    },*/
+                    type: 'memory',
+                    //type: 'ajax',
+                 //   url: '/users.json',
+                    reader: {
+                        type: "json",
+                        //type: "json",
+                          root: 'data',
+                          idProperty: 'CodigoElemento'
+                    }
+                }
+            },
+            columns: {
+                items: [
+                    {
+                        dataIndex: "ValorCodigo2",
+                        text: "IdFactorRelacionado",
+                        hidden: true
+                    }, {
+                dataIndex: "CodigoElemento",
+                    text : "Codigo"
+            },{
+                dataIndex: "DescripcionLocal",
+                text: "Descripción"
+                , width: 290
+            },
+            {
+                dataIndex: "ValorCodigo5",
+                text: "Estado",
+                renderer: function (value) {
+                    var template = '<span style="color:{0};">{1}</span>';
+                    if (value == 2)
+                        return Ext.String.format(template, COLOR_BLUE01, "ACTIVO");
+                    if (value == 1)
+                        return Ext.String.format(template, COLOR_RED01, "INACTIVO");
+                }
+
+            }
+            ]
+            },
+            enableDragDrop: true,
+            stripeRows: true,
+            //autoExpandColumn: 'name',
+            width: '100%',
+            /*height: 325,*/
+            region: 'west'
+        });
+
+
+        Subpanel.add(grid);
+        Subpanel.doLayout();
+
+    };
+
+    function fn() {
+
+        var parametro1 = App.IdDominioPAE.getValue();
+        var parametro2 = App.IdDominioPAE.getValue();
+        var parametro3 = App.IdDominioPAE.getValue();
+        var parametro4 = App.IdDominioPAE.getValue();
+        var parametro5 = App.IdDominioPAE.getValue();
+      
+
+        if (parametro1 == 1) { idparametro1 = true; } else { idparametro1 = false; }
+        if (parametro2 == 1) { idparametro2 = true; } else { idparametro2 = false; }
+        if (parametro3 == 1) { idparametro3 = true; } else { idparametro3 = false; }
+        if (parametro4 == 1) { idparametro4 = true; } else { idparametro4 = false; }
+        if (parametro5 == 1) { idparametro5 = true; } else { idparametro5 = false; }
+      
+        if (idparametro1 == false && idparametro2 == false && idparametro3 == false && idparametro4 == false && idparametro5 == false && idparametro6 == false && idparametro7 == false && idparametro8 == false && idparametro9 == false && idparametro10 == false) {
+            return 0
+        } else {
+            return 1
+        }
+
+    }
+
+
+    var eventoRadio = function (radio, nivel) {
+
+       // alert(nivel);
+
+        var grid1 = Ext.getCmp('gridIn');
+        var store = grid1.store;
+
+        var bar = fn();
+
+        var radioAll = radio.getValue();
+        var id = radio.getValue();
+        var numero = 0;
+
+        //if (App.IdTotal.getValue() != '') {
+        //    numero = App.IdTotal.getValue();
+        //} else {
+        //    numero = 0
+        //}
+
+        grid1.store.each(function (r) {
+            x2 = x2 + parseFloat(r.get('IdMantener'));
+        });
+        total = x1 + x2 ;
+        App.txtmantener.setValue(total);
+
+
+        if (id) {
+
+            if (nivel == 5) {
+                valor = 5 + parseInt(numero);
+                App.txtmantener.setValue('1');
+
+
+            }
+
+            if (nivel == 4) {
+                valor = 4 + parseInt(numero);
+                App.txtmantener.setValue('1');
+            }
+
+            if (nivel == 3) {
+
+                valor = 3 + parseInt(numero);
+                App.txtmantener.setValue('1');
+            }
+
+            if (nivel == 2) {
+                valor = 2 + parseInt(numero);
+                App.txtmantener.setValue('1');
+            }
+
+            if (nivel == 1) {
+                valor = 1 + parseInt(numero);
+                App.txtmantener.setValue('1');
+            }
+
+           
+
+        }
+        else {
+
+            if (nivel == 5) { valor = numero - 5; App.txtmantener.setValue('0'); }
+            if (nivel == 4) { valor = numero - 4; App.txtmantener.setValue('0'); }
+            if (nivel == 3) { valor = numero - 3; App.txtmantener.setValue('0'); }
+            if (nivel == 2) { valor = numero - 2; App.txtmantener.setValue('0'); }
+            if (nivel == 1) { valor = numero - 1; App.txtmantener.setValue('0'); }
+           
+        }
+
+        var variable = fn();
+
+        if (variable == 1) {
+            App.txtmantener.setValue(valor);
+        } else {
+            App.txtmantener.setValue('');
+        }
+
+
+
+    };
+
+    var cargargrillaNic = function (nanda, noc, nic) {
+        //var d = data.length;
+        var nomp = 'Act_F' + nanda +'_'+ noc + '_' + nic;
+        var Subpanel = Ext.getCmp(nomp);
+
+        var grid = Ext.create('Ext.grid.Panel', {
+            id: 'gridAct' + nanda + '_' + noc + '_' + nic,
+            renderTo: Ext.getBody(),
+            layout: {
+                padding: '10', align: 'stretch'
+            },
+            store: {
+                id: 'store' + nanda + '_' + noc + '_' + nic,
+                model: Ext.define(Ext.id(), {
+                    extend: "Ext.data.Model",
+                    idProperty: 'IdNA',
+                    fields: [
+                    { name: "IdNA" },
+                        { name: "IdNic" },
+                        { name: "IdActividad" },
+                        { name: "Descripcion" },
+                        { name: "Estado" },
+                      /*  { name: "ValorCodigo5" },
+                        { name: "ValorCodigo5" },*/
+                        { name: "Accion" }
+                    ]
+                }),
+                autoLoad: true,
+                proxy: {
+                    /*  */
+                    type: 'ajax',
+                    //type: 'ajax',
+                    url: 'getGrillaNicActividad',
+                    extraParams: {
+                        IdNic: '0'/*nic*/
+                    },
+                    reader: {
+                        type: "json",
+                        //type: "json",
+                        root: 'data',
+                        totalproperty: 'total',
+                        idProperty: 'IdNA'
+                    }
+                }
+               /* , listeners: {
+                    load: function (sender, node, records) {
+                        Deshabilita(this);
+                    }
+                }*/
+            },
+            columns: {
+                items: [
+                    {
+                        dataIndex: "IdNA",
+                        text: "ID",
+                        hidden: true
+                    }, {
+                        dataIndex: "IdNic",
+                        text: "IdNic",
+                        hidden: true,
+                        readOnly: true
+                    },{
+                        dataIndex: "IdActividad",
+                        text: "Código",
+                        hidden: true,
+                        readOnly: true
+                    },
+                    {
+                        dataIndex: "Descripcion",
+                        text: "Actividad",
+                        xtype: 'componentcolumn',
+                        flex: 1,
+                        editor: true,
+                        component: {
+                            xtype: 'textfield'/*,
+                            readonly: true*/
+                            , listeners: {
+                                afterRender: function (sender, node, records) {
+                                    Deshabilita(this);
+                                }
+                            }
+
+                        }
+
+
+                    },
+            {
+                dataIndex: "Estado",
+                text: "Estado",
+                renderer: function (value) {
+                    var template = '<span style="color:{0};">{1}</span>';
+                    if (value == 2)
+                        return Ext.String.format(template, COLOR_BLUE01, "ACTIVO");
+                    if (value == 1)
+                        return Ext.String.format(template, COLOR_RED01, "INACTIVO");
+                }
+
+            }
+                ]
+            },
+            enableDragDrop: true,
+            stripeRows: true,
+            //autoExpandColumn: 'name',
+            width: '100%',
+            /*height: 325,*/
+            region: 'west'
+        });
+
+
+        Subpanel.add(grid);
+        Subpanel.doLayout();
+
+    };
+
+
+
+
+
+    var cargargrillaIndicaciones = function (numero, noc) {
+        //var d = data.length;
+        var nomp = 'Ind' + numero + '_' + noc;
+        var Subpanel = Ext.getCmp(nomp);
+
+        var cellEditing = Ext.create('Ext.grid.plugin.CellEditing', {
+            clicksToEdit: 1
+        });
+
+        var gridIn = Ext.create('Ext.grid.Panel', {
+            id: 'gridIn' + numero + '_' + noc,
+            frame: true,
+            plugins: [cellEditing],
+            renderTo: Ext.getBody(),
+            layout: {
+                padding: '10', align: 'stretch'
+            },
+            store: {
+                id: 'storeIn' + numero + '_' + noc,
+                model: Ext.define(Ext.id(), {
+                    extend: "Ext.data.Model",
+                    idProperty: 'CodigoElemento',
+                    fields: [
+                        { name: "ValorCodigo2" },
+                        { name: "CodigoElemento" },
+                        { name: "DescripcionLocal" },
+                        { name: "ValorCodigo5" },
+
+                    ],
+                    xtype: 'cell-editing'
+                }),
+                autoLoad: true,
+
+
+                proxy: {
+                    /*  data: {
+                          items: [{ test: "0", sss: "0" },
+                      { test: "1", sss: "1" },
+                          ]
+                      },*/
+                    type: 'memory',
+
+                    //type: 'ajax',
+                    //   url: '/users.json',
+                    reader: {
+                        type: "json",
+                        //type: "json",
+                        root: 'data',
+                        idProperty: 'CodigoElemento'
+                    }
+                }
+            },
+            
+                    
+            
+            //features: [{
+            //    id: 'group',
+            //    ftype: 'groupingsummary',
+            //    groupHeaderTpl: '{name}',
+            //    hideGroupedHeader: true,
+            //    enableGroupingMenu: false
+            //}],
+            columns: {
+                items: [
+                    {
+                        dataIndex: "ValorCodigo2",
+                        text: "IdFactorRelacionado",
+                        hidden: true,
+                        xtype: 'checkcolumn',
+
+                    }, {
+
+                        xtype: 'checkcolumn',
+                        dataIndex: "active",
+                        text: "",
+                        StopSelection: false,
+                        editable: true,
+                        width: 30
+                    },
+                    {
+                        dataIndex: "DescripcionLocal",
+                        text: "INDICADOR",
+                        flex: 1,
+                        sortable: true,
+
+                    }
+                    ,
+                    {
+
+                        text: 'ESCALA LIKER',
+                        columns: [{
+                            text: '1',
+                            width: 40,
+                            sortable: true,
+                            xtype: 'checkcolumn',
+                            editable: true,
+                            dataIndex: '1',
+                            checked: true,
+                            value: '1',
+                            id: 'Check1'
+                            , listeners: {
+                            afterRender: function ( radio, nivel) 
+                            {
+                            //    eventoRadio(this,1);
+                            }
+                        } 
+
+
+
+
+
+
+                        }, {
+                            text: '2',
+                            width: 40,
+                            sortable: true,
+                            xtype: 'checkcolumn',
+                            editable: true,
+                            dataIndex: '2',
+                            checked: true,
+                            value: '2',
+                            id: 'Check2',
+                           // handler: "eventoRadio(this,2);"
+                        }
+
+                        , {
+                            text: '3',
+                            width: 40,
+                            sortable: true,
+                            xtype: 'checkcolumn',
+                            editable: true,
+                            dataIndex: '3',
+                            checked: true,
+                            value: '3',
+                            id: 'Check3',
+                          //  handler: "eventoRadio(this,3);"
+                        },
+
+                         {
+                             text: '4',
+                             width: 40,
+                             sortable: true,
+                             xtype: 'checkcolumn',
+                             editable: true,
+                             //editor: { xtype: 'checkbox' },
+                             dataIndex: '4',
+                             checked: true,
+                             value: '4',
+                             id: 'Check4',
+                           //  handler: "eventoRadio(this,4);"
+                         },
+                          {
+                              text: '5',
+                              width: 40,
+                              sortable: true,
+                              xtype: 'checkcolumn',
+                              editable: true,
+                              //editor: { xtype: 'checkbox' },
+                              dataIndex: '5',
+                              checked: true,
+                              value: '5',
+                              id: 'Check5',
+                          //    handler: "eventoRadio(this,5);"
+
+
+
+
+                          }
+
+                        ]
+
+
+
+
+
+                    }
+
+
+                    ,
+
+           {
+
+               text: 'PUNTUACION DIANA',
+              
+               columns: [{
+                   text: 'Mantener en',
+                   width: 80,
+                   sortable: true,
+                   //summaryType: 'sum',
+                   dataIndex: 'IdMantener',
+                   editor: true,
+                   xtype: 'componentcolumn',
+                   //field: {
+                   //    xtype: 'textfield',
+                   //    enabled: true,
+                   //    editable :true
+                   //}
+                   component: {
+                       xtype: 'textfield',
+                       enabled: true,
+                       width: 65,
+                       editable: true
+                       /*,
+
+                            readonly: true*/
+                       //, listeners: {
+                       //    afterRender: function (sender, node, records) {
+                       //        Deshabilita(this);
+                       //    }
+                       /*}*/
+
+                   }
+
+               }, {
+                   text: 'Aumentar a',
+                   width: 80,
+                   sortable: true,
+                   //summaryType: 'sum',
+                   dataIndex: 'IdAumentar',
+                   editor: true,
+                   xtype: 'componentcolumn',
+                   
+                   component: {
+                       xtype: 'numberfield',
+                       enabled: true,
+                       width: 65,                       
+                       
+
+                       listeners:
+                           {
+                              
+
+                               keyup: function (thisSpinner, numberValue, directionString) {
+
+                                   Calcular1(numero, noc);
+
+                               },
+                               
+
+                               spinup: function (thisSpinner, numberValue, directionString) {
+
+                                   Calcular1_mas(numero, noc);
+
+                               },
+
+                              spindown: function (thisSpinner , numberValue, directionString) {
+
+                                   Calcular1_menos(numero, noc);
+
+                              }
+
+                           
+                           }
+
+                          // this.Calcular1_menos.SpinDown(),
+                     //  handler: this.spinUp.Calcular1_mas
+
+                   }
+               }]
+
+
+           }
+                ]
+            }        
+            
+            ,
+
+
+
+            enableDragDrop: false,
+            stripeRows: false,
+            //autoExpandColumn: 'name',
+            width: '100%',
+            /*height: 325,*/
+            region: 'west'
+
+          
+        }
+
+
+        );
+
+
+
+        
+
+       // var RegionInd = Ext.create('App.BookDetail', {
+       //     extend: 'Ext.panel.Panel',
+       //   //  id: 'RegionInd' + numero + '_' + noc,
+
+       //     id: 'RegionInd' + numero + '_' + noc,
+       //     //    align: 'right',
+       //     //centered: true,
+       //     // register the App.BookDetail class with an xtype of bookdetail
+       //     alias: 'widget.bookdetail',
+            
+       //     // add tplMarkup as a new property
+       //     tplMarkup: [
+       //         'PUNTUACION TOTAL: <a href="{DetailPageURL}" </a><br/>',
+                
+       //     ],
+
+            
+
+       //     // startingMarup as a new property
+       ////     startingMarkup: 'PUNTUACION TOTAL',
+        
+           
+       //     items   : [
+                       
+       //      {
+       //          xtype: 'fieldset',
+       //          title: '',
+       //          collapsible: true,
+                 
+       //          //width: 300,
+       //         // bodyStyle: 'margin: 10px; padding: 15px 3px;',
+       //          // fieldStyle:     "align:right;",
+       //          style: 'padding-left: 900px',
+       //          defaults: {
+       //              labelWidth: 120,
+       //              anchor: '100%',
+       //              layout: {
+       //                  type: 'hbox',
+       //                  align: 'right',
+       //                  defaultMargins: {top: 0, right: 5, bottom: 0, left: 0}
+       //              }
+       //          },
+       //          items: [
+       //              {
+       //                  xtype: 'fieldcontainer',
+       //                  fieldLabel: 'PUNTUACION TOTAL',
+       //                  combineErrors: true,
+       //                  msgTarget: 'under',
+       //                  defaults: {
+       //                      hideLabel: true
+       //                  },
+       //                  items: [
+       //                      {xtype: 'displayfield', value: ''},
+       //                      {xtype: 'textfield',    fieldLabel: 'Phone 1', name: 'phone-1', width: 65,id:'txtmantener'},
+       //                      {xtype: 'displayfield', value: ''},
+       //                      { xtype: 'textfield', fieldLabel: 'Phone 2', name: 'phone-2', width: 65, margins: '0 5 0 2', id: 'txtaumentar'  }
+                           
+       //                  ]
+       //              },
+                     
+                     
+       //          ]
+       //      }
+       //     ],            
+
+       //     bodyPadding: 7
+       // });
+
+        var filterPanel = Ext.create('Ext.panel.Panel', {
+
+
+            id: 'filterPanel' + numero + '_' + noc,
+         //   bodyPadding: 5,  // Don't want content to crunch against the borders
+         //   width: 600,
+           // title: 'PUNTUACION TOTAL',
+            tplMarkup: [
+              'PUNTUACION TOTAL: <a href="{DetailPageURL}" </a><br/>',
+                
+          ],
+            items   : [
+                       
+             {
+                 xtype: 'fieldset',
+                  title: '',
+                  collapsible: true,
+                 
+                 //width: 300,
+                // bodyStyle: 'margin: 10px; padding: 15px 3px;',
+                 // fieldStyle:     "align:right;",
+                 style: 'padding-left: 900px',
+                  defaults: {
+                     labelWidth: 120,
+                      anchor: '100%',
+                      layout: {
+                          type: 'hbox',
+                          align: 'right',
+                          defaultMargins: {top: 0, right: 5, bottom: 0, left: 0}
+                      }
+                  },
+                  items: [
+                      {
+                          xtype: 'fieldcontainer',
+                         fieldLabel: 'PUNTUACION TOTAL',
+                          combineErrors: true,
+                          msgTarget: 'under',
+                          defaults: {
+                              hideLabel: true
+                         },
+                          items: [
+                             {xtype: 'displayfield', value: ''},
+                             { xtype: 'textfield', fieldLabel: 'Phone 1', name: 'phone-1', width: 65, id: 'txtmantener' + numero + '_' + noc },
+                              {xtype: 'displayfield', value: ''},
+                              { xtype: 'textfield', fieldLabel: 'Phone 2', name: 'phone-2', width: 65, margins: '0 5 0 2', id: 'txtaumentar' + numero + '_' + noc }
+                           
+                         ]
+                     },
+                     
+                     
+                  ]
+              }
+             ],            
+
+           bodyPadding: 7,
+            renderTo: Ext.getBody()
+        });
+
+
+        Subpanel.add(gridIn, filterPanel);
+        Subpanel.doLayout();
+       
+    };
+
+
+   
+
+
+    Ext.define('App.BookStore', {
+        extend: 'Ext.data.Store',
+        constructor: function (config) {
+            config = config || {};
+
+            config.model = 'Book';
+            config.proxy = {
+                type: 'ajax',
+                url: 'sheldon.xml',
+                reader: Ext.create('Ext.data.reader.Xml', {
+                    // records will have an "Item" tag
+                    record: 'Item',
+                    id: 'ASIN'
+                    
+                })
+            };
+
+            // call the superclass's constructor
+            this.callParent([config]);
+        }
+    });
+
+
+    function Calcular2(valu) {
+        //var x1 = App.Orina.getValue();
+        //var x2 = App.Heces.getValue();
+        //var x3 = App.Vomitos.getValue();
+        //var x4 = App.Succion.getValue();
+        //var x5 = App.PerdidaSNG.getValue();
+        //var x6 = App.Temperatura.getValue();
+
+        var x7 = 0;
+
+        /*var x8*/
+
+        var total = 0;
+        var grid1 = Ext.getCmp('gridIn');
+        var store = grid1.store;
+
+
+
+
+        grid1.store.each(function (r) {
+            x7 = x7 + parseFloat(r.get('IdAumentar'));
+        });
+
+        total =  x7;
+
+     //   (App.txtaumentar + numero + '_' + noc).setValue(total);
+
+    }
+
+
+
+
+    function Calcular1(numero, noc) {
+      
+      
+
+        var x3 = 0;
+        var total = 0;
+        var grid1 = Ext.getCmp('gridIn' + numero + '_' + noc);
+        var store = grid1.store;
+        var txtaument = Ext.getCmp('txtaumentar' + numero + '_' + noc);
+
+        grid1.store.each(function (r) {
+            x3 = x3 + parseFloat(r.get('IdAumentar'));
+        });
+        total =  x3;
+        txtaument.setValue(total);
+
+    }
+
+
+    function Calcular1_menos(numero, noc) {
+       
+        
+        var x3 = 0;
+        var total = 0;
+        var grid1 = Ext.getCmp('gridIn' +  numero + '_' + noc);
+        var store = grid1.store;
+        var txtaument1 = Ext.getCmp('txtaumentar' + numero + '_' + noc);
+
+        grid1.store.each(function (r) {
+            x3 = x3 + parseFloat(r.get('IdAumentar'));
+        });
+        total =  x3 - 1;
+        txtaument1.setValue(total);
+
+    }
+
+
+    Calcular1_mas = function (numero, noc) {
+       
+
+
+        var x3 = 0;
+        var total = 0;
+        var grid1 = Ext.getCmp('gridIn' + numero + '_' + noc);
+        var store = grid1.store;
+        var txtaument2 = Ext.getCmp('txtaumentar' + numero + '_' + noc);
+
+        grid1.store.each(function (r) {
+            x3 = x3 + parseFloat(r.get('IdAumentar'));
+
+        });
+
+        total = x3 + 1;
+        txtaument2.setValue(total);
+
+    };
+
+
+
+    var cargarNOC = function (data,nanda) {
+        var d = data.length;
+        // var Paneles = Ext.getCmp('Paneles');
+        var numero;
+        for (var i = 0; i < d; i++) {
+
+            var myButton = new Ext.Button({
+                id: 'AgregarIND'+ nanda+'_'+data[i].IdNoc,
+                text: 'Añadir',
+                iconCls: 'icon-add',
+                handler: this.eventoagregarindicador
+            });
+            var tb = new Ext.Toolbar({
+                id: 'tbIN' + nanda + '_' + data[i].IdNoc,
+                items: [myButton
+                ]
+            });
+
+            var panel_IND = new Ext.Panel({
+                id: 'Ind_F' + nanda + '_' + data[i].IdNoc,
+                /*title: "INDICADORES",
+                tbar: tb,*/
+             /*   html: "<div></div>",*/
+                border: true,
+                hidden: true
+            });
+
+            var panelIND = new Ext.Panel({
+                id: 'Ind' + nanda + '_' + data[i].IdNoc,
+                title: "INDICADORES",
+                tbar: tb,
+              /*  html: "<div></div>",*/
+                border: true
+            });
+
+            var myButton2 = new Ext.Button({
+                id: 'AgregarINT' + nanda+'_'+data[i].IdNoc,
+                text: 'Añadir',
+                iconCls: 'icon-add',
+                handler: this.eventoagregarintervencion
+            });
+            var tb2 = new Ext.Toolbar({
+                id: 'tbINT' + nanda + '_'+ data[i].IdNoc,
+                items: [myButton2
+                ]
+            });
+
+            /***************************************/
+            var panelXZY = new Ext.Panel({
+                id: 'Nic_F' + nanda + '_' + data[i].IdNoc,
+                /*html: "<div></div>",*/
+                border: true,
+                hidden: true
+            });
+
+            var panelInterv = new Ext.Panel({
+                id: 'Intervencion' + nanda + '_' + data[i].IdNoc,
+                /* title: "OBJETIVOS (NOC)",*/
+                /*  tbar: tb2,*/
+                /* html: "<div></div>",*/
+                border: true,
+                layout: {
+                    type: 'accordion', padding: '10', align: 'stretch'
+                },
+                items: [panelXZY],
+                autoScroll: true
+            });
+
+
+            /********************************************/
+            var panelINT = new Ext.Panel({
+                id: 'Int' + nanda + '_' + data[i].IdNoc,
+                title: "INTERVENCIONES (NIC)",
+                tbar: tb2,
+                /* html: "<div></div>",*/
+                items: [panelInterv],
+                border: true
+            });
+
+            var panel4 = Ext.create('Ext.panel.Panel', {
+                layout: {
+                    type: 'accordion', padding: '10', align: 'stretch'
+                },
+                items: [panel_IND,panelIND, panelINT],
+                autoScroll: true,
+                renderTo: Ext.getBody(),
+                width: '100%',
+               /* height: 300,*/
+                region: 'center',
+                left: '2%',
+                right: '2%',
+                top: 10
+            });
+            var nombre = 'PanelObj' + nanda;
+            Ext.getCmp(nombre).add(Ext.create('Ext.Panel', {
+                id: 'NOC' + nanda + '_' + data[i].IdNoc,
+                title: "<table style='width:100%';><col width='70%'><col witdh='30%'><tr><td><span>" + data[i].Codigo + " - " + data[i].Descripcion + "</span></td></tr></table>",
+                //  html: "<div class='x-panel x-panel-default' style='height: 400px;width: 96%;left: 2%;right: 2%;top: 10px;' id='SubPanel'><div class='x-toolbar x-docked x-toolbar-default x-docked-top x-toolbar-docked-top x-toolbar-default-docked-top x-box-layout-ct' id='toolbar-1011' style='width: 100%; right: auto; left: 0px; top: 0px;'><div id='toolbar-1011-innerCt' class='x-box-inner ' role='presentation' style='width: 100%x; height: 0px;'><div id='toolbar-1011-targetEl' class='x-box-target' style='width: 665px;'></div></div></div><div id='SubPanel" + data[i].IdNanda + "-body' class='x-panel-body x-panel-body-default x-accordion-layout-ct x-panel-body-default' style='left: 0px; width: 669px; height: 395px; top: 5px;'><div id='SubPanel" + data[i].IdNanda + "-innerCt' class='x-box-inner ' role='presentation' style='height: 393px; width: 667px;'><div id='SubPanel" + data[i].IdNanda + "-targetEl' class='x-box-target' style='width: 667px;'></div></div></div></div>",
+                border: true,
+                items: [panel4]
+            }));
+
+            numeroNOC = numeroNOC + 1;
+
+             numero = data[i].IdNoc;
+        }
+        cargargrillaIndicaciones(nanda, numero);
+
+    };
+
+    var cargarNIC = function (data, nanda, noc) {
+        var d = data.length;
+        // var Paneles = Ext.getCmp('Paneles');
+        var numero;
+        for (var i = 0; i < d; i++) {
+
+            var myButton = new Ext.Button({
+                id: 'AgregarACT' + nanda + '_'+ noc + '_' + data[i].IdNic,
+                text: 'Añadir',
+                iconCls: 'icon-add',
+                handler: this.eventoagregarActividad
+            });
+            var tb = new Ext.Toolbar({
+                id: 'tbACT' + nanda + '_' + noc + '_' + data[i].IdNic,
+                items: [myButton]
+            });
+
+            var panel_ACT = new Ext.Panel({
+                id: 'Act_F' + nanda + '_' + noc + '_' + data[i].IdNic,
+                /*title: "INDICADORES",
+                tbar: tb,*/
+                /*   html: "<div></div>",*/
+                border: false/*,
+                hidden: true*/
+            });
+            var panel_ACT2 = new Ext.Panel({
+                id: 'Act_F_' + nanda + '_' + noc + '_' + data[i].IdNic,
+                /*title: "INDICADORES",
+                tbar: tb,*/
+                /*   html: "<div></div>",*/
+                border: false,
+                hidden: true
+            });
+
+            var panelACT = new Ext.Panel({
+                id: 'Act' + nanda + '_' + noc + '_' + data[i].IdNic,
+                /*title: "INDICADORES",*/
+                tbar: tb,
+                items: [panel_ACT],
+                /*  html: "<div></div>",*/
+                border: false
+            });
+
+         /*   var myButton2 = new Ext.Button({
+                id: 'AgregarINT' + nanda + '_' + data[i].IdNoc,
+                text: 'Añadir',
+                iconCls: 'icon-add',
+                handler: this.eventoagregarintervencion
+            });
+            var tb2 = new Ext.Toolbar({
+                id: 'tbINT' + data[i].IdNoc,
+                items: [myButton2
+                ]
+            });*/
+
+            /***************************************/
+         /*   var panelXY = new Ext.Panel({
+                id: 'XY_' + data[i].IdNoc,
+                html: "<div></div>",
+                border: true,
+                hidden: true
+            });
+
+            var panelInterv = new Ext.Panel({
+                id: 'Intervencion' + data[i].IdNoc,
+
+                border: true,
+                layout: {
+                    type: 'accordion', padding: '10', align: 'stretch'
+                },
+                items: [panelXY],
+                autoScroll: true
+            });*/
+
+
+            /********************************************/
+          /*  var panelINT = new Ext.Panel({
+                id: 'Int' + data[i].IdNoc,
+                title: "INTERVENCIONES (NIC)",
+                tbar: tb2,
+
+                items: [panelInterv],
+                border: false
+            });*/
+
+            var panel4 = Ext.create('Ext.panel.Panel', {
+                /*layout: {
+                    type: 'accordion', padding: '10', align: 'stretch'
+                },*/
+                items: [panel_ACT2, panelACT],
+                autoScroll: true,
+                renderTo: Ext.getBody(),
+                width: '100%',
+                /* height: 300,*/
+                region: 'center',
+                left: '2%',
+                right: '2%',
+                top: 10
+            });
+            var nombre = 'Intervencion' + nanda + '_' + noc;
+            Ext.getCmp(nombre).add(Ext.create('Ext.Panel', {
+                id: 'NIC' + nanda + '_' + noc + '_' + data[i].IdNic,
+                title: "<table style='width:100%';><col width='70%'><col witdh='30%'><tr><td><span>" + data[i].IdNic + " - " + data[i].Descripcion + "</span></td></tr></table>",
+                //  html: "<div class='x-panel x-panel-default' style='height: 400px;width: 96%;left: 2%;right: 2%;top: 10px;' id='SubPanel'><div class='x-toolbar x-docked x-toolbar-default x-docked-top x-toolbar-docked-top x-toolbar-default-docked-top x-box-layout-ct' id='toolbar-1011' style='width: 100%; right: auto; left: 0px; top: 0px;'><div id='toolbar-1011-innerCt' class='x-box-inner ' role='presentation' style='width: 100%x; height: 0px;'><div id='toolbar-1011-targetEl' class='x-box-target' style='width: 665px;'></div></div></div><div id='SubPanel" + data[i].IdNanda + "-body' class='x-panel-body x-panel-body-default x-accordion-layout-ct x-panel-body-default' style='left: 0px; width: 669px; height: 395px; top: 5px;'><div id='SubPanel" + data[i].IdNanda + "-innerCt' class='x-box-inner ' role='presentation' style='height: 393px; width: 667px;'><div id='SubPanel" + data[i].IdNanda + "-targetEl' class='x-box-target' style='width: 667px;'></div></div></div></div>",
+                border: true,
+                items: [panelACT/*panel4*/]
+            }));
+
+            numeroNIC = numeroNIC + 1;
+            numero = data[i].IdNic;
+        }
+        cargargrillaNic(nanda,noc,numero);
+
+    };
+
+    ///
+    eventoagregarfactor = function(button, event) {
+
+        var nanda = button.id.replace('Agregar','')
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("AdicionarFactor"))',
+            params: {
+                MODO: 'VER',
+                idNanda: nanda
+
+            }
+        });
+
+    };
+        eventoagregarobjetivo = function (button, event) {
+
+            var nanda = button.id.replace('AgregarO', '')
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("AdicionarObjetivo"))',
+                params: {
+                    MODO: 'VER',
+                    idNanda: nanda
+
+                }
+            });
+
+        };
+
+        eventoagregarintervencion = function (button, event) {
+
+            var dato = button.id.replace('AgregarINT', '')
+            var cadena = dato.split('_');
+
+            var nanda = cadena[0];
+            var noc = cadena[1];
+
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("AdicionarIntervencion"))',
+                params: {
+                    MODO: 'VER',
+                    idNanda: nanda,
+                    idNoc: noc
+                }
+            });
+
+        };
+
+        eventoagregarActividad = function (button, event) {
+
+            var dato = button.id.replace('AgregarACT', '')
+            var cadena = dato.split('_');
+
+            var nanda = cadena[0];
+            var noc = cadena[1];
+            var nic = cadena[2];
+
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("AdicionarActividad"))',
+                params: {
+                    MODO: 'VER',
+                    idNanda: nanda,
+                    idNoc: noc,
+                    idNic: nic
+                }
+            });
+
+        };
+
+        eventoagregarindicador = function (button, event) {
+
+            var dato = button.id.replace('AgregarIND', '')
+
+            var cadena = dato.split('_');
+
+            var nanda = cadena[0];
+            var noc = cadena[1];
+
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("AdicionarIndicador"))',
+                params: {
+                    MODO: 'VER',
+                    idNanda: nanda,
+                    idNoc: noc
+
+
+                }
+            });
+
+        };
+
+
+    ///
+
+    function EnviarData(grid) {
+
+        if (true) {
+            App.taAlerts.setVisible(false);
+            App.taAlerts.setValue(null);
+            App.conthbIndicaError.setVisible(false);
+            source = App.grillaValoracionNanda;
+            var store = App.storeValoracionNanda;
+            var status = 0;
+            var i = 0;
+            var valores = "";
+            var ArrayList = new Array();
+
+            var records = App.grillaValoracionNanda.getSelectionModel().getSelection();
+            var invalidFields = new Array();
+            var fila = 0;
+            App.storeValoracionNanda.each(function (r) {
+                fila = fila + 1;
+                ///VALIDACIÓN
+                setValuesGridForm(r, null);
+                invalidFields = getInvalidFieldsGrid(App.formactual, invalidFields, fila);
+
+                /////////////
+                var MA_MiscelaneosDetalle = {
+                    ValorEntero7: r.get('ValorEntero7'),
+                    ValorCodigo2: r.get('ValorCodigo2'),
+                    ValorCodigo3: r.get('ValorCodigo3'),
+                    ValorCodigo4: r.get('ValorCodigo4'),
+
+                    CodigoElemento: r.get('CodigoElemento'),
+                    ACCION: (r.get('ACCION') == 'NUEVO' ? 'NUEVO' : 'UPDATE')
+
+                };
+                ArrayList.push(MA_MiscelaneosDetalle);
+                i = i + 1;
+            });
+            if (invalidFields.length > 0) {
+                addRecursosValidacion(invalidFields);
+                App.cmdGuardar.setDisabled(false);
+            } else {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("Save_DianosticoValoracionNanda"))',
+                    params: {
+                        selection: ArrayList,
+                        text: 'O'
+                    }
+
+                });
+            }
+        } else {
+            App.cmdGuardar.setDisabled(false);
+        }
+    }
+
+
+        function InsertPanel(valor) {
+            //if (soloLectura == '1') {
+           //     setIndicaCambios(false);
+          //  } else {
+                if (valor.getValue() != '') {
+                    var obj = JSON.parse(valor.getValue());
+                    var nanda = obj.ValorCodigo3;
+                   // var codigo = obj.CodigoElemento;
+                   // var estado = obj.ValorCodigo7;
+                    if (validaDuplicadopanel(nanda)) {
+                        Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: 'Advertencia',
+                            message: 'Ya existe registro',
+                            tipo: 'WARNING'
+                        }
+                    });
+                    return;
+                    } else {
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("cargar_planf"))',
+                            params: {
+                                idNanda: nanda
+                            },
+                            success: function (result) { cargar(result.data); }
+                        });
+                    }
+                    //valor.setValue('');
+                }
+            }
+
+      //  }
+
+        function InsertRowSubPanel(valor) {
+           // if (soloLectura == '1') {
+           //     setIndicaCambios(false);
+           // } else {
+                if (valor.getValue() != '') {
+                    var obj = JSON.parse(valor.getValue());
+                    var CodigoElemento = obj.CodigoElemento;
+                    var DescripcionLocal = obj.DescripcionLocal;
+                    var Estado = obj.ValorCodigo5;
+                    var IdNanda = obj.ValorCodigo1;
+                    var IdFRN = obj.ValorCodigo2;
+                    var NandaAUX = obj.ValorEntero1;
+
+                    var grilla = 'grid' + NandaAUX;
+                    var grid = Ext.getCmp(grilla);
+                    var store1 = 'store' + NandaAUX;
+                    var myStore = Ext.getStore(store1);
+
+
+                    //var ValorTipoCod = 'S';
+                    if (validaDuplicadoRowSubPanel(CodigoElemento, store1)) {
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("showMensajeNotify"))',
+                            params: {
+                                titulo: 'Advertencia',
+                                message: 'Ya existe registro',
+                                tipo: 'WARNING'
+                            }
+                        });
+                        valor.setValue('');
+                        return;
+                    }
+                    var grilla = 'grid' + NandaAUX;
+                    var grid = Ext.getCmp(grilla);
+                   // var store = grid.getStore();
+                    var store1 = 'store' + NandaAUX;
+                    //setIndicaCambios(true);
+                    var myStore = Ext.getStore(store1);
+                    //myStore.load();
+                   /* grid.store.insert(0, {
+                        CodigoElemento: CodigoElemento,
+                        DescripcionLocal: DescripcionLocal,
+                        ValorCodigo5: Estado//,
+                       // ValorCodigo1: IdNanda,
+                       // ValorCodigo2: IdFRN,
+                        //ACCION: 'NUEVO'
+                    });
+                    Ext.Function.defer(function () {
+                        grid.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+                    }, 100);*/
+
+                    Ext.getStore(myStore).add({
+                        CodigoElemento: CodigoElemento,
+                        DescripcionLocal: DescripcionLocal,
+                        ValorCodigo5: Estado,
+                       // ValorCodigo1: IdNanda,
+                        ValorCodigo2: IdFRN
+                       // ACCION: 'NUEVO'
+
+
+                    });
+
+
+
+
+
+                    valor.setValue('');
+                }
+            }
+        // }
+
+        function InsertRowPanelACTIVIDAD(valor) {
+
+            if (valor.getValue() != '') {
+                var obj = JSON.parse(valor.getValue());
+                var CodigoElemento = obj.CodigoElemento;
+                var DescripcionLocal = obj.DescripcionLocal;
+                var Estado = obj.ValorCodigo5;
+                var IdActividad = obj.ValorCodigo1;
+                var IdNA = obj.ValorCodigo2;
+
+                var nandaAUX = obj.ValorEntero1;
+                var NocAux = obj.ValorEntero2;
+                var NicAux = obj.ValorEntero3;
+
+                var grilla = 'gridAct' + nandaAUX+'_'+NocAux + '_' + NicAux;
+                var grid = Ext.getCmp(grilla);
+                var store1 = 'store' + nandaAUX + '_' + NocAux + '_' + NicAux;
+                var myStore = Ext.getStore(store1);
+
+                if (validaDuplicadoPanelAct(IdActividad, store1)) {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: 'Advertencia',
+                            message: 'Ya existe registro',
+                            tipo: 'WARNING'
+                        }
+                    });
+                    valor.setValue('');
+                    return;
+                }
+              /*  var grilla = 'grid' + IdNanda;
+                var grid = Ext.getCmp(grilla);
+                // var store = grid.getStore();
+                var store1 = 'store' + IdNanda;
+
+                var myStore = Ext.getStore(store1);*/
+                setIndicaCambios(true);
+
+                Ext.getStore(myStore).add({
+                    IdActividad: IdActividad,
+                    Descripcion: DescripcionLocal,
+                    Estado: Estado,
+                    // ValorCodigo1: IdNanda,
+                    IdNA: IdNA
+                    // ACCION: 'NUEVO'
+
+                });
+
+
+
+
+
+                valor.setValue('');
+            }
+        }
+
+        function InsertPanelNOC(valor) {
+            //if (soloLectura == '1') {
+            //     setIndicaCambios(false);
+            //  } else {
+            if (valor.getValue() != '') {
+                var obj = JSON.parse(valor.getValue());
+                var noc = obj.CodigoElemento;
+                var nanda = obj.ValorCodigo1;
+                var nandaAUX = obj.ValorEntero1;
+                // alert(nanda);
+                // var codigo = obj.CodigoElemento;
+                // var estado = obj.ValorCodigo7;
+                if (validaDuplicadopanelNOC(noc)) {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: 'Advertencia',
+                            message: 'Ya existe registro',
+                            tipo: 'WARNING'
+                        }
+                    });
+                    return;
+                } else {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("cargar_NOC"))',
+                        params: {
+                            idNOC: noc
+                        },
+                        success: function (result) { cargarNOC(result.data, nandaAUX); }
+                    });
+
+                    /*cargarNOC(obj);*/
+                }
+                //valor.setValue('');
+            }
+        };
+
+
+        function InsertPanelNIC(valor) {
+            //if (soloLectura == '1') {
+            //     setIndicaCambios(false);
+            //  } else {
+            if (valor.getValue() != '') {
+                var obj = JSON.parse(valor.getValue());
+                var noc = obj.CodigoElemento;
+                var nic = obj.ValorCodigo1;
+
+                var nandaAUX = obj.ValorEntero1;
+                var nocAUX = obj.ValorEntero2;
+
+                // alert(nanda);
+                // var codigo = obj.CodigoElemento;
+                // var estado = obj.ValorCodigo7;
+                if (validaDuplicadopanelNIC(noc,nic)) {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: 'Advertencia',
+                            message: 'Ya existe registro',
+                            tipo: 'WARNING'
+                        }
+                    });
+                    return;
+                } else {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("cargar_NIC"))',
+                        params: {
+                            idNOC: noc,
+                            idNic: nic
+                        },
+                        success: function (result) { cargarNIC(result.data, nandaAUX,nocAUX); }
+                    });
+
+                    /*cargarNOC(obj);*/
+                }
+                //valor.setValue('');
+            }
+        }
+
+        function Deshabilita(ev) {
+          /*  var nombre = value.storeId;
+
+            Ext.getStore(nombre).each(function (r) {
+
+                if (r.get('IdNA') != 0) {
+
+                    r.get('Descripcion').setReadOnly(true);
+
+                }
+            });*/
+            /*alert(ev)*/
+
+            if (ev.record.data.IdNA != 0) {
+                ev.setReadOnly(true);
+
+
+            }
+
+
+        }
+
+
+
+
+
+    </script>
+
+
+    <script>
+        var refreshTree = function (tree) {
+            App.direct.RefreshMenu({
+                success: function (node) {
+                    if (!Ext.isEmpty(node)) {
+                        tree.setRootNode(node);
+                    }
+                    else {
+                        tree.getRootNode().removeAll();
+                    }
+                }
+            });
+        };
+        var aRecordSelector = {
+            add: function (valor) {
+                var rango = valor.split('RowIndex');
+                var rango = rango[1].split(':');
+                var rango = rango[1].split('}');
+                source = App.GridPanel1;
+                var store = App.StoreTasks;
+                var status = 0;
+                var i = 0;
+                var clinico = "";
+                var atencion = "";
+                if (App.GridPanel1.getSelectionModel().hasSelection()) {
+                    var records = App.GridPanel1.getSelectionModel().getSelection();
+                    App.StoreTasks.each(function (r) {
+                        if (rango[0] == i) {
+                            clinico = r.get('Persona_Old');
+                            atencion = r.get('IdPersonaUnificado');
+                        }
+                        i = i + 1;
+                    });
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("SelectClinico"))',
+                        params: {
+                            Clinico: clinico,
+                            Atencion: atencion
+                        }
+                    });
+                }
+            }
+        };
+    </script>
+
+    <script>
+    function eventoRenderForm() {
+        var kk = 195;
+        var scrH = screen.height;
+        var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+        var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+        if (southH == 0) {
+            southH = 30;
+        }
+        var dimCentral = (scrH - (northH + southH) - kk);
+        App.formactual.setHeight(dimCentral);
+    }
+    var indicaCambios = false;
+    function setIndicaCambios(value) {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("setIndicaCambiosFormulario"))',
+            params: {
+                indica: (value ? 1 : 0)
+            }
+        });
+        indicaCambios = value;
+    }
+
+    var seleccRecordActual = null;
+    function setSeleccionActual(record) {
+        seleccRecordActual = record;
+    }
+
+    var count = 0; // a counter for new records
+
+    function visibleGrid(grid) {
+        grid.visibleGrid(true);
+    }
+
+    function addRecord(grid) {
+        setIndicaCambios(true);
+        grid.store.insert(0, { CODIGOELEMENTO: 'New' + count++ });
+
+        Ext.Function.defer(function () {
+            grid.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+        }, 100);
+    }
+
+    function deleteActual(record) {
+        seleccRecordActual = record;
+        if (seleccRecordActual != null) {
+            setIndicaCambios(true);
+            var store = App.grillaValoracionNanda.store;
+            var par1 = seleccRecordActual.data.ValorCodigo1;
+            var par2 = seleccRecordActual.data.CodigoElemento;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("addEliminar_DianosticoValoracionNanda"))',
+                params: {
+                    selection: '',
+                    codigo: par1,
+                    secuencia: par2
+                }
+            });
+
+            store.remove(seleccRecordActual);
+
+            seleccRecordActual = null;
+        }
+
+    };
+    var eventoOnEditar = function (btn) {
+        App.cmdGuardar.setDisabled(false);
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+
+    };
+
+    function selectRecord(grid, id) {
+        var record = grid.store.getById(id);
+
+        grid.store.loadPage(grid.store.findPage(record), {
+            callback: function () {
+                grid.getSelectionModel().select(record);
+            }
+        });
+    };
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+            App.conthbIndicaError.setVisible(true);
+            App.taAlerts.focus();
+
+        } else {
+            App.taAlerts.setVisible(false);
+            App.conthbIndicaError.setVisible(false);
+        }
+
+    };
+
+    var getInvalidFields = function (form) {
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+        });
+        return invalidFields;
+    };
+
+    var beforeSave = function (form) {
+        App.taAlerts.setVisible(false);
+        App.taAlerts.setValue(null);
+        App.conthbIndicaError.setVisible(false);
+        var FieldsInvalidos = getInvalidFields(form);
+        if (FieldsInvalidos.length > 0) {
+            addRecursosValidacion(FieldsInvalidos);
+        }
+
+    };
+    var addRecursosValidacion = function (FieldsInvalidos) {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("addRecursosValidacion"))',
+                params: {
+                    data: FieldsInvalidos,
+                    indica: 'VALIDAR',
+                },
+                success: function (result) { accionMensajes(result.data); }
+            });
+    };
+
+    var getInvalidFieldsGrid = function (form, invalidFields, fila) {
+        var fields = App.formactual.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: 'Fila N° ' + fila + '-' + field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+                field.reset();
+            }
+        });
+        return invalidFields;
+    };
+    var setValuesGridForm = function (r,valor) {
+        ////ESTE METODO  CAMBIA DE ACUERDO A CADA FORMULARIO:
+        var ValorCodigo1= r.get('ValorCodigo1');
+        var ValorCodigo2= r.get('ValorCodigo2');
+        var ValorCodigo3= r.get('ValorCodigo3');
+        var ValorCodigo4= r.get('ValorCodigo4');
+        var ValorCodigo5= r.get('ValorCodigo5');
+        var ValorCodigo6= r.get('ValorCodigo6');
+        var ValorEntero5= r.get('ValorEntero5');
+        var ValorEntero6= r.get('ValorEntero6');
+        var ValorEntero7= r.get('ValorEntero7');
+
+        if (ValorEntero7 == null || ValorEntero7 == '') {
+            App.IdDominioPAE.setValue(null);
+        }
+        App.Observacion.setValue(ValorCodigo6 == 0 ? null : ValorCodigo6);
+       // App.CadenaRecursiva.setValue(ValorCodigo3 == 0 ? null : ValorCodigo3);
+      //  App.Estado.setValue(ValorCodigo4 == 0 ? null : ValorCodigo4);
+        /**
+        App.TipoAntecedente.setValue(ValorCodigo5 == 0 ? null : ValorCodigo5);
+        App.IndicadorPreExistencia.setValue(ValorEntero5 == 0 ? null : ValorEntero5);
+        App.IndicadorCronico.setValue(ValorEntero6 == 0 ? null : ValorEntero6);
+        App.IndicadorNuevo.setValue(ValorEntero7 == 0 ? null : ValorEntero7);
+        */
+    };
+
+    </script>
+    <script>
+
+    var mmValidation = function (m) {
+        if (m.getValue() > 59) {
+            m.setValue(59);
+        }
+
+    }
+
+
+    var hhValidation = function (h) {
+        str = h.value;
+        tempo = "'";
+        str = str.replace('javascript:myFunction(' + tempo, '');
+        str = str.replace('%20', ' ');
+        str = str.replace('%C3%B3', 'ó');
+        str = str.replace('%C3%A1', 'á');
+        str = str.replace('%C3%A9', 'é');
+        str = str.replace('%C3%AD', 'í');
+        str = str.replace('%C3%BA', 'ú');
+        str = str.replace('%C3%B1', 'ñ');
+
+        str = str.replace('%C3%8D', 'Í');
+        str = str.replace('%C3%93', 'Ó');
+        str = str.replace('%C3%81', 'Á');
+        str = str.replace('%C3%91', 'Ñ');
+        str = str.replace('%C3%9A', 'Ú');
+        str = str.replace(tempo + ')', '');
+        h.setValue(str);
+
+    }
+
+    function InsertRow(valor, estado, soloLectura) {
+        if (soloLectura == '1') {
+            setIndicaCambios(false);
+        } else {
+            if (valor.getValue() != '') {
+                var obj = JSON.parse(valor.getValue());
+                var DescripcionLocalVar = obj.DescripcionLocal;
+                var codigo = obj.CodigoElemento;
+                var estado = obj.ValorCodigo7;
+                if (validaDuplicado(DescripcionLocalVar)) {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: 'Advertencia',
+                            message: 'Ya existe registro',
+                            tipo: 'WARNING'
+                        }
+                    });
+                    valor.setValue('');
+                    return;
+                } else {
+                    var grid = Ext.getCmp("grillaValoracionNanda");
+                    setIndicaCambios(true);
+                    grid.store.insert(0, { CodigoElemento: codigo, ValorCodigo6: DescripcionLocalVar, ValorCodigo4: estado, ACCION: "NUEVO" });
+                    Ext.Function.defer(function () {
+                        grid.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+                    }, 100);
+                }
+                valor.setValue('');
+            }
+        }
+
+    }
+    function validaDuplicado(valor) {
+        var estados = false;
+        var valor1
+        var valor2
+        App.storeValoracionNanda.each(function (r) {
+            if ((r.get('ValorCodigo6')) == (valor)) estados = true;
+        });
+        // alert(estados);
+        return estados;
+    }
+    function validaDuplicadofactor(valor) {
+        var estados = false;
+        var valor1
+        var valor2
+        App.storeValoracionNanda.each(function (r) {
+            if ((r.get('ValorCodigo6')) == (valor)) estados = true;
+        });
+        // alert(estados);
+        return estados;
+
+    }
+
+    function validaDuplicadopanel(valor) {
+        var estados = false;
+
+
+        if (document.getElementById("Nanda"+valor)) estados = true;
+
+        // alert(estados);
+        return estados;
+    }
+    function validaDuplicadoRowSubPanel(valor, sto) {
+        var estados = false;
+        Ext.getStore(sto).each(function (r) {
+            if ((r.get('CodigoElemento')) == (valor)) estados = true;
+        });
+        return estados;
+    }
+    function validaDuplicadopanelNOC(valor) {
+        var estados = false;
+
+
+        if (document.getElementById("NOC" + valor)) estados = true;
+
+        // alert(estados);
+        return estados;
+    }
+    function validaDuplicadopanelNIC(valor1, valor2) {
+        var estados = false;
+
+
+        if (document.getElementById("NIC" + valor1+"_"+valor2)) estados = true;
+
+        // alert(estados);
+        return estados;
+    }
+
+    function validaDuplicadoPanelAct(valor, sto) {
+        var estados = false;
+        Ext.getStore(sto).each(function (r) {
+            if ((r.get('IdActividad')) == (valor)) estados = true;
+        });
+        return estados;
+    }
+
+
+
+    function trim(str) {
+        return str.replace(/^\s+|\s+$/g, "");
+    }
+
+    var formGen = null;
+    function eventoCancelar(form) {
+        if (form != null) {
+            formGen = form;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("confirmacionCancelarEdicionForm"))',
+                    params: {
+                        mensaje: "¿Al cancelar la Edición, se perderán los cambios no guardados. Está seguro de Cancelar?",
+                        titulo: "Confirmación"
+                    }
+                });
+            }
+        }
+
+        function eventoCancelarResult() {
+            if (formGen != null) {
+                var form = formGen;
+                form.getForm().reset();
+                App.taAlerts.setVisible(false);
+                App.conthbIndicaError.setVisible(false);
+                setIndicaCambios(false);
+                App.storeValoracionNanda.reload();
+            }
+        }
+        function DoCancel() {
+        }
+
+        function eventoVisorReporte(param1) {
+            if(param1=='HC'){
+                window.location.href = '@Url.Action("HCEReportesView_total", "HClinica")';
+            } else {
+                window.location.href = '@Url.Action("HCEReportesView", "HClinica")';
+            }
+        }
+
+        function setImpresion(store) {
+            App.btnImpresion.setVisible(false);
+            var contar = 0;
+            if (store!=null) {
+                store.each(function (r) {
+                    contar++;
+                });
+            }
+            if (contar > 0) {
+                App.btnImpresion.setVisible(true);
+            }
+        }
+
+     
+
+
+        function InsertRowSubPanelInd(valor) {
+
+           
+            
+            if (valor.getValue() != '') {
+                var obj = JSON.parse(valor.getValue());
+                var CodigoElemento = obj.CodigoElemento;
+                var DescripcionLocal = obj.DescripcionLocal;
+                var Estado = obj.ValorCodigo5;
+                var IdNoc = obj.ValorCodigo1;
+                var IdNIN = obj.ValorCodigo2;
+                var IdNanda = obj.ValorEntero1;
+                var grilla = 'gridIn' + IdNanda + '_' + IdNoc;
+                var grid = Ext.getCmp(grilla);
+                var store1 = 'storeIn' + IdNanda + '_' + IdNoc;
+                var myStore = Ext.getStore(store1);
+               // alert(IdNanda + '_' + IdNoc);
+            
+                @*if (validaDuplicadoRowSubPanel(CodigoElemento, store1)) {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: 'Advertencia',
+                            message: 'Ya existe registro',
+                            tipo: 'WARNING'
+                        }
+                    });
+                    valor.setValue('');
+                    return;
+                }*@
+
+
+                var grilla = 'gridIn' + IdNanda + '_' + IdNoc;
+                var grid = Ext.getCmp(grilla);            
+                var store1 = 'storeIn' + IdNanda + '_' + IdNoc;
+                var myStore = Ext.getStore(store1);
+            
+                Ext.getStore(myStore).add({
+                    CodigoElemento: CodigoElemento,
+                    DescripcionLocal: DescripcionLocal,
+                    ValorCodigo5: Estado,                
+                    ValorCodigo2: IdNIN
+                
+
+
+                });
+
+
+
+                
+
+                valor.setValue('');
+            }
+        }
+
+        function deleteActualNota(record) {
+            seleccRecordActual = record;
+            if (seleccRecordActual != null) {
+                setIndicaCambios(true);
+                var store = App.GridPanelNotas.StoreNotas;
+                var par1 = seleccRecordActual.data.ValorCodigo1;
+                var par2 = seleccRecordActual.data.ValorCodigo6;
+                var par3 = seleccRecordActual.data.ValorCodigo7;
+                var par4 = seleccRecordActual.data.ValorCodigo8;
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("addEliminar_DianosticoValoracionNanda"))',
+                    params: {
+                        selection: '',
+                        codigo: par1,
+                        secuencia: par2
+                    }
+                });
+
+                App.StoreNotas.remove(seleccRecordActual);
+
+                seleccRecordActual = null;
+            }
+
+        };
+
+
+        function addRecordMain(grid) {
+            setIndicaCambios(true);
+            var ValorCodigo1Max = 0;
+            var f = new Date();
+            App.StoreNotas.each(function (r) {
+                var temp = r.get('ValorCodigo1');
+                if (temp > ValorCodigo1Max) {
+                    ValorCodigo1Max = temp;
+                }
+            });
+
+
+            App.StoreNotas.insert(0, {
+                ValorCodigo1: ValorCodigo1Max + 1, ValorCodigo6: f, ValorCodigo7: '', ValorCodigo8: '', ACCION: 'NUEVO'
+            });
+
+            Ext.Function.defer(function () {
+                grid.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+            }, 100);
+        };
+
+
+
+
+    </script>
+}
+
+@section cuerpo
+{
+    @(Html.X().Viewport()
+        .Layout(LayoutType.VBox)
+
+        .LayoutConfig(
+            new VBoxLayoutConfig { Align = VBoxAlign.Stretch }
+        )
+        .Listeners(l =>
+        {
+            l.AfterLayout.BroadcastOnBus = "App.resize";
+            l.AfterLayout.Single = true;
+        })
+        .Items(regions =>
+        {
+
+            regions.Add(
+
+                Html.X().FormPanel()
+                .ItemID("center")
+                .DefaultAnchor("100%")
+                .AutoScroll(true)
+               .Header(false)
+               .Border(true)
+                .ID("formactual")
+                .Listeners(l =>
+                {
+                    l.Render.Handler = "eventoRenderForm();";
+                    l.AfterRender.Handler =
+                        "eventoValidaReglaGen('POSaludControlGinecologia', '" + (Url.Action("POSaludControlGinecologia")) + "',1);" +
+                        "eventoValidaReglaGen('POSaludExamenLaboratorio', '" + (Url.Action("POSaludExamenLaboratorio")) + "',2);" +
+                        "";
+                })
+               .Items(
+
+                    X.FieldSet()
+                                 .ColumnWidth(0.4)
+                                 .Title("DIAGNÓSTICO NANDA")
+                                 .MarginSpec("0 05 0 05")
+                                 .Defaults(d =>
+                                 {
+                                     d.Add(new Parameter("LabelWidth", "170"));
+                                 })
+
+                                 .DefaultAnchor("100%")
+                                 .FieldDefaults(d =>
+                                 {
+                                     d.LabelAlign = LabelAlign.Left;
+                                 })
+                   .Items(X.TextField()
+                                                 .ID("RecepcionaRecurso")
+                                                 .Listeners(l =>
+                                                 {
+                                                     l.Change.Handler = "InsertPanel(this);";
+                                                 })
+                                                 .Hidden(true),
+
+                                                  X.TextField()
+                                                 .ID("RecepcionaRecurso2")
+                                                 .Listeners(l =>
+                                                 {
+                                                     l.Change.Handler = "InsertRowSubPanel(this);";
+                                                 })
+                                                 .Hidden(true),
+
+                                                  X.TextField()
+                                                 .ID("RecepcionaRecurso3")
+                                                 .Listeners(l =>
+                                                 {
+                                                     l.Change.Handler = "InsertPanelNOC(this);";
+                                                 })
+                                                 .Hidden(true),
+                                                  X.TextField()
+                                                 .ID("RecepcionaRecurso4")
+                                                 .Listeners(l =>
+                                                 {
+                                                     l.Change.Handler = "InsertPanelNIC(this);";
+                                                 })
+                                                 .Hidden(true),
+                                                  X.TextField()
+                                                 .ID("RecepcionaRecurso5")
+                                                 .Listeners(l =>
+                                                 {
+                                                     l.Change.Handler = "InsertRowPanelACTIVIDAD(this);";
+                                                 })
+                                                 .Hidden(true),
+
+                                                 X.TextField()
+                                                 .ID("RecepcionaRecursoX")
+                                                 .Listeners(l =>
+                                                 {
+                                                     l.Change.Handler = "InsertRowSubPanelInd(this);";
+                                                 })
+                                                 .Hidden(true),
+
+
+                                              X.NumberField().ID("IdDominioPAE").Hidden(true).Value(1),
+                                               X.NumberField().ID("IdNanda").Hidden(true).Value(1),
+                                              X.NumberField().ID("IdClasePAE").Hidden(true).Value(1),
+                                              X.NumberField().ID("Observacion").Hidden(true).Value(1),
+
+                                              
+                                               X.GridPanel().Flex(1)
+                                            .ID("GridPanelNotas").Width(400)
+                                            .Border(false).PaddingSpec("6")
+                                            .Store(
+                                                Html.X().Store()
+                                                .ID("StoreNotas")
+                                                .Model(
+                                                    Html.X().Model()
+                                                    .IDProperty("ValorCodigo1")
+                                                .Fields(
+                                                        //new ModelField("ValorCodigo1", ModelFieldType.String),
+                                                        //new ModelField("ValorCodigo6", ModelFieldType.String),
+                                                        //new ModelField("ValorCodigo7", ModelFieldType.String),
+                                                        //new ModelField("ValorCodigo8", ModelFieldType.String),
+                                                        //new ModelField("ACCION", ModelFieldType.String)
+       
+                                                Html.X().ModelField().Name("ValorCodigo1"),
+                                                Html.X().ModelField().Name("ValorCodigo6"),
+                                                Html.X().ModelField().Name("ValorCodigo7"),
+                                                Html.X().ModelField().Name("ValorCodigo8"),                                                
+                                                Html.X().ModelField().Name("Accion")
+                                                
+                                                        )
+                                                    )
+                                                .AutoLoad(true)
+                                                .RemoteSort(false)
+                                                .IsPagingStore(true)
+                                                .RemotePaging(true)
+                                                .PageSize(5)
+                                                .Proxy(proxy => proxy.Add(
+                                                    Html.X().AjaxProxy()
+                                                        .Url("CCEP9916_LISTARNOTAS")
+                                                        .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                                .Root("data")
+                                                                .TotalProperty("total")
+                                                                .IDProperty("ValorCodigo1"))))
+                                                                )
+                                                    )
+                                            .ColumnModel(
+                                                   Html.X().ComponentColumn().Editor(true)
+                                                    .Hidden(false)
+                                                    .DataIndex("ValorCodigo1")
+                                                    .Text("N°")
+               
+                                                    .Component(
+                                                         Html.X().TextField().ReadOnly(true)
+                                                         //.Listeners(l => { l.Change.Handler = "hhValidation(this);"; })
+                                                        )
+                
+                                                  , Html.X().ComponentColumn().Editor(true)
+                                                    .DataIndex("ValorCodigo6")
+                                                    .Text("Fecha")
+                                                    .Width(150)
+                                                    .Component(
+                                                         Html.X().DateField().ReadOnly(false).Format("dd/MM/yyyy")
+                                                        //.Listeners(l => { l.Change.Handler = "hhValidation(this);"; })
+                                                        .EnableKeyEvents(true)  //Hace que funcione el evento KeyPress y otros mas
+                                                        //.Listeners(l => { l.KeyPress.Handler = "setIndicaCambios(true);"; })
+                                                        )
+                                                        ,
+
+                                                        Html.X().ComponentColumn().Editor(true)
+                                                    .DataIndex("ValorCodigo7")
+                                                    .Text("Hora")
+                                                    .Width(150)
+                                                    .Component(
+                                                         Html.X().TimeField().ReadOnly(false).Format("H:mm")
+                                                        //.Listeners(l => { l.Change.Handler = "hhValidation(this);"; })
+                                                        .EnableKeyEvents(true)  //Hace que funcione el evento KeyPress y otros mas
+                                                        //.Listeners(l => { l.KeyPress.Handler = "setIndicaCambios(true);"; })
+                                                        )
+                                                        ,
+
+                                                        Html.X().ComponentColumn().Editor(true)
+                                                    .DataIndex("ValorCodigo8")
+                                                    .Text("Descripcion")
+                                                    .Flex(1)
+                                                    .Component(
+                                                         Html.X().TextField().ReadOnly(false)
+                                                        //.Listeners(l => { l.Change.Handler = "hhValidation(this);"; })
+                                                        .EnableKeyEvents(true)  //Hace que funcione el evento KeyPress y otros mas
+                                                        .Listeners(l => { l.KeyPress.Handler = "setIndicaCambios(true);"; })
+                                                        )
+              
+
+                                                , Html.X().Column().Text("ACCION").DataIndex("ACCION").Width(85).Hidden(true),
+                                                  Html.X().CommandColumn()
+                                                    .Width(70)
+                                                    .Text("Acción")
+                                                    .Commands(
+                                                        Html.X().GridCommand().Disabled(indicaModoLectura)
+                                                            .CommandName("Delete")
+                                                            .Icon(Icon.Delete)
+                                                    )
+                                                    .Listeners(ls => ls.Command.Handler = "deleteActualNota(record);")
+                                          )
+                                                 .SelectionModel(
+                                                     Html.X().RowSelectionModel().Mode(SelectionMode.Multi)
+                                                 )
+                                                 .Plugins(
+                                                     Html.X().CellEditing()
+                                                 )
+                                            .Listeners(l => l.CellClick
+                                                        .Handler = "setSeleccionActual(record);")
+                                            .TopBar(
+                                                Html.X().Toolbar().Hidden(indicaModoLectura)
+                                                    .Items(
+                                                    X.ToolbarSeparator()
+                                                    , Html.X().Label()
+                                                    .Html("<b><font color='" + COLOR_BLUE01 + "'> Notas " + "</font></b>")
+                                                        , X.ToolbarFill()
+                                                    , X.Button().Text("Bienes/servicios").ID("cmdServicios").Hidden(true)
+                                                    .Handler("parent.App.txtEventoBienes.setValue('FILTRO_X');")
+                                                    .Icon(Icon.CogAdd)
+                                                    , X.Button().Text("Agregar")
+           
+                                                    .Handler("addRecordMain(this.up('grid'));")
+                                                    .Icon(Icon.Add)
+                                                     )
+                                                   ), 
+
+
+                            X.Panel()
+                           .ID("Paneles")
+                                 .DefaultAnchor("100%").AutoScroll(true)
+
+                                      .BodyBorder(0)
+                                        .Layout(LayoutType.Accordion)
+                                        .TopBar(
+                                           X.Toolbar()
+                                           .Items(
+
+
+                                                 )
+                                               )
+                                         .Items(
+                                                 X.Panel().Height(20).Hidden(true)
+
+
+                                              )
+                         )
+
+                                        ,
+                                        X.TextArea().ID("taAlerts")
+                                        .Border(false)
+                                        .StyleSpec("background:white;border:1px solid gray;")
+                                        .FieldStyle("color: red")
+                                        .Hidden(true)
+                                        .ReadOnly(true)
+                                        .Height(90)
+
+                     )
+
+                    .TopBar(X.Toolbar().Hidden(indicaModoLectura).Items(
+                                X.ToolbarSpacer(20)
+                                ,
+                                Html.X().Container().Layout(LayoutType.HBox)
+                                .ID("conthbIndicaError").Hidden(true).Items(
+                                    X.Label().Html("<font  size='1.9em'; color='red'>(</font>"),
+                                    X.Label().Html("<font  size='3.9em'; color='red'><b>&#161;</b></font>"),
+                                    X.Label().Html("<font  size='1.9em'; color='red'>) Verificar los errores presentados</font>")
+                                ),
+
+                            X.ToolbarFill(),
+                                X.Button()
+                                .Text("Imprimir")
+                                .Icon(Icon.Report)
+                                .Hidden(!visibleImpresion)
+                                .ID("btnImpresion")
+                                .Handler("eventoVisorReporte('');")
+                                ,
+                                X.ToolbarSpacer().Width(40)
+                                ,
+                            X.Button()
+                                .Text("Guardar")
+                                .Icon(Icon.Disk)
+                                .ID("cmdGuardar1")
+                                .Handler("App.cmdGuardar.setDisabled(true); EnviarData(this.up('grid'));")
+                                ,
+                //.DirectClickAction("Save_SS_HC_Anamnesis_EA"),
+                //.OnClientClick("var form = this.up('form'); form.getForm().updateRecord(form.down('grid').getSelectionModel().getLastSelected());"),
+                            X.Button()
+                                .Text("Cancelar")
+                                .ID("btnCancel")
+                                .Icon(Icon.Cancel)
+                                .OnClientClick("eventoCancelar(this.up('form'));")
+                                ,
+                            X.Button()
+                                .Text("Editar")
+                                .ID("btnOnEdit")
+                                .Icon(Icon.ApplicationFormEdit)
+                                .Hidden(true)
+                                .Handler("eventoOnEditar(App.btnOnEdit);")
+                /* ,
+                 X.Button()
+                 .Text("Adicionar")
+                 .Icon(Icon.Add)
+                 .ID("cmdGuardar")
+                 .DirectEvents(de =>
+                       {
+                           de.Click.Url = Url.Action("cargar_planf");
+                           de.Click.Success = "onSuccess(result.data);";
+
+                       })*/
+                        ))
+                /*.Listeners(l => l.FieldChange
+                    .Handler = "if(!indicaCambios){setIndicaCambios(true);} "
+                ) */
+                );
+        }
+        )
+
+
+    )
+
+}
+
+
+

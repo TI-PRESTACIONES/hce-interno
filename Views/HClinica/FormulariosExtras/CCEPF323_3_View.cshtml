@@ -1,0 +1,2288 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_HC_FichaAnestesia_3_FE
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+
+    var indicaVisiblePrint = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_VISIBLE_IMPRESION;
+    var visibleImpresion = (indicaVisiblePrint == 2/* && Model.Accion == "UPDATE"*/ ? true : false);
+    var isVista = (Model.Accion == "VISTA" ? true : false);
+    var isNuevo = (Model.Accion == "NUEVO" ? true : false);
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VISTA" ? false : false))));
+
+    var COLOER_IND_OBLIGA = AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("COL_BCOBLI");
+    var MENS_NUMERO = "No se permite un valor negativo.";
+    var PAR_FORMATO02 = "999";
+
+
+    var DESC_ADD = "Proc. Médicos SEGUS";
+
+    var DESC_ADD2 = "Proc. Médicos SEGUS";
+    var DESC_ADD3 = "Proc. Médicos SEGUS";
+    var DESC_ADD4 = "Proc. Médicos SEGUS";
+
+    var DESC_ADDCPT = "Proc. Médicos CPT";
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+    var COLOR_YELLOW02 = "#D9A407";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_ORANGE01 = "#E07509";
+    // String varEliminar = Convert.ToString(Session["ELIMINAR_DATA"]);
+
+
+}
+@section cabecera
+{   <link rel="stylesheet" href="@Url.Content("~/resources/css/main.css")" />
+    <style>
+        html body {
+            padding: 0px;
+            background: none;
+            background: none;
+            background: none;
+            background-attachment: fixed;
+            background-position: center;
+            font-family: tahoma,verdana,sans-serif;
+            background-color: #ffffff;
+        }
+    </style>
+
+    <script>
+     var indicaCambios = false;
+    function setIndicaCambios(value) {
+        indicaCambios = value;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("setIndicaCambiosFormulario"))',
+            params: {
+                indica: (value ? 1 : 0)
+            }
+        });
+
+
+        var val = '@visibleImpresion';
+        var vis = '@isVista';
+        if (vis == 'False') {
+            if (val == 'True') {
+
+                if (value == true) {
+                    App.btnImpresion.setDisabled(true);
+                    App.btnImpresionHC.setDisabled(true);
+                    parent.App.btnGuardarFirma.setDisabled(true);
+                    // parent.App.btnContEpisodio_HCE.setDisabled(true);//A TODOS
+
+                } else {
+                    App.btnImpresion.setDisabled(false);
+                    App.btnImpresionHC.setDisabled(false);
+                    parent.App.btnGuardarFirma.setDisabled(false);
+                    //parent.App.btnContEpisodio_HCE.setDisabled(false);//A TODOS
+                }
+            }
+        }
+    }
+    var count = 0; // a counter for new records
+
+
+
+    var eventoKey = function (tf, e) {
+        if (e.getKey() == '110' || e.getKey() == '190' || e.getKey() == '100') {
+            var str = tf.getRawValue().replace('.', '');
+            tf.setValue(str);
+        } else if (e.getKey() == '109' || e.getKey() == '189') {
+            var str = tf.getRawValue().replace('-', '');
+            tf.setValue(str);
+        }
+    };
+    var eventoOnEditar = function (btn) {
+        App.cmdGuardar.setDisabled(false);
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+
+    };
+
+
+    //Solo permite introducir numeros.
+    function soloNumeros(e) {
+        var key = window.event ? e.which : e.keyCode;
+        if (key < 48 || key > 57) {
+            e.preventDefault();
+        }
+    }
+
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+            App.conthbIndicaError.setVisible(true);
+            App.taAlerts.focus();
+        } else {
+            App.taAlerts.setVisible(false);
+            App.conthbIndicaError.setVisible(false);
+        }
+
+    };
+
+    var getInvalidFields = function (form) {
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+        });
+        return invalidFields;
+    };
+
+
+
+        @*var onSuccess = function (data) {
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+
+        var reload = true;
+        if (data != null) {
+            if (data.length > 0) {
+                reload = false
+                App.cmdGuardar.setDisabled(false);
+                if (data[0].TIPOMSG == 'EXCEPTION') {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: data[0].TITULO,
+                            message: data[0].DESCRIPCION,
+                            tipo: 'ERROR'
+                        }
+                    });
+                } else {
+                    accionMensajes(data);
+                }
+            }
+        }
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+        }
+    };*@
+
+
+
+        var onSuccess = function (data) {
+            App.btnOnEdit.setVisible(false);
+            App.btnCancel.setVisible(true);
+            App.formactual.setDisabled(true);
+            var reload = true;
+            if (data != null) {
+                if (data.length > 0) {
+                    reload = false
+                    App.cmdGuardar.setDisabled(false);
+                    App.formactual.setDisabled(false);
+                    if (data[0].TIPOMSG == 'EXCEPTION') {
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("showMensajeNotify"))',
+                            params: {
+                                titulo: data[0].TITULO,
+                                message: data[0].DESCRIPCION,
+                                tipo: 'ERROR'
+                            }
+                        });
+                    } else {
+                        accionMensajes(data);
+                    }
+                }
+            }
+            if (reload) {
+                parent.App.txtRecargarX.setValue('RELOAD');
+            }
+        };
+
+
+
+    var onFailure = function (data) {
+        App.cmdGuardar.setDisabled(false);
+    };
+
+    function eventoCancelar(form) {
+        App.bar.setDisabled(true);
+        var reload = true;
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+            // beforeSave(form);
+        }
+    }
+
+    </script>
+    <script>
+
+        var hhValidation = function (h) {
+            str = h.value;
+
+            tempo = "'";
+            str = str.replace('javascript:myFunction(' + tempo, '');
+            str = str.replace('%20', ' ');
+            str = str.replace('%C3%B3', 'ó');
+            str = str.replace('%C3%A1', 'á');
+            str = str.replace('%C3%A9', 'é');
+            str = str.replace('%C3%AD', 'í');
+            str = str.replace('%C3%BA', 'ú');
+            str = str.replace('%C3%B1', 'ñ');
+
+            str = str.replace('%C3%8D', 'Í');
+            str = str.replace('%C3%93', 'Ó');
+            str = str.replace('%C3%81', 'Á');
+            str = str.replace('%C3%91', 'Ñ');
+            str = str.replace('%C3%9A', 'Ú');
+            str = str.replace(tempo + ')', '');
+            h.setValue(str);
+
+        }
+        var mmValidation = function (m) {
+            if (m.getValue() > 59) {
+                m.setValue(59);
+            }
+
+        };
+        function eventoRenderForm() {
+
+            var kk = 195;
+            var scrH = screen.height;
+            var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+            var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+
+            if (southH == 0) {
+                southH = 30;
+            } else if (parent.App.PanelMainSouth.collapsed) {
+                southH = 30;
+            }
+            var dimCentral = (scrH - (northH + southH) - kk);
+            App.formactual.setHeight(545);
+
+            var v = '@isNuevo';
+            if (v == 'True') {
+                App.btnImpresion.setVisible(false);
+                App.btnImpresionHC.setVisible(false);
+            }
+        }
+
+        function eventoVisorReporte(param1) {
+            if(param1=='HC'){
+                window.location.href = '@Url.Action("HCEReportesView_total", "HClinica")';
+            } else {
+                window.location.href = '@Url.Action("HCEReportesView", "HClinica")';
+            }
+        }
+    </script>
+
+    <script>
+        var eventoRadio = function (rd1, pregunta, valor) {
+            var radioAll = rd1.getValue();
+
+            if (radioAll) {
+                if (pregunta == 'R3') {
+                    if (valor == 'S') {
+                        App.TxtEspecificar1.setDisabled(false);
+
+                    } else {
+                        App.TxtEspecificar1.setDisabled(true);
+                    };
+                }
+
+                if (pregunta == 'R4') {
+                    if (valor == 'S') {
+                        App.TxtEspecificar2.setDisabled(false);
+
+                    } else {
+                        App.TxtEspecificar2.setDisabled(true);
+                    };
+                }
+
+            }
+
+        };
+
+        var keyCode
+        function ReplaceCaracterEspec(e) {
+
+            /*Capturar tecla pulsada*/
+            if (window.event) keyCode = window.event.keyCode;
+            else if (e) keyCode = e.which;
+            var prueba = keyCode;
+            // alert(keyCode);
+            //
+            if (prueba == 60) {
+                var textactual = e.getValue();
+                e.value = e.setValue(textactual + " ");
+            }
+            var texto = e.getValue();
+            var vacio = "";
+            var cadena = vacio + e.getValue();
+            var recortado = cadena.substr(-1, 1);
+            // alert(recortado + ' antes');
+            if (recortado == "<" || recortado == ">") {
+                //  alert(recortado + ' despues');
+                e.value = e.setValue(texto + " ");
+            }
+        }
+
+
+
+
+
+        var tempEliminar = false;
+        var COLOR_BLUE01_ = "#284A89";
+        var COLOR_RED01_ = "#990000";
+        var COLOR_YELLOW02_ = "#D9A407";
+        var COLOR_GREEN01_ = "#177506";
+        var COLOR_ORANGE01_ = "#E07509";
+
+        var changeEPS = function (value) {
+
+            var templateX = '<div unselectable="on" class="x-grid-cell-inner " style="text-align:left;background-color: {0}; "></div>';
+            var template = '<span style="font-size: 1.9em; color:{0};"> <b>&bull;</b></span>';
+            if (value == 1)
+                return Ext.String.format(template, COLOR_RED01_, "No Coberturado");
+            else if (value == 2)
+                return Ext.String.format(template, COLOR_GREEN01_, "Coberturado");
+            else if (value == 3)
+                return Ext.String.format(template, COLOR_ORANGE01_, "Auditoria");
+            else if (value == 4)
+                return Ext.String.format(template, COLOR_YELLOW02_, "Carta de Garantia");
+            else
+                return Ext.String.format(template, "gray", "No especificada");
+
+        };
+
+
+        var setValuesGridForm = function (r, valor) {
+            ////ESTE METODO  CAMBIA DE ACUERDO A CADA FORMULARIO:
+            var ValorFecha = r.get('ValorFecha');
+            var ValorCodigo1 = r.get('ValorCodigo1');
+            var ValorCodigo4 = r.get('ValorCodigo4');
+            var varDescripcionExtranjera = r.get('DescripcionExtranjera');
+
+            App.FechaSolitada.setValue(ValorFecha == null ? null : ValorFecha);
+            App.Observacion.setValue(ValorCodigo4 == null ? null : ValorCodigo4);
+            App.Especificaciones.setValue(ValorCodigo4 == null ? null : varDescripcionExtranjera);
+        };
+
+
+        var getInvalidFieldsGrid = function (form, invalidFields, fila) {
+            //alert('getInvalidFieldsGrid ');
+            var fields = App.formactual.getForm().getFields();
+            fields.filterBy(function (field) {
+                if (!field.isValid()) {
+                    //alert('if ' + field.name);
+                    var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                        NombreCampo: field.name,
+                        IdEvento: (field.isValid() ? 1 : 0),
+                        ValorTexto: 'Fila N° ' + fila + '-' + field.name + ': ' + field.getErrors()
+                    };
+                    invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+                    field.reset();
+                }
+            });
+            return invalidFields;
+        };
+
+
+
+        function EnviarData(grid) {
+
+            beforeSave(App.formactual);
+            var reload = true;
+
+            if (true) {
+
+                App.taAlerts.setVisible(false);
+                App.taAlerts.setValue(null);
+                App.conthbIndicaError.setVisible(false);
+                //   var store = App.storeExamenes;
+                var status = 0;
+                var i = 0;
+                var errores = 0;
+                var valores = "";
+                var invalidFields = new Array();
+                var fila = 0;
+                var objCabezeraOrdenAtencion = new Array();
+                var ArrayOrdInterQuirurDiagnosti = new Array();
+
+                var invalidFieldsGrid = new Array();
+
+                var Estomagolleno = App.IdRadioEstomagoLleno.getValue();
+                var ArrayEstomagolleno = new Array();
+                ArrayEstomagolleno.push(Estomagolleno);
+                var valorEstomagolleno = ArrayEstomagolleno[0].EstomagoLleno;
+
+                console.log("llegoo valorEstomagolleno >>", valorEstomagolleno);
+
+                var objCabecerra2 = {
+                    Peso: App.Peso.getValue(),
+                    Talla: App.Talla.getValue(),
+                    Fecha: App.Fecha.getValue(),
+                    NSop: App.NSop.getValue(),
+                    Glucosa: App.Glucosa.getValue(),
+                    Hb: App.Hb.getValue(),
+                    PLAQ: App.PLAQ.getValue(),
+                    GrupoSanguineo: App.GrupoSanguineo.getValue(),
+                    VDRL: App.VDRL.getValue(),
+                    Hcto: App.Hcto.getValue(),
+                    PTPIT: App.PTPIT.getValue(),
+                    FactorRH: App.FactorRH.getValue(),
+                    PSA: App.PSA.getValue(),
+                    UreaCreat: App.UreaCreat.getValue(),
+                    INR: App.INR.getValue(),
+                    Ayuno: App.Ayuno.getValue(),
+                    EstomagoLleno: valorEstomagolleno,
+
+
+                    IdMedico: App.nfMedico.getValue(),
+                    Anestesiologo: App.nfMedicoAnaste.getValue(),
+                    Ayudante: App.nfMedicoAyudante.getValue(),
+                    EnfInstrumentista: App.nfMedicoInstrumentista.getValue(),
+                    EnfCirculante: App.nfMedicoCirculantes.getValue(),
+                    Neonatologo: App.nfMedicoNeonatologo.getValue(),
+                    Cardiologo: App.nfMedicoCardiologo.getValue()
+
+
+
+
+                };
+                objCabezeraOrdenAtencion.push(objCabecerra2);
+
+
+
+
+                var ArrayList0 = new Array();
+                App.storeExamenes.each(function (r) {
+                    fila = fila + 1;
+                    ///VALIDACIÓN, no se valida
+                    setValuesGridForm(r, null);
+                    invalidFieldsGrid = getInvalidFieldsGrid(App.formactual, invalidFieldsGrid, fila);
+                    var MA_MiscelaneosDetalle = {
+                        ValorFecha: r.get('ValorFecha'),
+                        ValorCodigo1: r.get('ValorCodigo1'),
+                        ValorCodigo2: r.get('ValorCodigo2'),
+                        ValorCodigo3: r.get('ValorCodigo3'),
+                        ValorCodigo4: r.get('ValorCodigo4'),
+                        ValorCodigo5: r.get('ValorCodigo5'),
+                        ValorEntero6: r.get('ValorEntero6'),
+                        ValorEntero7: r.get('ValorEntero7'),
+                        ValorCodigo6: r.get('ValorCodigo6'),
+                        ValorCodigo7: r.get('ValorCodigo7'),
+                        ValorEntero5: r.get('ValorEntero5'),
+                        CodigoElemento: r.get('CodigoElemento'),
+                        DescripcionExtranjera: r.get('DescripcionExtranjera'),
+                        ACCION: (r.get('ACCION') == 'NUEVO' ? 'DETALLE' : 'UPDATEDETALLE')
+                    };
+                    ArrayList0.push(MA_MiscelaneosDetalle);
+                    i = i + 1;
+                });
+
+
+
+                var ArrayAnestesiaDiagnosti1 = new Array();
+
+                App.storeDiagnostico.each(function (r) {
+                    fila = fila + 1;
+                    ///VALIDACIÓN
+                    setValuesGridForm(r, null);
+                    invalidFieldsGrid = getInvalidFieldsGrid(App.formactual, invalidFields, fila);
+                    var SS_HC_AnestesiaDiagnostico1_FE = {
+                        CodigoElemento: r.get('CodigoElemento'),
+                        ValorCodigo1: r.get('ValorCodigo1'),
+                        ValorCodigo2: r.get('ValorCodigo2'),
+                        ValorCodigo3: r.get('ValorCodigo3'),
+                        ValorCodigo4: r.get('ValorCodigo4'),
+                        ValorEntero4: r.get('ValorEntero4'),
+                        ValorCodigo5: r.get('ValorCodigo5'),
+                        ValorCodigo6: r.get('ValorCodigo6'),
+                        ValorEntero5: r.get('ValorEntero5'),
+                        ValorEntero6: r.get('ValorEntero6'),
+                        ValorEntero7: r.get('ValorEntero7'),
+                        ACCION: (r.get('ACCION') == 'NUEVO' ? 'DETALLE' : 'UPDATEDETALLE')
+                    };
+                    ArrayAnestesiaDiagnosti1.push(SS_HC_AnestesiaDiagnostico1_FE);
+                });
+
+
+                var ArrayListAnestesiaExam2 = new Array();
+                App.storeAnestesiaExamen2.each(function (r) {
+                    fila = fila + 1;
+                    ///VALIDACIÓN, no se valida
+                    setValuesGridForm(r, null);
+                    invalidFieldsGrid = getInvalidFieldsGrid(App.formactual, invalidFieldsGrid, fila);
+                    var MA_MiscelaneosDetalle = {
+                        ValorFecha: r.get('ValorFecha'),
+                        ValorCodigo1: r.get('ValorCodigo1'),
+                        ValorCodigo2: r.get('ValorCodigo2'),
+                        ValorCodigo3: r.get('ValorCodigo3'),
+                        ValorCodigo4: r.get('ValorCodigo4'),
+                        ValorCodigo5: r.get('ValorCodigo5'),
+                        ValorEntero6: r.get('ValorEntero6'),
+                        ValorEntero7: r.get('ValorEntero7'),
+                        ValorCodigo6: r.get('ValorCodigo6'),
+                        ValorCodigo7: r.get('ValorCodigo7'),
+                        ValorEntero5: r.get('ValorEntero5'),
+                        CodigoElemento: r.get('CodigoElemento'),
+                        DescripcionExtranjera: r.get('DescripcionExtranjera'),
+                        ACCION: (r.get('ACCION') == 'NUEVO' ? 'DETALLE' : 'UPDATEDETALLE')
+                    };
+                    ArrayListAnestesiaExam2.push(MA_MiscelaneosDetalle);
+                    i = i + 1;
+                });
+
+
+
+
+                var ArrayListAnesteExam3 = new Array();
+                App.storeAnestesiaExamenes3.each(function (r) {
+                    fila = fila + 1;
+                    ///VALIDACIÓN, no se valida
+                    setValuesGridForm(r, null);
+                    invalidFieldsGrid = getInvalidFieldsGrid(App.formactual, invalidFieldsGrid, fila);
+                    var MA_MiscelaneosDetalle = {
+                        ValorFecha: r.get('ValorFecha'),
+                        ValorCodigo1: r.get('ValorCodigo1'),
+                        ValorCodigo2: r.get('ValorCodigo2'),
+                        ValorCodigo3: r.get('ValorCodigo3'),
+                        ValorCodigo4: r.get('ValorCodigo4'),
+                        ValorCodigo5: r.get('ValorCodigo5'),
+                        ValorEntero6: r.get('ValorEntero6'),
+                        ValorEntero7: r.get('ValorEntero7'),
+                        ValorCodigo6: r.get('ValorCodigo6'),
+                        ValorCodigo7: r.get('ValorCodigo7'),
+                        ValorEntero5: r.get('ValorEntero5'),
+                        CodigoElemento: r.get('CodigoElemento'),
+                        DescripcionExtranjera: r.get('DescripcionExtranjera'),
+                        ACCION: (r.get('ACCION') == 'NUEVO' ? 'DETALLE' : 'UPDATEDETALLE')
+                    };
+                    ArrayListAnesteExam3.push(MA_MiscelaneosDetalle);
+                    i = i + 1;
+                });
+
+
+                var ArrayAnestesiaDiagnostiPost3 = new Array();
+
+                App.storeDiagnosticopost3.each(function (r) {
+                    fila = fila + 1;
+                    ///VALIDACIÓN
+                    setValuesGridForm(r, null);
+                    invalidFieldsGrid = getInvalidFieldsGrid(App.formactual, invalidFields, fila);
+                    var SS_HC_AnestesiaDiagnosticoPost3_FE = {
+                        CodigoElemento: r.get('CodigoElemento'),
+                        ValorCodigo1: r.get('ValorCodigo1'),
+                        ValorCodigo2: r.get('ValorCodigo2'),
+                        ValorCodigo3: r.get('ValorCodigo3'),
+                        ValorCodigo4: r.get('ValorCodigo4'),
+                        ValorEntero4: r.get('ValorEntero4'),
+                        ValorCodigo5: r.get('ValorCodigo5'),
+                        ValorCodigo6: r.get('ValorCodigo6'),
+                        ValorEntero5: r.get('ValorEntero5'),
+                        ValorEntero6: r.get('ValorEntero6'),
+                        ValorEntero7: r.get('ValorEntero7'),
+                        ACCION: (r.get('ACCION') == 'NUEVO' ? 'DETALLE' : 'UPDATEDETALLE')
+                    };
+                    ArrayAnestesiaDiagnostiPost3.push(SS_HC_AnestesiaDiagnosticoPost3_FE);
+                });
+
+
+
+                if (invalidFields.length > 0) {
+                    addRecursosValidacion(invalidFields);
+                    App.cmdGuardar.setDisabled(false);
+                    App.formactual.setDisabled(false);
+                    return false;
+                } else {
+                    App.formactual.setDisabled(true);
+
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("CCEPF323_1_Save_anestesia"))',
+                        params: {
+                            selectionArrayCabezera: objCabezeraOrdenAtencion,
+                            selectionArray1: ArrayList0,
+                            selectionArray2: ArrayAnestesiaDiagnosti1,
+                            selectionArray3: ArrayListAnestesiaExam2,
+                            selectionArray4: ArrayListAnesteExam3,
+                            selectionArray5: ArrayAnestesiaDiagnostiPost3,
+
+                            text: '0'
+                        }
+                        , success: function (result) {
+                            reload = true;
+                        }
+
+                    });
+                }
+
+                if (reload) {
+                    parent.App.txtRecargarX.setValue('RELOAD');
+
+                } else {
+                    App.cmdGuardar.setDisabled(false);
+                    App.taAlerts.setVisible(true);
+                }
+
+            } else {
+                App.cmdGuardar.setDisabled(false);
+            }
+
+        }
+
+
+
+
+        function seleccionadorMedico() {
+            setIndicaCambios(true);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("seleccionadorMedico"))',
+                params: {
+                    AccionSeleccion: 'getSeleccionMedico',
+                    AccionListado: 'LISTARPAGEMPLEADO'
+                }
+            });
+        };
+
+
+        function seleccionadorMedicoAnestesiologo() {
+            setIndicaCambios(true);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("seleccionadorMedico"))',
+                params: {
+                    AccionSeleccion: 'getSeleccionMedicoAnestesiologo',
+                    AccionListado: 'LISTARPAGEMPLEADO'
+                }
+            });
+        };
+
+
+        function seleccionadorMedicoAyudante() {
+            setIndicaCambios(true);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("seleccionadorMedico"))',
+                params: {
+                    AccionSeleccion: 'getSeleccionMedicoAyudante',
+                    AccionListado: 'LISTARPAGEMPLEADO'
+                }
+            });
+        };
+
+
+        function seleccionadorMedicoInstrumentista() {
+            setIndicaCambios(true);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("seleccionadorMedico"))',
+                params: {
+                    AccionSeleccion: 'getSeleccionMedicoInstrumentista',
+                    AccionListado: 'LISTARPAGEMPLEADO'
+                }
+            });
+        };
+
+
+        function seleccionadorMedicoCirculante() {
+            setIndicaCambios(true);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("seleccionadorMedico"))',
+                params: {
+                    AccionSeleccion: 'getSeleccionMedicoCirculante',
+                    AccionListado: 'LISTARPAGEMPLEADO'
+                }
+            });
+        };
+
+
+        function seleccionadorMedicoNeonatologo() {
+            setIndicaCambios(true);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("seleccionadorMedico"))',
+                params: {
+                    AccionSeleccion: 'getSeleccionMedicoNeonatologo',
+                    AccionListado: 'LISTARPAGEMPLEADO'
+                }
+            });
+        };
+
+
+        function seleccionadorMedicoCardiologo() {
+            setIndicaCambios(true);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("seleccionadorMedico"))',
+                params: {
+                    AccionSeleccion: 'getSeleccionMedicoCardiologo',
+                    AccionListado: 'LISTARPAGEMPLEADO'
+                }
+            });
+        };
+
+
+
+
+        function eventoActivarSeleccionExamenes1(button, event) {
+            grillaActiva = 1;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("LoadFormatos"))',
+                params: {
+                    containerId: 'Center1',
+                    text: '3567'
+                },
+                success: function (result) {
+                    parent.App.StoreBuscarServicios.reload();
+                }
+            });
+            var panelServ = Ext.getCmp('East1');
+            parent.App.East1.expand();
+
+            var numero = button.id.replace('IdbtnDesactivo', '');
+            Ext.getCmp(button.id).hide();
+            Ext.getCmp('IdbtnActivo' + numero).show();
+            grilla_Actual = "grillaExamenes1";
+
+
+
+            Ext.getCmp('IdbtnDesactivo6').show();
+            Ext.getCmp('IdbtnActivo6').hide();
+
+            Ext.getCmp('IdbtnDesactivo2').show();
+            Ext.getCmp('IdbtnActivo2').hide();
+
+            Ext.getCmp('IdbtnDesactivo7').show();
+            Ext.getCmp('IdbtnActivo7').hide();
+
+            Ext.getCmp('IdbtnDesactivo8').show();
+            Ext.getCmp('IdbtnActivo8').hide();
+
+
+
+
+        };
+
+
+
+
+
+        function eventoDesactivarSeleccionExamenes1(button, event) {
+            grillaActiva = null;
+            parent.App.East1.collapse();
+            var numero = button.id.replace('IdbtnActivo', '')
+            Ext.getCmp(button.id).hide();
+            Ext.getCmp('IdbtnDesactivo' + numero).show();
+            //Ext.getCmp('IdbtnDesactivoSecundario').show();
+
+        };
+
+
+
+
+
+
+
+        function eventoActivarSeleccionDiagnostico1(button, event) {
+
+            grillaActiva = 1;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("LoadFormatos"))',
+                params: {
+                    containerId: 'Center1',
+                    text: '6209'
+                },
+                success: function (result) {
+                    parent.App.StoreBuscarServicios.reload();
+                }
+            });
+
+            var panelServ = Ext.getCmp('East1');
+            parent.App.East1.expand();
+            var numero = button.id.replace('IdbtnDesactivo6', '');
+
+            grilla_Actual = "grillaDiag1Anestesia";
+
+            Ext.getCmp(button.id).hide();
+            Ext.getCmp('IdbtnActivo6' + numero).show();
+
+            Ext.getCmp('IdbtnDesactivo').show();
+            Ext.getCmp('IdbtnActivo').hide();
+
+            Ext.getCmp('IdbtnDesactivo2').show();
+            Ext.getCmp('IdbtnActivo2').hide();
+
+            Ext.getCmp('IdbtnDesactivo7').show();
+            Ext.getCmp('IdbtnActivo7').hide();
+
+            Ext.getCmp('IdbtnDesactivo8').show();
+            Ext.getCmp('IdbtnActivo8').hide();
+
+
+            for (var i = 0; i < numerogrupo; i++) {
+                if (i != numero) {
+                    Ext.getCmp('IdbtnActivo6' + i).hide();
+                    Ext.getCmp('IdbtnDesactivo6' + i).show();
+                }
+            }
+        };
+
+
+
+
+        function eventoDesactivarSeleccionDiagnostico1(button, event) {
+            parent.App.East1.collapse();
+            var numero = button.id.replace('IdbtnActivo6', '')
+            Ext.getCmp(button.id).hide();
+            Ext.getCmp('IdbtnDesactivo6' + numero).show();
+
+        };
+
+
+        function eventoActivarSeleccionDiagnosticoPost3(button, event) {
+
+            grillaActiva = 1;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("LoadFormatos"))',
+                params: {
+                    containerId: 'Center1',
+                    text: '6209'
+                },
+                success: function (result) {
+                    parent.App.StoreBuscarServicios.reload();
+                }
+            });
+
+            var panelServ = Ext.getCmp('East1');
+            parent.App.East1.expand();
+            var numero = button.id.replace('IdbtnDesactivo8', '');
+
+            grilla_Actual = "grillaDiag1AnestesiaPost3";
+
+            Ext.getCmp(button.id).hide();
+            Ext.getCmp('IdbtnActivo8' + numero).show();
+
+            Ext.getCmp('IdbtnDesactivo').show();
+            Ext.getCmp('IdbtnActivo').hide();
+
+            Ext.getCmp('IdbtnDesactivo2').show();
+            Ext.getCmp('IdbtnActivo2').hide();
+
+            Ext.getCmp('IdbtnDesactivo7').show();
+            Ext.getCmp('IdbtnActivo7').hide();
+
+            Ext.getCmp('IdbtnDesactivo6').show();
+            Ext.getCmp('IdbtnActivo6').hide();
+
+
+
+
+            for (var i = 0; i < numerogrupo; i++) {
+                if (i != numero) {
+                    Ext.getCmp('IdbtnActivo8' + i).hide();
+                    Ext.getCmp('IdbtnDesactivo8' + i).show();
+                }
+            }
+        };
+
+
+
+
+
+
+
+        function eventoActivarSeleccionCirugiaProceExam2(button, event) {
+
+            grillaActiva = 1;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("LoadFormatos"))',
+                params: {
+                    containerId: 'Center1',
+                    text: '3567'
+                },
+                success: function (result) {
+                    parent.App.StoreBuscarServicios.reload();
+                }
+            });
+
+            var panelServ = Ext.getCmp('East1');
+            parent.App.East1.expand();
+            var numero = button.id.replace('IdbtnDesactivo2', '');
+
+            grilla_Actual = "grillaExamenes2";
+
+            Ext.getCmp(button.id).hide();
+            Ext.getCmp('IdbtnActivo2' + numero).show();
+
+            Ext.getCmp('IdbtnDesactivo').show();
+            Ext.getCmp('IdbtnActivo').hide();
+
+
+            Ext.getCmp('IdbtnDesactivo6').show();
+            Ext.getCmp('IdbtnActivo6').hide();
+
+            Ext.getCmp('IdbtnDesactivo7').show();
+            Ext.getCmp('IdbtnActivo7').hide();
+
+            Ext.getCmp('IdbtnDesactivo8').show();
+            Ext.getCmp('IdbtnActivo8').hide();
+
+
+            for (var i = 0; i < numerogrupo; i++) {
+                if (i != numero) {
+                    Ext.getCmp('IdbtnActivo2' + i).hide();
+                    Ext.getCmp('IdbtnDesactivo2' + i).show();
+                }
+            }
+        };
+
+        function eventoDesactivarSeleccionCirugiaProceExam2(button, event) {
+            parent.App.East1.collapse();
+            var numero = button.id.replace('IdbtnActivo2', '')
+            Ext.getCmp(button.id).hide();
+            Ext.getCmp('IdbtnDesactivo2' + numero).show();
+
+        };
+
+
+
+        function eventoActivarSeleccionAnestesiaExam3(button, event) {
+
+            grillaActiva = 1;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("LoadFormatos"))',
+                params: {
+                    containerId: 'Center1',
+                    text: '3567'
+                },
+                success: function (result) {
+                    parent.App.StoreBuscarServicios.reload();
+                }
+            });
+
+            var panelServ = Ext.getCmp('East1');
+            parent.App.East1.expand();
+
+            var numero = button.id.replace('IdbtnDesactivo7', '');
+
+            grilla_Actual = "grillaExamenes3";
+
+            Ext.getCmp(button.id).hide();
+            Ext.getCmp('IdbtnActivo7' + numero).show();
+
+            Ext.getCmp('IdbtnDesactivo').show();
+            Ext.getCmp('IdbtnActivo').hide();
+
+            Ext.getCmp('IdbtnDesactivo6').show();
+            Ext.getCmp('IdbtnActivo6').hide();
+
+
+            Ext.getCmp('IdbtnDesactivo8').show();
+            Ext.getCmp('IdbtnActivo8').hide();
+
+            Ext.getCmp('IdbtnDesactivo2').show();
+            Ext.getCmp('IdbtnActivo2').hide();
+
+
+            for (var i = 0; i < numerogrupo; i++) {
+                if (i != numero) {
+                    Ext.getCmp('IdbtnActivo7' + i).hide();
+                    Ext.getCmp('IdbtnDesactivo7' + i).show();
+                }
+            }
+
+        };
+
+
+
+
+        function eventoDesactivarSeleccionAnestesiaExam3(button, event) {
+            parent.App.East1.collapse();
+            var numero = button.id.replace('IdbtnActivo7', '')
+            Ext.getCmp(button.id).hide();
+            Ext.getCmp('IdbtnDesactivo7' + numero).show();
+
+        };
+
+
+
+
+
+
+
+        function InsertRow(valor, estado, soloLectura) {
+            var datito = grillaActiva;
+            if (soloLectura == '1') {
+                setIndicaCambios(false);
+            } else {
+                if (datito == null) {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: 'Advertencia',
+                            message: 'Debe activar la selección de una de las Tablas.',
+                            tipo: 'WARNING'
+                        }
+                    });
+                    //  parent.App.btnBuscarServiviosNota.setDisabled(true);
+                    valor.setValue('');
+                    return;
+                }
+                if (grilla_Actual == 'grillaDiag1Anestesia') {
+
+                    if (valor.getValue() != '') {
+                        var obj = JSON.parse(valor.getValue());
+                        console.log(JSON.stringify(obj));
+                        var DescripcionLocalVar = obj.DescripcionLocal;
+                        var cadena1 = '';
+                        var cadena2 = '';
+                        var posicion = 0;
+                        for (var i = 0; i < DescripcionLocalVar.length; i++) {
+                            if (DescripcionLocalVar[i] == '|') {
+                                posicion = i;
+                            }
+                        }
+                        for (var i = 0; i < DescripcionLocalVar.length; i++) {
+                            if (i < posicion) {
+                                cadena1 = cadena1 + DescripcionLocalVar[i];
+                            } else if (i > posicion) {
+                                cadena2 = cadena2 + DescripcionLocalVar[i];
+                            }
+                        }
+                        var DescripcionLocalVar2 = '';
+                        DescripcionLocalVar2 = cadena1 + '|[' + obj.CodigoElemento + ']';
+                        var grid = Ext.getCmp("grillaDiagnosticoCirugia");
+                        setIndicaCambios(true);
+                        grid.store.insert(0, { CodigoElemento: 'New' + count++, ValorCodigo1: DescripcionLocalVar, ValorCodigo7: DescripcionLocalVar2, ACCION: "NUEVO" });
+                        Ext.Function.defer(function () {
+                            grid.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+                        }, 100);
+                        valor.setValue('');
+                    }
+                }else if (grilla_Actual == 'grillaDiag1AnestesiaPost3') {
+
+                    if (valor.getValue() != '') {
+                        var obj = JSON.parse(valor.getValue());
+                        console.log(JSON.stringify(obj));
+                        var DescripcionLocalVar = obj.DescripcionLocal;
+                        var cadena1 = '';
+                        var cadena2 = '';
+                        var posicion = 0;
+                        for (var i = 0; i < DescripcionLocalVar.length; i++) {
+                            if (DescripcionLocalVar[i] == '|') {
+                                posicion = i;
+                            }
+                        }
+                        for (var i = 0; i < DescripcionLocalVar.length; i++) {
+                            if (i < posicion) {
+                                cadena1 = cadena1 + DescripcionLocalVar[i];
+                            } else if (i > posicion) {
+                                cadena2 = cadena2 + DescripcionLocalVar[i];
+                            }
+                        }
+                        var DescripcionLocalVar2 = '';
+                        DescripcionLocalVar2 = cadena1 + '|[' + obj.CodigoElemento + ']';
+                        var grid = Ext.getCmp("grillaDiagnosticoCirugiaPost3");
+                        setIndicaCambios(true);
+                        grid.store.insert(0, { CodigoElemento: 'New' + count++, ValorCodigo1: DescripcionLocalVar, ValorCodigo7: DescripcionLocalVar2, ACCION: "NUEVO" });
+                        Ext.Function.defer(function () {
+                            grid.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+                        }, 100);
+                        valor.setValue('');
+                    }
+
+                } else if (grilla_Actual == 'grillaExamenes1') {
+                    if (valor.getValue() != '') {
+                        var obj = JSON.parse(valor.getValue());
+                        var DescripcionLocalVar = obj.DescripcionLocal;
+                        var ValorIndicadorEPS = obj.ValorEntero4;
+                        var ValorCodSEGUS = obj.ValorCodigo1;
+
+                        var cadena1 = '';
+                        var cadena2 = '';
+                        var posicion = 0;
+
+                        for (var i = 0; i < DescripcionLocalVar.length; i++) {
+                            if (DescripcionLocalVar[i] == '|') {
+                                posicion = i;
+                            }
+                        }
+                        for (var i = 0; i < DescripcionLocalVar.length; i++) {
+                            if (i < posicion) {
+                                cadena1 = cadena1 + DescripcionLocalVar[i];
+                            } else if (i > posicion) {
+                                cadena2 = cadena2 + DescripcionLocalVar[i];
+                            }
+                        }
+
+                        var DescripcionLocalVar2 = '';
+                        DescripcionLocalVar2 = cadena1 + '|[' + obj.CodigoElemento + ']';
+                        var grid = Ext.getCmp("grillaExamenes");
+                        setIndicaCambios(true);
+                        grid.store.insert(0, {
+                            CodigoElemento: 'New' + count++, ValorFecha: new Date(), ValorEntero5: ValorIndicadorEPS, ValorCodigo2: DescripcionLocalVar,
+                            ValorCodigo1: DescripcionLocalVar2, ValorCodigo7: ValorCodSEGUS, ACCION: 'NUEVO'
+                        });
+                        Ext.Function.defer(function () {
+                            grid.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+                        }, 100);
+                        valor.setValue('');
+                    }
+                }
+                else if (grilla_Actual == 'grillaExamenes2') {
+                    if (valor.getValue() != '') {
+                        var obj = JSON.parse(valor.getValue());
+                        var DescripcionLocalVar = obj.DescripcionLocal;
+                        var ValorIndicadorEPS = obj.ValorEntero4;
+                        var ValorCodSEGUS = obj.ValorCodigo1;
+
+                        var cadena1 = '';
+                        var cadena2 = '';
+                        var posicion = 0;
+
+                        for (var i = 0; i < DescripcionLocalVar.length; i++) {
+                            if (DescripcionLocalVar[i] == '|') {
+                                posicion = i;
+                            }
+                        }
+                        for (var i = 0; i < DescripcionLocalVar.length; i++) {
+                            if (i < posicion) {
+                                cadena1 = cadena1 + DescripcionLocalVar[i];
+                            } else if (i > posicion) {
+                                cadena2 = cadena2 + DescripcionLocalVar[i];
+                            }
+                        }
+
+                        var DescripcionLocalVar2 = '';
+                        DescripcionLocalVar2 = cadena1 + '|[' + obj.CodigoElemento + ']';
+                        var grid = Ext.getCmp("grillaExamenCirugiaoProcedimiento");
+                        setIndicaCambios(true);
+                        grid.store.insert(0, {
+                            CodigoElemento: 'New' + count++, ValorFecha: new Date(), ValorEntero5: ValorIndicadorEPS, ValorCodigo2: DescripcionLocalVar,
+                            ValorCodigo1: DescripcionLocalVar2, ValorCodigo7: ValorCodSEGUS, ACCION: 'NUEVO'
+                        });
+                        Ext.Function.defer(function () {
+                            grid.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+                        }, 100);
+                        valor.setValue('');
+                    }
+                }
+                else if (grilla_Actual == 'grillaExamenes3') {
+
+                    if (valor.getValue() != '') {
+                        var obj = JSON.parse(valor.getValue());
+                        var DescripcionLocalVar = obj.DescripcionLocal;
+                        var ValorIndicadorEPS = obj.ValorEntero4;
+
+                        alert(ValorIndicadorEPS);
+
+                        var ValorCodSEGUS = obj.ValorCodigo1;
+
+                        var cadena1 = '';
+                        var cadena2 = '';
+                        var posicion = 0;
+
+                        for (var i = 0; i < DescripcionLocalVar.length; i++) {
+                            if (DescripcionLocalVar[i] == '|') {
+                                posicion = i;
+                            }
+                        }
+                        for (var i = 0; i < DescripcionLocalVar.length; i++) {
+                            if (i < posicion) {
+                                cadena1 = cadena1 + DescripcionLocalVar[i];
+                            } else if (i > posicion) {
+                                cadena2 = cadena2 + DescripcionLocalVar[i];
+                            }
+                        }
+
+                        var DescripcionLocalVar2 = '';
+                        DescripcionLocalVar2 = cadena1 + '|[' + obj.CodigoElemento + ']';
+                        var grid = Ext.getCmp("grillaAnestesiaExamenes3");
+                        setIndicaCambios(true);
+                        grid.store.insert(0, {
+                            CodigoElemento: 'New' + count++, ValorFecha: new Date(), ValorEntero5: ValorIndicadorEPS, ValorCodigo2: DescripcionLocalVar,
+                            ValorCodigo1: DescripcionLocalVar2, ValorCodigo7: ValorCodSEGUS, ACCION: 'NUEVO'
+                        });
+                        Ext.Function.defer(function () {
+                            grid.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+                        }, 100);
+                        valor.setValue('');
+                    }
+
+
+                }
+
+                else {
+                    // alert("falta");
+                }
+
+            }
+        }
+
+
+        var seleccRecordActual = null;
+        function setSeleccionActual(record) {
+            seleccRecordActual = record;
+        }
+
+
+
+        function deleteActualExamen1(record, grid, tipo) {
+            if (record != null) {
+                var store = grid.store;
+                setIndicaCambios(true);
+                var par1 = record.data.ValorCodigo2;
+                var par2 = record.data.CodigoElemento;
+                store.remove(record);
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("CCEPF323_1_Eliminar_AnestesiaExamenes1"))',
+                    params: {
+                        MODO: 'DELETEDETALLE',
+                        codigo: '' + par1,
+                        secuencia: par2
+                    }
+                });
+                seleccRecordActual = null;
+            }
+        };
+
+        function deleteActualAnestesiaExamen2(record, grid, tipo) {
+            if (record != null) {
+                var store = grid.store;
+                setIndicaCambios(true);
+                var par1 = record.data.ValorCodigo1;
+                var par2 = record.data.CodigoElemento;
+                store.remove(record);
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("CCEPF323_1_Eliminar_AnestesiaExamenes2"))',
+                    params: {
+                        MODO: 'DELETEDETALLE',
+                        codigo: '' + par1,
+                        secuencia: par2
+                    }
+                });
+                seleccRecordActual = null;
+            }
+        };
+
+
+        function deleteActualAnestesiaExamen3(record, grid, tipo) {
+            if (record != null) {
+                var store = grid.store;
+                setIndicaCambios(true);
+                var par1 = record.data.ValorCodigo2;
+                var par2 = record.data.CodigoElemento;
+                store.remove(record);
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("CCEPF323_1_Eliminar_AnestesiaExamenes3"))',
+                    params: {
+                        MODO: 'DELETEDETALLE',
+                        codigo: '' + par1,
+                        secuencia: par2
+                    }
+                });
+                seleccRecordActual = null;
+            }
+        };
+
+
+
+
+
+
+        function deleteActualDiagnostico1(record, grid, tipo) {
+            if (record != null) {
+                var store = grid.store;
+                setIndicaCambios(true);
+                var par1 = record.data.ValorCodigo1;
+                var par2 = record.data.CodigoElemento;
+                store.remove(record);
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("CCEPF323_1_Eliminar_AnestesiaDiagnostico1"))',
+                    params: {
+                        MODO: 'DELETEDETALLE',
+                        codigo: '' + par1,
+                        secuencia: par2
+                    }
+                });
+                seleccRecordActual = null;
+            }
+        };
+
+        function deleteActualDiagnosticoPost3(record, grid, tipo) {
+            if (record != null) {
+                var store = grid.store;
+                setIndicaCambios(true);
+                var par1 = record.data.ValorCodigo1;
+                var par2 = record.data.CodigoElemento;
+                store.remove(record);
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("CCEPF323_1_Eliminar_AnestesiaDiagnosticoPost3"))',
+                    params: {
+                        MODO: 'DELETEDETALLE',
+                        codigo: '' + par1,
+                        secuencia: par2
+                    }
+                });
+                seleccRecordActual = null;
+            }
+        };
+
+
+
+
+
+        function addRecordMain(grid) {
+            setIndicaCambios(true);
+
+            grid.store.insert(0, {
+                CODIGOELEMENTO: 'New' + count++, ValorCodigo1: '', ValorCodigo7: '', ValorEntero6: '', ACCION: 'NUEVO'
+            });
+
+            Ext.Function.defer(function () {
+                grid.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+            }, 100);
+        };
+
+
+
+
+        var beforeSave = function (form) {
+            App.taAlerts.setVisible(false);
+            App.taAlerts.setValue(null);
+            App.conthbIndicaError.setVisible(false);
+            var FieldsInvalidos = getInvalidFields(form);
+            if (FieldsInvalidos.length > 0) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("addRecursosValidacion"))',
+                    params: {
+                        data: FieldsInvalidos,
+                        indica: 'VALIDAR',
+                    },
+                    success: function (result) { accionMensajes(result.data); }
+                });
+            }
+        };
+
+
+
+
+
+
+    </script>
+}
+
+
+@section cuerpo
+{
+
+    @(
+ Html.X().Viewport().ID("ViewportXD")
+        .Layout(LayoutType.VBox)
+
+        .LayoutConfig(
+            new VBoxLayoutConfig { Align = VBoxAlign.Stretch }
+        )
+        .Listeners(l =>
+        {
+            l.AfterLayout.BroadcastOnBus = "App.resize";
+            l.AfterLayout.Single = true;
+        })
+        .Items(regions =>
+        {
+            regions.Add(
+              Html.X().FormPanel()
+                .ItemID("center")
+                .DefaultAnchor("100%")
+                .AutoScroll(true)
+                .Height(900)
+               .Header(false)
+               .Border(true)
+                  .ID("formactual")
+
+                .Listeners(l =>
+                {
+                    l.Render.Handler = "eventoRenderForm(); ";
+
+                })
+               .Items(
+                X.FormPanel()
+                      .ID("Panel1")
+                      .AutoScroll(true)
+                      .Border(false)
+                      .Header(false),
+                      X.FieldSet()
+                      .ColumnWidth(0.4).Collapsible(true)
+                     .Title("<b></b>")
+                      
+                 .Items(
+                   X.Container().Layout(LayoutType.HBox)
+                            .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                            .Items(
+
+                               X.Component().Width(10),
+
+                               Html.X().Label()
+                               .Html("<b>Visualización</b>")
+                               ,
+
+                            X.Component().Width(5),
+                            X.RadioGroupFor(c => c.VisualizacionaAnestesia, new List<Radio.Config> {
+                                    new Radio.Config{BoxLabel = "1" , InputValue = "1", ReadOnly =indicaModoLectura, Width = 80}
+                                }).FieldLabel("").LabelWidth(110),
+                                     Html.X().Image().ID("IMG")
+                                          .ImageUrl("~/resources/images/LeyendaPolitraumatizado_F442.JPG")
+                                          .MarginSpec("05 05 05 05")
+                                          .Width(150)
+                                          .Height(100)
+                                          ,
+
+                               X.Component().Width(5),
+                            X.RadioGroupFor(c => c.VisualizacionaAnestesia, new List<Radio.Config> {
+                                    new Radio.Config{BoxLabel = "2" , InputValue = "2", ReadOnly =indicaModoLectura, Width = 80}
+                                }).FieldLabel("").LabelWidth(110),
+                                     Html.X().Image().ID("IMG2")
+                                          .ImageUrl("~/resources/images/LeyendaPolitraumatizado_F442.JPG")
+                                          .MarginSpec("05 05 05 05")
+                                          .Width(150)
+                                          .Height(100)
+                                          ,
+
+
+                                                X.Component().Width(5),
+                            X.RadioGroupFor(c => c.VisualizacionaAnestesia, new List<Radio.Config> {
+                                    new Radio.Config{BoxLabel = "3" , InputValue = "3", ReadOnly =indicaModoLectura, Width = 80}
+                                }).FieldLabel("").LabelWidth(110),
+                                     Html.X().Image().ID("IMG3")
+                                          .ImageUrl("~/resources/images/LeyendaPolitraumatizado_F442.JPG")
+                                          .MarginSpec("05 05 05 05")
+                                          .Width(150)
+                                          .Height(100)
+
+                                          ,
+
+
+                                             X.Component().Width(5),
+                            X.RadioGroupFor(c => c.VisualizacionaAnestesia, new List<Radio.Config> {
+                                    new Radio.Config{BoxLabel = "4" , InputValue = "4", ReadOnly =indicaModoLectura, Width = 80}
+                                }).FieldLabel("").LabelWidth(110),
+                                     Html.X().Image().ID("IMG4")
+                                          .ImageUrl("~/resources/images/LeyendaPolitraumatizado_F442.JPG")
+                                          .MarginSpec("05 05 05 05")
+                                          .Width(150)
+                                          .Height(100)
+                                          
+                                          
+                                
+                            ),
+                            
+                            
+                            
+                                 X.Container().Layout(LayoutType.HBox)
+                            .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                            .Items(
+
+                               X.Component().Width(40),
+
+                               Html.X().Label()
+                               .Html("<b>Monitorización</b>"),
+
+                                   X.Button()
+                                .Text("El registro debe generar un cuadro en grafico")
+                                .Icon(Icon.Report)
+                                .ID("btngengrafico")
+                             //   .Handler("eventoVisorReporte('');")
+                               )
+                               
+                               
+                               
+                 
+                 
+                 
+                 ),
+
+
+                         X.FormPanel()
+                      .ID("Panel2")
+                      .BodyPadding(5)
+                      .AutoScroll(true)
+                      .Border(false)
+                      .Header(false),
+                      X.FieldSet()
+                      .ColumnWidth(0.4).Collapsible(true)
+                     .Title("<b></b>")
+             .MarginSpec("05 05 05 00")
+             .DefaultAnchor("100%")
+                      .Items(
+
+
+
+                          X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "150")); })
+                                .Items(
+                                    X.Component().Width(250),
+                                    X.Label().Hidden(false).Border(false).Html("<b><font  size='2.5em'; color='black'>15'</font></b>"),
+                                    X.Component().Width(200),
+                                    X.Label().Hidden(false).Border(false).Html("<b><font  size='2.5em'; color='black'>30'</font></b>"),
+                                    X.Component().Width(200),
+                                    X.Label().Hidden(false).Border(false).Html("<b><font  size='2.5em'; color='black'>45'</font></b>"),
+                                    X.Component().Width(200),
+                                    X.Label().Hidden(false).Border(false).Html("<b><font  size='2.5em'; color='black'>60'</font></b>")
+
+                                  )
+
+
+                                    , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "200")); })
+                                .Items(
+
+
+                                 //X.Component().Width(10),
+                                 //   X.Label().Hidden(false).Border(false)
+                                 //           .Html("<font  size='2.5em'; color='black'>Presión arterial(mmHg)</font>")
+                                 //           .Width(250)
+                                 // ,
+
+                                  X.Component().Width(20),
+
+                                      X.NumberFieldFor(c => c.PresionArterial15_1).FieldLabel("Presión Arterial MSD:").LabelWidth(120)
+                                     .Width(200).MaxLength(4).MinValue(0).MaxLength(3).AllowDecimals(false).AllowExponential(false).MaskRe("/[0-9]/").ReadOnly(indicaModoLectura),
+
+                                     X.Component().Width(3),
+                                     X.Label().Text("/"),
+
+                                     X.Component().Width(3),
+                                     X.NumberFieldFor(c => c.PresionArterial15_2).FieldLabel("").LabelWidth(1)
+                                     .Width(80).MaxLength(4).MinValue(0).MaxLength(3).AllowDecimals(false).AllowExponential(false).MaskRe("/[0-9]/").ReadOnly(indicaModoLectura)
+                                     
+                                     ,
+                                     
+                                      X.Component().Width(80),
+                                     
+                                         X.NumberFieldFor(c => c.PresionArterial30_1).FieldLabel("").LabelWidth(120)
+                                     .Width(80).MaxLength(4).MinValue(0).MaxLength(3).AllowDecimals(false).AllowExponential(false).MaskRe("/[0-9]/").ReadOnly(indicaModoLectura),
+
+                                     X.Component().Width(3),
+                                     X.Label().Text("/"),
+
+                                     X.Component().Width(3),
+                                     X.NumberFieldFor(c => c.PresionArterial30_2).FieldLabel("").LabelWidth(1)
+                                     .Width(80).MaxLength(4).MinValue(0).MaxLength(3).AllowDecimals(false).AllowExponential(false).MaskRe("/[0-9]/").ReadOnly(indicaModoLectura)
+
+                                      ,
+
+                                      X.Component().Width(50),
+
+                                         X.NumberFieldFor(c => c.PresionArterial45_1).FieldLabel("").LabelWidth(120)
+                                     .Width(80).MaxLength(4).MinValue(0).MaxLength(3).AllowDecimals(false).AllowExponential(false).MaskRe("/[0-9]/").ReadOnly(indicaModoLectura),
+
+                                     X.Component().Width(3),
+                                     X.Label().Text("/"),
+
+                                     X.Component().Width(3),
+                                     X.NumberFieldFor(c => c.PresionArterial45_2).FieldLabel("").LabelWidth(1)
+                                     .Width(80).MaxLength(4).MinValue(0).MaxLength(3).AllowDecimals(false).AllowExponential(false).MaskRe("/[0-9]/").ReadOnly(indicaModoLectura)
+
+                                     ,
+
+                                      X.Component().Width(50),
+
+                                         X.NumberFieldFor(c => c.PresionArterial60_1).FieldLabel("").LabelWidth(120)
+                                     .Width(80).MaxLength(4).MinValue(0).MaxLength(3).AllowDecimals(false).AllowExponential(false).MaskRe("/[0-9]/").ReadOnly(indicaModoLectura),
+
+                                     X.Component().Width(3),
+                                     X.Label().Text("/"),
+
+                                     X.Component().Width(3),
+                                     X.NumberFieldFor(c => c.PresionArterial60_2).FieldLabel("").LabelWidth(1)
+                                     .Width(80).MaxLength(4).MinValue(0).MaxLength(3).AllowDecimals(false).AllowExponential(false).MaskRe("/[0-9]/").ReadOnly(indicaModoLectura)
+
+
+
+                                 ))
+
+
+                                  , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "200")); })
+                                .Items(
+                                
+                                
+                                  X.Component().Width(20),
+
+                                      X.TextFieldFor(c => c.AnestesiaEKG15).FieldLabel("EKG:").LabelWidth(120)
+                                     .Width(290).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(80),
+                                     X.TextFieldFor(c => c.AnestesiaEKG30).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                     
+                                      ,
+
+                                      X.Component().Width(50),
+                                       X.TextFieldFor(c => c.AnestesiaEKG45).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(50),
+                                          X.TextFieldFor(c => c.AnestesiaEKG60).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                 ))
+                                 
+                                  , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "200")); })
+                                .Items(
+                                
+                                
+                                  X.Component().Width(20),
+
+                                      X.NumberFieldFor(c => c.PresionS0215).FieldLabel("S02(%):").LabelWidth(120)
+                                     .Width(290).ReadOnly(indicaModoLectura)
+                                     .EnableKeyEvents(true)
+                                      .Listeners(l => { l.KeyPress.Handler = "soloNumeros()"; })
+                                     ,
+
+                                      X.Component().Width(80),
+                                     X.NumberFieldFor(c => c.PresionS0230).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                       .EnableKeyEvents(true)
+                                      .Listeners(l => { l.KeyPress.Handler = "soloNumeros()"; })
+                                     
+                                      ,
+
+                                      X.Component().Width(50),
+                                       X.NumberFieldFor(c => c.PresionS0245).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                       .EnableKeyEvents(true)
+                                      .Listeners(l => { l.KeyPress.Handler = "soloNumeros()"; })
+                                     ,
+
+                                      X.Component().Width(50),
+                                          X.NumberFieldFor(c => c.PresionS0260).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                       .EnableKeyEvents(true)
+                                      .Listeners(l => { l.KeyPress.Handler = "soloNumeros()"; })
+                                 ))
+
+
+                                  , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "200")); })
+                                .Items(
+
+
+                                  X.Component().Width(20),
+
+                                      X.NumberFieldFor(c => c.PresionETC0215).FieldLabel("ETC02(%):").LabelWidth(120)
+                                     .Width(290).ReadOnly(indicaModoLectura)
+                                       .EnableKeyEvents(true)
+                                      .Listeners(l => { l.KeyPress.Handler = "soloNumeros()"; })
+                                     ,
+
+                                      X.Component().Width(80),
+                                     X.NumberFieldFor(c => c.PresionETC0230).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                       .EnableKeyEvents(true)
+                                      .Listeners(l => { l.KeyPress.Handler = "soloNumeros()"; })
+
+                                      ,
+
+                                      X.Component().Width(50),
+                                       X.NumberFieldFor(c => c.PresionETC0245).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                       .EnableKeyEvents(true)
+                                      .Listeners(l => { l.KeyPress.Handler = "soloNumeros()"; })
+                                     ,
+
+                                      X.Component().Width(50),
+                                          X.NumberFieldFor(c => c.PresionETC0260).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                       .EnableKeyEvents(true)
+                                      .Listeners(l => { l.KeyPress.Handler = "soloNumeros()"; })
+                                 ))
+
+
+
+                                    , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "200")); })
+                                .Items(
+
+
+                                  X.Component().Width(20),
+
+                                      X.NumberFieldFor(c => c.PresionT15).FieldLabel("T° (°C):").LabelWidth(120)
+                                     .Width(290).ReadOnly(indicaModoLectura)
+                                     .EnableKeyEvents(true)
+                                     .Listeners(l => { l.KeyPress.Handler = "soloNumeros()"; })
+                                     ,
+
+                                      X.Component().Width(80),
+                                     X.NumberFieldFor(c => c.PresionT30).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                     .EnableKeyEvents(true)
+                                     .Listeners(l => { l.KeyPress.Handler = "soloNumeros()"; })
+                                      ,
+
+                                      X.Component().Width(50),
+                                       X.NumberFieldFor(c => c.PresionT45).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                     .EnableKeyEvents(true)
+                                     .Listeners(l => { l.KeyPress.Handler = "soloNumeros()"; })
+                                     ,
+
+                                      X.Component().Width(50),
+                                          X.NumberFieldFor(c => c.PresionT60).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                     .EnableKeyEvents(true)
+                                     .Listeners(l => { l.KeyPress.Handler = "soloNumeros()"; })
+                                 ))
+
+                                     , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "200")); })
+                                .Items(
+
+
+                                  X.Component().Width(20),
+
+                                      X.TextFieldFor(c => c.PresionPAN15).FieldLabel("PAM:").LabelWidth(120)
+                                     .Width(290).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(80),
+                                     X.TextFieldFor(c => c.PresionPAN30).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+
+                                      ,
+
+                                      X.Component().Width(50),
+                                       X.TextFieldFor(c => c.PresionPAN45).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(50),
+                                          X.TextFieldFor(c => c.PresionPAN60).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                 ))
+
+
+                                      , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "200")); })
+                                .Items(
+
+
+                                  X.Component().Width(20),
+
+                                      X.TextFieldFor(c => c.PresionPANI15).FieldLabel("PANI:").LabelWidth(120)
+                                     .Width(290).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(80),
+                                     X.TextFieldFor(c => c.PresionPANI30).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+
+                                      ,
+
+                                      X.Component().Width(50),
+                                       X.TextFieldFor(c => c.PresionPANI45).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(50),
+                                          X.TextFieldFor(c => c.PresionPANI60).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                 ))
+
+
+                                     , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "200")); })
+                                .Items(
+
+
+                                  X.Component().Width(20),
+
+                                      X.TextFieldFor(c => c.PresionPVC15).FieldLabel("PVC:").LabelWidth(120)
+                                     .Width(290).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(80),
+                                     X.TextFieldFor(c => c.PresionPVC30).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+
+                                      ,
+
+                                      X.Component().Width(50),
+                                       X.TextFieldFor(c => c.PresionPVC45).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(50),
+                                          X.TextFieldFor(c => c.PresionPVC60).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                 ))
+
+
+                                   , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "200")); })
+                                .Items(
+
+
+                                  X.Component().Width(20),
+
+                                      X.TextFieldFor(c => c.PresionBIS15).FieldLabel("BIS:").LabelWidth(120)
+                                     .Width(290).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(80),
+                                     X.TextFieldFor(c => c.PresionBIS30).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+
+                                      ,
+
+                                      X.Component().Width(50),
+                                       X.TextFieldFor(c => c.PresionBIS45).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(50),
+                                          X.TextFieldFor(c => c.PresionBIS60).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                 ))
+
+
+                                  , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "200")); })
+                                .Items(
+
+
+                                  X.Component().Width(20),
+
+                                      X.TextFieldFor(c => c.PresionRespiEspontanea15).FieldLabel("Respiración espontánea:").LabelWidth(120)
+                                     .Width(290).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(80),
+                                     X.TextFieldFor(c => c.PresionRespiEspontanea30).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+
+                                      ,
+
+                                      X.Component().Width(50),
+                                       X.TextFieldFor(c => c.PresionRespiEspontanea45).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(50),
+                                          X.TextFieldFor(c => c.PresionRespiEspontanea60).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                 ))
+
+                                , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "200")); })
+                                .Items(
+
+
+                                  X.Component().Width(20),
+
+                                      X.TextFieldFor(c => c.PresionRespiAsistida15).FieldLabel("Respiración asistida:").LabelWidth(120)
+                                     .Width(290).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(80),
+                                     X.TextFieldFor(c => c.PresionRespiAsistida30).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+
+                                      ,
+
+                                      X.Component().Width(50),
+                                       X.TextFieldFor(c => c.PresionRespiAsistida45).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(50),
+                                          X.TextFieldFor(c => c.PresionRespiAsistida60).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                 ))
+
+
+                                   , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "200")); })
+                                .Items(
+
+
+                                  X.Component().Width(20),
+
+                                      X.TextFieldFor(c => c.PresionRespiControlado15).FieldLabel("Respiración controlado:").LabelWidth(120)
+                                     .Width(290).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(80),
+                                     X.TextFieldFor(c => c.PresionRespiControlado30).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+
+                                      ,
+
+                                      X.Component().Width(50),
+                                       X.TextFieldFor(c => c.PresionRespiControlado45).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(50),
+                                          X.TextFieldFor(c => c.PresionRespiControlado60).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                 ))
+
+
+
+                                  , X.FieldSet().Border(false)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "200")); })
+                                .Items(
+                                  X.Component().Width(20),
+                                     Html.X().Label()
+                                     .Html("<b>AGA</b>")
+                                     
+                                 ))
+                                 
+                                   , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "200")); })
+                                .Items(
+
+
+                                  X.Component().Width(20),
+
+                                      X.TextFieldFor(c => c.AGASodio15).FieldLabel("Sodio:").LabelWidth(120)
+                                     .Width(290).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(80),
+                                     X.TextFieldFor(c => c.AGASodio30).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+
+                                      ,
+
+                                      X.Component().Width(50),
+                                       X.TextFieldFor(c => c.AGASodio45).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(50),
+                                          X.TextFieldFor(c => c.AGASodio60).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                 ))
+
+                                 , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "200")); })
+                                .Items(
+
+
+                                  X.Component().Width(20),
+
+                                      X.TextFieldFor(c => c.AGAPotasio15).FieldLabel("Potasio:").LabelWidth(120)
+                                     .Width(290).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(80),
+                                     X.TextFieldFor(c => c.AGAPotasio30).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+
+                                      ,
+
+                                      X.Component().Width(50),
+                                       X.TextFieldFor(c => c.AGAPotasio45).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(50),
+                                          X.TextFieldFor(c => c.AGAPotasio60).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                 ))
+
+                                   , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "200")); })
+                                .Items(
+
+
+                                  X.Component().Width(20),
+
+                                      X.TextFieldFor(c => c.AGABicarbonato15).FieldLabel("Bicabornato:").LabelWidth(120)
+                                     .Width(290).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(80),
+                                     X.TextFieldFor(c => c.AGABicarbonato30).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+
+                                      ,
+
+                                      X.Component().Width(50),
+                                       X.TextFieldFor(c => c.AGABicarbonato45).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(50),
+                                          X.TextFieldFor(c => c.AGABicarbonato60).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                 ))
+                                 
+                                 
+                                  , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "200")); })
+                                .Items(
+
+
+                                  X.Component().Width(20),
+
+                                      X.TextFieldFor(c => c.AGABh15).FieldLabel("PH:").LabelWidth(120)
+                                     .Width(290).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(80),
+                                     X.TextFieldFor(c => c.AGABh30).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+
+                                      ,
+
+                                      X.Component().Width(50),
+                                       X.TextFieldFor(c => c.AGABh45).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(50),
+                                          X.TextFieldFor(c => c.AGABh60).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                 ))
+
+
+                                    , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "200")); })
+                                .Items(
+
+
+                                  X.Component().Width(20),
+
+                                      X.TextFieldFor(c => c.AGAFiO15).FieldLabel("FiO2:").LabelWidth(120)
+                                     .Width(290).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(80),
+                                     X.TextFieldFor(c => c.AGAFiO30).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+
+                                      ,
+
+                                      X.Component().Width(50),
+                                       X.TextFieldFor(c => c.AGAFiO45).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(50),
+                                          X.TextFieldFor(c => c.AGAFiO60).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                 ))
+
+
+                                  , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "200")); })
+                                .Items(
+
+
+                                  X.Component().Width(20),
+
+                                      X.TextFieldFor(c => c.AGAHemoglobina15).FieldLabel("Hemoglobina/Hcto.:").LabelWidth(120)
+                                     .Width(290).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(80),
+                                     X.TextFieldFor(c => c.AGAHemoglobina30).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+
+                                      ,
+
+                                      X.Component().Width(50),
+                                       X.TextFieldFor(c => c.AGAHemoglobina45).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(50),
+                                          X.TextFieldFor(c => c.AGAHemoglobina60).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                 ))
+
+                                  , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "200")); })
+                                .Items(
+
+
+                                  X.Component().Width(20),
+
+                                      X.TextFieldFor(c => c.AGAHematogrito15).FieldLabel("Hematogrito:").LabelWidth(120)
+                                     .Width(290).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(80),
+                                     X.TextFieldFor(c => c.AGAHematogrito30).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+
+                                      ,
+
+                                      X.Component().Width(50),
+                                       X.TextFieldFor(c => c.AGAHematogrito45).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                     ,
+
+                                      X.Component().Width(50),
+                                          X.TextFieldFor(c => c.AGAHematogrito60).FieldLabel("")
+                                     .Width(170).ReadOnly(indicaModoLectura)
+                                 ))
+                                 
+                      
+                      ),
+                      
+                      
+                      
+                      
+                        X.HiddenFor(m => m.Accion),
+                        X.DateFieldFor(m => m.FechaCreacion).Hidden(true),
+                        X.DateFieldFor(m => m.FechaModificacion).Hidden(true),
+                        X.TextFieldFor(m => m.UsuarioCreacion).Hidden(true),
+                        X.TextFieldFor(m => m.UsuarioModificacion).Hidden(true),
+                //  X.TextFieldFor(m => m.Estado).Hidden(true),
+                        X.TextArea().ID("taAlerts")
+                        .Border(false)
+                        .StyleSpec("background:white;border:1px solid gray;")
+                        .FieldStyle("color: red")
+                        .Hidden(true)
+                        .ReadOnly(true)
+
+                     )
+
+                    .TopBar(X.Toolbar().ID("bar").Items(
+                                X.ToolbarSpacer(20),
+                                X.TextField().Width(15).FieldStyle("border-color: " + COLOER_IND_OBLIGA).ReadOnly(true).Hidden(indicaModoLectura),
+                                X.Label().Html("<b><font color='" + COLOER_IND_OBLIGA + "'>Campos Obligatorios</font></b>").Hidden(indicaModoLectura),
+
+                                X.ToolbarSpacer(20)
+                                ,
+                                Html.X().Container().Layout(LayoutType.HBox)
+                                .ID("conthbIndicaError").Hidden(true).Items(
+                                    X.Label().Html("<font  size='1.9em'; color='red'>(</font>"),
+                                    X.Label().Html("<font  size='3.9em'; color='red'><b>&#161;</b></font>"),
+                                    X.Label().Html("<font  size='1.9em'; color='red'>) Verificar los errores presentados</font>")
+                                ),
+                                X.ToolbarFill(),
+                                 X.Button()
+                            .Text("Imprimir")
+                            .Icon(Icon.Report)
+                            .Hidden(!visibleImpresion)
+                            .ID("btnImpresion")
+                            .Handler("eventoVisorReporte('');"),
+
+                            X.Button()
+                            .Text("Imprimir Todos")
+                            .Icon(Icon.ReportGo)
+                            .Hidden(!visibleImpresion)
+                            .ID("btnImpresionHC")
+                            .Handler("eventoVisorReporte('HC');"),
+
+                                X.ToolbarSpacer().Width(40)
+                                ,
+                            X.Button()
+                                .Text("Guardar")
+                                .Icon(Icon.Disk)
+
+                                 .ID("cmdGuardar").Hidden(indicaModoLectura)
+                //  .Handler("EnviarData(this.up('grid'));"),
+
+
+                              .DirectEvents(de =>
+                                {  //Model.ACCION : Posee el MODO ACTUAL
+                                    de.Click.Url = Url.Action("CCEPF323_3_Save_Ficha_Anestesia3");
+                                    de.Click.EventMask.ShowMask = true;
+                                    de.Click.Before = "" +
+                                            "beforeSave(App.formactual); return App.formactual.getForm().isValid();";
+
+                                    de.Click.Success = "onSuccess(result.data);";
+                                    de.Click.Failure = "onFailure();";
+                                }),
+                           
+                             
+                                //.ID("cmdGuardar").Hidden(indicaModoLectura)
+                                //.DirectEvents(de =>
+                                //{  //Model.ACCION : Posee el MODO ACTUAL
+                                //    de.Click.Url = Url.Action("CCEPF323_2_Save_FichaAnestesia");
+                                //    de.Click.EventMask.ShowMask = true;
+                                //    //de.Click.Before = "return EnviarData('grid');";
+                                //    de.Click.Before = "" +
+                                //            "beforeSave(App.formactual); return App.formactual.getForm().isValid();";
+
+                                //    de.Click.Success = "onSuccess(result.data);";
+                                //    de.Click.Failure = "onFailure();";
+                                //}),
+
+                            X.Button()
+                                .Text("Cancelar")
+                                .ID("btnCancel").Hidden(indicaModoLectura)
+                                .Icon(Icon.Cancel)
+                                .Handler("eventoCancelar(this.up('form'));")
+                                ,
+                            X.Button()
+                                .Text("Editar")
+                                .ID("btnOnEdit")
+                                .Icon(Icon.ApplicationFormEdit)
+                                .Hidden(true)
+                                .Handler("eventoOnEditar(App.btnOnEdit);")
+
+                        ))
+                        .Listeners(l => l.FieldChange
+                            .Handler = "setIndicaCambios(true);"
+                        )
+                );
+        }
+        )
+
+
+    )
+
+}
+

@@ -1,0 +1,1515 @@
+﻿@model List<SoluccionSalud.Entidades.Entidades.SS_HC_Diagnostico_FE>
+@{
+    ViewBag.Title = ViewBag.Prueba;
+    var OPCION_SUCURSAL = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.Sucursal;
+}
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8" />
+    <title>@ViewBag.Lista</title>
+    <meta name="keywords" content="HTML5 Admin Template" />
+    <meta name="description" content="Porto Admin - Responsive HTML5 Template" />
+    <meta name="author" content="okler.net" />
+    <!-- Mobile Metas -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <!-- Web Fonts  -->
+    <!-- Vendor CSS
+    <link rel="stylesheet" href="assets/vendor/bootstrap/css/bootstrap.css" />-->
+    <link href="~/assets/vendor/bootstrap/css/bootstrap.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/assets/vendor/font-awesome/css/font-awesome.css" />
+    <link rel="stylesheet" href="~/assets/vendor/magnific-popup/magnific-popup.css" />
+    <link rel="stylesheet" href="~/assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
+    <!-- Specific Page Vendor CSS -->
+    <link rel="stylesheet" href="~/assets/vendor/select2/select2.css" />
+    <link rel="stylesheet" href="~/assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
+    <!--Tamaño Columnas -->
+    <!-- Consumo JSON
+
+
+    <script src="~/assets/functions.js"></script>
+       -->
+    <link href="~/assets/stylesheets/size.css" rel="stylesheet" />
+    <!-- Theme CSS />-->
+    <link rel="stylesheet" href="~/assets/stylesheets/theme.css" />
+    <!-- Skin CSS -->
+    <link rel="stylesheet" href="~/assets/stylesheets/skins/default.css" />
+    <!-- Theme Custom CSS -->
+    <link rel="stylesheet" href="~/assets/stylesheets/theme-custom.css" />
+    <!-- Head Libs -->
+    <script src="~/assets/vendor/modernizr/modernizr.js"></script>
+    <script src="~/HistoriaClinicaWest/jquery-1.8.3.js"></script>
+
+
+
+    <link rel="stylesheet" href="~/assets/vendor/pnotify/pnotify.custom.css" />
+
+
+
+    <style>
+        input:disabled {
+            background: #1A1B1D;
+        }
+
+        #container {
+            margin: 0 auto;
+            width: 80%;
+            overflow: auto;
+        }
+
+        table.gridtable {
+            margin: 0 auto;
+            width: 95%;
+            overflow: auto;
+            font-family: helvetica,arial,sans-serif;
+            font-size: 12px;
+            color: #333333;
+            border-width: 1px;
+            border-color: #666666;
+            border-collapse: collapse;
+            text-align: center;
+        }
+
+            table.gridtable th {
+                border-width: 1px;
+                padding: 8px;
+                border-style: solid;
+                border-color: #666666;
+                background-color: #E7E9E9;
+            }
+
+            table.gridtable td {
+                border-width: 1px;
+                padding: 8px;
+                border-style: solid;
+                border-color: #666666;
+            }
+
+        tr:hover {
+            background-color: #D6E8FA;
+        }
+    </style>
+
+    <style>
+        .content {
+            display: none;
+        }
+
+        .preload {
+            margin: 0;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-right: -50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div  class="preload">
+        <img src="~/HistoriaClinicaWest/loading.gif" />
+    </div>
+
+    <div id="bloque_info" class="content">
+
+        <br />
+
+        <div class="panel-body">
+
+
+
+
+            <div class="row">
+                <div class="col-sm-2">
+                    <div class="form-group">
+
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-sm-2">
+                    <div class="form-group">
+                        <label class="control-label">Anamnesis</label>
+                        <input class="form-check-input" type="checkbox" value="Anamnesis" id="checkanamesis" />
+                    </div>
+                </div>
+
+                <div class="col-sm-2">
+                    <div class="form-group">
+                        <label class="control-label">Diagnóstico </label>
+                        <input class="form-check-input" type="checkbox" value="Diagnostico" id="checkdiagnostico" />
+                    </div>
+                </div>
+
+                <div class="col-sm-2">
+                    <div class="form-group">
+                        <label class="control-label">Receta </label>
+                        <input class="form-check-input" type="checkbox" value="Receta" id="checkreceta" />
+                    </div>
+                </div>
+
+                <div class="col-sm-2">
+                    <div class="form-group">
+                        <label class="control-label">Plan de Trabajo </label>
+                        <input class="form-check-input" type="checkbox" value="Receta" id="checkplantrabajo" />
+                    </div>
+                </div>
+                <div class="col-sm-2">
+                    <div class="form-group">
+
+                    </div>
+                </div>
+
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="control-label">  </label>
+                        <button style="margin: 20px" type="submit" class="btn btn-success" id="BtnCopiar" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Copiando....">Copiar</button>
+                    </div>
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-sm-2">
+                    <div class="form-group">
+                        <label class="control-label">Sucursal</label>
+                        <input type="text" disabled=disabled disabled=disabled id="TxtSucursalInfo" name="website" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="col-sm-2">
+                    <div class="form-group">
+                        <label class="control-label">Código OA </label>
+
+
+
+                        <input type="text" disabled=disabled disabled=disabled id="TxtCodigoOaInfo" name="website" class="form-control" />
+
+
+                    </div>
+                </div>
+
+                <div class="col-sm-2">
+                    <div class="form-group">
+                        <label class="control-label">Especialidad </label>
+
+                        <input type="text" disabled=disabled disabled=disabled id="TxtEspecialidadInfo" name="website" class="form-control" />
+
+
+                    </div>
+                </div>
+
+                <div class="col-sm-2">
+                    <div class="form-group">
+                        <label class="control-label">Médico </label>
+
+                        <input type="text" disabled=disabled disabled=disabled id="TxtMedicoInfo" name="website" class="form-control" />
+
+
+                    </div>
+                </div>
+
+                <div class="col-sm-2">
+                    <div class="form-group">
+
+                    </div>
+                </div>
+
+
+
+
+
+            </div>
+
+            <!--<div class="row">
+            <div class="col-sm-2">
+                <div class="form-group">
+
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group">
+
+                </div>
+            </div>
+
+
+            <div class="col-sm-2">
+                <div class="form-group">
+
+
+
+                </div>
+            </div>
+
+            <div class="col-sm-2">
+                <div class="form-group">
+
+
+                </div>
+            </div>
+
+            <div class="col-sm-2">
+                <div class="form-group">
+
+
+
+
+                </div>
+            </div>
+
+            <div class="col-sm-2">-->
+            @*<button type="submit" class="btn btn-primary" id="BtnBuscarOAS">Buscar</button>
+                <button type="submit" class="btn btn-success" id="BtnCopiar">Copiar</button>*@
+
+            <!--</div>
+
+
+            </div>-->
+
+            <br />
+
+
+
+            @*<div class="container" id="container">*@
+            @*<button type="submit" class="btn btn-primary" id="BtnLogin" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Ingresando....">Iniciar Sesión</button>*@
+
+
+
+            <table id="table_id" class="gridtable " cellspacing="1" width="100%">
+                <thead>
+                    <tr>
+
+                        <th style="font-size:13px;">Acciones</th>
+                        <th style="font-size:13px;">Sucursal</th>
+                        <th style="font-size:13px;">Fecha Atención</th>
+                        <th style="font-size:13px;">Hora Cita</th>
+                        <th style="font-size:13px;">Código OA</th>
+                        <th style="font-size:13px;">Anamnesis</th>
+                        <th style="font-size:13px;">Diagnóstico</th>
+                        <th style="font-size:13px;">Receta</th>
+                        <th style="font-size:13px;">Plan de Trabajo</th>
+                        <th style="font-size:13px;" class="center hidden-phone">Especialidad</th>
+                        <th style="font-size:13px;">Médico</th>
+
+
+
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            @*</div>*@
+
+            </nav>
+        </div>
+
+
+
+    </div>
+
+
+    <style>
+        .modal-dialog-center {
+            margin-top: 15%;
+        }
+
+        .anyClass {
+            height: 560px;
+            overflow-y: scroll;
+        }
+    </style>
+
+
+
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-center" role="document">
+
+            <form id="FrmData">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel"></h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="panel-body">
+
+
+                            <div class="center">
+
+                                <div class="panel-body">
+                                    <div class="row">
+                                        <div class="col-sm-6">
+                                            <div class="form-group">
+                                                <label class="control-label">Cargando...</label>
+
+                                                <img style="width:50px;height:50px;" class="form-control" src="~/resources/images/loading_dos.gif" />
+
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="modal-footer">
+
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+
+        </div>
+    </div>
+
+
+    <script>
+
+   
+
+        $(function () {
+            $(".preload").fadeOut(2000, function () {
+                $(".content").fadeIn(1000);
+            });
+        });
+
+
+
+
+        $('#table_id tbody').on('click', 'tr', function () {
+            //get row contents into an array
+            var tableData = $(this).children("td").map(function () {
+                return $(this).text();
+            }).get();
+
+            $("#TxtSucursalInfo").val("" + tableData[1]);
+            $("#TxtCodigoOaInfo").val("" + tableData[4]);
+            $("#TxtEspecialidadInfo").val("" + tableData[9]);
+            $("#TxtMedicoInfo").val("" + tableData[10]);
+
+
+
+
+
+
+        });
+    </script>
+
+    <!-- Vendor -->
+    <script src="~/assets/vendor/jquery/jquery.js"></script>
+    <script src="~/assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
+    <script src="~/assets/vendor/bootstrap/js/bootstrap.js"></script>
+    <script src="~/assets/vendor/nanoscroller/nanoscroller.js"></script>
+    <script src="~/assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+    <script src="~/assets/vendor/magnific-popup/magnific-popup.js"></script>
+    <script src="~/assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
+
+    <!-- Specific Page Vendor -->
+    <script src="~/assets/vendor/select2/select2.js"></script>
+    <script src="~/assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
+    <script src="~/assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
+    <script src="~/assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
+
+    <!-- Theme Base, Components and Settings -->
+    <script src="~/assets/javascripts/theme.js"></script>
+
+    <!-- Theme Custom -->
+    <script src="~/assets/javascripts/theme.custom.js"></script>
+
+    <!-- Theme Initialization Files -->
+    <script src="~/assets/javascripts/theme.init.js"></script>
+
+
+    <!-- Examples -->
+    <script src="~/assets/javascripts/tables/examples.datatables.default.js"></script>
+    <script src="~/assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
+    <script src="~/assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+
+    <script src="~/assets/vendor/pnotify/pnotify.custom.js"></script>
+
+    <script src="~/assets/javascripts/ui-elements/examples.notifications.js"></script>
+
+
+    <style type="text/css">
+        .highlighted {
+            background: red;
+        }
+
+        #data tr {
+            background: white;
+        }
+    </style>
+
+
+    <style>
+        tr {
+            cursor: pointer;
+            transition: all .25s ease-in-out;
+        }
+
+        .selected {
+            background-color: red;
+            font-weight: bold;
+            color: #fff;
+        }
+    </style>
+
+    <!-- Consumo JSON :D -->
+
+    <script>
+
+        var selectedItems = [];
+        var selectCapRow ;
+
+        LoadComboSucursal();
+        LoadComboEspecialidad();
+
+        function LoadMaestroTable() {
+
+            dt = $("#table_id").DataTable({
+                destroy: true,
+                responsive: true,
+                searching: false,
+                ordering: false,
+                lengthChange: false,
+                ajax: {
+                    method: "POST",
+                    url: "@Url.Content("~/VisorCopiado/Json")",
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    data: function (d) {
+
+                        return JSON.stringify(d);
+                    },
+                    dataSrc: "data"
+                },
+                columns: [
+                    {
+                        "data": "UnidadReplicacion", 'orderable': false,
+                        'render': function (data, type, JsonResultRow, meta) {
+                            var html = '<button class="btn btn-primary"  data-toggle="tooltip" data-placement="top"  data-codigo="' + JsonResultRow.flag_valor_concatenado + '" title="Copiar Atención" id="BtnCopytable" type="button"><i class="fa fa-file "></i></button>'
+                            return html;
+                        }
+                    },
+
+                    { "data": "UnidadReplicacion", "name": "UnidadReplicacion", "autoWidth": true },
+                    {
+                        "data": "FechaRegistroString", "name": "FechaRegistroString", "autoWidth": true},
+                    { "data": "HoraString", "name": "HoraString", "autoWidth": true },
+                    { "data": "CodigoOA", "name": "CodigoOA", "autoWidth": true },
+                    {
+
+                        "data": "flagAnamnesisCount", "name": "flagAnamnesisCount", "autoWidth": true, "visible": true
+                        ,
+                        'render': function (data, type, JsonResultRow, meta) {
+
+                            if (JsonResultRow.flagAnamnesisCount >= 1) {
+                                var html = '<input class="form-check-input" type="checkbox" checked="true" disabled  data-codigo="' + JsonResultRow.flag_valor_concatenado + '" value="Anamnesis" id="checkanamesissup">'
+                                return html;
+                            } else {
+                                var html = '<input class="form-check-input" type="checkbox" disabled data-codigo="' + JsonResultRow.flag_valor_concatenado + '" value="Anamnesis" id="checkanamesissup">'
+                                return html;
+                            }
+
+                            //return data + html;
+
+                        }
+
+                    },
+                    {
+                        "data":  null, "autoWidth": true
+                        ,
+
+                        'render': function (data, type, JsonResultRow, meta) {
+
+
+                            if (JsonResultRow.flagDiagnosticoCount >= 1) {
+                                var html = '<input class="form-check-input" type="checkbox" checked="true" disabled data-codigo="' + JsonResultRow.flag_valor_concatenado + '" value="Diagnostico" id="checkdiagnostico">'
+                                return html;
+                            } else {
+                                var html = '<input class="form-check-input" type="checkbox"    disabled data-codigo="' + JsonResultRow.flag_valor_concatenado + '" value="Diagnostico" id="checkdiagnostico">'
+                                return html;
+                            }
+
+
+
+                        }
+                    },
+                    {
+                        "data": "UnidadReplicacion", "name": "UnidadReplicacion", "autoWidth": true
+                        ,
+
+                        'render': function (data, type, JsonResultRow, meta) {
+
+
+
+                            if (JsonResultRow.flagRecetaCount >= 1) {
+
+                                var html = '<input class="form-check-input" checked="true"  type="checkbox" disabled data-codigo="' + JsonResultRow.flag_valor_concatenado + '" value="Receta" id="checkreceta">'
+                                return html;
+                            } else {
+                                var html = '<input class="form-check-input" type="checkbox" disabled data-codigo="' + JsonResultRow.flag_valor_concatenado + '" value="Receta" id="checkreceta">'
+                                return html;
+                            }
+
+                        }
+                    },
+                    {
+
+                        "data": "UnidadReplicacion", "name": "UnidadReplicacion", "autoWidth": true
+
+                        ,
+
+                        'render': function (data, type, JsonResultRow, meta) {
+
+
+                            if (JsonResultRow.flagPlanTrabajoCount >= 1) {
+                                var html = '<input class="form-check-input" type="checkbox" checked="true"  disabled data-codigo="' + JsonResultRow.flag_valor_concatenado + '" value="Receta" id="checkplantrabajo">'
+                                return html;
+                            } else {
+                                var html = '<input class="form-check-input" type="checkbox"   disabled data-codigo="' + JsonResultRow.flag_valor_concatenado + '" value="Receta" id="checkplantrabajo">'
+                                return html;
+                            }
+                        }
+                    },
+                    { "data": "ObservacionFirma", "name": "ObservacionFirma", "autoWidth": true },
+                    { "data": "ObservacionOrden", "name": "ObservacionOrden", "autoWidth": true }
+
+
+
+                ]
+
+            });
+        }
+
+        function dtUsers() {
+
+            $(document).ready(function () {
+                $("#table_id").DataTable({
+                    "processing": true,
+                    "serverSide": true,
+                    "ordering": false,
+                    "searching": false,
+                    "lengthChange": false,
+                    "ajax": {
+                        "url": "@Url.Content("~/HistoriaClinicaWest/Json")",
+                        "type": "POST",
+                        "datatype": "json"
+                    },
+                    "pageLength": 10,
+                    "filter": true,
+                    "responsivePriority": 1,
+                    "data": null,
+                    "columns": [
+					{ "data": "Sucursal", "name": "Sucursal", "autoWidth": true },
+					{ "data": "CitaFecha", "name": "CitaFecha", "autoWidth": true },
+					{ "data": "UsuarioCreacion", "name": "UsuarioCreacion", "autoWidth": true },
+                    { "data": "Origen", "name": "Origen", "autoWidth": true },
+					{ "data": "Observacion", "name": "Observacion", "autoWidth": true },
+                    { "data": "UnidadReplicacion", "name": "UnidadReplicacion", "autoWidth": true },
+                        {
+                            "data": "Estado", 'orderable': false,
+                            'render': function (data, type, full, meta) {
+                                if (data == 1) {
+                                    var html = ' <a class="text-danger"><i class="fa fa-circle"></i></a>';
+                                    return html;
+                                }
+                                else if (data == 2) {
+                                    var html = ' <a class="text-success"><i class="fa fa-circle"></i></a>';
+                                    return html;
+                                }
+                                else if (data == 3) {
+                                    var html = ' <a class="text-primary"><i class="fa fa-circle"></i></a>';
+                                    return html;
+                                }
+                                else {
+                                    var html = ' <a class="text-warning"><i class="fa fa-circle"></i></a>';
+
+                                    return html;
+                                }
+                            }
+                        },
+                        {
+                            "data": "TipoAntecedente", 'orderable': false,
+                            'render': function (data, type, full, meta) {
+                                var html = '<button class="btn btn-primary"  data-toggle="tooltip" data-placement="top"  data-codigo="' + data + '" title="Consultar OA" id="BtnShow" type="button"><i class="fa fa-eye "></i></button>'
+                                return html;
+
+                            }
+                        },
+                        {
+                            "data": "EpisodioClinico", 'orderable': false,
+                            'render': function (data, type, full, meta) {
+                                if (data == 1) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-success"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                }
+                                else if (data == 2 || data == 3) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-secondary"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                } else {
+                                    var html = '';
+                                    return html;
+                                }
+                            }
+                        },
+                        {
+                            "data": "IdDiagnostico", 'orderable': false,
+                            'render': function (data, type, full, meta) {
+                                if (data == 1) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-success"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                }
+                                else if (data == 2 || data == 3) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-secondary"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                } else {
+                                    var html = '';
+                                    return html;
+                                }
+                            }
+                        },
+                        {
+                            "data": "IdDiagnosticoValoracion", 'orderable': false,
+                            'render': function (data, type, full, meta) {
+                                if (data == 1) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-success"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                }
+                                else if (data == 2 || data == 3) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-secondary"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                } else {
+                                    var html = '';
+                                    return html;
+                                }
+                            }
+                        }
+                    ]
+                });
+            })
+
+        }
+
+
+
+        //$('#table_id tbody').on('click', 'tr', function () {
+        //    var data = $(this);
+        //    alert('You clicked on ' + data[0] + '\'s row');
+        //});
+
+
+
+
+
+
+        $('#table_id').on('click', '#BtnCopytable', function (e) {
+            //var object = $(this);
+            var Response = $(this).data('codigo');
+
+            selectCapRow = Response;
+
+            var data = Response;
+            var arr = data.split('|');
+            var IdOrdenAtencion = parseInt(arr[0]);
+            var LineaOrdenAtencion = parseInt(arr[1]);
+            var CodigoOa = arr[2];
+            var IdEpisodioAtencion = arr[3];
+            var EpisodioClinico = arr[4];
+            var Anamnesis = arr[5];
+            var Diagnostico = arr[6];
+            var Receta = arr[7];
+            var Plan = arr[8];
+
+
+
+
+            if (Anamnesis >= 1) {
+
+                document.getElementById('checkanamesis').checked = true;
+                document.getElementById("checkanamesis").disabled = false;
+            } else {
+
+                document.getElementById('checkanamesis').checked = false;
+                document.getElementById("checkanamesis").disabled = true;
+
+            }
+
+
+
+            if (Diagnostico >= 1) {
+
+                document.getElementById('checkdiagnostico').checked = true;
+                document.getElementById("checkdiagnostico").disabled = false;
+            } else {
+
+                document.getElementById('checkdiagnostico').checked = false;
+                document.getElementById("checkdiagnostico").disabled = true;
+
+
+            }
+
+
+            if (Receta >= 1) {
+
+                document.getElementById('checkreceta').checked = true;
+                document.getElementById("checkreceta").disabled = false;
+            } else {
+
+                document.getElementById('checkreceta').checked = false;
+
+                document.getElementById("checkreceta").disabled = true;
+
+            }
+
+            if (Plan >= 1) {
+
+                document.getElementById('checkplantrabajo').checked = true;
+
+                document.getElementById("checkplantrabajo").disabled = false;
+            } else {
+
+                document.getElementById('checkplantrabajo').checked = false;
+
+                document.getElementById("checkplantrabajo").disabled = true;
+
+            }
+
+
+            // alert(Anamnesis + " " + Diagnostico + " " + Receta + " " + Plan)
+
+        });
+
+        $('#table_id').on('click', '#BtnShow', function (e) {
+            //var object = $(this);
+            var capId = $(this).data('codigo');
+            //$(this).parent().parent().css('background-color', 'orange');
+            //$(this).parent().parent().css('color', 'white');
+            getId(capId);
+
+        });
+
+        $('#table_id').on('change', '#checkanamesis', function (e) {
+            //var object = $(this);
+            var Response = $(this).data('codigo');
+
+            var ValueCheck = e.currentTarget.checked;
+            var ValueText = e.currentTarget.value;
+            var data = Response;
+            var arr = data.split('|');
+            var IdOrdenAtencion = parseInt(arr[0]);
+            var LineaOrdenAtencion = parseInt(arr[1]);
+            var CodigoOa = arr[2];
+            var IdEpisodioAtencion = arr[3];
+            var EpisodioClinico = arr[4];
+            var sucursal = $("#TxtSucursalInfo").val();
+            alert(sucursal);
+
+            if (selectedItems.length > 0) {
+
+                debugger;
+
+
+                var filteredValue = selectedItems.filter(function (item) {
+                    return item.IdOrdenAtencion == IdOrdenAtencion && item.LineaOrdenAtencion == LineaOrdenAtencion ;
+                });
+
+                if (filteredValue.length > 0) {
+                    selectedItems.forEach(function (item, index) {
+
+                        if (item.IdOrdenAtencion == IdOrdenAtencion && item.LineaOrdenAtencion == LineaOrdenAtencion) {
+                            if (ValueCheck) {
+                                item.flagAnamnesis = true;
+                            } else {
+                                item.flagAnamnesis = false;
+
+                                selectedItems.splice(index, 1);
+                            }
+                        }
+
+                    });
+                } else {
+                    selectedItems.push({
+                        IdEpisodioAtencion: IdEpisodioAtencion,
+                        EpisodioClinico: EpisodioClinico,
+                        IdOrdenAtencion: IdOrdenAtencion,
+                        LineaOrdenAtencion: LineaOrdenAtencion,
+                        CodigoOA: CodigoOa,
+                        flagFormato: ValueText,
+                        flagAnamnesis: ValueCheck,
+                        flagDiagnostico: false,
+                        flagReceta: false,
+                        flagPlanTrabajo: false,
+                        UnidadReplicacion: sucursal 
+                    });
+                }
+
+            } else {
+
+                selectedItems.push({
+                    IdEpisodioAtencion: IdEpisodioAtencion,
+                    EpisodioClinico: EpisodioClinico,
+                    IdOrdenAtencion: IdOrdenAtencion,
+                    LineaOrdenAtencion: LineaOrdenAtencion,
+                    CodigoOA: CodigoOa,
+                    flagFormato: ValueText,
+                    flagAnamnesis: ValueCheck,
+                    flagDiagnostico: false,
+                    flagReceta: false,
+                    flagPlanTrabajo: false,
+                    UnidadReplicacion: sucursal
+                });
+            }
+
+
+
+        });
+
+
+
+
+        $('#table_id').on('change', '#checkdiagnostico', function (e) {
+            //var object = $(this);
+            var Response = $(this).data('codigo');
+
+            var ValueCheck = e.currentTarget.checked;
+            var ValueText = e.currentTarget.value;
+            var data = Response;
+            var arr = data.split('|');
+            var IdOrdenAtencion = parseInt(arr[0]);
+            var LineaOrdenAtencion = parseInt(arr[1]);
+            var CodigoOa = arr[2];
+            var IdEpisodioAtencion = arr[3];
+            var EpisodioClinico = arr[4];
+
+
+            if (selectedItems.length > 0) {
+
+                debugger;
+
+
+                var filteredValue = selectedItems.filter(function (item) {
+                    return item.IdOrdenAtencion == IdOrdenAtencion && item.LineaOrdenAtencion == LineaOrdenAtencion;
+                });
+
+                if (filteredValue.length > 0) {
+                    selectedItems.forEach(function (item, index) {
+
+                        if (item.IdOrdenAtencion == IdOrdenAtencion && item.LineaOrdenAtencion == LineaOrdenAtencion) {
+                            if (ValueCheck) {
+                                item.flagDiagnostico = true;
+                            } else {
+                                item.flagDiagnostico = false;
+                                selectedItems.splice(index, 1);
+                            }
+                        }
+
+                    });
+                } else {
+                    selectedItems.push({
+                        IdEpisodioAtencion: IdEpisodioAtencion,
+                        EpisodioClinico: EpisodioClinico,
+                        IdOrdenAtencion: IdOrdenAtencion,
+                        LineaOrdenAtencion: LineaOrdenAtencion,
+                        CodigoOA: CodigoOa,
+                        flagFormato: ValueText,
+                        flagAnamnesis: false,
+                        flagDiagnostico: ValueCheck,
+                        flagReceta: false,
+                        flagPlanTrabajo: false,
+                        UnidadReplicacion: $("#TxtSucursalInfo").val()
+                    });
+                }
+
+            } else {
+
+                selectedItems.push({
+                    IdEpisodioAtencion: IdEpisodioAtencion,
+                    EpisodioClinico: EpisodioClinico,
+                    IdOrdenAtencion: IdOrdenAtencion,
+                    LineaOrdenAtencion: LineaOrdenAtencion,
+                    CodigoOA: CodigoOa,
+                    flagFormato: ValueText,
+                    flagAnamnesis: false,
+                    flagDiagnostico: ValueCheck,
+                    flagReceta: false,
+                    flagPlanTrabajo: false,
+                    UnidadReplicacion: $("#TxtSucursalInfo").val()
+                });
+            }
+
+        });
+
+        $('#table_id').on('change', '#checkreceta', function (e) {
+            //var object = $(this);
+            var Response = $(this).data('codigo');
+            var ValueCheck = e.currentTarget.checked;
+            var ValueText = e.currentTarget.value;
+            var data = Response;
+            var arr = data.split('|');
+            var IdOrdenAtencion = parseInt(arr[0]);
+            var LineaOrdenAtencion = parseInt(arr[1]);
+            var CodigoOa = arr[2];
+            var IdEpisodioAtencion = arr[3];
+            var EpisodioClinico = arr[4];
+            if (selectedItems.length > 0) {
+
+                debugger;
+
+
+                var filteredValue = selectedItems.filter(function (item) {
+                    return item.IdOrdenAtencion == IdOrdenAtencion && item.LineaOrdenAtencion == LineaOrdenAtencion;
+                });
+
+                if (filteredValue.length > 0) {
+                    selectedItems.forEach(function (item, index) {
+
+                        if (item.IdOrdenAtencion == IdOrdenAtencion && item.LineaOrdenAtencion == LineaOrdenAtencion) {
+                            if (ValueCheck) {
+                                item.flagReceta = true;
+                            } else {
+                                item.flagReceta = false;
+                                selectedItems.splice(index, 1);
+                            }
+                        }
+
+                    });
+                } else {
+                    selectedItems.push({
+                        IdEpisodioAtencion: IdEpisodioAtencion,
+                        EpisodioClinico: EpisodioClinico,
+                        IdOrdenAtencion: IdOrdenAtencion,
+                        LineaOrdenAtencion: LineaOrdenAtencion,
+                        CodigoOA: CodigoOa,
+                        flagFormato: ValueText,
+                        flagAnamnesis: false,
+                        flagDiagnostico: false,
+                        flagReceta: ValueCheck,
+                        flagPlanTrabajo: false,
+                        UnidadReplicacion: $("#TxtSucursalInfo").val()
+                    });
+                }
+
+            } else {
+
+                selectedItems.push({
+                    IdEpisodioAtencion: IdEpisodioAtencion,
+                    EpisodioClinico: EpisodioClinico,
+                    IdOrdenAtencion: IdOrdenAtencion,
+                    LineaOrdenAtencion: LineaOrdenAtencion,
+                    CodigoOA: CodigoOa,
+                    flagFormato: ValueText,
+                    flagAnamnesis: false,
+                    flagDiagnostico: false,
+                    flagReceta: ValueCheck,
+                    flagPlanTrabajo: false,
+                    UnidadReplicacion: $("#TxtSucursalInfo").val()
+                });
+            }
+
+        });
+
+
+
+        $('#table_id').on('change', '#checkplantrabajo', function (e) {
+            //var object = $(this);
+            var Response = $(this).data('codigo');
+
+            var ValueCheck = e.currentTarget.checked;
+            var ValueText = e.currentTarget.value;
+            var data = Response;
+            var arr = data.split('|');
+            var IdOrdenAtencion = parseInt(arr[0]);
+            var LineaOrdenAtencion = parseInt(arr[1]);
+            var CodigoOa = arr[2];
+            var IdEpisodioAtencion = arr[3];
+            var EpisodioClinico = arr[4];
+
+            if (selectedItems.length > 0) {
+
+                debugger;
+
+
+                var filteredValue = selectedItems.filter(function (item) {
+                    return item.IdOrdenAtencion == IdOrdenAtencion && item.LineaOrdenAtencion == LineaOrdenAtencion;
+                });
+
+                if (filteredValue.length > 0) {
+                    selectedItems.forEach(function (item, index) {
+
+                        if (item.IdOrdenAtencion == IdOrdenAtencion && item.LineaOrdenAtencion == LineaOrdenAtencion) {
+                            if (ValueCheck) {
+                                item.flagPlanTrabajo = true;
+                            } else {
+                                item.flagPlanTrabajo = false;
+                                selectedItems.splice(index, 1);
+                            }
+                        }
+
+                    });
+                } else {
+                    selectedItems.push({
+                        IdEpisodioAtencion: IdEpisodioAtencion,
+                        EpisodioClinico: EpisodioClinico,
+                        IdOrdenAtencion: IdOrdenAtencion,
+                        LineaOrdenAtencion: LineaOrdenAtencion,
+                        CodigoOA: CodigoOa,
+                        flagFormato: ValueText,
+                        flagAnamnesis: false,
+                        flagDiagnostico: false,
+                        flagReceta: false,
+                        flagPlanTrabajo: ValueCheck,
+                        UnidadReplicacion: $("#TxtSucursalInfo").val()
+                    });
+                }
+
+            } else {
+
+                selectedItems.push({
+                    IdEpisodioAtencion: IdEpisodioAtencion,
+                    EpisodioClinico: EpisodioClinico,
+                    IdOrdenAtencion: IdOrdenAtencion,
+                    LineaOrdenAtencion: LineaOrdenAtencion,
+                    CodigoOA: CodigoOa,
+                    flagFormato: ValueText,
+                    flagAnamnesis: false,
+                    flagDiagnostico: false,
+                    flagReceta: false,
+                    flagPlanTrabajo: ValueCheck,
+                    UnidadReplicacion: $("#TxtSucursalInfo").val()
+                });
+            }
+
+        });
+
+        function SendDataRequest() {
+         
+            var V_EpisodioAtenciones = {
+                json: JSON.stringify(selectedItems)
+
+
+            };
+            $.ajax({
+                url: "/VisorCopiado/ArmarJson",
+                data: JSON.stringify(V_EpisodioAtenciones),
+                type: "POST",
+                contentType: "application/json;charset=utf-8",
+                dataType: "json",
+                success: function (result) {
+                    //$(function () {
+                    //    new PNotify({
+                    //        title: 'Proceso Exitoso..',
+                    //        type: 'success',
+                    //        text: result
+                    //    });
+                    //});
+                    //myButton.disabled = false;
+                    //document.getElementById("BtnCopiar").disabled = false;
+                
+                    alert('El copiado se realizó satisfactoriamente..');
+                    document.getElementById("BtnCopiar").disabled = true;
+                    $('#BtnCopiar').button('reset'); 
+                    document.getElementById('checkanamesis').checked = false;
+                    document.getElementById("checkanamesis").disabled = true; 
+                    document.getElementById('checkdiagnostico').checked = false;
+                    document.getElementById("checkdiagnostico").disabled = true; 
+                    document.getElementById('checkreceta').checked = false; 
+                    document.getElementById("checkreceta").disabled = true; 
+                    document.getElementById('checkplantrabajo').checked = false; 
+                    document.getElementById("checkplantrabajo").disabled = true;           
+                   // window.WindowAsignarPerfilHC.back();
+                   // WindowAsignarPerfilHC.close();
+                    parent.App.txtRecargarX.setValue('RELOAD');
+                    parent.App.WindowAsignarPerfilHC.close();
+
+                    //window.history.go(-1)
+                    //window.location.href = window.location.href;
+                    //LoadMaestroTable();
+                    //swal.close();
+                },
+                error: function (errormessage) {
+
+                    $(function () {
+                        new PNotify({
+                            title: 'ERROR.. : ',
+                            type: 'error',
+                            text: errormessage.responseText
+                        });
+                    });
+                    $('#BtnCopiar').button('reset');
+                }
+            });
+        }
+
+        $(document).ready(function () {
+            $('#dataTable').DataTable({
+                "searching": false,
+                "paging": true,
+                "info": false,
+                "lengthChange": false
+            });
+        });
+        $(document).ready(function () {
+            $('#dataTable2').DataTable({
+                "searching": false,
+                "paging": true,
+                "info": false,
+                "lengthChange": false
+            });
+        });
+        $(document).ready(function () {
+            $('#dataTable3').DataTable({
+                "searching": false,
+                "paging": true,
+                "info": false,
+                "lengthChange": false
+            });
+        });
+
+        $(document).ready(function () {
+            $('#dataTable4').DataTable({
+                "searching": false,
+                "paging": true,
+                "info": false,
+                "lengthChange": false
+            });
+        });
+
+        $(document).ready(function () {
+            $('body').on('click', '#BtnBuscarOAS', function (e) {
+                // $('#BtnBuscarOAS').button('loading');
+                SendDataDate();
+            });
+        });
+
+
+        $(document).ready(function () {
+            $('body').on('click', '#BtnCopiar', function (e) {
+                var sucursal = $("#TxtSucursalInfo").val();
+                var data = selectCapRow;
+                if (data == undefined || data == null || data == "") {
+                    $(function () {
+                        new PNotify({
+                            title: 'Advertencia..',
+                            type: 'info',
+                            text: 'Seleccione una atención',
+                            delay: 1000
+                        });
+                    });                    
+                }
+
+                var arr = data.split('|');
+                var IdOrdenAtencion = parseInt(arr[0]);
+                var LineaOrdenAtencion = parseInt(arr[1]);
+                var CodigoOa = arr[2];
+                var IdEpisodioAtencion = arr[3];
+                var EpisodioClinico = arr[4];
+                var Anamnesis = arr[5];
+                var Diagnostico = arr[6];
+                var Receta = arr[7];
+                var Plan = arr[8];
+
+                if (Anamnesis == 0 && Diagnostico == 0 && Receta == 0 && Plan == 0) {
+                    $(function () {
+                        new PNotify({
+                            title: '¡Atención!',
+                            type: 'info',
+                            text: 'No Existe información para copiar',
+                            delay: 1000
+                        });
+                    });
+
+                }else {
+
+                    let checkanamesis = $("#checkanamesis").is(":checked") ? "true" : "false";
+                    let checkdiagnostico = $("#checkdiagnostico").is(":checked") ? "true" : "false";
+                    let checkreceta = $("#checkreceta").is(":checked") ? "true" : "false";
+                    let checkplantrabajo = $("#checkplantrabajo").is(":checked") ? "true" : "false";
+
+                    if (checkanamesis == "false" && checkdiagnostico == "false" && checkreceta == "false" && checkplantrabajo == "false") {
+                        $(function () {
+                            new PNotify({
+                                title: '¡Atención!',
+                                type: 'info',
+                                text: 'Para Copiar debe seleccionar una atención',
+                                delay: 1000
+                            });
+                        });
+                    }else{
+
+                     
+
+                        if (checkreceta == "true" && checkdiagnostico == "false") {
+
+                            $(function () {
+                                new PNotify({
+                                    title: '¡Atención!',
+                                    type: 'info',
+                                    text: 'Para Copiar la receta necesita de un diagnóstico',
+                                    delay: 1000
+                                });
+                            });
+
+                        } else {
+
+                            selectedItems.push({
+                                IdEpisodioAtencion: IdEpisodioAtencion,
+                                EpisodioClinico: EpisodioClinico,
+                                IdOrdenAtencion: IdOrdenAtencion,
+                                LineaOrdenAtencion: LineaOrdenAtencion,
+                                CodigoOA: CodigoOa,
+                                flagAnamnesis: checkanamesis,
+                                flagDiagnostico: checkdiagnostico,
+                                flagReceta: checkreceta,
+                                flagPlanTrabajo: checkplantrabajo,
+                                UnidadReplicacion: sucursal
+                                
+                            });
+
+                            $('#BtnCopiar').button('loading');
+
+                            SendDataRequest();
+                        }
+                    }
+                }
+            });
+        });
+
+
+        function filterItems(items, searchVal) {
+            return items.filter((item) => Object.values(item).includes(searchVal));
+        }
+
+
+        function LoadComboEspecialidad() {
+            $.ajax({
+                url: "/VisorCopiado/getEspecialidad",
+                data: {},
+                type: 'GET',
+                dataType: 'json',
+                success: function (respJson) {
+                    $("#cboEspecialidad").empty();
+                    $("#cboEspecialidad").append("<option readonly value=null>--Todos--</option>");
+                    $.each(respJson, function (index, value) {
+                        $("#cboEspecialidad").append("<option value='" + value.ValorCodigo1 + "'>" + value.DescripcionLocal + "</option>");
+                    });
+                },
+                error: function (xhr, status) {
+
+                    $(function () {
+                        new PNotify({
+                            title: 'ERROR.. : ' + status,
+                            type: 'error',
+                            text: xhr
+                        });
+                    });
+                }
+            });
+
+        }
+
+        function SendDataDate() {
+            dt = $("#table_id").DataTable({
+                destroy: true,
+                responsive: true,
+                ordering: false,
+                searching: false,
+                lengthChange: false,
+                ajax: {
+                    method: "POST",
+                    url: "@Url.Content("~/VisorCopiado/JsonSend")",
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    data: function (d) {
+                        d.FechaAtencion = $('#TxtFechaInicio').val();
+                        d.UnidadReplicacion = $('#cboSucursal').val();
+                        d.CodigoOA = $('#CboCodigoOa').val();
+                        d.IdEspecialidad = parseInt($('#cboEspecialidad').val());
+                        return JSON.stringify(d);
+                    },
+                    dataSrc: "data"
+                },
+                columns: [
+                    {
+                        "data": "UnidadReplicacion", 'orderable': false,
+                        'render': function (data, type, JsonResultRow, meta) {
+                            var html = '<button class="btn btn-primary"  data-toggle="tooltip" data-placement="top"  data-codigo="' + JsonResultRow.flag_valor_concatenado + '" title="Copiar Atención" id="BtnCopytable" type="button"><i class="fa fa-file "></i></button>'
+                            return html;
+                        }
+                    },
+
+                    { "data": "UnidadReplicacion", "name": "UnidadReplicacion", "autoWidth": true },
+                    {
+                        "data": "FechaRegistroString", "name": "FechaRegistroString", "autoWidth": true
+                    },
+                    { "data": "HoraString", "name": "HoraString", "autoWidth": true },
+                    { "data": "CodigoOA", "name": "CodigoOA", "autoWidth": true },
+                    {
+
+                        "data": "flagAnamnesisCount", "name": "flagAnamnesisCount", "autoWidth": true, "visible": true
+                        ,
+                        'render': function (data, type, JsonResultRow, meta) {
+
+                            if (JsonResultRow.flagAnamnesisCount >= 1) {
+                                var html = '<input class="form-check-input" type="checkbox" checked="true" disabled  data-codigo="' + JsonResultRow.flag_valor_concatenado + '" value="Anamnesis" id="checkanamesissup">'
+                                return html;
+                            } else {
+                                var html = '<input class="form-check-input" type="checkbox" disabled data-codigo="' + JsonResultRow.flag_valor_concatenado + '" value="Anamnesis" id="checkanamesissup">'
+                                return html;
+                            }
+                        }
+
+                    },
+                    {
+                        "data": null, "autoWidth": true
+                        ,
+                        'render': function (data, type, JsonResultRow, meta) {
+                            if (JsonResultRow.flagDiagnosticoCount >= 1) {
+                                var html = '<input class="form-check-input" type="checkbox" checked="true" disabled data-codigo="' + JsonResultRow.flag_valor_concatenado + '" value="Diagnostico" id="checkdiagnostico">'
+                                return html;
+                            } else {
+                                var html = '<input class="form-check-input" type="checkbox"    disabled data-codigo="' + JsonResultRow.flag_valor_concatenado + '" value="Diagnostico" id="checkdiagnostico">'
+                                return html;
+                            }
+                        }
+                    },
+                    {
+                        "data": "UnidadReplicacion", "name": "UnidadReplicacion", "autoWidth": true
+                        ,
+                        'render': function (data, type, JsonResultRow, meta) {
+                            if (JsonResultRow.flagRecetaCount >= 1) {
+                                var html = '<input class="form-check-input" checked="true"  type="checkbox" disabled data-codigo="' + JsonResultRow.flag_valor_concatenado + '" value="Receta" id="checkreceta">'
+                                return html;
+                            } else {
+                                var html = '<input class="form-check-input" type="checkbox" disabled data-codigo="' + JsonResultRow.flag_valor_concatenado + '" value="Receta" id="checkreceta">'
+                                return html;
+                            }
+
+                        }
+                    },
+                    {
+                        "data": "UnidadReplicacion", "name": "UnidadReplicacion", "autoWidth": true
+                        ,
+                        'render': function (data, type, JsonResultRow, meta) {
+
+                            if (JsonResultRow.flagPlanTrabajoCount >= 1) {
+                                var html = '<input class="form-check-input" type="checkbox" checked="true"  disabled data-codigo="' + JsonResultRow.flag_valor_concatenado + '" value="Receta" id="checkplantrabajo">'
+                                return html;
+                            } else {
+                                var html = '<input class="form-check-input" type="checkbox"   disabled data-codigo="' + JsonResultRow.flag_valor_concatenado + '" value="Receta" id="checkplantrabajo">'
+                                return html;
+                            }
+                        }
+                    },
+                    { "data": "ObservacionFirma", "name": "ObservacionFirma", "autoWidth": true },
+                    { "data": "ObservacionOrden", "name": "ObservacionOrden", "autoWidth": true }
+                ]
+            });
+        }
+
+        function cleanTexbox() {
+            $("#TxtTipoEnfermedad").val("");
+            $("#TxtRelato").val("");
+            $("#TxtAntecedentes").val("");
+            $("#TxtPA").val("");
+            $("#TxtFc").val("");
+            $("#TxtmmHg").val("");
+            $("#TxtEstado").val("");
+            $("#TxtSat").val("");
+            $("#TxtExamenFisico").val("");
+            $("#TxtEvolucion").val("");
+            $("#TxtTemperatura").val("");
+            $("#TxtPeso").val("");
+            //OFTALMOLOGIA
+            $("#txtAVODsc").val("");
+            $("#txtAVODCc").val("");
+            $("#txtAVODAE").val("");
+            $("#txtAVODCERCA").val("");
+            $("#txtAVOISc").val("");
+            $("#TxtAVOICc").val("");
+            $("#TxtAVOIAE").val("");
+            $("#TxtAVOICERCA").val("");
+            $("#TxtODSPH").val("");
+            $("#TxtODCIL").val("");
+            $("#TxtODEJE").val("");
+            $("#TxtODAV").val("");
+            $("#TxtODADD").val("");
+            $("#TxtODDIP").val("");
+            $("#TxtOISPH").val("");
+            $("#TxtOICIL").val("");
+            $("#TxtOIEJE").val("");
+            $("#TxtOIAV").val("");
+            $("#TxtOIADD").val("");
+            $("#TxtOIDIP").val("");
+            $("#TxtPARPADOSYANEXOS").val("");
+            $("#TxtCORNEACRISTALINOESCLERA").val("");
+            $("#TxtIRISPUPILA").val("");
+            $("#TxtTONOMETRIAOD").val("");
+            $("#TxtTONOMETRIAOI").val("");
+            $("#TxtTONOMETRIAmmHg").val("");
+            $("#TxtFONDODEOJO1").val("");
+            $("#TxtFONDODEOJO2").val("");
+
+        }
+
+
+        $(document).ready(function () {
+            $('#datatable tr').click(function () {
+                $(this).css('background-color', "#D6D5C3");
+            });
+        });
+
+
+
+
+
+        function LoadComboSucursal() {
+            $.ajax({
+                url: "/HistoriaClinicaWest/getEstados",
+                data: {},
+                type: 'GET',
+                dataType: 'json',
+                success: function (respJson) {
+                    $("#cboSucursal").empty();
+                    //$("#cboSucursal").append("<option readonly value='0'>--SELECCIONE--</option>");
+                    $.each(respJson, function (index, value) {
+                        $("#cboSucursal").append("<option value='" + value.CodigoElemento + "'>" + value.DescripcionLocal + "</option>");
+                    });
+
+                    var cap = respJson[0].UsuarioActual;
+
+                    $("#cboSucursal").val('@OPCION_SUCURSAL');
+                    LoadMaestroTable();
+                },
+                error: function (xhr, status) {
+
+                    $(function () {
+                        new PNotify({
+                            title: 'ERROR.. : ' + status,
+                            type: 'error',
+                            text: xhr
+                        });
+                    });
+
+                }
+
+            });
+
+        }
+
+
+    </script>
+
+
+</body>
+</html>

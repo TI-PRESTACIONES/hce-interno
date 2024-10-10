@@ -1,0 +1,237 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SG_Grupo
+
+@{
+    var X = Html.X();
+}
+
+<script>
+
+    
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 2) {
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        }
+        if (value == 1) {
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+        }
+    };
+
+
+
+    var seleccionRecordActual = null;
+    var status = null;
+    var status2 = null;
+    var status3 = null;
+    function setSeleccionSG(record) {
+        seleccionRecordActual = record;
+    }
+
+    var onSuccess = function (grid, data) {
+        grid.show();
+        grid.getStore().loadData(data);
+    };
+
+    var onFailure = function (modo) {
+        Ext.Msg.notify("EVENTO: FAILURE", "MODEL::" + modo);
+    };
+
+    function enviarSeleccion() {
+        if (seleccionRecordActual != null) {
+            enviarSeleccionDirect(seleccionRecordActual.data.IdGrupo, seleccionRecordActual.data.Nombre, seleccionRecordActual.data.CodigoGrupo);
+        } else {
+            Ext.Msg.alert('Debe Seleccionar un elemento.');
+        }
+
+    }
+
+    function enviarSeleccionDirect(param1,param2,param3) {
+        var status = param1;
+        var status2 = param2;
+        var status3 = param3;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action(Model.ACCION))',
+            params: {
+                MODO: 'get',
+                id: status,
+                descripcion: status2,
+                cod: status3,
+                idWindow: "WindowSelectGrupo"
+            }
+        });
+    }
+
+    var varTipoBuscar = "LOAD";
+    var accionBuscarFiltroSGG = function (tipo) {
+        varTipoBuscar = tipo;
+        App.GridPanelSelSGGrupo.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+    var eventoCheckFiltro = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+</script>
+
+
+
+@(Html.X().Window()
+    .Width(450)
+    .Height(450)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowSelectGrupo")
+    .Title("Seleccionar Grupo")
+    .Padding(4)
+        //.X(0)
+        //.Y(0)
+    .TopBar(
+                                     X.Toolbar()
+                                     .Height(30)
+                                     .Items(
+                                    X.Button()
+                                    .Border(true)
+                                    .Text("Buscar")
+                                    .Icon(Icon.Find)
+                                    .Handler("accionBuscarFiltroSGG('FILTRO');")  ,
+                                        X.ToolbarFill(),
+                                        X.Button()
+                                            .Text("Aceptar")
+                                            .Icon(Icon.Accept)
+                                                    .Handler("enviarSeleccion();")
+
+                                                 ,
+                                        X.Button()
+                                            .Text("Cancelar")
+                                            .Icon(Icon.Cancel)
+                                             .DirectEvents(de =>
+                                              {
+                                                  de.Click.Url = Url.Action("cerrarWindow");
+                                                  //de.Click.EventMask.ShowMask = true;
+                                                  de.Click.ExtraParams.Add(new Parameter(
+                                                        "id", "WindowSelectGrupo", ParameterMode.Value));
+                                                  //de.Click.Success = "onSuccess(result.data,'" + Model.ACCION + "');";
+                                                  //de.Click.Failure = "onSuccess(result.data,'"+ Model.ACCION + "');";
+                                              })
+                                         )
+
+    )
+    .Items(
+                        X.GridPanel()
+
+                            .TopBar(
+                                X.Toolbar()
+                                    .Items(
+                                                   X.Checkbox().FieldLabel("Nombre").ID("chkId").Checked(true)
+                                                       .Handler("eventoCheckFiltro(App.chkId,App.tfBuscarDesc);").LabelWidth(70),
+                                     X.TextField().ID("tfBuscarDesc").Disabled(true).FieldLabel("")  
+                                   ,
+                                    X.ToolbarFill()                              
+                                )
+                            )
+                            .Border(false)
+                            .Scroll(ScrollMode.Both)
+                            .AutoScroll(true)
+                            .ID("GridPanelSelSGGrupo")
+        // .DefaultAnchor("100%")
+        //.Anchor("100% 100%")
+                            .Margins("0 0 0 0")
+
+                            ///CONFIGURAR EL STORE
+                            .Store(store => store.Add(
+                                     Html.X().Store()
+                                          .ID("StoreSelGrupo")
+                                         .AutoLoad(true)
+                                         .RemoteSort(false)
+                                         .IsPagingStore(true)
+                                         .RemotePaging(true)
+                                         .PageSize(10)////CAMBIAR DE ACUERDO A ALGÚN UN CRITERIO
+                                         .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                .Url("getGrillaSG_Grupo")                                                                                    
+                                                .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                .Root("data")
+                                                .TotalProperty("total")
+                                                .IDProperty("IdGrupo"))))
+                                          )
+                                        .Parameters(ps =>
+                                                ps.Add(new
+                                                {
+                                                    //start = 0,
+                                                    //limit = 10,                                                                                                                                            
+
+                                                    nombre = JRawValue.From("App.tfBuscarDesc.getValue()"), 
+                                                    tipoBuscar = JRawValue.From("varTipoBuscar")
+                                                })
+                                         )                                                
+                                //.Reader(reader => reader.Add(Html.X().JsonReader().Root("data").IDProperty("P_ID")))
+                                // .Writer(writer => writer.Add(Html.X().JsonWriter().AllowSingle(true)))
+                                         .Model(model => model.Add(Html.X().Model()
+                                                 .Fields(fields =>
+                                                 {
+                                                     fields.Add(Html.X().ModelField().Name("IdGrupo"));
+                                                     fields.Add(Html.X().ModelField().Name("IdGrupoPadre"));
+                                                     fields.Add(Html.X().ModelField().Name("CodigoGrupo"));
+                                                     fields.Add(Html.X().ModelField().Name("NivelGrupo"));
+                                                     fields.Add(Html.X().ModelField().Name("Nombre"));
+                                                     fields.Add(Html.X().ModelField().Name("Descripcion"));
+                                                     fields.Add(Html.X().ModelField().Name("Estado"));
+
+                                                 }))
+                                                )
+                                              )
+                                   )
+
+                                ///CONFIGURAR LAS COLUMNAS
+                                .ColumnModel(columnModel =>
+                                {
+                                    columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("IdGrupo").Width(80));
+                                    columnModel.Columns.Add(Html.X().Column().Text("ID Padre").DataIndex("IdGrupoPadre").Width(80));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Código").DataIndex("CodigoGrupo").Width(90));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Nivel").DataIndex("NivelGrupo").Width(80));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Nombre").DataIndex("Nombre").Width(200));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Descripción").DataIndex("Descripcion").Width(200));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(100)
+                                    .Renderer("changeEstado"));                                    
+
+                                })
+                                 .View(Html.X().GridView().TrackOver(false))
+        //.View(view => view.Add(Html.X().GridView().TrackOver(false)))
+                                 .Border(false)
+                                .Listeners(l => l.CellDblClick
+                                   .Handler = "enviarSeleccionDirect(record.data.IdGrupo,record.data.Nombre,record.data.CodigoGrupo);")
+                                .Listeners(l => l.CellClick
+                                   .Handler = "setSeleccionSG(record);")
+                                .BottomBar(bar => bar.Add(
+                                    Html.X().PagingToolbar()
+                                    //.DisplayInfo(true)
+                                    //.DisplayMsg("Displaying customers {0} - {1} of {2}"))
+                                ))
+
+                               /*.TopBar(X.Panel()
+                                    .Height(50)
+                                    .Title("Buscador")
+                                    .Border(false)
+                                )   */
+    )
+
+    .CloseAction(CloseAction.Destroy)
+
+)
+@(
+ X.KeyNav()
+    .Target("WindowSelectGrupo")
+    .Enter(a => a.Handler = "accionBuscarFiltroSGG('FILTRO');")
+)

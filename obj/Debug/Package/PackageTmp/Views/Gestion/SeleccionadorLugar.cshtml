@@ -1,0 +1,249 @@
+﻿@model SoluccionSalud.Entidades.Entidades.MA_MiscelaneosDetalle
+@{
+    var X = Html.X();
+}
+
+<script>
+    var template = '<span style="color:{0};">{1}</span>';
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+
+    var seleccionActual = null;
+    var seleccionActualDesc = null;
+    var seleccionActual3 = null;
+    var seleccionActual4 = null;
+    var seleccionActual5 = null;
+    var seleccionActual6 = null;
+    var seleccionActual7 = null;
+    var seleccionActual8 = null;
+    function setSeleccion(param1) {
+        seleccionActual = param1.ValorCodigo1;
+        seleccionActualDesc = param1.DescripcionLocal;
+        seleccionActual3 = param1.ValorCodigo2;
+        seleccionActual4 = param1.DescripcionExtranjera;
+        seleccionActual5 = param1.ValorCodigo3;
+        seleccionActual6 = param1.ValorCodigo6;
+        seleccionActual7 = param1.ValorCodigo4;
+        seleccionActual8 = param1.ValorCodigo5;
+    }
+
+    var onSuccess = function (grid, data) {
+        grid.show();
+        grid.getStore().loadData(data);
+    };
+
+    var onFailure = function (modo) {
+        Ext.Msg.notify("EVENTO: FAILURE", "MODEL::" + modo);
+    };
+
+    function enviarSeleccion(grid) {
+        if (seleccionActual != null) {
+            var status = seleccionActual;
+            var status2 = seleccionActualDesc;
+            var status3 = seleccionActual3;
+            var status4 = seleccionActual4;
+            var status5 = seleccionActual5;
+            var status6 = seleccionActual6;
+            var status7 = seleccionActual7;
+            var status8 = seleccionActual8;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action(Model.ACCION))',
+                params: {
+                    MODO: 'get',
+                    idPais: status,
+                    pais: status2,
+                    idDepa: status3,
+                    depa: status4,
+                    idProv: status5,
+                    prov: status6,
+                    idDist: status7,
+                    dist: status8,
+                    idWindow: "WindowSeleccion"
+                }
+            });
+        } else {
+            Ext.Msg.alert('Debe Seleccionar un elemento.');
+        }
+
+    }
+
+    function enviarSeleccionDirect(param1) {
+        var status = param1.ValorCodigo1;
+        var status2 = param1.DescripcionLocal;
+        var status3 = param1.ValorCodigo2;
+        var status4 = param1.DescripcionExtranjera;
+        var status5 = param1.ValorCodigo3;
+        var status6 = param1.ValorCodigo6;
+        var status7 = param1.ValorCodigo4;
+        var status8 = param1.ValorCodigo5;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action(Model.ACCION))',
+            params: {
+                MODO: 'get',
+                idPais: status,
+                pais: status2,
+                idDepa: status3,
+                depa: status4,
+                idProv: status5,
+                prov: status6,
+                idDist: status7,
+                dist: status8,
+                idWindow: "WindowSeleccion"
+            }
+        });
+    }
+
+    var eventoCheckFiltro = function (check, componente, componente2, componente3) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente2.setDisabled(true);
+            componente3.setDisabled(true);
+            componente.setValue(null);
+            componente2.setValue(null);
+            componente3.setValue(null);
+        } else {
+            componente.setDisabled(false);
+            componente2.setDisabled(false);
+            componente3.setDisabled(false);
+        }
+    };
+
+    var accionBuscarFiltroCiap = function (tipo) {
+        varTipoBuscar = tipo;
+        App.GridPanelSel.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+</script>
+
+@(Html.X().Window()
+    .Width(450)
+    .Height(450)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowSeleccion")
+    .Title("Seleccionar País, Departamento, Provincia, Distrito")
+    .Padding(4)
+        .TopBar(
+        X.Toolbar().Height(30)
+        .Items(
+        X.Button().Text("Buscar").Icon(Icon.Find).Handler("accionBuscarFiltroCiap('FILTRO');"),
+        X.ToolbarFill(),
+        X.Button().Text("Aceptar").Icon(Icon.Accept).Handler("enviarSeleccion(App.GridPanelSel.getSelectionSubmit().getSelectionModelField().getValue());"),
+        X.Button().Text("Cancelar").Icon(Icon.Cancel).DirectEvents(de =>{
+            de.Click.Url = Url.Action("cerrarWindow");
+            de.Click.ExtraParams.Add(new Parameter("id", "WindowSeleccion", ParameterMode.Value));
+        })
+        )
+        )
+        .Items(
+        X.GridPanel().TopBar(
+        X.Toolbar()
+        .Items(
+        Html.X().Container().Layout(LayoutType.VBox).LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+        .Items(
+            Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch })
+            .Items(
+                X.Checkbox().FieldLabel("País").ID("chkNiv").Checked(true).Handler("eventoCheckFiltro(App.chkNiv,App.cmbPais,App.cmbDep,App.cmbProv);").LabelWidth(70),
+                X.ComboBox().ID("cmbPais").Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboMiscelaneoLista.GetComboGenericoTxt("SELECCPAIS").Select(d => new ListItem(d.Name, d.Codigo))).FieldLabel("").Editable(false).Disabled(true).Width(212).Listeners(ls => ls.Select.Handler = "App.cmbDep.clearValue(); App.cmbDep.getStore().load()")),
+
+            Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch })
+            .Items(
+                X.Label().Text("Departamento").Width(75),
+                X.ComboBox().ID("cmbDep").Listeners(ls => ls.Select.Handler = "App.cmbProv.clearValue(); App.cmbProv.getStore().load()")
+                .Disabled(true).TypeAhead(true).QueryMode(DataLoadMode.Local).ForceSelection(true).TriggerAction(TriggerAction.All).DisplayField("name").ValueField("codigo").EmptyText("Loading...").ValueNotFoundText("Loading...").Width(226)
+                .Store(
+                Html.X().Store().AutoLoad(false)
+                .Model(
+                        Html.X().Model().IDProperty("Codigo").Fields(
+                        new ModelField("codigo", ModelFieldType.String) { Mapping = "Codigo" },
+                        new ModelField("name", ModelFieldType.String) { Mapping = "Name" })).Proxy(Html.X().AjaxProxy().Url(Url.Action("Departamentos")).Reader(Html.X().JsonReader().Root("data")))
+                        .Parameters(ps => ps.Add(new
+                        {
+                            pais = JRawValue.From("App.cmbPais.getValue()"),
+                            departamento = "",
+                            Accion = "SELECCDEPA"
+                        }))
+                            .Listeners(ls => ls.Load.Handler = @"var combo = App.cmbDep;combo.setValue(records[0].get(combo.valueField));"))
+
+                            .Editable(true).SimpleSubmit(true)
+                            ),
+
+            Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch })
+            .Items(
+                X.Label().Text("Provincia").Width(75),
+                X.ComboBox().ID("cmbProv").Listeners(ls => ls.Select.Handler = "App.cmbZona.clearValue(); App.cmbZona.getStore().load()")
+                .Disabled(true).TypeAhead(true).QueryMode(DataLoadMode.Local).ForceSelection(true).TriggerAction(TriggerAction.All).DisplayField("name").ValueField("codigo").EmptyText("Loading...").ValueNotFoundText("Loading...").Width(226)
+                .Store(
+                    Html.X().Store().AutoLoad(false).Model(
+                        Html.X().Model().IDProperty("Codigo").Fields(
+                        new ModelField("codigo", ModelFieldType.String) { Mapping = "Codigo" },
+                        new ModelField("name", ModelFieldType.String) { Mapping = "Name" })).Proxy(Html.X().AjaxProxy().Url(Url.Action("Provincias")).Reader(Html.X().JsonReader().Root("data")))
+                            .Parameters(ps => ps.Add(new
+                            {
+                                departamento = JRawValue.From("App.cmbDep.getValue()"),
+                                provincia = "",
+                                Accion = "SELECCPROV"
+                            }))
+                                .Listeners(ls => ls.Load.Handler = @"var combo = App.cmbProv;combo.setValue(records[0].get(combo.valueField));"))
+                                .SimpleSubmit(true))
+                                ),
+                                X.ToolbarFill()
+                                        )
+                                        )
+                            .Border(false).Scroll(ScrollMode.Both).AutoScroll(true).ID("GridPanelSel").Margins("0 0 0 0").Store(store => store.Add(
+                                Html.X().Store().ID("StoreSel").AutoLoad(true).RemoteSort(false).IsPagingStore(true).RemotePaging(true).PageSize(15)
+                                 .Proxy(proxy => proxy.Add(
+                                     Html.X().AjaxProxy().Url("getGrillaLugar").Reader(reader => reader.Add(
+                                     Html.X().JsonReader().Root("data").TotalProperty("total").IDProperty("RowID"))))
+                                     ).Parameters(ps =>ps.Add(new{
+                                         pais = JRawValue.From("App.cmbPais.getValue()"),
+                                         depa = JRawValue.From("App.cmbDep.getValue()"),
+                                         prov = JRawValue.From("App.cmbProv.getValue()"),
+                                         tipoBuscar = JRawValue.From("varTipoBuscar")
+                                     })
+                                     )
+                                     .Model(model => model.Add(Html.X().Model().Fields(fields =>{
+                                                 fields.Add(Html.X().ModelField().Name("RowID"));
+                                                 fields.Add(Html.X().ModelField().Name("ValorCodigo1"));
+                                                 fields.Add(Html.X().ModelField().Name("DescripcionLocal"));
+                                                 fields.Add(Html.X().ModelField().Name("ValorCodigo2"));
+                                                 fields.Add(Html.X().ModelField().Name("DescripcionExtranjera"));
+                                                 fields.Add(Html.X().ModelField().Name("ValorCodigo3"));
+                                                 fields.Add(Html.X().ModelField().Name("ValorCodigo6"));
+                                                 fields.Add(Html.X().ModelField().Name("ValorCodigo4"));
+                                                 fields.Add(Html.X().ModelField().Name("ValorCodigo5"));
+                                             }))
+                                            )
+                                          )
+                               )
+                            .ColumnModel(columnModel =>
+                            {
+                                columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("RowID").Width(80).Hidden(true));
+                                columnModel.Columns.Add(Html.X().Column().Text("c1").DataIndex("ValorCodigo1").Width(100).Hidden(true));
+                                columnModel.Columns.Add(Html.X().Column().Text("País").DataIndex("DescripcionLocal").Width(100));
+                                columnModel.Columns.Add(Html.X().Column().Text("c2").DataIndex("ValorCodigo2").Width(80).Hidden(true));
+                                columnModel.Columns.Add(Html.X().Column().Text("Departamento").DataIndex("DescripcionExtranjera").Width(100));
+                                columnModel.Columns.Add(Html.X().Column().Text("c3").DataIndex("ValorCodigo3").Width(250).Hidden(true));
+                                columnModel.Columns.Add(Html.X().Column().Text("Provincia").DataIndex("ValorCodigo6").Width(100));
+                                columnModel.Columns.Add(Html.X().Column().Text("c4").DataIndex("ValorCodigo4").Width(250).Hidden(true));
+                                columnModel.Columns.Add(Html.X().Column().Text("Distrito").DataIndex("ValorCodigo5").Width(100));
+                            })
+                             .View(Html.X().GridView().TrackOver(false)).Border(false)
+                             .Listeners(l => l.CellDblClick.Handler = "enviarSeleccionDirect(record.data);")
+                             .Listeners(l => l.CellClick.Handler = "setSeleccion(record.data);")
+                             .BottomBar(bar => bar.Add(
+                             Html.X().PagingToolbar()
+                             ))
+                             ).CloseAction(CloseAction.Destroy)
+                             )
+@(
+ X.KeyNav()
+    .Target("WindowSeleccion")
+    .Enter(a => a.Handler = "accionBuscarFiltroCiap('FILTRO');")
+)

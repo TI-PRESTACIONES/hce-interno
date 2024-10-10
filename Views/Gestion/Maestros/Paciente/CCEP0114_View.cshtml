@@ -1,0 +1,356 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.VW_PERSONAPACIENTE
+
+@{
+	ViewBag.Title = "CCEP0114_View";
+	Layout = "~/Views/Shared/_BaseLayout.cshtml";
+	var X = Html.X();
+}
+
+@section cabecera {
+    <script>
+	        var varTipoBuscar = "LOAD";
+	var Valores;
+	var COLOR_BLUE01 = "#284A89";
+	var COLOR_RED01 = "#990000";
+	var COLOR_GREEN01 = "#177506";
+	var COLOR_YELLOW02 = "#D9A407";
+	var COLOR_BLACK = "#000000";
+	var seleccionActual1 = null;
+	function setSeleccion(param1) {
+		seleccionActual1 = param1;
+	}
+	var changeEstado = function (value) {
+		var template = '<span style="color:{0};">{1}</span>';
+		if (value == 0)
+		              return Ext.String.format(template, COLOR_BLUE01, "Activo");
+		if (value == 1)
+		              return Ext.String.format(template, COLOR_RED01, "Inactivo");
+	}
+	;
+	var pctChange = function (value) {
+		return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+	}
+	;
+	// funciones relacionadas a al GRILLA
+	var onSuccess = function (grid, data) {
+		grid.show();
+		grid.getStore().loadData(data);
+	}
+	;
+	function nuevo() {
+		Ext.net.DirectMethod.request( {
+			url: '@(Url.Action("TipoAtencionRegistro"))',
+			            params: {
+				MODO: 'NUEVO',
+				                tipo: ''
+			}
+		}
+		);
+	}
+	;
+	function modificarSelected() {
+		if (seleccionActual1 != null ) {
+			var status = seleccionActual1;
+			Ext.net.DirectMethod.request( {
+				url: '@(Url.Action("TipoAtencionRegistro"))',
+				                    params: {
+					MODO: 'UPDATE',
+					                        tipo: status
+				}
+			}
+			);
+		} else {
+			Ext.Msg.show( {
+				title: "Advertencia",
+				                    msg: "Debe Seleccionar un Elemento.",
+				                    icon: Ext.Msg.WARNING,
+				                    minWidth: 200,
+				                    buttons: Ext.Msg.OK
+			}
+			);
+		}
+	}
+	function eliminarSelected() {
+		if (seleccionActual1 != null ) {
+			var status = seleccionActual1;
+			Ext.net.DirectMethod.request( {
+				url: '@(Url.Action("TipoAtencionRegistro"))',
+				                params: {
+					MODO: 'DELETE',
+					                    tipo: status
+				}
+			}
+			);
+		} else {
+			Ext.Msg.show( {
+				title: "Advertencia",
+				                    msg: "Debe Seleccionar un Elemento.",
+				                    icon: Ext.Msg.WARNING,
+				                    minWidth: 200,
+				                    buttons: Ext.Msg.OK
+			}
+			);
+		}
+	}
+	function verSelected() {
+		eventoVerSelected(seleccionActual1);
+	}
+	function eventoVerSelected(param1) {
+		if (param1 != null) {
+			var status = param1;
+			Ext.net.DirectMethod.request( {
+				url: '@(Url.Action("TipoAtencionRegistro"))',
+				                    params: {
+					MODO: 'VER',
+					                        tipo: status
+				}
+			}
+			);
+		} else {
+			Ext.Msg.show( {
+				title: "Advertencia",
+				                    msg: "Debe Seleccionar un Elemento.",
+				                    icon: Ext.Msg.WARNING,
+				                    minWidth: 200,
+				                    buttons: Ext.Msg.OK
+			}
+			);
+		}
+	}
+	var accionBuscarFiltro = function (tipo) {
+		varTipoBuscar = tipo;
+		App.GridPanel1.getStore().reload();
+		varTipoBuscar = 'LOAD';
+	}
+	;
+	var accionFinal = function (btn) {
+		App.GridPanel1.getStore().reload();
+	}
+	;
+	var eventoCheckFiltro = function (check, componente) {
+		var checkAll = check.getValue();
+		if (checkAll) {
+			componente.setDisabled(true);
+			componente.setValue(null);
+		} else {
+			componente.setDisabled(false);
+		}
+	}
+    </script>
+}
+@section cuerpo {
+    @(
+	 Html.X().Viewport()
+	        .AutoScroll(true)
+	        .Layout(LayoutType.Border)
+	        .Items(
+	           X.Panel()
+	              .Title("Maestro de Paciente")
+	        //.Header(false)
+	.Border(false)
+	              .Region(Region.North)
+	              .Split(true)
+	             .Collapsible(true)
+	        //.Header(false)
+	.Height(150)
+	              .TopBar(
+	                         X.Toolbar()
+	                        .Height(30)
+                                        .Items(
+                               X.Button()
+                                .Text("Buscar")
+                                    .Icon(Icon.Find)
+                                         .Handler("accionBuscarFiltro('FILTRO');"),
+                                                X.ToolbarSeparator(),
+                                                X.ToolbarSpacer(),   
+	                                    X.Button()
+	                                        .Text("Nuevo")
+	                                        .Icon(Icon.ApplicationFormAdd)
+	                                        .Handler("nuevo(); "),
+	                                    X.Button()
+	                                        .Text("Modificar")
+	                                        .Icon(Icon.ApplicationFormEdit)
+	                                                .Handler("modificarSelected();")
+	                                             ,
+	                                    X.Button()
+	                                        .Text("Eliminar")
+	                                        .Icon(Icon.ApplicationFormDelete)
+	                                            .Handler("eliminarSelected();"),
+	                                       X.ToolbarSeparator(),
+	                                        X.Button()
+	                                            .Text("Ver")
+	                                            .Icon(Icon.ApplicationViewDetail)
+	                                            .Handler("verSelected();"),
+	                                     X.ToolbarFill()
+	                              )
+	              )
+	             .Items(X.Panel()
+	                    .Layout(LayoutType.HBox)
+	                        .BodyPadding(5)
+	                        .Border(false)
+	                        .MarginSpec("1 20 1 1")
+	                    .Items(
+	                            X.FieldSet()
+	                                .Flex(1)
+	                                .Title("Filtros")
+	                                .MarginSpec("5 5 5 10")
+	                                .Defaults(d => {d.Add(new Parameter("LabelWidth", "40"));})
+	                                .Items(
+	                                   Html.X().Container().Layout(LayoutType.HBox)
+	                                   .LayoutConfig(new HBoxLayoutConfig {
+                                           Align = HBoxAlign.Top})
+	                                    .Items(
+	                                     X.Checkbox().FieldLabel("H.C")
+                                          .ID("chHHC").Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chHHC,App.tfBuscarHC);")
+	                                      .Checked(true),
+	                                     X.TextField()
+	                                      .ID("tfBuscarHC").Disabled(true)
+	                                      .Name("buscarHC").FieldLabel(""),
+                                          
+	                                     X.Checkbox().FieldLabel("Nombre Paciente")
+                                          .ID("chHPac").Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chHPac,App.tfBuscarDesc);")
+	                                      .Checked(true),
+	                                     X.TextField()
+	                                      .ID("tfBuscarDesc").Disabled(true)
+	                                      .Name("buscarDesc").FieldLabel("")),
+                                          
+                                          Html.X().Container().Layout(LayoutType.HBox)
+                                          .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                          .Items(
+                                          X.Checkbox()
+                                         .FieldLabel("H.C. Anterior")
+                                         .ID("chHHCAn")
+                                         .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chHHCAn,App.tfBuscarHCAn);")
+                                         .Checked(true),
+                                         X.TextField()
+	                                      .ID("tfBuscarHCAn").Disabled(true)
+	                                      .Name("buscarHCAn").FieldLabel(""),
+                                         
+                                         X.Checkbox()
+                                         .FieldLabel("Documento")
+                                         .ID("chHDoc")
+                                         .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chHDoc,App.tfBuscarDoc);")
+                                         .Checked(true),
+                                         X.TextField()
+	                                      .ID("tfBuscarDoc").Disabled(true)
+	                                      .Name("buscarDoc").FieldLabel("")),
+                                         
+                                          Html.X().Container().Layout(LayoutType.HBox)
+                                          .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                          .Items(
+                                          X.Checkbox()
+                                         .FieldLabel("Código")
+                                         .ID("chHCod")
+                                         .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chHCod,App.tfBuscarCod);")
+                                         .Checked(true),
+                                         X.TextField()
+	                                      .ID("tfBuscarCod").Disabled(true)
+	                                      .Name("buscarCod").FieldLabel(""),
+                                         
+                                         X.Checkbox()
+                                         .FieldLabel("Estado")
+                                         .ID("chHEst")
+                                         .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chHEst,App.cmbBuscarEst);")
+                                         .Checked(true),
+                                         X.ComboBox()
+                                         .ID("cmbBuscarEst").Disabled(true)
+                                         .Name("buscarEst")
+                                         .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("ESTADOINT").Select(d => new ListItem(d.Name, d.ID)))
+                                         .FieldLabel("").SimpleSubmit(true)),
+                                         Html.X().Container().Layout(LayoutType.HBox)
+                                          .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                          .Items(
+                                         X.Checkbox()
+                                         .FieldLabel("Estado")
+                                         .ID("chHBloq").Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chHBloq,App.cmbBuscarBloq);")
+                                         .Checked(true),
+                                         X.ComboBox()
+                                         .ID("cmbBuscarBloq").Disabled(true)
+                                         .Name("buscarBloq").Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("SITUACIONE").Select(d => new ListItem(d.Name, d.ID)))
+                                         .FieldLabel("").SimpleSubmit(true))))),
+	            X.Panel()
+	                .Region(Region.Center)
+	                .ItemID("center")
+	               .Header(false)
+	               .Border(false)
+	               .Items(
+	                   X.GridPanel()
+	                        .Border(false)
+	                        .Scroll(ScrollMode.Both)
+	                        .AutoScroll(true)
+	                        .ID("GridPanel1")
+	                        .Margins("0 0 0 0")
+	        ///CONFIGURAR EL STORE
+	.Store(store => store.Add(
+	                                 Html.X().Store()
+	                                     .ID("Store1")
+	                                     .AutoLoad(true)
+	                                     .RemoteSort(false)
+	                                     .IsPagingStore(true)
+	                                     .RemotePaging(true)
+	                                     .PageSize(15)
+	                                     .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                                .Url("getGrillaPaciente")
+	                                            .Reader(reader => reader.Add(Html.X().JsonReader()
+	                                            .Root("data")
+	                                                .TotalProperty("total")
+	                                                                     .IDProperty("Persona")
+	                                                 )))
+	                                                )
+	                                         .Parameters(ps =>
+	                                                ps.Add(new {
+                                                        codigohc = JRawValue.From("App.tfBuscarHC.getValue()"),
+                                                        codigohcanterior = JRawValue.From("App.tfBuscarHCAn.getValue()"),
+                                                        paciente = JRawValue.From("App.tfBuscarCod.getValue()"),
+                                                        situacion = JRawValue.From("App.cmbBuscarBloq.getValue()"),
+                                                        nombrecompleto = JRawValue.From("App.tfBuscarDesc.getValue()"),
+                                                        documento = JRawValue.From("App.tfBuscarDoc.getValue()"),
+                                                        estado = JRawValue.From("App.cmbBuscarEst.getValue()"),
+		                                                tipoBuscar = JRawValue.From("varTipoBuscar")
+                                                    }))
+	                                     .Model(model => model.Add(Html.X().Model()
+	                                             .Fields(fields => {
+		fields.Add(Html.X().ModelField().Name("CodigoHC"));
+		fields.Add(Html.X().ModelField().Name("CodigoHCAnterior"));
+		fields.Add(Html.X().ModelField().Name("TipoDocumento"));
+		fields.Add(Html.X().ModelField().Name("Documento"));
+		fields.Add(Html.X().ModelField().Name("NombreCompleto"));
+		fields.Add(Html.X().ModelField().Name("edad"));
+		fields.Add(Html.X().ModelField().Name("FechaNacimiento"));
+		fields.Add(Html.X().ModelField().Name("Paciente"));
+		fields.Add(Html.X().ModelField().Name("Direccion"));
+		fields.Add(Html.X().ModelField().Name("Telefono"));
+		fields.Add(Html.X().ModelField().Name("Estado"));
+		fields.Add(Html.X().ModelField().Name("Situacion"));})))))
+	                            ///CONFIGURAR LAS COLUMNAS
+	.ColumnModel(columnModel => {
+		columnModel.Columns.Add(Html.X().Column().Text("H.C").DataIndex("CodigoHC").Width(80));
+		columnModel.Columns.Add(Html.X().Column().Text("H.C Anterior").DataIndex("CodigoHCAnterior").Width(80));
+		columnModel.Columns.Add(Html.X().Column().Text("Tip. Doc.").DataIndex("TipoDocumento").Width(100));
+		columnModel.Columns.Add(Html.X().Column().Text("Documento").DataIndex("Documento").Width(200));
+		columnModel.Columns.Add(Html.X().Column().Text("Nombre Paciente").DataIndex("NombreCompleto").Width(100));
+		columnModel.Columns.Add(Html.X().Column().Text("Edad").DataIndex("edad").Width(200));
+		columnModel.Columns.Add(Html.X().Column().Text("Fec. Nac.").DataIndex("FechaNacimiento").Width(200));
+		columnModel.Columns.Add(Html.X().Column().Text("Código").DataIndex("Paciente").Width(200));
+		columnModel.Columns.Add(Html.X().Column().Text("Dirección").DataIndex("Direccion").Width(200));
+		columnModel.Columns.Add(Html.X().Column().Text("Teléfono").DataIndex("Telefono").Width(200));
+		columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(200).Renderer("changeEstado"));
+		columnModel.Columns.Add(Html.X().Column().Text("Bloqueado").DataIndex("Situacion").Width(100));
+	}
+	)
+	                             .View(Html.X().GridView().TrackOver(false))
+	                                 .Border(false)
+	                                 .Listeners(l => l.CellClick.Handler = "setSeleccion(record.data.Persona);")
+	                                 .Listeners(l => l.CellDblClick.Handler = "eventoVerSelected(record.data.Persona);")
+	                            .BottomBar(bar => bar.Add(
+	                                Html.X().PagingToolbar()
+	                            ))
+	                )
+	        )
+    )
+    @(X.KeyNav()
+	                    .Target("={document.body}")
+	                    .Enter(a => a.Handler = "accionBuscarFiltro('FILTRO');")
+    )
+}

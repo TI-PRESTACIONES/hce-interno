@@ -1,0 +1,302 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_HC_EpisodioAtencion
+
+@{
+    var X = Html.X();
+    var idWindow = "WindowFirmarActoMedico";
+    var modoDesc = (Model.Accion == "NUEVO" ? "Nuevo" :
+                    (Model.Accion == "UPDATE" ? "Firmar" :
+                        (Model.Accion == "DELETE" ? "Eliminar" :
+                            (Model.Accion == "VER" ? "Ver" : "--"))));
+
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VER" ? false : false))));
+
+    var indicaModoLecturaKey = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? false :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VER" ? false : false))));
+
+    var STYLE_BACKGROUND_NODEIT = "background: #BBD8D6"; //BBD8D6  #9FBCB9
+    var COLOR_BORDER_DEFAULT = "#b5b8c8";
+
+    var STYLE_BORDER_DEF_VALID01 =
+        (Model.IdEpisodioAtencion != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+
+}
+
+<script>
+
+
+    var template = 'color:{0};';
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_RED01 = "#990000";
+
+    var COLOR_BORDER_ERROR = "red";
+    var COLOR_BORDER_DEF = "#b5b8c8";
+    var COLOR_BACKGROUND_NOEDIT = "#9FBCB9";
+
+
+    var change = function (value, meta) {
+        return value;
+
+    };
+
+    function seleccionadorGrupo() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorSGGrupo"))',
+            params: {
+                accionSeleccion: 'getSeleccionSG_Grupo',
+                accionListado: 'LISTARPAG'
+            }
+        });
+    };
+    function seleccionadorPersona() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorPersona"))',
+            params: {
+                accionSeleccion: 'getSeleccionPersonaMaestroAgente',
+                accionListado: 'LISTARPAGSELECUSER'
+            }
+        });
+    };
+    function seleccionadorOpciones() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorOpciones"))',
+            params: {
+                accionSeleccion: 'getSeleccionOpciones',
+                accionListado: 'LISTARPAG'
+            }
+        });
+    };
+    function validarfechas(obj, fecha1, fecha2) {
+        if (fecha2 != null) {
+            if (fecha1 > fecha2) {
+                obj.setValue(null);
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Las fecha inicial no debe ser mayor que la fecha final.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+        }
+    };
+
+    function validarFechaExpiracion(obj, fecha1, fecha2, fecha3) {
+        if (fecha1 != null && fecha2 != null) {
+            if (fecha3 > fecha1 && fecha2 >= fecha3) {
+            } else {
+                obj.setValue(null);
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "La fecha de expiración debe estar dentro del rango fecha inicio y fecha final.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Ingresar fecha inicio y fecha final.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+    };
+
+    function cerrarWindow() {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("showMensajeBox"))',
+                params: {
+                    message: 'Se registró correctamente el Agente.',
+                    accion: null
+                }
+            });
+        }
+
+
+        var onSuccess = function (data) {
+
+        };
+
+        var onFailure = function (modo) {
+            App.btnSave.setDisabled(false);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("showMensajeBox"))',
+                params: {
+                    message: 'Un error en el evento ',
+                    titulo: "Error",
+                    tipo: 'ERROR'
+                }
+            });
+        };
+        var accionMensajes = function (data) {
+            var mensajes = "";
+            if (data.length > 0) {
+                for (var i = 0; i < data.length; i++) {
+                    mensajes = mensajes + "\t *" + data[i].DESCRIPCION + "\n";
+                }
+                App.taAlerts.setVisible(true);
+                App.taAlerts.setValue(mensajes);
+            } else {
+                App.taAlerts.setVisible(false);
+            }
+
+        };
+        var validarCampo = function (componente) {
+            if (componente.getValue() != null) {
+                if (componente.getValue().trim() == 0) {
+                    componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+
+                } else {
+                    componente.setFieldStyle("border-color: " + COLOR_BORDER_DEF);
+                }
+            } else {
+                componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+
+            }
+        };
+
+        var eventoCheck = function (check, componente) {
+            var checkAll = check.getValue();
+            if (!checkAll) {
+                componente.setDisabled(true);
+                componente.setValue(null);
+            } else {
+                componente.setDisabled(false);
+            }
+        }
+
+</script>
+
+@(Html.X().Window()
+    .Width(570)
+    .Height(440)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(false)
+    .Layout(LayoutType.Fit)
+        //.LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.StretchMax })
+
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID(idWindow)
+    .Title("Registro de Actos médicos:" + modoDesc)
+        //.Padding(4)
+        //.X(0)
+        //.Y(0)
+    .Items(
+                Html.X().FormPanel()
+                             .Frame(false)
+                             .Border(false)
+                            .Layout(LayoutType.VBox)
+                            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                    .Items(
+                             Html.X().FieldSet()
+                               .Title("Datos del Episodio")
+                               .MarginSpec("05 05 05 05")
+                                  .Layout(LayoutType.VBox)
+                                  .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                                .Items(
+                                   
+                                ),
+                             Html.X().FieldSet()
+        //.ColumnWidth(0.4)
+                               .Title("Datos del proceso")
+        //.Border(false)
+                               .MarginSpec("05 05 05 05")
+        /*.Defaults(d =>
+        {
+            d.Add(new Parameter("LabelWidth", "170"));
+            d.Add(new Parameter("DefaultAnchor", "100%"));
+            d.Add(new Parameter("LabelAlign", "Left"));
+        })*/
+
+                               //.DefaultAnchor("100%")
+                                  .Layout(LayoutType.VBox)
+                                  .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+
+                                .Items(
+                                    X.TextField()
+                                    .FieldLabel("Médico firma")
+                                    .ReadOnly(true)
+                                    .Text(Model.DescansoMedico)
+                                    ,
+                                    X.ComboBoxFor(m => m.FlagFirma).Hidden(true).Value(2)
+                                    .Items(
+                                        new ListItem("Sin Especificar", 0),
+                                        new ListItem("Sin Firma", 1),
+                                        new ListItem("Firmado", 2)
+                                    ).ReadOnly(indicaModoLectura).Width(200)
+                                    .FieldLabel("Estado").Editable(true)
+                                    .SimpleSubmit(true)
+                                    ,
+                                         X.TextField().ID("txtPassword")
+                                            .FieldLabel("Contraseña").InputType(Ext.Net.InputType.Password)
+                                        .ReadOnly(false)
+
+                                        ,
+                                   
+                                    X.NumberFieldFor(m => m.idMedicoFirma).Hidden(true).Value(Model.idMedicoFirma),
+                                    X.TextAreaFor(m => m.ObservacionFirma)
+                                    .Height(90)
+                                    .FieldLabel("Observaciones")
+                                )
+
+                         )
+                         .TopBar(
+                             X.Toolbar()
+                             .Height(30)
+                             .Items(
+                                X.ToolbarFill(),
+                                X.Button()
+                                    .Hidden((Model.Accion == "VER" ? true : false))
+                                    .ID("btnSave")
+                                        .Text((Model.Accion == "DELETE" ? "Eliminar" : "Guardar"))
+                                        .Icon((Model.Accion == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave))
+                                     .DirectEvents(de =>
+                                      {  //Model.ACCION : Posee el MODO ACTUAL
+                                          de.Click.Url = Url.Action("save_FirmaActosMedicos", "BandejaMedico");
+                                          de.Click.EventMask.ShowMask = true;
+                                          de.Click.Before = "App.btnSave.setDisabled(true); ";
+                                          de.Click.After = "App.btnSave.setDisabled(false); ";
+                                          de.Click.ExtraParams.Add(new Parameter("MODO", Model.Accion, ParameterMode.Value));
+                                          de.Click.ExtraParams.Add(new Parameter("idWindow", idWindow, ParameterMode.Value));
+                                          de.Click.ExtraParams.Add(new { password = JRawValue.From("App.txtPassword.getValue()") });
+                                          de.Click.Success = "onSuccess('');";
+                                          de.Click.Failure = "onFailure('" + Model.Accion + "');";
+
+                                      }),
+                                X.Button()
+                                        .Text((Model.Accion == "VER" ? "Aceptar" : "Cancelar"))
+                                        .Icon((Model.Accion == "VER" ? Icon.Accept : Icon.Cancel))
+                                     .DirectEvents(de =>
+                                      {  //Model.ACCION : Posee el MODO ACTUAL
+                                          de.Click.Url = Url.Action("cerrarWindow");
+                                          //de.Click.EventMask.ShowMask = true;
+                                          de.Click.ExtraParams.Add(new Parameter(
+                                                "id", idWindow, ParameterMode.Value));
+                                          //de.Click.Success = "onSuccess(result.data,'" + Model.ACCION + "');";
+                                          //de.Click.Failure = "onSuccess(result.data,'"+ Model.ACCION + "');";
+                                      })
+                                 )
+                            )
+
+                //)
+    )
+        /*.DirectEvents(de =>
+        {
+            de.Render.Url = Url.Action("postWindowAgente");
+            de.Render.ExtraParams.Add(new Parameter(
+                  "idGrupo", "" + Model.IdGrupo, ParameterMode.Value));
+        })*/
+    .CloseAction(CloseAction.Destroy)
+)

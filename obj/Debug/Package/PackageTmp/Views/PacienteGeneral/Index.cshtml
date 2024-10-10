@@ -1,0 +1,89 @@
+﻿@{
+    ViewBag.Title = "Viewport with BorderLayout - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+}
+
+@section cuerpo
+{
+    @(X.Viewport()
+        .Layout(LayoutType.Border)
+        .Items(
+            X.Panel()
+                .Title("North")
+                .Region(Region.North)
+                .Split(true)
+                .Height(100)
+                .BodyPadding(6)
+                .Html("North")
+                .Collapsible(true),
+
+            X.Panel()
+                .Title("West")
+                .Region(Region.West)
+                .Layout(LayoutType.Accordion)
+                .Width(225)
+                .MinWidth(225)
+                .MaxWidth(400)
+                .Split(true)
+                .Collapsible(true)
+                .Items(items =>
+                         {
+                             items.Add(new Panel
+                             {
+                                 ID = "West1",
+                                 Title = "West",
+                                 Width = 240,
+                                 Border = false,
+                                 Layout = "Accordion",
+                                 Region = Region.West,
+                                 Loader = Html.X().ComponentLoader()
+                                     .Url(Url.Action("PanelWest"))
+                                     .Mode(LoadMode.Script)
+                                     .Params(new { containerId = "West1" })
+                             });
+
+                  }),
+           
+                 X.Panel() 
+                        .Title("Centro")
+                         
+                        .Region(Region.Center)
+                        .Split(true)
+                        .Height(100)
+                        .BodyPadding(6)
+                        .Html("North")
+                        .Collapsible(true)
+                         .Items(items =>
+                               {
+                                   items.Add(new Panel
+                                   {
+                                       ID = "Center1",
+                                       Region = Region.Center,
+                                       Border = false,
+                                       //BodyPadding = 10,
+                                       Header = false
+                                   });
+                               })
+                        
+                        .TopBar(Html.X().Toolbar()
+                                .Items(Html.X().Button()
+                                    .Text("Add GridPanel")
+                                    .Icon(Icon.Add)
+                                    .DirectEvents(de => 
+                                    {
+                                        de.Click.Url = Url.Action("GetSelectPaciente");
+                                        de.Click.ExtraParams.Add(new { containerId = "Window1" });
+                                        de.Click.EventMask.ShowMask = true;
+                                        de.Click.EventMask.Target = MaskTarget.CustomTarget;
+                                        de.Click.EventMask.CustomTarget = "Window1";
+                                        de.Click.Before = "this.disable()";
+                                    })
+                                )
+                            ) 
+                           
+
+                ) 
+        )
+    )
+}

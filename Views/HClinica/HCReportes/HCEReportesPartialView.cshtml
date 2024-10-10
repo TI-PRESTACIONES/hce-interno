@@ -1,0 +1,128 @@
+﻿@*using Region = Ext.Net.Region*@
+@model SoluccionSalud.Entidades.Entidades.ENTITY_GENERALHCE
+@{
+   // ViewBag.Title = "Portal - Ext.NET MVC Examples";
+   // Layout = "~/Views/Shared/_BaseLayout.cshtml";
+   // HttpContext.Current.Items["ext.net.mvc.example"] = true;
+
+
+    var X = Html.X();
+
+    var indicaModoLectura = !(Model.ACCION == "NUEVO" ? true :
+                        (Model.ACCION == "UPDATE" ? true :
+                        (Model.ACCION == "DELETE" ? false :
+                        (Model.ACCION == "VISTA" ? false : false))));
+
+    var COLOER_IND_OBLIGA = "#035895";
+
+
+    var path = Model.campoStr01;
+    //var accionReport = (Model.campoStr03 == "TOTALHC" ? "TOTALHC" : Model.campoStr02);
+
+
+    var accionReport = (Model.campoStr03 == "TOTALHC" ? "GENERICO_HCE" : Model.campoStr02);
+    var pathLocalURL = "/Reportes/VisorReportesHCE.aspx?ReportID=";
+    var showURL_end = "&Visor=I";
+    var showURL_endParam = (Model.campoStr03 == "TOTALHC" ? "&UR=CEG&EC=2&EA=1&PA=1072676&FOR=CCEP00XX-CCEP0253" : "");
+    var showURL = path + pathLocalURL + accionReport + showURL_end + showURL_endParam;
+
+
+}
+
+
+
+    <style>
+
+    </style>
+
+    <script>
+       // function eventoRenderForm() {
+         //   var kk = 160;
+         //   var scrH = screen.height;
+         // //  if (!parent.App.PanelMainSouth.collapsed) {
+         // //      parent.App.PanelMainSouth.collapse();
+         // //  } else {
+         //       var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+         //       var southH = 30;
+         //       if (southH == 0) {
+         //           southH = 30;
+         //       }
+         //       var dimCentral = (scrH - (northH + southH) - kk);
+         //       App.formactual2.setHeight(dimCentral);
+         ////   }
+       // }
+
+        function eventoVisorEdicionForm(param1) {
+            window.location.href = '@Url.Action(Model.campoStr02+"_View", "HClinica")';
+        }
+    </script>
+
+
+
+    @(
+ X.Window()
+     .Width(939).ID("ReportePartial")
+     .Height(500)
+     .Maximizable(true)
+     .Modal(true)
+     .OnEsc("false")
+     .AutoScroll(true)
+     .Layout(LayoutType.Fit)
+     .CloseAction(CloseAction.Destroy)
+     .Icon(Icon.ApplicationForm)
+         .Padding(4)
+            
+        //.Layout(LayoutType.Fit)
+        .Items(
+                X.Panel()
+                .ID("formactual2")
+                    .Border(false)
+                .Layout(LayoutType.VBox)
+                .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+            //.Region(Region.Center)
+            .TopBar(
+                    Html.X().Toolbar()
+                    .Items(
+                           // X.Label().Text("URL: http://" + showURL),
+                        X.ToolbarFill()
+                        ,
+                        X.Button()
+                        .Text("Cancelar")
+                        .Icon(Icon.ApplicationFormEdit)
+                        .ToolTip("Volver")
+                        .ID("btnFormBack")
+                            .DirectEvents(de =>
+                        {
+                            de.Click.Url = Url.Action("cerrarWindow");
+                            de.Click.ExtraParams.Add(new Parameter("id", "ReportePartial", ParameterMode.Value));
+                        })
+                         , X.ToolbarSeparator()
+                         , X.ToolbarSeparator()
+                    )
+            )
+            //.Header(false)
+              .Border(false)
+              .Split(true)
+            // .Collapsible(true)
+        //.Header(false)
+                .Loader(
+                    Html.X().ComponentLoader()
+                    .Listeners(l =>
+                    {
+                        //EVENTO JAVA SCRIPT
+                        l.Load.Handler = "loadReporte(record);";
+                    })
+                    .ID("compLoaderReporte2")
+                    .AutoLoad(true)
+                            .Url("http://" + showURL)
+                    .Mode(LoadMode.Frame)
+                    .ReloadOnEvent(false)
+                    .DisableCaching(true)
+                )
+            //    .Listeners(l =>
+             //   {
+              //      l.Render.Handler = "eventoRenderForm();";
+              //  })
+        )
+    )
+    

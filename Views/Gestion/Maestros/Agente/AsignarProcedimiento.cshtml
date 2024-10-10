@@ -1,0 +1,445 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SG_Agente
+
+
+@{
+    var X = Html.X();
+
+    var esTipoUsuario = (Model.TipoAgente == 2 ? true : false);
+    var descAgente = Model.Nombre;
+    var descTipoAgente = (Model.TipoAgente == 2 ? "Agente-Usuario" :
+            (Model.TipoAgente == 1 ? "Agente-perfil" : "No def."));
+
+    var descSeleccion = (Model.TipoAgente == 2 ? "Agente-Pefil" : "Agente-Usuario");
+    var modoSeleccion = (Model.TipoAgente == 2 ? "LISTARPERFILES" : "LISTeventoCheckARUSUARIOS");
+
+    var COLOR_BLUE01_temp = "#284A89";
+    var COLOR_RED01_temp = "#990000";
+    var COLOR_GREEN01_temp = "#177506";
+    var COLOR_YELLOW02_temp = "#D9A407";
+
+}
+
+<script>
+
+    var template = 'color:{0};';
+    var cuenta = 0;
+    var change = function (value, meta) {
+        return value;
+
+    };
+
+    var valor = 0;
+    var cont=0;
+    function eventoCheck(grid, casilla) {
+        if (grid.value) {
+            cont = cont + 1;
+            valor = 1;
+
+        }
+        else {
+            valor = 0;
+            cont--;
+        }
+
+        if (casilla == "chkInd") {
+            grid.record.data.MasterBrowseFlag = valor;
+        }
+
+    }
+
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 'A')
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == 'I')
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+    var valorcombo = "";
+
+
+    function addRecord(grid, grupo, codagente, componenteAdd) {
+      
+        var sucur = App.cmbProcedimiento.getRawValue();
+
+        if (componenteAdd.getValue() != null) {
+            var valorSelec = componenteAdd.getValue();
+
+            if (validaDuplicado(componenteAdd.getRawValue())) {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Ya existe el Registro",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            } else {
+                cuenta = cuenta + 1;
+                grid.store.insert(0,
+                        {
+                AplicacionCodigo: 'NEW_' + cuenta,
+                Grupo: grupo,
+                Concepto: valorSelec,
+                Usuario: codagente,
+                Estado: 'A',
+                Accion: 'INSERT',
+                MasterUpdateFlag: componenteAdd.getRawValue(),
+                MasterApproveFlag: sucur
+
+                        });
+            }
+
+        }else{
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe seleccionar un Almacen para añadirlo.",
+                icon: Ext.Msg.INFO,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+
+    };
+
+
+
+    function validaDuplicado(valor1) {
+        var estados = false;
+        App.StoreSysAutoriza.each(function (r) {
+            if (trim(r.get('MasterUpdateFlag')) == trim(valor1) /*&& trim(r.get('Concepto')) == trim(valor2)*/)
+
+            {
+              
+                estados = true;
+            }
+        });
+        return estados;
+    } 
+
+    function trim(str) {
+        return str.replace(/^\s+|\s+$/g, "");
+    }
+
+    function pruebita() {
+     
+    } 
+
+
+    function deleteActual(record) {
+        var store = App.GridPanelSysAutoriza.store;
+        store.remove(record);
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("add_DataDeleteSysAutorizacionesAlmacen"))',
+            params: {
+                MODO: 'DELETE',
+                app: record.data.AplicacionCodigo,
+                grupo: record.data.Grupo,
+                concepto: record.data.Concepto,
+                usuario: record.data.Usuario,
+                descripcion: record.data.MasterUpdateFlag
+            }
+        });
+    };
+
+
+
+    function save_SysAutorizaciones(agente, idAg) {
+        var i = 0;
+        var store = App.StoreSysAutoriza;
+        var status;
+        var sysAutorizacionesArray = new Array();
+
+        store.each(function (r) {
+            var SY_SeguridadAutorizaciones = {
+                AplicacionCodigo: r.get('AplicacionCodigo'),
+                Grupo: r.get('Grupo'),
+                Concepto: r.get('Concepto'),
+                Usuario: r.get('Usuario'),
+                Estado: r.get('Estado'),
+                Accion: r.get('Accion'),
+                MasterBrowseFlag: r.get('MasterBrowseFlag')
+
+            };
+            sysAutorizacionesArray.push(SY_SeguridadAutorizaciones);
+        });
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("save_SysAutorizacionesProcedimiento"))',
+            params: {
+                MODO: 'NUEVO',
+                idWindow: "WindowAsignarSysAutoriza",
+                data: sysAutorizacionesArray,
+                codagente: agente,
+                idAgente: idAg
+            }
+        });
+
+
+
+    };
+
+</script>
+
+
+@(Html.X().Window()
+    .Width(650)
+    .Height(450)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Constrain(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowAsignarSysAutoriza")
+        .Title("Asignación de Procedimentos")
+    .Padding(4)
+        //.X(0)
+        //.Y(0)
+        .TopBar(
+            X.Toolbar()
+            .Height(30)
+            .Items(
+                X.ToolbarSpacer(),
+                  X.Label().Html("<b><span style='color:" + COLOR_BLUE01_temp + ";'>" + descTipoAgente + ": " + Model.Nombre + "</span> </b>")
+                ,
+                X.ToolbarFill(),
+                X.Button()
+                    .Text((Model.ACCION == "DELETE" ? "Eliminar" : "Guardar"))
+                    .Icon((Model.ACCION == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave))
+                     .Handler("save_SysAutorizaciones('" + Model.CodigoAgente + "' , " + Model.IdAgente + ");"),
+                X.Button()
+                    .Text("Cancelar")
+                    .Icon(Icon.Cancel)
+                    .DirectEvents(de =>
+                     {  //Model.ACCION : Posee el MODO ACTUAL
+                         de.Click.Url = Url.Action("cerrarWindow");
+                         //de.Click.EventMask.ShowMask = true;
+                         de.Click.ExtraParams.Add(new Parameter(
+                               "id", "WindowAsignarSysAutoriza", ParameterMode.Value));
+                         //de.Click.Success = "onSuccess(result.data,'" + Model.ACCION + "');";
+                         //de.Click.Failure = "onSuccess(result.data,'"+ Model.ACCION + "');";
+                     }),
+                                          X.ToolbarSpacer(20)
+                                         )
+                                     )
+    .Items(
+            X.Panel()
+
+            .Border(false)
+            .Layout(LayoutType.VBox)
+            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+            .Items(
+                X.FieldSet().Height(50)
+                .ColumnWidth(0.4)
+                .Title("Agregar Autorizaciones para:")
+                .MarginSpec("0 05 0 05")
+                .Items(
+
+                            Html.X().Container()
+                            .Layout(LayoutType.HBox)
+                            .Defaults(d =>
+                            {
+                                d.Add(new Parameter("LabelWidth", "90"));
+                            })
+                             .Items(
+
+                                 Html.X().Container()
+                        .Layout(LayoutType.HBox)
+                        .Defaults(d =>
+                        {
+                            d.Add(new Parameter("LabelWidth", "90"));
+                        })
+                        .Items(
+                            X.ComboBox().ID("cmbProcedimiento").Width(350)
+                            .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboSeguridadTxt("PROCEDIMIENTO", "", "", 0).Select(d => new ListItem(d.Name, d.Codigo)))
+
+                             //   .Listeners(ls => ls.Change.Handler = "App.cmbSucursal.clearValue(); App.cmbSucursal.getStore().load(); App.cmdUnidadRepli.getStore().load();")
+
+                        .FieldLabel("Procedimiento").ReadOnly(false).Editable(true).MatchFieldWidth(false)
+                        .SimpleSubmit(true)
+
+                        )
+                        ,
+
+                     X.Button().Text("Agregar").Icon(Icon.Add)
+                                                .Handler("addRecord(App.GridPanelSysAutoriza,'PROCEDIMIENTO','" + Model.CodigoAgente + "' , App.cmbProcedimiento );")
+
+
+                            )
+
+                )
+
+                //AKII
+
+                    //TERMINA
+                ,
+                X.GridPanel().Flex(1)
+                    .ID("GridPanelSysAutoriza")
+                    .Border(false)
+                        .Store(
+                        Html.X().Store()
+        //.AutoSync(true)
+                                .ID("StoreSysAutoriza")
+                            .Model(
+                                    Html.X().Model()
+                                    .IDProperty("AplicacionCodigo")
+                                    .Fields(
+                                                Html.X().ModelField().Name("AplicacionCodigo"),
+                                                Html.X().ModelField().Name("Grupo"),
+                                                Html.X().ModelField().Name("Concepto"),
+                                                    Html.X().ModelField().Name("Usuario"),
+                                                Html.X().ModelField().Name("MasterBrowseFlag"),
+                                                Html.X().ModelField().Name("MasterUpdateFlag"),
+                                                Html.X().ModelField().Name("MasterApproveFlag"),
+        //  Html.X().ModelField().Name("ALMACEN"),
+                                                Html.X().ModelField().Name("Estado"),
+                                                Html.X().ModelField().Name("Accion")
+                                    )
+                                )
+                                .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                              .Url("getGrillaListaSysAutorizacionesProcedimiento")
+                                        .Reader(reader => reader.Add(Html.X().JsonReader()
+                                        .Root("data")
+                                        .TotalProperty("total")
+                                             .IDProperty("AplicacionCodigo")
+                                        )))
+                                )
+                                .Parameters(ps =>
+                                    ps.Add(new
+                                        {
+                                            agente = Model.IdAgente,
+                                            tipoagente = Model.TipoAgente,
+                                            codagente = Model.CodigoAgente
+                                        })
+                                )
+                                .AutoLoad(true)
+                            )
+                            .ColumnModel(
+                                         Html.X().ComponentColumn()
+                                                    .Editor(true)
+                                                         .DataIndex("AplicacionCodigo")
+                                                     .Text("AplicacionCodigo")
+                                                    .Width(80)
+                                                    .Hidden(true)
+                                                    .Component(
+                                                    Html.X().TextField().ReadOnly(true)
+                                                        ),
+                                                   Html.X().ComponentColumn()
+                                                            .Editor(true)
+                                                              .DataIndex("Concepto")
+                                                                .Text("Codigo")
+                                                             .Width(90)
+                                                            .Hidden(false)
+                                                            .Component(
+                                                            Html.X().TextField().ReadOnly(true)
+                                                                ),
+                                             Html.X().ComponentColumn()
+                                                        .Editor(true)
+                                                                .DataIndex("Grupo")
+                                                        .Text("Sucursal")
+                                                        .Width(110)
+                                                        .Hidden(true)
+                                                        .Component(
+                                                        Html.X().TextField().ReadOnly(true)
+                                                            ),
+                                                             Html.X().ComponentColumn()
+                                                                .Editor(true)
+                                                                         .DataIndex("MasterApproveFlag")
+                                                                    .Text("Descripcion")
+                                                                .Width(150)
+                                                                .Hidden(false)
+                                                                .Component(
+                                                                Html.X().TextField().ReadOnly(true)
+                                                                    ),
+
+                                              //              //aki
+        //Html.X().ComponentColumn()
+        //.Width(250)
+        //              .Editor(true)
+        //               //.DataIndex("UltimoUsuario")
+        //                      .DataIndex("MasterUpdateFlag")
+        //               .Text("Almacen")
+        //                    .Width(190)
+        //              .Hidden(true)
+        //              .Component(
+        //              Html.X().TextField().ReadOnly(true)
+        //                  ),
+
+
+                                              Html.X().ComponentColumn()
+                                                            .Editor(true)
+                                                                        .DataIndex("Usuario")
+                                                            .Text("Usuario")
+                                                                 .Width(80)
+                                                                    .Hidden(false)
+                                                                    .Component(
+                                                                    Html.X().TextField().ReadOnly(true)
+                                                                        ),
+
+                                            Html.X().ComponentColumn()
+                                                .Editor(true)
+                                                .DataIndex("Estado")
+                                                .Width(100)
+                                                .Text("Estado")
+                                                .Component(Html.X().ComboBox()
+                                                    .Editable(false)
+                                                    .Items(
+                                                        new ListItem("Activo", 'A'),
+                                                        new ListItem("Inactivo", 'I')
+                                                    )
+                                                ),
+
+                                                     Html.X().ComponentColumn()
+                                                          .Width(50)
+                                                                .Editor(true)
+                                                                               .DataIndex("MasterBrowseFlag")
+                                                                .Text("Ind.S.S")
+                                                                .Hidden(true)
+                                                                .Component(
+                                                                X.Checkbox()
+
+                                                                    .Handler("eventoCheck(this,'chkInd');")
+
+                                                     //  .Checked(true)
+                                                       )
+                                                       ,
+
+                                            Html.X().CommandColumn()
+                                                .Width(80)
+                                                .Commands(
+                                                    Html.X().GridCommand()
+                                                        .CommandName("Delete")
+                                                        .Icon(Icon.Delete)
+                                                        .Text("Eliminar")
+                                                )
+                                                .Listeners(ls => ls.Command.Handler = "deleteActual(record);"),
+                                         Html.X().ComponentColumn()
+                                                    .Editor(true)
+                                                    .DataIndex("Accion")
+                                                    .Text("Acción")
+                                                    .Hidden(true)
+                                                    .Component(
+                                                    Html.X().TextField().ReadOnly(true)
+                                                        )
+
+                                )
+                                .SelectionModel(
+                                        Html.X().RowSelectionModel().Mode(SelectionMode.Multi)
+                                )
+                                .Plugins(
+                                                             Html.X().CellEditing()
+                                )
+            )
+
+    )
+    .CloseAction(CloseAction.Destroy)
+        //.Html(DateTime.Now.ToLongTimeString())
+
+)
+
+

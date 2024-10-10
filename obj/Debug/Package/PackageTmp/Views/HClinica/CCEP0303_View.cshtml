@@ -1,0 +1,1250 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.HC_Medicamento
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VISTA" ? false : false))));
+    var DESC_ADD = "Medicamentos";
+    var COLOR_BLUE01 = "#284A89";
+    
+    var COLOR_RED01 = "#990000";
+    var COLOR_YELLOW02 = "#D9A407";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_ORANGE01 = "#E07509";  
+
+    var COLOR_REDbackg = "#FD9788";
+    var COLOER_IND_OBLIGA =
+    AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("COL_BCOBLI"); ;
+    
+                            
+}
+@section cabecera
+{
+<style>
+    html body {
+        padding: 0px;
+        background: none;
+        background: none;
+        background: none;
+        background-attachment: fixed;
+        background-position: center;
+        font-family: tahoma,verdana,sans-serif;
+        background-color: #ffffff;
+    }
+</style>
+
+    <script>
+        var COLOR_BLUE01_ = "#284A89";
+        var COLOR_RED01_ = "#990000";
+        var COLOR_YELLOW02_ = "#D9A407";
+        var COLOR_GREEN01_ = "#177506";
+        var COLOR_ORANGE01_ = "#E07509";
+
+        var changeEPS = function (value) {
+
+            var templateX = '<div unselectable="on" class="x-grid-cell-inner " style="text-align:left;background-color: {0}; "></div>';
+            var template = '<span style="font-size: 1.9em; color:{0};"> <b>&bull;</b></span>';
+            if (value == 1)
+                return Ext.String.format(template, COLOR_RED01_, "No Coberturado");
+            else if (value == 2)
+                return Ext.String.format(template, COLOR_GREEN01_, "Coberturado");
+            else if (value == 3)
+                return Ext.String.format(template, COLOR_ORANGE01_, "Auditoria");
+            else if (value == 4)
+                return Ext.String.format(template, COLOR_YELLOW02_, "Carta de Garantia");
+            else
+                return Ext.String.format(template, "gray", "No especificada");
+
+        };
+
+        var Valores = 0;
+        var ContDell = 1;
+        var RegActivoMed = 0;
+        var EstadoDetalle = 0;        
+
+        var onSuccess = function () {            
+        };
+
+    function eventoRenderForm() {
+
+
+        var kk = 195;
+        var scrH = screen.height;
+        var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+        var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+        if (southH == 0) {
+            southH = 30;
+        }
+        var dimCentral = (scrH - (northH + southH) - kk);
+        App.formactual.setHeight(dimCentral);
+    }
+    var indicaCambios = false;
+    function setIndicaCambios(value) {
+        indicaCambios = value;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("setIndicaCambiosFormulario"))',
+            params: {
+                indica: (value ? 1 : 0)
+            }
+        });
+    }
+
+    var seleccRecordActualMicronut = null;
+    var seleccRecordActualDietas = null;
+
+    function setSeleccionActualMicronut(record) {
+        seleccRecordActualMicronut = record;
+    }
+    function setSeleccionActualDieta(record) {
+        seleccRecordActualDietas = record;
+    }
+
+    function deleteActual(tipo, grid, recordAct) {
+        var record = recordAct;
+
+        if (record != null) {
+            setIndicaCambios(true);
+            var store = grid.store;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("addDataEliminarMedicamentos"))',
+                params: {
+                    MODO: 'DELETEINDIV',
+                    id: record.data.Secuencia,
+                    tipo: record.data.TipoMedicamento
+                }
+            });
+            store.remove(record);
+            record = null;
+        }
+    };
+
+    var invalidFields = new Array();
+
+    function updateActual(tipo, grid) {
+        var record = null;
+        var indtipo = 0;
+        if (tipo == 'MICRONUT') {
+            indtipo = 3;
+        } else if (tipo == 'DIETA') {
+            indtipo = 2;
+        }
+        var ArrayList0 = new Array();        
+        if (indtipo > 0) {
+            setIndicaCambios(true);
+            var store = grid.store;
+            var fila = 0;
+            grid.store.each(function (r) {
+                ///VALIDACIÓN
+                fila = fila + 1;
+                setValuesGridForm(r, null, tipo);
+                invalidFields = getInvalidFieldsGrid(App.formactual, invalidFields, fila, tipo);
+
+                var HC_Medicamento = {
+                    Secuencia: r.get('Secuencia'),
+                    IdUnidadMedida: r.get('IdUnidadMedida'),
+                    Dosis: r.get('Dosis'),
+                    IdVia: r.get('IdVia'),
+                    TipoComida: r.get('TipoComida'),
+                    Cantidad: r.get('Cantidad'),
+                    Frecuencia: r.get('Frecuencia'),
+                    DiasTratamiento: r.get('DiasTratamiento'),
+                    Linea: r.get('Linea'),
+                    Familia: r.get('Familia'),
+                    SubFamilia: r.get('SubFamilia'),
+                    LineaDescripcion: r.get('LineaDescripcion'),
+                    FamiliaDescripcion: r.get('FamiliaDescripcion'),
+                    SubFamiliaDescripcion: r.get('SubFamiliaDescripcion'),
+                    Comentario: r.get('Comentario'),
+                    TipoMedicamento: r.get('TipoMedicamento'),
+                    Estado: r.get('Estado'),
+                    CodigoComponente: r.get('CodigoComponente'),
+                    IndicadorEPS: r.get('IndicadorEPS')
+                    
+                };
+                ArrayList0.push(HC_Medicamento);
+            });
+            if (invalidFields.length > 0) {
+                addRecursosValidacion(invalidFields);
+                App.cmdGuardar.setDisabled(false);                
+            }
+        }
+        return ArrayList0;
+    };
+
+    function seleccTipoRecurso() {
+        if (App.TipoMedicamento.getValue() == 3) {
+            App.cbIdUnidadMedida.setVisible(true);
+            App.Dosis.setVisible(true);
+            App.Frecuencia.setVisible(true);
+            App.labHoras.setVisible(true);
+
+            App.IdVia.setVisible(true);
+            App.DiasTratamiento.setVisible(true);
+            App.labDias.setVisible(true);
+            App.TipoComida.setVisible(false);
+
+            App.btnAgregarRec.setText('Agregar Micronutriente');
+        } else {
+            App.cbIdUnidadMedida.setVisible(false);
+            App.Dosis.setVisible(false);
+            App.Frecuencia.setVisible(false);
+            App.labHoras.setVisible(false);
+
+            App.IdVia.setVisible(false);
+            App.DiasTratamiento.setVisible(false);
+            App.labDias.setVisible(false);
+            App.TipoComida.setVisible(true);
+            App.btnAgregarRec.setText('Agregar Dieta');
+        }
+    }
+
+
+
+    var count = 0; // a counter for new records
+    var countDell = 0; // a counter for new records
+
+    function visiblePanel(valor) {
+        var panel = App.Panel1;
+        panel.setVisible(valor);
+    }   
+
+    var eventoOnEditar = function (btn) {
+        App.cmdGuardar.setDisabled(false);
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+
+    };
+
+    //function SelectDobleClik(secuencia, Linea, Familia) {
+    function SelectDetalleClik() {
+        //alert("fadfadsf");
+        EstadoDetalle = 2;
+    };
+    var hhValidation = function (h) {
+        str = h.value;
+        tempo = "'";
+        str = str.replace('javascript:myFunction(' + tempo, '');
+        str = str.replace('%20', ' ');
+        str = str.replace('%C3%B3', 'ó');
+        str = str.replace('%C3%A1', 'á');
+        str = str.replace('%C3%A9', 'é');
+        str = str.replace('%C3%AD', 'í');
+        str = str.replace('%C3%BA', 'ú');
+        str = str.replace('%C3%B1', 'ñ');
+
+        str = str.replace('%C3%8D', 'Í');
+        str = str.replace('%C3%93', 'Ó');
+        str = str.replace('%C3%81', 'Á');
+        str = str.replace('%C3%91', 'Ñ');
+        str = str.replace('%C3%9A', 'Ú');
+        str = str.replace(tempo + ')', '');
+        h.setValue(str);
+
+    };
+
+     ;
+
+        function PanelOcultar(grid) {
+            var panel1 = App.Panel1;
+            panel1.setVisible(false);
+        };      
+
+        var accionMensajes = function (data) {
+            var mensajes = "";
+            if (data.length > 0) {
+                for (var i = 0; i < data.length; i++) {
+                    mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+                }
+                App.taAlerts.setVisible(true);
+                App.taAlerts.setValue(mensajes);
+                App.conthbIndicaError.setVisible(true);
+                App.taAlerts.focus();
+            } else {
+                App.taAlerts.setVisible(false);
+                App.conthbIndicaError.setVisible(false);
+            }
+
+        };
+
+        var getInvalidFields = function (form) {
+            var invalidFields = new Array();
+            var fields = form.getForm().getFields();
+            fields.filterBy(function (field) {
+                if (!field.isValid()) {
+                    var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                        NombreCampo: field.name,
+                        IdEvento: (field.isValid() ? 1 : 0),
+                        ValorTexto: field.name + ': ' + field.getErrors()
+                    };
+                    invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+                }
+            });
+            return invalidFields;
+        };
+
+        var beforeSave = function (form) {
+            App.taAlerts.setVisible(false);
+            App.taAlerts.setValue(null);
+            App.conthbIndicaError.setVisible(false);
+            var FieldsInvalidos = getInvalidFields(form);
+            if (FieldsInvalidos.length > 0) {
+                addRecursosValidacion(FieldsInvalidos);
+            }
+        };
+
+        var addRecursosValidacion = function (FieldsInvalidos) {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("addRecursosValidacion"))',
+            params: {
+                data: FieldsInvalidos,
+                indica: 'VALIDAR',
+            },
+            success: function (result) { accionMensajes(result.data); }
+        });
+    };
+
+    var getInvalidFieldsGrid = function (form, invalidFields, fila,tipo) {            
+        var fields = App.formactual.getForm().getFields();
+        fields.filterBy(function (field) {
+            var validar = true;
+            if (tipo == 'MICRONUT') {
+                validar = true;               
+            } else if (tipo == 'DIETA') {
+                if (field.name == 'Dosis') {
+                    validar = false;
+                }
+                if (field.name == 'IdVia') {
+                    validar = false;
+                }
+                if (field.name == 'IdUnidadMedida') {
+                    validar = false;
+                }
+                if (field.name == 'Frecuencia') {
+                    validar = false;
+                }
+                if (field.name == 'DiasTratamiento') {
+                    validar = false;
+                }                
+            }
+            if (!field.isValid() && validar) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                        NombreCampo: field.name,
+                        IdEvento: (field.isValid() ? 1 : 0),
+                        ValorTexto: tipo + '; Fila N° ' + fila + '-' + field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);                
+                field.reset();
+            }
+        });
+        
+        return invalidFields;
+    };
+    var setValuesGridForm = function (r, valor, tipo) {
+        ////ESTE METODO  CAMBIA DE ACUERDO A CADA FORMULARIO:        
+        var Secuencia = r.get('Secuencia');
+        var IdUnidadMedida = r.get('IdUnidadMedida');
+        var Dosis = r.get('Dosis');
+        var IdVia = r.get('IdVia');
+        var TipoComida = r.get('TipoComida');
+        var Cantidad = r.get('Cantidad');
+        var Frecuencia = r.get('Frecuencia');
+        var DiasTratamiento = r.get('DiasTratamiento');
+        var Linea = r.get('Linea');
+        var Familia = r.get('Familia');
+        var SubFamilia = r.get('SubFamilia');
+        var LineaDescripcion = r.get('LineaDescripcion');
+        var FamiliaDescripcion = r.get('FamiliaDescripcion');
+        var SubFamiliaDescripcion = r.get('SubFamiliaDescripcion');
+        var Comentario = r.get('Comentario');
+        var TipoMedicamento = r.get('TipoMedicamento');
+        var CodigoComponente = r.get('CodigoComponente');
+        
+        App.Linea.setValue(Linea == null ? null : Linea);        
+                
+        App.Familia.setValue(Familia == null ? null : Familia);
+        App.Dosis.setValue(Dosis == 0 ? null : Dosis);
+        App.Frecuencia.setValue(Frecuencia == 0 ? null : Frecuencia);
+        App.SubFamilia.setValue(SubFamilia == null ? null : SubFamilia);        
+        //App.TipoComida.setValue(TipoComida == 0 ? null : TipoComida);
+        App.IdVia.setValue(IdVia == 0 ? null : IdVia);        
+        App.DiasTratamiento.setValue(DiasTratamiento == 0 ? null : DiasTratamiento);        
+        App.TipoMedicamento.setValue(TipoMedicamento == 0 ? null : TipoMedicamento);        
+        App.Cantidad.setValue(Cantidad == 0 ? null : Cantidad);
+        App.IdUnidadMedida.setValue(IdUnidadMedida == 0 ? null : '' + IdUnidadMedida);
+    };
+    function eventoCancelar(form) {
+        form.getForm().reset();
+        App.taAlerts.setVisible(false);
+        App.conthbIndicaError.setVisible(false);
+        setIndicaCambios(false);
+        App.storeMedNut.reload();
+        App.storeDieta.reload();
+    };
+    </script>
+    <script>
+        var SubFamilia = function (h) {
+            str = h.value;
+            tempo = "'";
+            str = str.replace('javascript:myFunction(' + tempo, '');
+            str = str.replace('%20', ' ');
+            str = str.replace('%C3%B3', 'ó');
+            str = str.replace('%C3%A1', 'á');
+            str = str.replace('%C3%A9', 'é');
+            str = str.replace('%C3%AD', 'í');
+            str = str.replace('%C3%BA', 'ú');
+            str = str.replace('%C3%B1', 'ñ');
+
+            str = str.replace('%C3%8D', 'Í');
+            str = str.replace('%C3%93', 'Ó');
+            str = str.replace('%C3%81', 'Á');
+            str = str.replace('%C3%91', 'Ñ');
+            str = str.replace('%C3%9A', 'Ú');
+            str = str.replace(tempo + ')', '');
+            h.setValue(str);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("ReturnFindSubFamilia"))',
+                params: {
+                    modo: 'set',
+                    linea: '',
+                    familia: '',
+                    subFamilia: str,
+                    descripcion: '',
+                    descripLinea: '',
+                    descripFamilia: '',
+                    idWindow: "IdBuscadorMedicamento"
+                }
+            });
+        }
+        var mmValidation = function (m) {
+            if (m.getValue() > 59) {
+                m.setValue(59);
+            }
+        }
+        function EnviarDataServer(grid) {            
+            if (true) {
+                invalidFields = new Array();
+                App.taAlerts.setVisible(false);
+                App.taAlerts.setValue(null);
+                App.conthbIndicaError.setVisible(false);
+                var array01 = updateActual('DIETA', App.grillaMedDieta);
+                var array02 = updateActual('MICRONUT', App.grillaMedNut);
+                if (invalidFields.length==0) { 
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("Save_MedDietasMicroNutrientes"))',
+                            params: {
+                                selectionArray1: array01,
+                                selectionArray2: array02,
+                                Id: 0,
+                                Evento: 'Server'
+                            }
+                        });                        
+                }
+            } else {
+                App.cmdGuardar.setDisabled(false);
+            }
+        };
+        function InsertRow(valor, estado, soloLectura) {
+            if (soloLectura == '1') {
+                setIndicaCambios(false);
+            } else {
+                if (valor.getValue() != '') {                    
+                    var obj = JSON.parse(valor.getValue());
+                    var DescripcionLocalVar = obj.DescripcionLocal;
+                    var ValorEntero4Var = obj.ValorEntero4;
+                    App.Linea.setValue(null);
+                    App.cbIdUnidadMedida.setValue(null);
+                    App.Familia.setValue(null);
+                    App.Dosis.setValue(null);
+                    App.Frecuencia.setValue(null);
+                    App.SubFamilia.setValue(null);
+                    App.TipoComida.setValue(null);
+                    App.IdVia.setValue(null);
+                    App.DiasTratamiento.setValue(null);
+                    App.Cantidad.setValue(null);
+                    App.IndicadorEPS.setValue(null);
+
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("ReturnFindSubFamilia"))',
+                        params: {
+                            modo: 'set',
+                            linea: '',
+                            familia: '',
+                            subFamilia: DescripcionLocalVar,
+                            descripcion: '',
+                            descripLinea: '',
+                            descripFamilia: '',
+                            indicadoreps: ValorEntero4Var,
+                            idWindow: "IdBuscadorMedicamento"
+                        }
+                    });
+
+                    /*
+                    var grid = Ext.getCmp("grillaExamenes");
+                    setIndicaCambios(true);
+                    grid.store.insert(0, { CodigoElemento: 'New' + count++, ValorCodigo1: valor.getValue() });
+                    Ext.Function.defer(function () {
+                        grid.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+                    }, 100);*/
+                    valor.setValue('');
+                }
+            }
+        }
+
+        function noDuplicado(tipo) {
+            var descTipo = '';
+            var store = null;
+            if (tipo == 3) {
+                descTipo = 'Micronutrientes';
+                store = App.storeMedNut;
+            } else if (tipo == 2) {
+                descTipo = 'Dietas';
+                store = App.storeDieta;
+            }
+            var noHayDuplicado = true;
+            if (store!=null) {                
+                store.each(function (r) {
+                    if (trim(r.get('Linea')) == trim(App.Linea.getValue()) &&
+                        trim(r.get('Familia')) == trim(App.Familia.getValue()) &&
+                        trim(r.get('SubFamilia')) == trim(App.SubFamilia.getValue())) {
+                        noHayDuplicado = false;
+                    }
+                });
+            }        
+            if (!noHayDuplicado) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("showMensajeNotify"))',
+                    params: {
+                        titulo: 'Advertencia',
+                        message: 'Ya existe registro.',
+                        tipo: 'WARNING'
+                    }
+                });
+            }
+            // alert(estados);
+            return noHayDuplicado;
+        }
+        function trim(str) {
+            return str.replace(/^\s+|\s+$/g, "");
+        }
+    </script>
+}
+@section cuerpo
+{
+    @(Html.X().Viewport()
+        .Layout(LayoutType.VBox)
+
+        .LayoutConfig(
+            new VBoxLayoutConfig { Align = VBoxAlign.Stretch }
+        )
+        .Listeners(l =>
+        {
+            l.AfterLayout.BroadcastOnBus = "App.resize";
+            l.AfterLayout.Single = true;
+        })
+        .Items(regions =>
+        {
+            regions.Add(Html.X().FormPanel()
+                .ItemID("center")
+                .DefaultAnchor("100%")
+                .AutoScroll(true)
+                .Height(340)
+               .Header(false)
+               .Border(true)
+                .ID("formactual")
+                .Listeners(l =>
+                {
+                    l.Render.Handler = "eventoRenderForm();";
+                })
+               .Items(
+                        X.FormPanel()
+                                .ID("Panel0")
+                                .BodyPadding(5)
+                                .AutoScroll(true)
+                                .Border(false)
+                                .Header(false)                
+                                .Items(
+                                 X.FieldSet().Collapsible(true)
+                                 .ColumnWidth(0.4)
+                                 .Title("<b>MICRONUTRIENTES</b>")
+                                 .MarginSpec("0 05 0 05")
+                                 .Defaults(d =>
+                                 {
+                                     d.Add(new Parameter("LabelWidth", "170"));
+                                 })
+
+                                 .DefaultAnchor("100%")
+                                 .FieldDefaults(d =>
+                                 {
+                                     d.LabelAlign = LabelAlign.Left;
+                                 })
+                                     .Items(
+                                             X.TextField()
+                                                 .ID("RecepcionaRecurso")
+                                                 .Listeners(l =>
+                                                 {
+                                                     l.Change.Handler = "InsertRow(this,'Logico','" + (indicaModoLectura ? 1 : 0) + "');";		
+                                                 })
+                                                 .Hidden(true),
+                                            X.GridPanel()
+                                                 .ID("grillaMedNut")
+                                                 .Border(false)
+                                                 .Store(
+                                                     Html.X().Store()
+                                                             .ID("storeMedNut")
+                                                           .Model(
+                                                             Html.X().Model()
+                                                                 .IDProperty("Secuencia")                
+                                                                .Fields(new ModelField("Secuencia", ModelFieldType.String),
+
+                                                                           new ModelField("IdUnidadMedida", ModelFieldType.Int),
+                                                                           new ModelField("Dosis", ModelFieldType.Float),
+                                                                           new ModelField("IdVia", ModelFieldType.Int),
+                                                                           new ModelField("Cantidad", ModelFieldType.Float),
+                                                                           new ModelField("Frecuencia", ModelFieldType.Float),
+                                                                           new ModelField("DiasTratamiento", ModelFieldType.Float),
+                                                                           new ModelField("Linea", ModelFieldType.String),
+                                                                           new ModelField("Familia", ModelFieldType.String),
+                                                                           new ModelField("SubFamilia", ModelFieldType.String),
+                                                                           new ModelField("LineaDescripcion", ModelFieldType.String),
+                                                                           new ModelField("FamiliaDescripcion", ModelFieldType.String),
+                                                                           new ModelField("SubFamiliaDescripcion", ModelFieldType.String),
+                                                                           new ModelField("Comentario", ModelFieldType.String),                                                                           
+                //
+                                                                           new ModelField("Estado", ModelFieldType.Int),
+                                                                           new ModelField("TipoMedicamento", ModelFieldType.Int),
+                                                                           new ModelField("CodigoComponente", ModelFieldType.String),
+                                                                           new ModelField("IndicadorEPS", ModelFieldType.Int)
+                                                                           
+                                                                 )
+                                                            )
+                                                          .AutoLoad(true)
+                                                          .RemoteSort(false)
+                                                          .IsPagingStore(true)
+                                                          .RemotePaging(true)
+                                                          .PageSize(5)
+                                                          .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                                            .Url("CCEP0303_MED_MICRONUTRIENTES")
+                                                                            .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                                                           .Root("data")
+                                                                                           .TotalProperty("total")
+                                                                                           .IDProperty("Secuencia")))))
+                                                         .Parameters(ps =>
+                                                                ps.Add(new
+                                                                {
+                                                                    tipoRecurso = 3 //Micro
+                                                                })
+                                            )
+
+                                                 )
+                                                 .ColumnModel(
+                                                    Html.X().Column().Text("EPS").DataIndex("IndicadorEPS")
+                                                    .Width(30).Renderer("changeEPS"),
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true).Hidden(true)
+                                                         .DataIndex("Secuencia").Hidden(true)
+                                                         .Text("Nro")
+                                                          .Width(30)
+                                                         .Component(
+                                                             Html.X().TextField().ReadOnly(indicaModoLectura)
+                                                                    .ReadOnly(true)                
+                                                             ),
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("SubFamiliaDescripcion")
+                                                         .Text("Micronutriente")
+                                                         .Flex(1)
+                                                         .Component(
+                                                             Html.X().TextField().ReadOnly(true)
+                                                                     .Listeners(l => { l.Change.Handler = "hhValidation(this);"; })
+                                                             ),
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("IdUnidadMedida")
+                                                         .Text("Presentación")
+                                                         .Width(110)
+                                                         .Component(
+                                                                Html.X().ComboBox().ReadOnly(indicaModoLectura)
+                                                                        .ID("cbAVALORPRESENTACION")
+                                                                         .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenericos("UNIDADPRESENTACION", "").Select(d => new ListItem(d.Name, d.ID)))
+                //.SetHeight(10)
+                                                                        .SimpleSubmit(true)
+                                                             ),
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("Dosis")
+                                                         .Text("Dosis")
+                                                         .Width(70)
+                                                         .Component(
+                                                             Html.X().NumberField().ReadOnly(indicaModoLectura)
+                                                             .Listeners(l => l.Focus.Handler = "setIndicaCambios(true);")
+                                                             ),
+                                                       Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("IdVia")
+                                                         .Text("Via")
+                                                         .Width(110)
+                                                         .Component(
+                                                             Html.X().ComboBox().ReadOnly(indicaModoLectura)
+                                                                        .ID("cbIdVia")
+                                                                        .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("TIPOVIA").Select(d => new ListItem(d.Name, d.ID)))
+                                                                        .SimpleSubmit(true)
+                                                                        .Listeners(l => l.Select.Handler = "setIndicaCambios(true);")
+                                                             ),
+                                                      Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("Cantidad")
+                                                         .Text("Cantidad")
+                                                          .Width(80)
+                                                         .Component(
+                                                             Html.X().NumberField().ReadOnly(indicaModoLectura)
+                                                             .Listeners(l => l.Focus.Handler = "setIndicaCambios(true);")
+                                                             ),
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("Frecuencia")
+                                                         .Text("C/. hr.")
+                                                          .Width(70)
+                                                         .Component(
+                                                             Html.X().NumberField().ReadOnly(indicaModoLectura)
+                                                             .Listeners(l => l.Focus.Handler = "setIndicaCambios(true);")
+                                                             ),
+                                                    Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("DiasTratamiento")
+                                                         .Text("Días")
+                                                         .Width(70)
+                                                         .Component(
+                                                             Html.X().NumberField().ReadOnly(indicaModoLectura)
+                                                             .Listeners(l => l.Focus.Handler = "setIndicaCambios(true);")
+                                                             ),
+                                                    Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("Comentario")
+                                                         .Text("Indicaciones")
+                                                         .Width(120)
+                                                         .Component(
+                                                             Html.X().TextField().ReadOnly(indicaModoLectura)
+                                                             ),                                                              
+                                                    Html.X().ComponentColumn()
+                                                         .Editor(true).Hidden(true)
+                                                         .DataIndex("TipoMedicamento")
+                                                         .Text("Tipo")
+                                                         .Width(70)
+                                                         .Component(
+                                                             Html.X().NumberField()
+                                                             .Listeners(l => l.Focus.Handler = "setIndicaCambios(true);")
+                                                             )
+                                                        ,
+                                                        Html.X().CommandColumn()
+                                                        .Width(70)
+                                                        .Text("Acción")
+                                                        .Commands(
+                                                        Html.X().GridCommand().Disabled(indicaModoLectura)
+                                                        .CommandName("Delete")
+                                                        .Icon(Icon.Delete)
+                                                        .Text("Eliminar")
+                                                        )
+                                                        .Listeners(ls => ls.Command.Handler = "deleteActual('MICRONUT',App.grillaMedNut,record);")                                                                                                                                                                                          
+                                                 )
+                                                 .SelectionModel(
+                                                     Html.X().RowSelectionModel().Mode(SelectionMode.Multi)
+                                                 )
+                                                 .Plugins(
+                                                     Html.X().CellEditing()
+                                                 )                
+                                                 .Listeners(l => l.CellClick.Handler = "setSeleccionActualMicronut(record);")
+                                                 .TopBar(
+                                                         Html.X().Toolbar().Hidden(indicaModoLectura)
+                                                             .Items(
+                                                                 Html.X().ToolbarSeparator()
+                                                                , Html.X().Label()
+                                                                .Html("<b><font color='" + COLOR_BLUE01 + "'> Detalle - " + DESC_ADD + "</font></b>")
+                                                                                                                              
+                                                             )
+                                                   )
+                                                   .BottomBar(
+                                                         Html.X().Toolbar().Hidden(indicaModoLectura).Height(30)
+                                                             .Items(
+                                                                Html.X().Label()
+                                                                .Html("<span style = 'color: " + COLOR_BLUE01 + "; '>" +
+                                                                "<span style=' color:" + COLOR_BLUE01 + ";'> <b>EPS: </b></span>" + "</span>")
+                                                                , X.ToolbarSpacer(5)
+                                                                , Html.X().Label()
+                                                                .Html("<span style='font-size: 1.6em; color:" + COLOR_RED01 + ";'> <b>&bull;</b>" +
+                                                                "<span style = 'font-size: 0.6em; color: " + COLOR_BLUE01 + "; '>No Coberturado </span>" +
+                                                                "</span>")
+                                                                , X.ToolbarSpacer(5)
+                                                                , Html.X().Label()
+                                                                .Html("<span style='font-size: 1.6em; color:" + COLOR_GREEN01 + ";'> <b>&bull;</b>" +
+                                                                "<span style = 'font-size: 0.6em; color: " + COLOR_BLUE01 + "; '>Coberturado </span>" +
+                                                                "</span>")
+                                                                , X.ToolbarSpacer(5)
+                                                                , Html.X().Label()
+                                                                .Html("<span style='font-size: 1.6em; color:" + COLOR_ORANGE01 + ";'> <b>&bull;</b>" +
+                                                                "<span style = 'font-size: 0.6em; color: " + COLOR_BLUE01 + "; '>Auditoría </span>" +
+                                                                "</span>")
+                                                                , X.ToolbarSpacer(5)
+                                                                , Html.X().Label()
+                                                                .Html("<span style='font-size: 1.6em; color:" + COLOR_YELLOW02 + ";'> <b>&bull;</b>" +
+                                                                "<span style = 'font-size: 0.6em; color: " + COLOR_BLUE01 + "; '>Carta de Garantía </span>" +
+                                                                "</span>")                                                               
+                                                             )
+                                                   )                                                   
+                                        )
+                                ),
+                        X.FormPanel()
+                                .ID("Panel2")
+                                .BodyPadding(5)
+                                .AutoScroll(true)
+                                .Border(false)
+                                .Header(false)
+                                .Items(
+                                 X.FieldSet().Collapsible(true)
+                                 .ColumnWidth(0.4)
+                                 .Title("<b>DIETAS</b>")
+                                 .MarginSpec("0 05 0 05")
+                                 .Defaults(d =>
+                                 {
+                                     d.Add(new Parameter("LabelWidth", "170"));
+                                 })
+
+                                 .DefaultAnchor("100%")
+                                 .FieldDefaults(d =>
+                                 {
+                                     d.LabelAlign = LabelAlign.Left;
+                                 })
+                                     .Items(
+                                             /*X.TextField()
+                                                 .ID("RecepcionaRecurso")
+                                                 .Listeners(l =>
+                                                 {
+                                                     l.Change.Handler = "InsertRow(this,'Logico');";
+                                                 })
+                                                 .Hidden(true),*/
+                                            X.GridPanel()
+                                                 .ID("grillaMedDieta")
+                                                 .Border(false)
+                                                 .Store(
+                                                     Html.X().Store()
+                                                             .ID("storeDieta")
+                                                           .Model(
+                                                             Html.X().Model()
+                                                                 .IDProperty("Secuencia")
+                                                                .Fields(new ModelField("Secuencia", ModelFieldType.String),
+
+                                                                           new ModelField("IdUnidadMedida", ModelFieldType.Int),
+                                                                           new ModelField("Dosis", ModelFieldType.Float),
+                                                                           new ModelField("IdVia", ModelFieldType.Int),
+                                                                           new ModelField("TipoComida", ModelFieldType.Int), 
+                                                                           new ModelField("Cantidad", ModelFieldType.Float),
+                                                                           new ModelField("Frecuencia", ModelFieldType.Float),
+                                                                           new ModelField("DiasTratamiento", ModelFieldType.Float),
+                                                                           new ModelField("Linea", ModelFieldType.String),
+                                                                           new ModelField("Familia", ModelFieldType.String),
+                                                                           new ModelField("SubFamilia", ModelFieldType.String),
+                                                                           new ModelField("LineaDescripcion", ModelFieldType.String),
+                                                                           new ModelField("FamiliaDescripcion", ModelFieldType.String),
+                                                                           new ModelField("SubFamiliaDescripcion", ModelFieldType.String),
+                                                                            new ModelField("Comentario", ModelFieldType.String),                
+                
+                                                                           new ModelField("Estado", ModelFieldType.Int),
+                                                                           new ModelField("TipoMedicamento", ModelFieldType.Int),
+                                                                           new ModelField("CodigoComponente", ModelFieldType.String),
+                                                                           new ModelField("IndicadorEPS", ModelFieldType.Int)
+                                                                           
+                                                                 )
+                                                            )
+                                                          .AutoLoad(true)
+                                                          .RemoteSort(false)
+                                                          .IsPagingStore(true)
+                                                          .RemotePaging(true)
+                                                          .PageSize(5)
+                                                          .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                                            .Url("CCEP0303_MED_MICRONUTRIENTES")
+                                                                            .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                                                           .Root("data")
+                                                                                           .TotalProperty("total")
+                                                                                           .IDProperty("Secuencia")))))
+                                                         .Parameters(ps =>
+                                                                ps.Add(new
+                                                                {
+                                                                    tipoRecurso = 2 //Micro
+                                                                })
+                                            )
+
+                                                 )
+                                                 .ColumnModel(
+                                                    Html.X().Column().Text("EPS").DataIndex("IndicadorEPS")
+                                                    .Width(30).Renderer("changeEPS"),
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true).Hidden(true)
+                                                         .DataIndex("Secuencia")
+                                                         .Text("Nro")
+                                                          .Width(30)
+                                                         .Component(
+                                                             Html.X().TextField()
+                                                                    .ReadOnly(true)
+                                                             ),
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("SubFamiliaDescripcion")
+                                                         .Text("Dieta")
+                                                         .Flex(1)
+                                                         .Component(
+                                                             Html.X().TextField().ReadOnly(true)
+                                                                     .Listeners(l => { l.Change.Handler = "hhValidation(this);"; })
+                                                             ),                                               
+                                                      Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("Cantidad")
+                                                         .Text("Cantidad")
+                                                          .Width(80)
+                                                         .Component(
+                                                             Html.X().NumberField().ReadOnly(indicaModoLectura)
+                                                             ),
+                                                      Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("TipoComida")
+                                                         .Text("Horarios")
+                                                          .Width(80)
+                                                         .Component(
+                                                             Html.X().NumberField().ReadOnly(indicaModoLectura)
+                                                             .Listeners(l => l.Focus.Handler = "setIndicaCambios(true);")
+                                                             ),                                                             
+                                                     /*Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("Frecuencia")
+                                                         .Text("C/. hr.")
+                                                          .Width(70)
+                                                         .Component(
+                                                             Html.X().TextField()
+                                                             ),*/
+                                                    Html.X().ComponentColumn()
+                                                         .Editor(true).Hidden(true)
+                                                         .DataIndex("DiasTratamiento")
+                                                         .Text("Dias")
+                                                         .Width(70)
+                                                         .Component(
+                                                             Html.X().NumberField().ReadOnly(true)                                                             
+                                                             ),
+                                                   Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("Comentario")
+                                                         .Text("Indicaciones")
+                                                         .Width(120)
+                                                         .Component(
+                                                             Html.X().TextField().ReadOnly(indicaModoLectura)
+                                                             .Listeners(l => l.Focus.Handler = "setIndicaCambios(true);")
+                                                             ),      
+                                                    Html.X().ComponentColumn()
+                                                         .Editor(true).Hidden(true)
+                                                         .DataIndex("TipoMedicamento")
+                                                         .Text("Tipo")
+                                                         .Width(70)
+                                                         .Component(
+                                                             Html.X().NumberField().ReadOnly(indicaModoLectura)
+                                                             )
+                                                        ,
+                                                        Html.X().CommandColumn()
+                                                        .Width(70)
+                                                        .Text("Acción")
+                                                        .Commands(
+                                                        Html.X().GridCommand().Disabled(indicaModoLectura)
+                                                        .CommandName("Delete")
+                                                        .Icon(Icon.Delete)
+                                                        .Text("Eliminar")
+                                                        )
+                                                        .Listeners(ls => ls.Command.Handler = "deleteActual('DIETA',App.grillaMedDieta,record);")                                                                                                                                                                                          
+                                                             
+                                                 )
+                                                 .SelectionModel(
+                                                     Html.X().RowSelectionModel().Mode(SelectionMode.Multi)
+                                                 )
+                                                 .Plugins(
+                                                     Html.X().CellEditing()
+                                                 )                                        
+                                                 .Listeners(l => l.CellClick.Handler = "setSeleccionActualDieta(record);")
+                                                 .TopBar(
+                                                         Html.X().Toolbar().Hidden(indicaModoLectura)
+                                                             .Items(
+                                                                Html.X().ToolbarSeparator()
+                                                                , Html.X().Label()
+                                                                .Html("<b><font color='" + COLOR_BLUE01 + "'> Detalle - " + DESC_ADD + "</font></b>")
+                                                                
+                                                             )
+                                                   )
+                                        )
+                                ),                                
+                                
+                           X.FormPanel()
+                                .ID("Panel1")
+                                .BodyPadding(5)
+                                .AutoScroll(true)
+                                .Border(false)
+                                .Header(false)
+                                .Hidden(true)
+                                .Items(
+                                        X.FieldSet()
+                                         .ColumnWidth(0.4)
+                                         .Title("<b>Información del Recurso<b>")
+                                         .MarginSpec("0 05 0 05")
+                                         .Defaults(d =>
+                                         {
+                                             d.Add(new Parameter("LabelWidth", "170"));
+                                         })
+
+                                         .DefaultAnchor("100%")
+                                         .FieldDefaults(d =>
+                                         {
+                                             d.LabelAlign = LabelAlign.Left;
+                                         })
+                                             .Items(
+                                              X.Container().Layout(LayoutType.HBox)
+                                              .Defaults(d =>
+                                              {
+                                                  d.Add(new Parameter("LabelWidth", "70"));
+                                              })
+                                              .Items(
+                                                X.NumberFieldFor(c => c.IndicadorEPS).FieldLabel("EPS").Hidden(true)
+                                              ),                                             
+                                                Html.X().Container().Layout(LayoutType.HBox)
+                                                .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch })
+                                                .Items(
+                                                    X.ComboBoxFor(c => c.TipoMedicamento)
+                                                    .FieldLabel("Tipo de Recurso")
+                                                    .FieldStyle("background: "+COLOR_REDbackg+"; border-color: "+COLOER_IND_OBLIGA)                                                    
+                                                    .ForceSelection(true).TypeAhead(true)
+                                                    .Items(
+                                                        new ListItem("DIETA", 2),
+                                                        new ListItem("MICRONUTRIENTE", 3)
+                                                    )
+                                                    .LabelWidth(115)
+                                                    .Value(2) //Default
+                                                    .Listeners(l => 
+                                                            l.Change.Handler = "seleccTipoRecurso();")
+                                                ),
+                                             
+                                                     X.Container()
+                                                        .Layout(LayoutType.HBox)
+                                                        .Defaults(d =>
+                                                        {
+                                                            d.Add(new Parameter("LabelWidth", "70"));
+                                                        })                
+                                                        .Items(
+                                                            X.TextFieldFor(c => c.Linea).ReadOnly(true)
+                                                             .FieldLabel("Linea")
+                                                             .Width(120),
+                                                            X.TextFieldFor(c => c.LineaDescripcion).ReadOnly(true)
+                                                              .FieldLabel(""),
+                                                            X.NumberFieldFor(c => c.IdUnidadMedida).Hidden(true)
+                                                              .FieldLabel(""),
+                                                            X.Component().Width(10),
+                                                            X.ComboBoxFor(c => c.IdUnidadMedida).ID("cbIdUnidadMedida")                                                               
+                                                                    .FieldLabel("U. Medida")
+                                                                    .TypeAhead(true)
+                                                                    .QueryMode(DataLoadMode.Local)
+                                                                    .ForceSelection(true)
+                                                                    .TriggerAction(TriggerAction.All)
+                                                                    .DisplayField("name")
+                                                                    .ValueField("codigo")
+                                                                    .EmptyText("Loading...")
+                                                                    .ValueNotFoundText("Loading...")
+                                                                    .Hidden(true)
+                                                                    .Listeners(l =>
+                                                                            l.Select.Handler = "App.IdUnidadMedida.setValue(App.cbIdUnidadMedida.getValue());")
+                                                                    .Store(Html.X().Store()
+                                                                        .AutoLoad(false)
+                                                                        .Model(Html.X().Model()
+                                                                            .IDProperty("Codigo")
+                                                                            .Fields(
+                                                                                new ModelField("codigo", ModelFieldType.String) { Mapping = "Codigo" },
+                                                                                new ModelField("name", ModelFieldType.String) { Mapping = "Name" }
+                                                                            )
+                                                                        )
+                                                                        .Proxy(Html.X().AjaxProxy()
+                                                                            .Url(Url.Action("UnidadMedidas"))
+                                                                            .Reader(Html.X().JsonReader().Root("data"))
+                                                                        )
+                                                                        .Parameters(ps =>
+                                                                             ps.Add(new
+                                                                             {
+                                                                                 Linea = JRawValue.From("App.Linea.getValue()"),
+                                                                                 Familia = JRawValue.From("App.Familia.getValue()"),
+                                                                                 SubFamilia = JRawValue.From("App.SubFamilia.getValue()"),
+                                                                                 Accion = "MEDUNIDAMED"
+                                                                             })
+                                                                        )
+                                                                        
+                                                                    )                
+                                                            ),
+                                                X.Container()
+                                                        .Layout(LayoutType.HBox)
+                                                        .Defaults(d =>
+                                                        {
+                                                            d.Add(new Parameter("LabelWidth", "70"));
+                                                        })
+                //.MarginSpec("0 0 10")
+                                                        .Items(
+                                                            X.TextFieldFor(c => c.Familia).ReadOnly(true)
+                                                             .FieldLabel("Familia")
+                                                             .Width(120),
+                                                            X.TextFieldFor(c => c.FamiliaDescripcion).ReadOnly(true)
+                                                              .FieldLabel(""),
+                //.Width(100),
+                                                            X.Component().Width(10),
+                                                            X.NumberFieldFor(c => c.Dosis).Hidden(true)
+                                                             .MinValue(0)
+                                                             .FieldLabel("Dosis"),
+                //.Width(120),
+                                                            X.Component().Width(10),
+                                                            X.NumberFieldFor(c => c.Frecuencia).Hidden(true)
+                                                             .FieldLabel("C/.")
+                                                             .MinValue(0),
+                                                            X.Label(" Hrs").ID("labHoras").Hidden(true)
+                //.Width(150)
+                                                            ),
+                                                    X.Container()
+                                                        .Layout(LayoutType.HBox)
+                                                        .Defaults(d =>
+                                                        {
+                                                            d.Add(new Parameter("LabelWidth", "70"));
+                                                        })
+                //.MarginSpec("0 0 10")
+                                                        .Items(
+                                                            X.TextFieldFor(c => c.SubFamilia).ReadOnly(true)
+                                                             .FieldLabel("Sub Familia")
+                                                             .Listeners(ls =>
+                                                                    ls.Change.Handler = "App.cbIdUnidadMedida.clearValue(); App.cbIdUnidadMedida.getStore().load()")
+                                                             .Width(120),
+                                                           X.TextFieldFor(c => c.CodigoComponente).ReadOnly(true).Hidden(true),
+                                                            X.TextFieldFor(c => c.SubFamiliaDescripcion).ReadOnly(true)
+                                                              .Listeners(l => { l.Change.Handler = "SubFamilia(this);"; })
+                                                              .FieldLabel(""),                                                                                        
+                                                            X.Component().Width(10),
+                                                            Html.X().NumberFieldFor(c => c.TipoComida)
+                                                                        .Hidden(false)
+                                                                        .MinValue(0)
+                                                                        .FieldLabel("Horario"),                                                                                                                                                
+                                                            
+                                                            Html.X().ComboBoxFor(c => c.IdVia)
+                                                                        .Hidden(true)
+                                                                        .FieldLabel("Vía")
+                                                                        .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("TIPOVIA").Select(d => new ListItem(d.Name, d.ID)))
+                                                                        .SimpleSubmit(true),
+
+                                                             //.Width(120),
+                                                            X.Component().Width(10),
+                                                            X.NumberFieldFor(c => c.DiasTratamiento)
+                                                              .MinValue(0)
+                                                             .FieldLabel("Tratamiento").Hidden(true),
+                                                             X.Label(" Diás").ID("labDias").Hidden(true)               
+                                                            ),
+                                                    X.Container()
+                                                        .Layout(LayoutType.HBox)
+                                                        .Defaults(d =>
+                                                        {
+                                                            d.Add(new Parameter("LabelWidth", "70"));
+                                                        })
+                //.MarginSpec("0 0 10")
+                                                        .Items(
+                                                            X.TextFieldFor(c => c.Medicamento).ReadOnly(true)
+                                                             .FieldLabel("Medicamento")
+                                                              .Width(120),
+                                                            X.TextFieldFor(c => c.MedicamentoDescripcion).ReadOnly(true)
+                                                              .FieldLabel(""),
+                //.Flex(1),
+                // .Width(120),
+                                                            X.Component().Width(10),
+                                                            X.NumberFieldFor(c => c.Cantidad)//.ID("nfCantidad")
+                                                            .MinValue(1)
+                                                             .FieldLabel("Cantidad"),
+                                                             X.Component().Width(10),
+                                                             X.Button()
+                                                                .Text("Agregar Dieta")
+                                                                .ID("btnAgregarRec")
+                                                                 .DirectEvents(de =>
+                                                                  {  //Model.ACCION : Posee el MODO ACTUAL
+                                                                      de.Click.Url = Url.Action("Save_MedDietasMicronutrientesTemp");
+                                                                      de.Click.EventMask.ShowMask = true;
+                                                                      de.Click.Before = "App.btnAgregarRec.setDisabled(true);  return noDuplicado(App.TipoMedicamento.getValue()); ";
+                                                                      
+                                                                      de.Click.After = "App.btnAgregarRec.setDisabled(false); ";                                                                                                                                                                                                                         
+                                                                      de.Click.ExtraParams.Add(
+                                                                          new
+                                                                          {
+                                                                              tipomedicamento = JRawValue.From("App.TipoMedicamento.getValue()"),
+                                                                          }                                                                          
+                                                                        );
+                                                                      
+                                                                      de.Click.Success = "onSuccess();";
+                                                                      de.Click.Failure = "onFailure();";
+
+                                                                  }),
+                                                                 //.DirectClickAction("Save_MedDietasMicronutrientesTemp"),
+                
+                                                            /* X.Component().Width(10),
+                                                              X.Button()
+                                                                .Text("....")
+                                                               .Handler("addPanel(this.up('grid'));"),*/
+                                                            X.Component().Width(10),
+                                                              X.Button()
+                                                                .Text("Ocultar")
+                                                                .Handler("PanelOcultar(this.up('grid'));")
+                                                            )
+                                            )
+                                )
+                                ////////ADD PARA MSGS/////		
+                                ,
+                                X.TextArea().ID("taAlerts")
+                                .Border(false)
+                                .StyleSpec("background:white;border:1px solid gray;")
+                                .FieldStyle("color: red")
+                                .Hidden(true)
+                                .ReadOnly(true)
+                                //////////////////////                       
+                     )
+                    .TopBar(X.Toolbar().Hidden(indicaModoLectura).Items(
+                            X.ToolbarSpacer(20)
+                                ,
+                                Html.X().Container().Layout(LayoutType.HBox)
+                                .ID("conthbIndicaError").Hidden(true).Items(
+                                    X.Label().Html("<font  size='1.9em'; color='red'>(</font>"),
+                                    X.Label().Html("<font  size='3.9em'; color='red'><b>&#161;</b></font>"),
+                                    X.Label().Html("<font  size='1.9em'; color='red'>) Verificar los errores presentados</font>")
+                                ),                    
+                            X.ToolbarFill(),
+                            X.Button()
+                                .Text("Guardar")
+                                .Icon(Icon.Disk)
+                                .ID("cmdGuardar")
+                                .Handler("App.cmdGuardar.setDisabled(true); EnviarDataServer(this.up('grid'));"),
+                //.OnClientClick("var form = this.up('form'); form.getForm().updateRecord(form.down('grid').getSelectionModel().getLastSelected());"),
+                            X.Button()
+                                .Text("Cancelar")
+                                .ID("btnCancel")
+                                .Icon(Icon.Cancel)
+                                .OnClientClick("eventoCancelar(this.up('form'));")
+                //.Handler("alert('TEST'+" + SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.CONCEPTO+ ");")
+                //.OnClientClick("this.up('form').getForm().reset();")
+                                ,
+                            X.Button()
+                                .Text("Editar")
+                                .ID("btnOnEdit")
+                                .Icon(Icon.ApplicationFormEdit)
+                                .Hidden(true)
+                                .Handler("eventoOnEditar(App.btnOnEdit);")
+                        ))
+                        /*.Listeners(l => l.FieldChange
+                            .Handler = "setIndicaCambios(true);"
+                        )*/
+                );
+        }
+        )
+    )
+}
+

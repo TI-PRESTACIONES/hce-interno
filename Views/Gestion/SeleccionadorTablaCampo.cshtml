@@ -1,0 +1,281 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_HC_TablaCampo
+
+@{
+    var X = Html.X();
+}
+
+<script>
+
+    var varTipoBuscar = "LOAD";
+  
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_RED01 = "#990000";
+
+    var COLOR_BORDER_ERROR = "red";
+    var COLOR_BORDER_DEF = "#b5b8c8";
+    var COLOR_BACKGROUND_NOEDIT = "#9FBCB9";
+
+    var change = function (value, meta) {
+        return value;
+    };
+
+    var changeTipoCampo = function (value) {
+        if (value == 10)
+            return Ext.String.format("numeric");
+        if (value == 9)
+            return Ext.String.format("varchar");
+        if (value == 8)
+            return Ext.String.format("text");
+        if (value == 7)
+            return Ext.String.format("smallint");
+        if (value == 6)
+            return Ext.String.format("money");
+        if (value == 5)
+            return Ext.String.format("int");
+        if (value == 4)
+            return Ext.String.format("decimal");
+        if (value == 3)
+            return Ext.String.format("datetime");
+        if (value == 2)
+            return Ext.String.format("char");
+        if (value == 1)
+            return Ext.String.format("bigint");
+    };
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 2)
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+
+    var accionBuscarFiltroTC = function (tipo) {
+        varTipoBuscar = tipo;
+        App.GridPanelSelTablaCampo.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+
+    var seleccionActual = null;
+    var seleccionActualDesc = null;
+    var seleccionidcampo = null;
+    var selecciontipocampo = null;
+
+    function setSeleccionTC(param1, param2, param3, param4) {
+        seleccionActual = param1;
+        seleccionActualDesc = param2;
+        seleccionidcampo = param3;
+        selecciontipocampo = param4;
+    }
+
+    var onSuccess = function (grid, data) {
+        grid.show();
+        grid.getStore().loadData(data);
+    };
+
+    var onFailure = function (modo) {
+        Ext.Msg.notify("EVENTO: FAILURE", "MODEL::" + modo);
+    };
+
+    function enviarSeleccion(grid) {
+        if (seleccionActual != null) {
+            var status = seleccionActual;
+            var status2 = seleccionActualDesc;
+            var status3 = seleccionidcampo;
+            if (selecciontipocampo != null)
+            {  var status4 = selecciontipocampo; }
+            else {var status4 = 0; }
+
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action(Model.Accion))',
+                params: {
+                    MODO: 'get',
+                    id: status,
+                    descripcion: status2,
+                    idcampo: status3,
+                    tipocampo: status4,
+                    idWindow: "WindowSelecTablaCampo"
+                }
+            });
+        } else {
+            Ext.Msg.alert('Debe Seleccionar un elemento.');
+        }
+
+    }
+
+    function enviarSeleccionDirect(param1, param2, param3, param4) {
+        var status = param1;
+        var status2 = param2;
+        var status3 = param3;
+        if (param4 != null)
+        {
+            var status4 = param4;
+        }
+        else
+        {
+            var status4 = 0;
+        }
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action(Model.Accion))',
+            params: {
+                MODO: 'get',
+                id: status,
+                descripcion: status2,
+                idcampo: status3,
+                tipocampo: status4,
+                idWindow: "WindowSelecTablaCampo"
+            }
+        });
+    }
+
+</script>
+
+@(Html.X().Window()
+    .Width(530)
+    .Height(400)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+        .ID("WindowSelecTablaCampo")
+    .Title("Seleccionar")
+    .Padding(4)
+        .TopBar(
+                                         X.Toolbar()
+                                         .Height(30)
+                                             .Items(
+                                                X.Button()
+                                                .Border(true)
+                                                .Text("Buscar")
+                                                .Icon(Icon.Find)
+                                                .Handler("accionBuscarFiltroTC('FILTRO');"),
+                                                X.ToolbarFill(),
+                                                X.Button()
+                                                    .Text("Aceptar")
+                                                    .Icon(Icon.Accept)
+                                                            .Handler("enviarSeleccion(App.GridPanelSelTablaCampo.getSelectionSubmit().getSelectionModelField().getValue());")
+
+                                                     ,
+                                            X.Button()
+                                                .Text("Cancelar")
+                                                .Icon(Icon.Cancel)
+                                                 .DirectEvents(de =>
+                                                  {
+                                                      de.Click.Url = Url.Action("cerrarWindow");
+
+                                                      de.Click.ExtraParams.Add(new Parameter(
+                                                            "id", "WindowSelecTablaCampo", ParameterMode.Value));
+
+                                                  })
+                                             )
+
+        )
+
+            .Items(
+                        X.GridPanel()
+
+                                           .TopBar(
+                                            X.Toolbar()
+                                                .Items(
+                                               X.Checkbox().FieldLabel("Tabla").ID("chkModulo").Checked(false)
+                                               .Handler("eventoCheckFiltro(App.chkModulo,App.tfBuscarTabla);").LabelWidth(50),
+
+                                                X.ComboBoxFor(m => m.IdFavoritoTabla)
+                                                .ID("tfBuscarTabla")
+                                                        .FieldLabel("").LabelWidth(35).Width(200)
+                                                            .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenericoTxt("TABLACAMPOFAV2").Select(d => new ListItem(d.Name, d.Codigo)))
+                                                     ,
+                                                X.Checkbox().FieldLabel("Descripción").ID("chkDesc").Checked(true)
+                                                .Handler("eventoCheckFiltro(App.chkDesc,App.tfBuscarSeleccDesc);").LabelWidth(70),
+                                                X.TextField()
+                                                .ID("tfBuscarSeleccDesc").Disabled(true)
+                                                .FieldLabel(""),
+                                                X.ToolbarFill()
+
+                                                )
+                                        )
+
+                            .Border(false)
+                            .Scroll(ScrollMode.Both)
+                            .AutoScroll(true)
+                                .ID("GridPanelSelTablaCampo")
+
+                            .Margins("0 0 0 0")
+
+                        .Store(store => store.Add(
+                                 Html.X().Store()
+                                     .ID("StoreSelTablaCampo")
+                                     .AutoLoad(true)
+                                     .RemoteSort(false)
+                                     .IsPagingStore(true)
+                                     .RemotePaging(true)
+                                     .PageSize(10)
+                                     .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                        .Url("getGrillaTablaCampo")
+                                                    .Reader(reader => reader.Add(Html.X().JsonReader()
+                                            .Root("data")
+                                            .TotalProperty("total")
+                                                             .IDProperty("IdFavoritoTabla")
+                                                             )))
+                                            )
+
+                                             .Parameters(ps =>
+                                                    ps.Add(new
+                                                    {
+                                                        tabla = JRawValue.From("App.tfBuscarTabla.getValue()"),
+                                                        tablacampo = JRawValue.From("App.tfBuscarSeleccDesc.getValue()"),
+                                                        tipoBuscar = JRawValue.From("varTipoBuscar")
+                                                    })
+                                             )
+                                            
+                                                  .Model(model => model.Add(Html.X().Model()
+                                                 .Fields(fields =>
+                                                 {
+                                                     fields.Add(Html.X().ModelField().Name("IdFavoritoTabla"));
+                                                     fields.Add(Html.X().ModelField().Name("IdCampo"));
+                                                     fields.Add(Html.X().ModelField().Name("NombreCampo"));
+                                                     fields.Add(Html.X().ModelField().Name("TipoCampo"));
+                                                     fields.Add(Html.X().ModelField().Name("Version"));
+                                                     fields.Add(Html.X().ModelField().Name("Estado"));
+                                                 }))
+                                                )
+                                            )
+                                 )
+
+
+                          .ColumnModel(columnModel =>
+                            {
+                                columnModel.Columns.Add(Html.X().Column().Text("Tabla").DataIndex("IdFavoritoTabla").Hidden(true).Width(60));
+                                columnModel.Columns.Add(Html.X().Column().Text("Tabla").DataIndex("Version").Hidden(false).Width(80));
+                                columnModel.Columns.Add(Html.X().Column().Text("Id Campo").DataIndex("IdCampo").Hidden(true).Width(60));
+                                columnModel.Columns.Add(Html.X().Column().Text("Nombre Tabla").DataIndex("NombreCampo").Width(200));
+                                columnModel.Columns.Add(Html.X().Column().Text("Tipo Campo").DataIndex("TipoCampo").Hidden(true).Width(150)
+                                    .Renderer("changeTipoCampo"));
+                                columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(60)
+                                .Renderer("changeEstado"));
+
+                            })
+                               .View(Html.X().GridView().TrackOver(false))
+
+                                 .Border(false)
+                                .Listeners(l => l.CellDblClick
+                                    .Handler = "enviarSeleccionDirect(record.data.Version,record.data.NombreCampo,record.data.IdCampo,record.data.TipoCampo);")
+                                .Listeners(l => l.CellClick
+                                    .Handler = "setSeleccionTC(record.data.Version,record.data.NombreCampo,record.data.IdCampo,record.data.TipoCampo);")
+                                .BottomBar(bar => bar.Add(
+                                    Html.X().PagingToolbar()
+
+                                ))
+                                )
+                                 .CloseAction(CloseAction.Destroy)
+
+)
+@(
+ X.KeyNav()
+    .Target("WindowSelecTablaCampo")
+    .Enter(a => a.Handler = "accionBuscarFiltroTC('FILTRO');")
+)

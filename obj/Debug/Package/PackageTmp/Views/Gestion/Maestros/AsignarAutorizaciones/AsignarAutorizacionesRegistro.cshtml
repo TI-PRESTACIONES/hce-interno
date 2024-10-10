@@ -1,0 +1,370 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SEGURIDADAUTORIZACIONE
+
+
+@{
+
+    var X = Html.X();
+}
+
+<script>
+
+    
+    function accion(record, value, item, index, event) {                
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionCheckTreeNodoAutorizacion"))',
+            params: {
+                nodoId: record.data.id,
+                valor: value
+            }
+        });
+    };
+
+    function seleccionarUsuario() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionarUsuario"))',
+            params: {
+                accion: 'getSeleccionUsuarioAutoriza'
+            }
+        });
+    };
+    function eventoChkTodos(value) {
+        alert("CHANHE CHK:" + App.chkAdd.getValue());
+        if (value) {
+            alert("CHANHE EVENT CHK:" + value);
+            App.chkAdd.Checked(true);
+            App.chkUpd.Checked(true);
+            App.chkDel.Checked(true);
+            App.chkAprob.Checked(true);
+        } else {
+
+        }
+    };
+
+    var onSuccess = function (tree,data) {
+        alert("ON SUCCES:" + tree);
+        alert("ON SUCCES:" + data.text);
+    };
+
+    var onFailure = function (modo) {
+        Ext.Msg.notify("EVENTO", "MODEL::" + modo);
+    };
+
+    var getTasks = function (accionAct,tree,usuarioAct) {      
+        var msg = "",
+            selChildren = tree.getChecked();
+        var ArrayList1 = new Array();
+        var ArrayList2 = new Array();
+        Ext.each(selChildren, function (node) {
+            if (msg.length > 0) {
+                msg += ", ";
+            }
+            msg += node.data.id;
+            ArrayList1.push(node.data.id);
+            ArrayList2.push(node.data.text);
+        });
+        if (msg.length > 0) {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("asignarConceptos"))',
+                params: {
+                    selectionArray1: ArrayList1,
+                    selectionArray2: ArrayList2,
+                    usuario: usuarioAct,
+                    accion: accionAct,
+                    flagAdd: (App.chkAdd.getValue() ? 'S' : 'N'),
+                    flagUpd: (App.chkUpd.getValue() ? 'S' : 'N'),
+                    flagDel: (App.chkDel.getValue() ? 'S' : 'N'),
+                    flagAprob: (App.chkAprob.getValue() ? 'S' : 'N')
+                }
+            });
+        } else {
+            Ext.Msg.show({
+                title: "Mensaje" + usuarioAct,
+                msg: "Debe seleccionar al menos item.",
+                icon: Ext.Msg.INFO,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+
+    };
+
+</script>
+
+
+
+@(Html.X().Window()
+    .Width(780)
+    .Height(450)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowX")
+    .Title("Asignar Perfil a Usuario:" + Model.ACCION)
+    .Padding(4)
+        //.X(0)
+        //.Y(0)
+    .Items(
+            Html.X().FormPanel()
+            .Frame(false)        
+            .AutoScroll(true)        
+            .Layout(LayoutType.HBox)        
+            .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+            
+            .TopBar(
+                X.Toolbar()
+                .Height(30)
+                .Items(            
+                    X.Button()
+                        .Text("Seleccionar usuario")
+                            .Disabled((Model.ACCION != "NUEVO" ? true : false))                        
+                            .Handler("seleccionarUsuario();")                                        
+                        .Icon(Icon.ApplicationViewList),
+                    X.TextField()
+                    .ID("tfUsuarioSeleccion").ReadOnly((Model.ACCION!="NUEVO"?true:false))
+                        .Name("buscar")
+                        .Text((Model.ACCION!="NUEVO"?Model.USUARIO:""))
+                        .FieldLabel(""),
+                    X.ToolbarFill()
+                )
+            )
+            .Items(
+                X.TreePanel()
+                    .Border(false)
+                    //.Height(300)
+                    .ID("treeMain")
+                    .Width(300)
+                    
+                    .Animate(true)
+                    .UseArrows(true)
+                    .Store(                    
+                       Html.X().TreeStore()
+                            .Proxy(
+                                Html.X().AjaxProxy().Url(Url.Action("GetTreeViewChildAsignacion"))                                
+                            )
+                            .Parameters(ps =>
+                                //ps.Add(new StoreParameter("grupo", Model.GRUPO, ParameterMode.Value)),
+                                ps.Add(new StoreParameter("usuario", null, ParameterMode.Value))
+                            )
+                            .Parameters(ps =>
+                                ps.Add(new StoreParameter("tipo", "MASTER", ParameterMode.Value))
+                             )
+                        /*                    
+                        X.TreeStore()
+                            .FolderSort(true)
+                            .Proxy(
+                                X.AjaxProxy().Url(Url.Action("GetTreeViewChild"))
+                            )
+                            .Sorters(
+                                X.DataSorter().Property("text")
+                            )
+                        */
+                        
+                    )
+                    .View(
+                        X.TreeView()
+                            .Plugins(
+                                X.TreeViewDragDrop().AppendOnly(true).ContainerScroll(true)
+                            )
+                    )                                        
+                    .Root(                        
+                        //X.Node().Text("My Files").Icon(Icon.Folder).Expanded(true)
+                        Html.X().Node().NodeID("WA").Text("WEB MASTER")
+                        /*
+                        .Children(
+                            X.Node().Text("Salud- gestión")
+                                .NodeID(Model.GRUPO).Leaf(true).Checked(false),
+                            X.Node().Text("Historia Clínica Electrónica")
+                                .NodeID(Model.CONCEPTO).Leaf(true).Checked(false)                                                        
+                        )*/
+                    )
+                    /*.DirectEvents(ev =>
+                                {
+                                    ev.Select.Url = "/Gestion/LoadCentral";
+                                    ev.Select.Method = HttpMethod.GET;
+                                    ev.Select.ExtraParams.Add(new
+                                                        {
+                                                            text = JRawValue.From("record.data.id"),
+                                                            containerId = "Center1"
+                                                        });
+                                    //ev.Select.Before = "o.url = record.get('url');";
+                                    // new Parameter("path", "record.get('path')", ParameterMode.Raw));
+                                    //ev.Select.Success = "onSuccess(result.data)";
+                                })
+                     */
+                       .Listeners(l =>
+                        {
+                            //l.ItemClick.Fn = "nodeLoad";
+                            l.CheckChange.Fn = "accion";                          
+                        }) 
+                    ,
+                    Html.X().FormPanel()
+                    .Frame(false)
+                    .Border(false)
+                    .AutoScroll(true)
+                    .Layout(LayoutType.VBox)
+                    .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Center})
+                    .Items(
+                        X.Button()
+                            .Text("Asignar")
+                            .Width(120)
+                            .Icon(Icon.ArrowRight)
+                            .IconAlign(IconAlign.Right)
+                            .Handler("getTasks('add',App.treeMain,App.tfUsuarioSeleccion.getValue());"),
+                        X.Button()                            
+                            .Text("Quitar")
+                            .Width(120)
+                            .Icon(Icon.ArrowLeft)
+                            .IconAlign(IconAlign.Left)
+                            .Handler("getTasks('delete',App.treeAsigna,App.tfUsuarioSeleccion.getValue());"),
+                       X.Label()
+                            .Html("<b>Asignar</b>"),
+                       X.Component().Html("<u>               </u>").Cls("x-form-check-group-label"),
+                       X.Checkbox().ID("chkTodos").BoxLabel("Todos").Checked(false)
+                       //.Handler("eventoChkTodos(App.chkTodos.getValue());")
+                       .Listeners(l => l.Change.Handler = @"var checkAll = #{chkTodos}.getValue();
+                            if(checkAll){            
+                                #{chkAdd}.setValue(true);
+                                #{chkUpd}.setValue(true);
+                                #{chkDel}.setValue(true);
+                                #{chkAprob}.setValue(true);
+                            }else{
+                                #{chkAdd}.setValue(false);
+                                #{chkUpd}.setValue(false);
+                                #{chkDel}.setValue(false);
+                                #{chkAprob}.setValue(false);
+                            }"
+                            )                       
+                       ,
+                       X.Component().Html("               ").Cls("x-form-check-group-label"),
+                       X.Checkbox().ID("chkAdd").BoxLabel("Agregar").Checked(false),
+                       X.Checkbox().ID("chkUpd").BoxLabel("Modificar").Checked(false),
+                       X.Checkbox().ID("chkDel").BoxLabel("Eliminar").Checked(false),
+                       X.Checkbox().ID("chkAprob").BoxLabel("Aprobar").Checked(false),
+                       X.Component().Html("               ").Cls("x-form-check-group-label"),
+                       X.Button()
+                            .Text("Actualizar")
+                            .Width(120)
+                            .Icon(Icon.ArrowRight)
+                            .IconAlign(IconAlign.Right)
+                            .Handler("getTasks('update',App.treeAsigna,App.tfUsuarioSeleccion.getValue());")
+                            
+                    )
+                    ,
+                    X.TreePanel()
+                        //.MultiSelect(true)
+                        .AutoDataBind(true)
+                        //.LazyMode(LazyMode.Inherit)
+                        .Border(false)
+                        //.Height(300)
+                        .Width(300)
+                        .ID("treeAsigna")
+                        .UseArrows(true)                        
+                        .Animate(true)
+                        .Store(
+                           Html.X().TreeStore()
+                                .Proxy(                                                                                
+                                        Html.X().AjaxProxy().Url(Url.Action("GetTreeViewChildAsignacion")                                                                                           
+                                        )                                                                            
+                                )
+                                .Parameters(ps => 
+                                    //ps.Add(new StoreParameter("grupo", Model.GRUPO, ParameterMode.Value)),
+                                    ps.Add(new StoreParameter("usuario", Model.USUARIO, ParameterMode.Value)) 
+                                )                
+                                .Parameters(ps =>
+                                    ps.Add(new StoreParameter("tipo", "ASIGNA", ParameterMode.Value)) 
+                                )  
+                        /*                    
+                        X.TreeStore()
+                            .FolderSort(true)
+                            .Proxy(
+                                X.AjaxProxy().Url(Url.Action("GetTreeViewChild"))
+                            )
+                            .Sorters(
+                                X.DataSorter().Property("text")
+                            )
+                        */
+                        )
+                        .View(
+                            X.TreeView()
+                                .Plugins(
+                                    X.TreeViewDragDrop().AppendOnly(true).ContainerScroll(true)
+                                )
+                        )
+                        .Root(  
+                            //Html.X().Node().NodeID("CCEP0001").Text("SALUD")
+                            Html.X().Node().NodeID("WA").Text("ASIGNADOS")                            
+                        )
+                        /*.DirectEvents(ev =>
+                            {
+                                ev.Select.Url = "seleccionTreeNodoAutorizacion";
+                                ev.Select.Method = HttpMethod.GET;
+                                ev.Select.ExtraParams.Add(new
+                                    {
+                                        nodoId = JRawValue.From("record.data.id")                                       
+                                    });
+                                    //ev.Select.Before = "o.url = record.get('url');";
+                                    // new Parameter("path", "record.get('path')", ParameterMode.Raw));
+                                    //ev.Select.Success = "onSuccess(result.data)";
+                            })*/
+                       .Listeners(l =>
+                        {
+                            //l.ItemClick.Fn = "nodeLoad";
+                            l.CheckChange.Fn = "accion";
+                          
+                        })  
+                        
+                       
+            )
+        
+    )
+    .TopBar(
+                                 X.Toolbar()
+                                 .Height(30)
+                                 .Items(
+                                    X.ToolbarFill(),
+                                    X.Button()
+                                        .Text((Model.ACCION == "DELETE" ? "Eliminar" : "Guardar"))
+                                        .Icon((Model.ACCION == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave))
+        //.DirectClickAction("save_Usuario"),
+                                         .DirectEvents(de =>
+                                          {  //Model.ACCION : Posee el MODO ACTUAL
+                                              de.Click.Url = Url.Action("save_Autorizaciones");
+                                              de.Click.EventMask.ShowMask = true;
+                                              de.Click.ExtraParams.Add(new
+                                              {
+                                                  MODO = Model.ACCION,
+                                                  usuario = JRawValue.From("App.tfUsuarioSeleccion.getValue()"),
+                                                  idWindow = "WindowX"                                                                                                    
+                                              });                                              
+                                              //de.Click.Success = "onSuccess(result.data,'" + Model.ACCION + "');";
+                                              de.Click.Failure = "onFailure('" + Model.ACCION + "');";
+
+                                          }),
+                                    X.Button()
+                                        .Text("Cancelar")
+                                        .Icon(Icon.Cancel)
+                                         .DirectEvents(de =>
+                                          {  //Model.ACCION : Posee el MODO ACTUAL
+                                              de.Click.Url = Url.Action("cerrarWindow");
+                                              //de.Click.EventMask.ShowMask = true;
+                                              de.Click.ExtraParams.Add(new Parameter(
+                                                    "id", "WindowX", ParameterMode.Value));
+                                              //de.Click.Success = "onSuccess(result.data,'" + Model.ACCION + "');";
+                                              //de.Click.Failure = "onSuccess(result.data,'"+ Model.ACCION + "');";
+                                          })
+                                     )    
+    
+    )
+    .CloseAction(CloseAction.Destroy)
+    .BottomBar(
+                                X.Toolbar().Items(
+                                    X.ToolbarFill(),
+                                    X.Label().Text("Selección - Asignados:")
+                                )
+      //X.StatusBar().AutoClear(1500)
+    )
+)

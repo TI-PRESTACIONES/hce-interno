@@ -1,0 +1,287 @@
+﻿/*2222**/
+@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.VW_SS_IT_ProcesoHistoriaAdjunta
+
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+}
+
+@section cabecera
+{
+    <script>
+        var varTipoBuscar = "LOAD";
+        var Valores;
+        var COLOR_BLUE01 = "#284A89";
+        var COLOR_RED01 = "#990000";
+        var COLOR_GREEN01 = "#177506";
+        var COLOR_YELLOW02 = "#D9A407";
+        var COLOR_BLACK = "#000000";
+        var seleccionActual1 = null;
+
+      function setSeleccion(param1) {
+            seleccionActual1 = param1;
+        }
+
+      var changeEstado = function (value) {
+          var template = '<span style="color:{0};">{1}</span>';
+          if (value == 2)
+              return Ext.String.format(template, COLOR_BLUE01, "Activo");
+          if (value == 1)
+              return Ext.String.format(template, COLOR_RED01, "Inactivo");
+      };
+
+      var pctChange = function (value) {
+          return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+      };
+
+      var onSuccess = function (grid, data) {
+          grid.show();
+          grid.getStore().loadData(data);
+      };
+
+    function nuevo() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("ErroresCargaRegistro"))',
+            params: {
+                MODO: 'NUEVO',
+                tipo: ''
+
+            }
+        });
+    };
+        function modificarSelected() {
+            if (seleccionActual1 != null) {
+                var status = seleccionActual1;
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("ErroresCargaRegistro"))',
+                    params: {
+                        MODO: 'UPDATE',
+                        tipo: status
+
+                    }
+                });
+            } else {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Debe Seleccionar un Elemento.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+        };
+
+        function eliminarSelected() {
+            if (seleccionActual1 != null) {
+                var status = seleccionActual1;
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("ErroresCargaRegistro"))',
+                    params: {
+                        MODO: 'DELETE',
+                        tipo: status
+
+                    }
+                });
+            } else {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Debe Seleccionar un Elemento.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+        };
+
+        function verSelected() {
+            eventoVerSelected(seleccionActual1);
+        };
+
+        function eventoVerSelected(param1) {
+            if (App.compoVER.isVisible(true)) {
+                if (param1 != null) {
+                    var status = param1;
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("ErroresCargaRegistro"))',
+                        params: {
+                            MODO: 'VER',
+                            tipo: status
+                        }
+                    });
+                } else {
+                    Ext.Msg.show({
+                        title: "Advertencia",
+                        msg: "Debe Seleccionar un Elemento.",
+                        icon: Ext.Msg.WARNING,
+                        minWidth: 200,
+                        buttons: Ext.Msg.OK
+                    });
+                }
+            }
+        };
+
+        var accionBuscarFiltro = function (tipo) {
+            varTipoBuscar = tipo;
+            App.GridPanel1.getStore().reload();
+            varTipoBuscar = 'LOAD';
+        };
+
+        var accionFinal = function (btn) {
+            App.GridPanel1.getSelectionModel().deselectAll();
+            seleccionActual1 = null;
+            App.GridPanel1.getStore().reload();
+        };
+
+        var eventoCheckFiltro = function (check, componente) {
+            var checkAll = check.getValue();
+            if (checkAll) {
+                componente.setDisabled(true);
+                componente.setValue(null);
+            } else {
+                componente.setDisabled(false);
+            }
+        };
+
+        var eventoCargarMain = function () {
+
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("addPermisosFormatos"))',
+                params: {
+                    data: 'FORMATO',
+                    indica: 'PERMISO',
+                },
+                success: function (result) { accionSetPermisos(result.data); }
+            });
+        };
+
+        var accionSetPermisos = function (data) {
+            var mensajes = "";
+            if (data.length > 0) {
+                for (var i = 0; i < data.length; i++) {
+                    if (data[i].ACCION == 'BUSCAR' && App.compoBUSCAR != null) {
+                        App.compoBUSCAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'NUEVO' && App.compoNUEVO != null) {
+                        App.compoNUEVO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'MODIFICAR' && App.compoMODIFICAR != null) {
+                        App.compoMODIFICAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'ELIMINAR' && App.compoELIMINAR != null) {
+                        App.compoELIMINAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'VER' && App.compoVER != null) {
+                        App.compoVER.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'ACCESO' && App.compoACCESO != null) {
+                        App.compoACCESO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'HABILITADO' && App.compoHABILITADO != null) {
+                        App.compoHABILITADO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'OBLIGA' && App.compoOBLIGA != null) {
+                        App.compoOBLIGA.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'PRIORIDADAGOPCION' && App.compoPRIORIDADAGOPCION != null) {
+                        App.compoPRIORIDADAGOPCION.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    }
+                }
+            }
+        };
+    </script>
+}
+
+@section cuerpo
+{
+    @(
+ Html.X().Viewport().AutoScroll(true).Layout(LayoutType.Border)
+ .Items(
+    X.Panel().Title("Errores de Carga").Border(false).Region(Region.North).Split(true).Collapsible(true).Height(150).TopBar(
+    X.Toolbar().Height(30)
+    .Items(
+        X.Button().Text("Buscar").ID("compoBUSCAR").Icon(Icon.Find).Handler("accionBuscarFiltro('FILTRO');"),
+        X.ToolbarSeparator(),
+        X.ToolbarSpacer(),
+        X.Button().Text("Nuevo").ID("compoNUEVO").Hidden(true).Icon(Icon.ApplicationFormAdd).Handler("nuevo(); "),
+        X.Button().Text("Modificar").ID("compoMODIFICAR").Hidden(true).Icon(Icon.ApplicationFormEdit).Handler("modificarSelected();"),
+        X.Button().Text("Eliminar").ID("compoELIMINAR").Hidden(true).Icon(Icon.ApplicationFormDelete).Handler("eliminarSelected();"),
+        X.ToolbarSeparator(),
+        X.Button().Text("Ver").ID("compoVER").Icon(Icon.ApplicationViewDetail).Handler("verSelected();"),
+        X.ToolbarFill()))
+    .Items(
+        X.Panel().Layout(LayoutType.HBox).BodyPadding(5).Width(1110).Border(false).MarginSpec("1 20 1 1")
+    .Items(
+        X.FieldSet().Flex(1).Title("Filtros").MarginSpec("5 5 5 5").Defaults(d =>
+        {
+            d.Add(new Parameter("LabelWidth", "120"));
+        })
+    .Items(
+
+Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+.Items(
+    X.Checkbox().FieldLabel("Id Aplicativo").ID("chHCo").Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chHCo,App.tfBuscarCo);").Checked(true),
+    X.TextField().ID("tfBuscarCo").Disabled(true).Name("buscarCo").FieldLabel(""),
+    X.Checkbox().FieldLabel("DNI").ID("chHC").Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chHC,App.tfBuscarDesc);").Checked(true),
+    X.TextField().ID("tfBuscarDesc").Disabled(true).Name("buscarDesc").FieldLabel("")),
+Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+.Items(
+    X.Checkbox().FieldLabel("Código Sucursal").ID("chHCodigo").Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chHCodigo,App.tfBuscarCod);").Checked(true),
+    X.TextField().ID("tfBuscarCod").Disabled(true).Name("buscarCod").FieldLabel(""),
+    X.Checkbox().FieldLabel("Código Ref.").ID("chHTipo").Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chHTipo,App.tfBuscarTipo);").Checked(true),
+    X.TextField().ID("tfBuscarTipo").Disabled(true).Name("buscarTip").FieldLabel("")))
+    )
+    ),
+    X.Panel().Region(Region.Center).ItemID("center").Header(false).Border(false)
+    .Items(
+        X.GridPanel().AllowDeselect(true).Border(false).Scroll(ScrollMode.Both).AutoScroll(true).ID("GridPanel1").Height(300).Margins("0 0 0 0").Store(store => store.Add(
+            Html.X().Store().ID("Store1").AutoLoad(true).RemoteSort(false).IsPagingStore(true).RemotePaging(true).PageSize(10).Proxy(proxy => proxy.Add(
+                Html.X().AjaxProxy().Url("getGrillaErroresCarga").Reader(reader => reader.Add(
+                        Html.X().JsonReader().Root("data").TotalProperty("total").IDProperty("idsecuencia")))))
+                    .Parameters(ps => ps.Add(new{
+                        aplicativo = JRawValue.From("App.tfBuscarCo.getValue()"),
+                        dni = JRawValue.From("App.tfBuscarDesc.getValue()"),
+                        sucursal = JRawValue.From("App.tfBuscarCod.getValue()"),
+                        referencia = JRawValue.From("App.tfBuscarTipo.getValue()"),
+                        tipoBuscar = JRawValue.From("varTipoBuscar")
+                    })).Model(model => model.Add(Html.X().Model().Fields(fields =>{
+                        fields.Add(Html.X().ModelField().Name("idsecuencia"));
+                        fields.Add(Html.X().ModelField().Name("CodigoSucursal"));
+                        fields.Add(Html.X().ModelField().Name("IdAplicativo"));
+                        fields.Add(Html.X().ModelField().Name("CodigoReferencia"));
+                        fields.Add(Html.X().ModelField().Name("CodigoHHCC"));
+                        fields.Add(Html.X().ModelField().Name("DNI"));
+                        fields.Add(Html.X().ModelField().Name("TipoAtencion"));
+                        fields.Add(Html.X().ModelField().Name("Fecha"));
+                        fields.Add(Html.X().ModelField().Name("Especialidad"));
+                        fields.Add(Html.X().ModelField().Name("Servicio"));
+                        fields.Add(Html.X().ModelField().Name("CodigoMedico"));
+                        fields.Add(Html.X().ModelField().Name("CodigoAdmision"));
+                        fields.Add(Html.X().ModelField().Name("CodigoOA"));
+                        fields.Add(Html.X().ModelField().Name("CodigoDiagnostico"));
+                        fields.Add(Html.X().ModelField().Name("NumeroPagina"));
+                        fields.Add(Html.X().ModelField().Name("RutaImagen"));
+                        fields.Add(Html.X().ModelField().Name("FechaRecepcion"));
+                        fields.Add(Html.X().ModelField().Name("DescripcionError"));
+                        fields.Add(Html.X().ModelField().Name("Rownumber"));
+                    }))))).ColumnModel(columnModel =>{
+                        columnModel.Columns.Add(Html.X().Column().Text("Secuencia").DataIndex("idsecuencia").Width(90));
+                        columnModel.Columns.Add(Html.X().Column().Text("Código Sucursal").DataIndex("CodigoSucursal").Width(90));
+                        columnModel.Columns.Add(Html.X().Column().Text("Id Aplicativo").DataIndex("IdAplicativo").Width(80));
+                        columnModel.Columns.Add(Html.X().Column().Text("Código Referencia").DataIndex("CodigoReferencia").Width(200));
+                        columnModel.Columns.Add(Html.X().Column().Text("Código HHCC").DataIndex("CodigoHHCC").Width(100));
+                        columnModel.Columns.Add(Html.X().Column().Text("DNI").DataIndex("DNI").Width(100));
+                        columnModel.Columns.Add(Html.X().Column().Text("Tipo Atención").DataIndex("TipoAtencion").Width(90));
+                        columnModel.Columns.Add(Html.X().Column().Text("Fecha").DataIndex("Fecha").Width(50));
+                        columnModel.Columns.Add(Html.X().Column().Text("Especialidad").DataIndex("Especialidad").Width(150));
+                        columnModel.Columns.Add(Html.X().Column().Text("Servicio").DataIndex("Servicio").Width(150));
+                        columnModel.Columns.Add(Html.X().Column().Text("Código Médico").DataIndex("CodigoMedico").Width(90));
+                        columnModel.Columns.Add(Html.X().Column().Text("Código Admisión").DataIndex("CodigoAdmision").Width(100));
+                        columnModel.Columns.Add(Html.X().Column().Text("Código OA").DataIndex("CodigoOA").Width(90));
+                        columnModel.Columns.Add(Html.X().Column().Text("Código Diagnóstico").DataIndex("CodigoDiagnostico").Width(110));
+                        columnModel.Columns.Add(Html.X().Column().Text("Número Página").DataIndex("NumeroPagina").Width(90));
+                        columnModel.Columns.Add(Html.X().Column().Text("Ruta Imagen").DataIndex("RutaImagen").Width(250));
+                        columnModel.Columns.Add(Html.X().Column().Text("Fecha Recepción").DataIndex("FechaRecepcion").Width(100));
+                        columnModel.Columns.Add(Html.X().Column().Text("Descripción Error").DataIndex("DescripcionError").Width(100));
+                        columnModel.Columns.Add(Html.X().Column().Text("rownumber").DataIndex("Rownumber").Width(70));
+                        }).View(Html.X().GridView().TrackOver(false)).Border(false)
+                        .Listeners(l => l.CellClick.Handler = "setSeleccion(record.data);")
+                        .Listeners(l => l.CellDblClick.Handler = "eventoVerSelected(record.data);")                        
+                        .BottomBar(bar => bar.Add(Html.X().PagingToolbar()))))
+                        .Listeners(l => l.Render.Handler = "eventoCargarMain();")
+    )
+    @(X.KeyNav().Target("={document.body}").Enter(a => a.Handler = "accionBuscarFiltro('FILTRO');"))
+}

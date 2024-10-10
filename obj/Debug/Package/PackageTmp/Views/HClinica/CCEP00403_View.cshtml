@@ -1,0 +1,580 @@
+﻿@using Region = Ext.Net.Region
+@model System.Collections.IEnumerable
+ 
+
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+    }
+@section cabecera
+{
+<style>
+    html body {
+        padding: 0px;
+        background: none;
+        background: none;
+        background: none;
+        background-attachment: fixed;
+        background-position: center;
+        font-family: tahoma,verdana,sans-serif;
+        background-color: #ffffff;
+    }
+</style>
+    <script>
+        var Valores;
+        var template = '<span style="color:{0};">{1}</span>';
+
+        var change = function (value) {
+            return Ext.String.format(template, (value > 0) ? "green" : "red", value);
+        };
+
+        var pctChange = function (value) {
+            return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+        };
+
+        var onSuccess = function (grid, data) {
+            grid.show();
+            grid.getStore().loadData(data);
+        };
+
+        function deleteSelected(grid) {
+            var store = grid.store,
+                records = grid.selModel.getSelection();
+
+            store.remove(records);
+            store.load(true);
+        }
+
+    </script>
+    <script>
+        var refreshTree = function (tree) {
+            App.direct.RefreshMenu({
+                success: function (node) {
+                    if (!Ext.isEmpty(node)) {
+                        tree.setRootNode(node);
+                    }
+                    else {
+                        tree.getRootNode().removeAll();
+                    }
+                }
+            });
+        };
+    </script>
+
+<script>
+    function eventoRenderForm() {
+
+        var kk = 195;
+        var scrH = screen.height;
+        var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+        var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+
+        if (southH == 0) {
+            southH = 30;
+        } else if (parent.App.PanelMainSouth.collapsed) {
+            southH = 30;
+        }
+        var dimCentral = (scrH - (northH + southH) - kk);
+        App.formactual.setHeight(545);
+    }
+    var count = 0; // a counter for new records
+
+    function visibleGrid(grid) {
+        grid.visibleGrid(true);
+    }
+
+    function addRecord(grid) {
+        grid.store.insert(0, { CODIGOELEMENTO: 'New' + count++ });
+
+        Ext.Function.defer(function () {
+            grid.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+        }, 100);
+    }
+
+    function deleteSelected(grid) {
+        var store = grid.store,
+            records = grid.selModel.getSelection();
+
+        store.remove(records);
+        store.load(true);
+    }
+
+    function selectRecord(grid, id) {
+        var record = grid.store.getById(id);
+
+        grid.store.loadPage(grid.store.findPage(record), {
+            callback: function () {
+                grid.getSelectionModel().select(record);
+            }
+        });
+    };
+    </script>
+    }
+
+
+    @section cuerpo
+{
+
+
+    @(Html.X().Viewport().ID("ViewportXD")
+        .Layout(LayoutType.VBox)
+
+        .LayoutConfig(
+            new VBoxLayoutConfig { Align = VBoxAlign.Stretch }
+        )
+        .Listeners(l =>
+        {
+            l.AfterLayout.BroadcastOnBus = "App.resize";
+            l.AfterLayout.Single = true;
+        })
+        .Items(regions =>
+        {
+
+            regions.Add(Html.X().Panel()
+                .ItemID("center")
+                .DefaultAnchor("100%")
+                .AutoScroll(true)
+                .Height(340)
+               .Header(false)
+               .Border(true)
+              
+               .Items(
+                      X.FieldSet()
+                            .ColumnWidth(0.4)
+                            .Title("DATOS PERSONALES")
+                            //.Border(false)
+                            .MarginSpec("0 05 0 05")
+                            .Defaults(d =>
+                            {
+                                d.Add(new Parameter("LabelWidth", "100"));
+                                d.Add(new Parameter("DefaultAnchor", "100%"));
+                                d.Add(new Parameter("LabelAlign", "Left"));
+                            })
+
+                            .DefaultAnchor("100%")
+                        .FieldDefaults(d =>
+                        {
+                            d.LabelAlign = LabelAlign.Left;
+                        })
+
+                            .Items(
+                                    X.TextArea()
+                                    .ID("txtEAnamnesis")
+                                   
+                                    //.FieldLabel("Relato")
+                                    
+                        )
+
+                     )
+                  .Items(
+                      X.FieldSet()
+                            .ColumnWidth(0.4)
+                            .Title("IDENTIFICACION DEL USUARIO")
+                //.Border(false)
+                            .MarginSpec("0 05 0 05")
+                            .Defaults(d =>
+                            {
+                                d.Add(new Parameter("LabelWidth", "100"));
+                                d.Add(new Parameter("DefaultAnchor", "100%"));
+                                d.Add(new Parameter("LabelAlign", "Left"));
+                            })
+
+                            .DefaultAnchor("100%")
+                        .FieldDefaults(d =>
+                        {
+                            d.LabelAlign = LabelAlign.Left;
+                        })
+
+                            .Items(
+                                    X.TextArea()
+                                    .Name("txtEExamenFisico")
+
+                        )
+
+                     )
+                   .Items(
+                      X.FieldSet()
+                            .ColumnWidth(0.4)
+                            .Title("RESUMEN DE HISTORIA CLINICA)")
+                //.Border(false)
+                            .MarginSpec("0 05 0 05")
+                            .Defaults(d =>
+                            {
+                                d.Add(new Parameter("LabelWidth", "100"));
+                                d.Add(new Parameter("DefaultAnchor", "100%"));
+                                d.Add(new Parameter("LabelAlign", "Left"));
+                            })
+
+                            .DefaultAnchor("100%")
+                        .FieldDefaults(d =>
+                        {
+                            d.LabelAlign = LabelAlign.Left;
+                        })
+
+                            .Items(
+                                 X.Container()
+                                    .Layout(LayoutType.HBox)
+                                    //.MarginSpec("0 0 10")
+                                    .Items(
+                                        X.DateField()
+                                         .FieldLabel("Fecha de Ingreso")
+                                         .ID("txtFechaI"),
+                                        X.Component().Width(10),
+                                        X.DateField()
+                                          .FieldLabel("Fecha de egreso")
+                                         .ID("txtFechaE")
+                                     ),
+                                     
+                                    X.TextArea()
+                                    .FieldLabel("Diagnóstico de Ingreso")
+                                    .Name("txtETratamiento"),
+                                  
+                                        X.Label("Diagnóstico de Egreso"),
+                                        X.Component().Width(10),
+                                        X.GridPanel()
+                                       // .Title("Plants")
+                                        //.Frame(true)
+                                        //.Width(620)
+                                        //.Height(340)
+                                        //.Hidden(true)
+                                        .ID("grillaMed")
+                                        .Border(false)
+                                        .Store(
+                                            Html.X().Store()
+                                                  .Model(
+                                                    Html.X().Model()
+                                                        .IDProperty("CODIGOELEMENTO")
+                                                        .Fields(
+                                                            Html.X().ModelField().Name("VALORCODIGO1")
+                                                        )
+                                                )
+                                                .PageSize(10)
+                                                .ServerProxy(
+                                                    Html.X().AjaxProxy()
+                                                        .Url(Url.Action("CCEP1051Read"))
+                                                       // .API(api => api.Sync = Url.Action("Sync"))
+                                                )
+                                        )
+                                        .ColumnModel(
+                                            Html.X().Column()
+                                                .DataIndex("VALORCODIGO1")
+                                                .Text("Medicamentos")
+                                                .Flex(1)
+                                                .Editor(Html.X().TextField())
+                                        )
+                                        .SelectionModel(
+                                            Html.X().RowSelectionModel().Mode(SelectionMode.Multi)
+                                        )
+                                        .Plugins(
+                                            Html.X().CellEditing()
+                                        )
+                                       // .BottomBar(
+                                       //     Html.X().PagingToolbar()
+                                       // )
+                                        .TopBar(
+                                            Html.X().Toolbar()
+                                                .Items(
+                                                    Html.X().Button()
+                                                        .Text("Agregar")
+                                                        .Icon(Icon.Add)
+                                                        .Handler("addRecord(this.up('grid'));"),
+
+                                                    Html.X().Button()
+                                                        .Text("Eliminar")
+                                                        .Icon(Icon.Delete)
+                                                        .Handler("deleteSelected(this.up('grid'));")
+
+                                                )
+
+                             ),
+
+                              X.TextArea()
+                                    .FieldLabel("Tratamiento y/o Procedimiento realizados")
+                                    .Name("txtTratamiento"),
+                              X.TextArea()
+                                    .FieldLabel("Adjuntar informes y reportes de procedimientos")
+                                    .Name("txtAdjuntar")                                    
+
+                        )
+
+                     )
+                  .Items(
+                      X.FieldSet()
+                            .ColumnWidth(0.4)
+                            .Title("DATOS DE LA CONTRARREFERENCIA")
+                //.Border(false)
+                            .MarginSpec("0 05 0 05")
+                            .Defaults(d =>
+                            {
+                                d.Add(new Parameter("LabelWidth", "100"));
+                                d.Add(new Parameter("DefaultAnchor", "100%"));
+                                d.Add(new Parameter("LabelAlign", "Left"));
+                            })
+
+                            .DefaultAnchor("100%")
+                        .FieldDefaults(d =>
+                        {
+                            d.LabelAlign = LabelAlign.Left;
+                        })
+
+                            .Items(
+                                    X.TextArea()
+                                    .Name("txtEEvolucion")
+
+                        )
+
+                     )
+                  .Items(
+                      X.FieldSet()
+                            .ColumnWidth(0.4)
+                            .Title("OPERACIÓN REALIZADA")
+                //.Border(false)
+                            .MarginSpec("0 05 0 05")
+                            .Defaults(d =>
+                            {
+                                d.Add(new Parameter("LabelWidth", "100"));
+                                d.Add(new Parameter("DefaultAnchor", "100%"));
+                                d.Add(new Parameter("LabelAlign", "Left"));
+                            })
+
+                            .DefaultAnchor("100%")
+                        .FieldDefaults(d =>
+                        {
+                            d.LabelAlign = LabelAlign.Left;
+                        })
+
+                            .Items(
+                                    X.TextArea()
+                                    .Name("txtEOperacion")
+
+                        )
+
+                     )
+                  .Items(
+                      X.FieldSet()
+                            .ColumnWidth(0.4)
+                            .Title("DIAGNÓSTICO DE INGRESO")
+                //.Border(false)
+                            .MarginSpec("0 05 0 05")
+                            .Defaults(d =>
+                            {
+                                d.Add(new Parameter("LabelWidth", "100"));
+                                d.Add(new Parameter("DefaultAnchor", "100%"));
+                                d.Add(new Parameter("LabelAlign", "Left"));
+                            })
+
+                            .DefaultAnchor("100%")
+                        .FieldDefaults(d =>
+                        {
+                            d.LabelAlign = LabelAlign.Left;
+                        })
+
+                            .Items(
+                                    X.TextArea()
+                                    .Name("txtDiagnosticoI")
+
+                        )
+
+                     )
+                   .Items(
+                      X.FieldSet()
+                            .ColumnWidth(0.4)
+                            .Title("DIAGNÓSTICO DEFINITIVO")
+                //.Border(false)
+                            .MarginSpec("0 05 0 05")
+                            .Defaults(d =>
+                            {
+                                d.Add(new Parameter("LabelWidth", "100"));
+                                d.Add(new Parameter("DefaultAnchor", "100%"));
+                                d.Add(new Parameter("LabelAlign", "Left"));
+                            })
+
+                            .DefaultAnchor("100%")
+                        .FieldDefaults(d =>
+                        {
+                            d.LabelAlign = LabelAlign.Left;
+                        })
+
+                            .Items(
+                                X.Label("Origen de la Referencia"),
+                                X.RadioGroup()
+                                 .Vertical(true)
+                                 .AnchorVertical("100%")
+                                 .Items(
+                                        X.Radio()
+                                        .ID("rdComunidad")
+                                        .FieldLabel("De la comunidad"),
+                                       X.Radio()
+                                        .ID("rdEstSalud")
+                                        .FieldLabel("De un estab. salud"),
+                                       X.Radio()
+                                        .ID("rdAutoRefe")
+                                        .FieldLabel("Autorreferencia")                                       
+                                    ),
+                                   X.Panel()
+                                    .Border(false)
+                                    .Html("<hr>"),
+                                 X.Label("Calificación preliminar de la Referencia"),
+                                X.RadioGroup()
+                                 .Vertical(true)
+                                 .AnchorVertical("100%")
+                                 .Items(
+                                        X.Radio()
+                                        .ID("rdJustifica")
+                                        .FieldLabel("Justificada"),
+                                       X.Radio()
+                                        .ID("rdNoJustifica")
+                                        .FieldLabel("No Justificada")                                  
+                                    ),
+                                   X.Panel()
+                                    .Border(false)
+                                    .Html("<hr>"),
+                               X.Label("UPS que ordena la Contrarreferencia"),
+                                X.RadioGroup()
+                                 .Vertical(true)
+                                 .AnchorVertical("100%")
+                                 .Items(
+                                        X.Radio()
+                                        .ID("rdConstExt")
+                                        .FieldLabel("Consultorio Ext."),
+                                       X.Radio()
+                                        .ID("rdEmergencia")
+                                        .FieldLabel("Emergencia"),
+                                       X.Radio()
+                                        .ID("rdApoyo")
+                                        .FieldLabel("Apoyo al Dx"),
+                                       X.Radio()
+                                        .ID("rdHospitalizacion")
+                                        .FieldLabel("Hospitalización")
+                                    ),
+                                       X.Panel()
+                                    .Border(false)
+                                    .Html("<hr>"),
+                                X.Label("Especialidad que ordena la Contrarreferencia"),
+                                 
+                                X.RadioGroup()
+                                 .Vertical(true)
+                                 .AnchorVertical("100%")
+                                 .Items(
+
+                                       X.Radio()
+                                        .ID("rdPediatria")
+                                        .FieldLabel("Pediatría"),
+                                       X.Radio()
+                                        .ID("rdMedicina")
+                                        .FieldLabel("Medicina"),
+                                       X.Radio()
+                                        .ID("rdCirujia")
+                                        .FieldLabel("Cirujía"),
+                                       X.Radio()
+                                        .ID("rdGinecoObs")
+                                        .FieldLabel("Gineco-Obst."),
+                                       X.Radio()
+                                        .ID("rdLab")
+                                        .FieldLabel("Lab."),
+                                       X.Radio()
+                                        .ID("rdDxImag")
+                                        .FieldLabel("Dr Imag."),
+                                       X.Radio()
+                                        .ID("rdOtros")
+                                        .FieldLabel("Otros")
+                                    )      
+                        )
+
+                     )
+                    .Items(
+                      X.FieldSet()
+                            .ColumnWidth(0.4)
+                            .Title("RECOMENDACIONES E INDICACIONES PARA EL SEGUIMIENTO")
+                //.Border(false)
+                            .MarginSpec("0 05 0 05")
+                            .Defaults(d =>
+                            {
+                                d.Add(new Parameter("LabelWidth", "100"));
+                                d.Add(new Parameter("DefaultAnchor", "100%"));
+                                d.Add(new Parameter("LabelAlign", "Left"));
+                            })
+
+                            .DefaultAnchor("100%")
+                        .FieldDefaults(d =>
+                        {
+                            d.LabelAlign = LabelAlign.Left;
+                        })
+
+                            .Items(
+                                    X.TextArea()
+                                    .Name("txtReconIndiSeg")
+
+                        )
+
+                     )
+                   .Items(
+                      X.FieldSet()
+                            .ColumnWidth(0.4)
+                            .Title("RESPONSABLE DE LA CONTRARREFENCIA")
+                //.Border(false)
+                            .MarginSpec("0 05 0 05")
+                            .Defaults(d =>
+                            {
+                                d.Add(new Parameter("LabelWidth", "100"));
+                                d.Add(new Parameter("DefaultAnchor", "100%"));
+                                d.Add(new Parameter("LabelAlign", "Left"));
+                            })
+
+                            .DefaultAnchor("100%")
+                        .FieldDefaults(d =>
+                        {
+                            d.LabelAlign = LabelAlign.Left;
+                        })
+
+                        .Items(
+                          X.Label("Condición del usuario para la contrarreferencia"),
+                                 
+                                X.RadioGroup()
+                                 .Vertical(true)
+                                 .AnchorVertical("100%")
+                                 .Items(
+
+                                       X.Radio()
+                                        .ID("rdRCCurado")
+                                        .FieldLabel("Curado"),
+                                       X.Radio()
+                                        .ID("rdMejorado")
+                                        .FieldLabel("Mejorado"),
+                                       X.Radio()
+                                        .ID("rdAntexApoyo")
+                                        .FieldLabel("Aten. Apoy Dx"),
+                                       X.Radio()
+                                        .ID("rdDesercion")
+                                        .FieldLabel("Deserción"),
+                                       X.Radio()
+                                        .ID("rdRetiroV")
+                                        .FieldLabel("Retiro volunt."),
+                                       X.Radio()
+                                        .ID("rdFallecido")
+                                        .FieldLabel("Fallecido")
+                                    )
+                                    )
+
+                     )                                                                                                     
+                    .Buttons(
+                            X.Button()
+                                .Text("Guardar")
+                                .Icon(Icon.Disk)
+                                .OnClientClick("var form = this.up('form'); form.getForm().updateRecord(form.down('grid').getSelectionModel().getLastSelected());"),
+                            X.Button()
+                                .Text("Cancelar")
+                                .Icon(Icon.Cancel)
+                                .OnClientClick("this.up('form').getForm().reset();")
+
+                        )
+                );
+        }
+        )
+
+
+      )
+
+    }
+

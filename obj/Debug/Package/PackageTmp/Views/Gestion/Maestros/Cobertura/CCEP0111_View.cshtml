@@ -1,0 +1,462 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_SG_MaestroCobertura
+
+@{
+    ViewBag.Title = "CCEP0111_View";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+}
+
+@section cabecera
+{
+    <script>
+        var varTipoBuscar = "LOAD";
+        var Valores;
+        var COLOR_BLUE01 = "#284A89";
+        var COLOR_RED01 = "#990000";
+        var COLOR_GREEN01 = "#177506";
+        var COLOR_YELLOW02 = "#D9A407";
+        var COLOR_BLACK = "#000000";
+        var seleccionActual1 = null;
+
+      function setSeleccion(param1) {
+            seleccionActual1 = param1;
+        }
+
+      var changeEstado = function (value) {
+          var template = '<span style="color:{0};">{1}</span>';
+          if (value == 2)
+              return Ext.String.format(template, COLOR_BLUE01, "Activo");
+          if (value == 1)
+              return Ext.String.format(template, COLOR_RED01, "Inactivo");
+      };
+      var changeIndicador = function (value) {
+          var template = '<span style="color:{0};">{1}</span>';
+          if (value == 1)
+              return Ext.String.format(template, COLOR_BLACK, "No");
+          if (value == 2)
+              return Ext.String.format(template, COLOR_BLACK, "Sí");
+      };
+      var changeTipo = function (value) {
+          var template = '<span style="color:{0};">{1}</span>';
+          if (value == 1)
+              return Ext.String.format(template, COLOR_BLACK, "EPS");
+          if (value == 2)
+              return Ext.String.format(template, COLOR_BLACK, "Seguros");
+          if (value == 3)
+              return Ext.String.format(template, COLOR_BLACK, "RAM");
+          if (value == 4)
+              return Ext.String.format(template, COLOR_BLACK, "Otros");
+      };
+
+      var pctChange = function (value) {
+          return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+      };
+      // funciones relacionadas a al GRILLA
+      var onSuccess = function (grid, data) {
+          grid.show();
+          grid.getStore().loadData(data);
+      };
+
+    function nuevo() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("CoberturaRegistro"))',
+            params: {
+                MODO: 'NUEVO',
+                tipo: ''
+            }
+        });
+    };
+        function modificarSelected() {
+            if (seleccionActual1 != null ) {
+                var status = seleccionActual1;
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("CoberturaRegistro"))',
+                    params: {
+                        MODO: 'UPDATE',
+                        tipo: status
+                    }
+                });
+            } else {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Debe Seleccionar un Elemento.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+        }
+        function eliminarSelected() {
+            if (seleccionActual1 != null ) {
+         var status = seleccionActual1;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("CoberturaRegistro"))',
+                params: {
+                    MODO: 'DELETE',
+                    tipo: status
+
+                }
+            });
+            } else {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Debe Seleccionar un Elemento.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+     }
+
+        function verSelected() {
+            eventoVerSelected(seleccionActual1);
+        }
+
+        function eventoVerSelected(param1) {
+            if (App.compoVER.isVisible(true)) {
+                if (param1 != null) {
+                    var status = param1;
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("CoberturaRegistro"))',
+                        params: {
+                            MODO: 'VER',
+                            tipo: status
+                        }
+                    });
+                } else {
+                    Ext.Msg.show({
+                        title: "Advertencia",
+                        msg: "Debe Seleccionar un Elemento.",
+                        icon: Ext.Msg.WARNING,
+                        minWidth: 200,
+                        buttons: Ext.Msg.OK
+                    });
+                }
+            }
+        }
+
+        var accionBuscarFiltro = function (tipo) {
+            varTipoBuscar = tipo;
+            App.GridPanel1.getStore().reload();
+            varTipoBuscar = 'LOAD';
+        };
+
+        var accionFinal = function (btn) {
+            App.GridPanel1.getSelectionModel().deselectAll();
+            seleccionActual1 = null;
+            App.GridPanel1.getStore().reload();
+        };
+
+        var eventoCheckFiltro = function (check, componente) {
+            var checkAll = check.getValue();
+            if (checkAll) {
+                componente.setDisabled(true);
+                componente.setValue(null);
+            } else {
+                componente.setDisabled(false);
+            }
+        }
+        var eventoCargarMain = function () {
+
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("addPermisosFormatos"))',
+                params: {
+                    data: 'FORMATO',
+                    indica: 'PERMISO',
+                },
+                success: function (result) { accionSetPermisos(result.data); }
+            });
+        };
+        var accionSetPermisos = function (data) {
+            var mensajes = "";
+            if (data.length > 0) {
+                for (var i = 0; i < data.length; i++) {
+                    if (data[i].ACCION == 'BUSCAR' && App.compoBUSCAR != null) {
+                        App.compoBUSCAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'NUEVO' && App.compoNUEVO != null) {
+                        App.compoNUEVO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'MODIFICAR' && App.compoMODIFICAR != null) {
+                        App.compoMODIFICAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'ELIMINAR' && App.compoELIMINAR != null) {
+                        App.compoELIMINAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'VER' && App.compoVER != null) {
+                        App.compoVER.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'ACCESO' && App.compoACCESO != null) {
+                        App.compoACCESO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'HABILITADO' && App.compoHABILITADO != null) {
+                        App.compoHABILITADO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'OBLIGA' && App.compoOBLIGA != null) {
+                        App.compoOBLIGA.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'PRIORIDADAGOPCION' && App.compoPRIORIDADAGOPCION != null) {
+                        App.compoPRIORIDADAGOPCION.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    }
+                }
+            }
+        };
+    </script>
+}
+@section cuerpo
+{
+    @(
+ Html.X().Viewport()
+        .AutoScroll(true)
+        .Layout(LayoutType.Border)
+        .Items(
+           X.Panel()
+              .Title("Lista de Maestro Coberturas")
+        //.Header(false)
+              .Border(false)
+              .Region(Region.North)
+              .Split(true)
+             .Collapsible(true)
+        //.Header(false)
+              .Height(180)
+              .TopBar(
+                         X.Toolbar()
+                        .Height(30)
+                                .Items(
+                                     X.Button()
+                                        .Text("Buscar").ID("compoBUSCAR")
+                                        .Icon(Icon.Find)
+                                             .Handler("accionBuscarFiltro('FILTRO');"),
+                                                    X.ToolbarSeparator(),
+                                                    X.ToolbarSpacer(), 
+                                    X.Button()
+                                            .Text("Nuevo").ID("compoNUEVO")
+                                        .Icon(Icon.ApplicationFormAdd)
+                                        .Handler("nuevo(); "),
+                                    X.Button()
+                                            .Text("Modificar").ID("compoMODIFICAR")
+                                        .Icon(Icon.ApplicationFormEdit)
+                                                .Handler("modificarSelected();")
+                                             ,
+                                    X.Button()
+                                            .Text("Eliminar").ID("compoELIMINAR")
+                                        .Icon(Icon.ApplicationFormDelete)
+                                            .Handler("eliminarSelected();"),
+                                       X.ToolbarSeparator(),
+                                        X.Button()
+                                                .Text("Ver").ID("compoVER")
+                                            .Icon(Icon.ApplicationViewDetail)
+                                            .Handler("verSelected();"),
+                                     X.ToolbarFill()
+                              )
+              )
+             .Items(X.Panel()
+                    .Layout(LayoutType.HBox)
+                        .BodyPadding(5)
+                        .Border(false)
+                        .MarginSpec("1 20 1 1")
+                    .Items(
+                            X.FieldSet()
+                                .Flex(1)
+                                .Title("Filtros")
+                                .MarginSpec("5 5 5 10")
+                                .Defaults(d =>
+                                {
+                                    d.Add(new Parameter("LabelWidth", "40"));
+                                })
+                                .Items(
+                                   Html.X().Container().Layout(LayoutType.HBox)
+                                   .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                   .Items(
+                                     X.Checkbox()
+                                         .FieldLabel("Id Cobertura")
+                                         .ID("chHId")
+                                         .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chHId,App.tfBuscarId);")
+                                         .Checked(true),
+                                     X.TextField()
+                                         .ID("tfBuscarId").Disabled(true)
+                                         .Name("buscarId")
+                                         .FieldLabel(""),
+
+                                     X.Checkbox()
+                                         .FieldLabel("Estado")
+                                         .ID("chHEst")
+                                         .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chHEst,App.cmbBuscarEst);")
+                                         .Checked(true),
+                                    X.ComboBox()
+                                         .ID("cmbBuscarEst").Disabled(true)
+                                         .Name("buscarEst")
+                                         .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("ESTADOINT").Select(d => new ListItem(d.Name, d.ID)))
+                                         .FieldLabel("").Editable(false)
+                                      .SimpleSubmit(true)
+                                      ),
+                                              
+                                   Html.X().Container().Layout(LayoutType.HBox)
+                                   .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                   .Items(
+                                     X.Checkbox()
+                                         .FieldLabel("Código")
+                                         .ID("chHCod")
+                                         .Listeners(l => l.Change.Handler = @"eventoCheckFiltro(App.chHCod,App.tfBuscarCod);")
+                                         .Checked(true),
+                                    X.TextField()
+                                         .ID("tfBuscarCod").Disabled(true)
+                                         .Name("buscarCod")
+                                         .FieldLabel(""),
+
+                                    X.Checkbox()
+                                        .FieldLabel("Cobertura")
+                                        .ID("chHobertura")
+                                        .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chHobertura,App.tfBuscarCobertura);")
+                                        .Checked(true),
+
+                                   X.TextField()
+                                        .ID("tfBuscarCobertura").Disabled(true)
+                                        .Name("buscarCobertura")
+                                        .FieldLabel("")),
+
+                                  Html.X().Container().Layout(LayoutType.HBox)
+                                  .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                  .Items(
+                                     X.Checkbox()
+                                         .FieldLabel("Tipo Cobertura")
+                                         .ID("chHTipo")
+                                         .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chHTipo,App.cmbBuscarTipo);")
+                                         .Checked(true),
+                                     X.ComboBox()
+                                         .ID("cmbBuscarTipo").Disabled(true)
+                                         .Name("buscarTipo")
+                                         .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("TIPOCOBERT").Select(d => new ListItem(d.Name, d.ID)))
+                                         .FieldLabel("").Editable(false)
+                                         .SimpleSubmit(true),
+
+                                     X.Checkbox()
+                                         .FieldLabel("Ind. Ambulatorio")
+                                         .ID("chHAmbulatorio")
+                                         .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chHAmbulatorio,App.cmbBuscarAmb);")
+                                         .Checked(true),
+                                    X.ComboBox()
+                                         .ID("cmbBuscarAmb").Disabled(true)
+                                         .Name("buscarEst")
+                                         .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("INDICADORE").Select(d => new ListItem(d.Name, d.ID)))
+                                         .FieldLabel("").Editable(false)
+                                      .SimpleSubmit(true)),
+
+                                  Html.X().Container().Layout(LayoutType.HBox)
+                                  .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                  .Items(
+                                     X.Checkbox()
+                                         .FieldLabel("Ind. Emergencia")
+                                         .ID("chHEmergencia")
+                                         .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chHEmergencia,App.cmbBuscarEmergencia);")
+                                         .Checked(true),
+                                    X.ComboBox()
+                                         .ID("cmbBuscarEmergencia").Disabled(true)
+                                         .Name("buscarEmergencia")
+                                         .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("INDICADORE").Select(d => new ListItem(d.Name, d.ID)))
+                                         .FieldLabel("").Editable(false)
+                                         .SimpleSubmit(true),  
+                                    
+                                     X.Checkbox()
+                                         .FieldLabel("Ind. Hospitalario")
+                                         .ID("chHHospitalario")
+                                         .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chHHospitalario,App.cmbBuscarHosp);")
+                                         .Checked(true),
+                                    X.ComboBox()
+                                         .ID("cmbBuscarHosp").Disabled(true)
+                                         .Name("buscarHosp")
+                                         .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("INDICADORE").Select(d => new ListItem(d.Name, d.ID)))
+                                         .FieldLabel("").Editable(false)
+                                         .SimpleSubmit(true) 
+                                ))
+                                
+
+                    )
+             ),
+            X.Panel()
+                .Region(Region.Center)
+                .ItemID("center")
+               .Header(false)
+               .Border(false)
+               .Items(
+                   X.GridPanel()
+                   .AllowDeselect(true)
+                        .Border(false)
+                        .Scroll(ScrollMode.Both)
+                        .AutoScroll(true)
+                        .ID("GridPanel1")
+                        .Margins("0 0 0 0")
+        ///CONFIGURAR EL STORE
+                        .Store(store => store.Add(
+                                 Html.X().Store()
+                                     .ID("Store1")
+                                     .AutoLoad(true)
+                                     .RemoteSort(false)
+                                     .IsPagingStore(true)
+                                     .RemotePaging(true)
+                                     .PageSize(15)
+                                     .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                        .Url("getGrillaCobertura")
+                                            .Reader(reader => reader.Add(Html.X().JsonReader()
+                                            .Root("data")
+                                                .TotalProperty("total")
+                                                                     .IDProperty("IdCobertura")
+                                                 )))
+                                                )
+
+                                         .Parameters(ps =>
+                                                ps.Add(new
+                                                {
+                                                    idcobertura = JRawValue.From("App.tfBuscarId.getValue()"),
+                                                    estado = JRawValue.From("App.cmbBuscarEst.getValue()"),
+                                                    codigo = JRawValue.From("App.tfBuscarCod.getValue()"),
+                                                    cobertura = JRawValue.From("App.tfBuscarCobertura.getValue()"),
+                                                    tipocobertura = JRawValue.From("App.cmbBuscarTipo.getValue()"),
+                                                    ambulatorio = JRawValue.From("App.cmbBuscarAmb.getValue()"),
+                                                    emergencia = JRawValue.From("App.cmbBuscarEmergencia.getValue()"),
+                                                    hospitalario = JRawValue.From("App.cmbBuscarHosp.getValue()"),
+                                                    tipoBuscar = JRawValue.From("varTipoBuscar")
+                                                })
+                                         )
+                                     .Model(model => model.Add(Html.X().Model()
+                                             .Fields(fields =>
+                                             {
+                                                 fields.Add(Html.X().ModelField().Name("IdCobertura"));
+                                                 fields.Add(Html.X().ModelField().Name("CodigoCobertura"));
+                                                 fields.Add(Html.X().ModelField().Name("Nombre"));
+                                                 fields.Add(Html.X().ModelField().Name("Descripcion"));
+                                                 fields.Add(Html.X().ModelField().Name("TipoTabla"));
+                                                 fields.Add(Html.X().ModelField().Name("IndicadorAmbulatorio"));
+                                                 fields.Add(Html.X().ModelField().Name("IndicadorEmergencia"));
+                                                 fields.Add(Html.X().ModelField().Name("IndicadorHospitalario"));
+                                                 fields.Add(Html.X().ModelField().Name("Estado"));
+                                             }))
+                                            )
+                                          )
+                               )
+        ///CONFIGURAR LAS COLUMNAS
+                            .ColumnModel(columnModel =>
+                            {
+                                columnModel.Columns.Add(Html.X().Column().Text("Id Cobertura").DataIndex("IdCobertura").Width(80));
+                                columnModel.Columns.Add(Html.X().Column().Text("Código").DataIndex("CodigoCobertura").Width(80));
+                                columnModel.Columns.Add(Html.X().Column().Text("Cobertura").DataIndex("Nombre").Width(200));
+                                columnModel.Columns.Add(Html.X().Column().Text("Descripción").DataIndex("Descripcion").Width(200));
+                                columnModel.Columns.Add(Html.X().Column().Text("Tip. Cobertura").DataIndex("TipoTabla").Width(150).Renderer("changeTipo"));
+                                columnModel.Columns.Add(Html.X().Column().Text("Ind. Amb.").DataIndex("IndicadorAmbulatorio").Width(100).Renderer("changeIndicador"));
+                                columnModel.Columns.Add(Html.X().Column().Text("Ind. Emer.").DataIndex("IndicadorEmergencia").Width(100).Renderer("changeIndicador"));
+                                columnModel.Columns.Add(Html.X().Column().Text("Ind. Hosp.").DataIndex("IndicadorHospitalario").Width(100).Renderer("changeIndicador"));
+                                columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(100).Renderer("changeEstado")
+                                    );
+                            })
+                             .View(Html.X().GridView().TrackOver(false))
+                                 .Border(false)
+                                  .Listeners(l => l.CellClick
+                                                          .Handler = "setSeleccion(record.data.IdCobertura);")
+                                    .Listeners(l => l.CellDblClick
+                                                    .Handler = "eventoVerSelected(record.data.IdCobertura);")
+                            .BottomBar(bar => bar.Add(
+                                Html.X().PagingToolbar()
+                            ))
+                )
+            )
+    .Listeners(l => l.Render.Handler = "eventoCargarMain();")
+    )
+
+    @(X.KeyNav()
+                    .Target("={document.body}")
+                    .Enter(a => a.Handler = "accionBuscarFiltro('FILTRO');")
+    )
+}

@@ -1,0 +1,407 @@
+﻿@model SoluccionSalud.Entidades.Entidades.V_EpisodioAtenciones
+
+
+@{
+    var X = Html.X();
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_BLUE01_temp = "#284A89";
+    var COLOR_RED01 = "#990000";
+    var COLOR_YELLOW02 = "#D9A407";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_ORANGE01 = "#E07509";
+
+    var COLOR_REDbackg = "#FD9788";
+
+    var idOpcion = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.IDOPCION_ACTUAL;
+    var codigoFormatoActual = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.CONCEPTO;
+    var descOpcion = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.CONCEPTODESCRIPCION;
+
+    var NODOROOT_desc = "DOCUMENTOS-SALUD";
+    var NODOROOT_id = "1|0|0|";
+
+    var idWindow = "windowCopiarForm";
+
+    var urlActivo = "";
+    urlActivo = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.PacienteDatos1;
+    var EpiAt = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.EpisodioAtencion;
+    var EpiCl = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.EpisodioClinico;
+    var UniRe = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.UnidadReplicacion;
+    var Usua = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.USUARIO;
+    var idOP = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.IDOPCION_ACTUAL;
+    var Paciente = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.PacienteID;
+    var IdSec = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.DinamicSecuencia;
+
+    var urllink = "http://10.0.8.36/FDWeb/PaginaGEN.html?IdForm=33&Version=6&Lectura=0" + "&IdOpcion=" + idOP + "&Replicacion=" + UniRe + "&Clinico=" + EpiCl + "&Atencion=" + EpiAt + "&Paciente=" + Paciente + "&Usuario=" + Usua;
+
+    string idForm0 = "http://10.0.8.36/FDWeb/PaginaGEN.html?IdForm=33&Version=6&Lectura=0";
+
+    int indice = idForm0.IndexOf("IdForm=");
+    int indice2 = idForm0.IndexOf("&Version");
+    int indice3 = idForm0.IndexOf("Pagina");
+    int indice4 = idForm0.IndexOf("&Lectura");
+    int longitud = idForm0.Length;
+
+    string urlaux = idForm0.Substring(0, (longitud - (longitud - indice3))) + "PaginaGENTRA.html?IdTra=";
+
+    string urlaux2 = idForm0.Substring(0, (longitud - (longitud - indice3))) + "PaginaGENSEC.html?IdTra=";
+
+    int longitud2 = indice2 - (indice + 7);
+
+    int longitud3 = indice4 - (indice2 + 9);
+
+    string idForm = idForm0.Substring((indice + 7), longitud2);
+
+    string idVersion = idForm0.Substring((indice2 + 9), longitud3);
+    int ise = SoluccionSalud.Service.FormatoDinamico.SvcFormatosDinamicos.Listar(Convert.ToInt32(idForm));
+    //var is9e = SoluccionSalud.Repository.DALFormatoCons.Formato.Listar(Convert.ToInt32(idForm));
+
+    if (ise == 0)
+    {
+        ise = SoluccionSalud.Service.FormatoDinamico.SvcFormatosDinamicos.ListarAnt(Convert.ToInt32(idForm));
+    }
+
+    if (ise > 0)
+    {
+        urllink = urlaux + ise.ToString() + "&IdForm=" + idForm + "&Version=" + idVersion + "&Lectura=0" + "&IdOpcion=" + idOP + "&Replicacion=" + UniRe + "&Clinico=" + EpiCl + "&Atencion=" + EpiAt + "&Paciente=" + Paciente + "&Usuario=" + Usua;
+
+
+    }
+    if (IdSec > 0)
+    {
+        urllink = urlaux2 + ise.ToString() + "&IdSec=" + IdSec + "&Lectura=0";
+
+    }
+    if (SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.ESTADOFORMULARIO_ACCION == "VISTA")
+    {
+        if (IdSec < 1)
+        {
+            urllink = urlaux + ise.ToString() + "&IdForm=" + idForm + "&Version=" + idVersion + "&Lectura=1" + "&IdOpcion=" + idOP + "&Replicacion=" + UniRe + "&Clinico=" + EpiCl + "&Atencion=" + EpiAt + "&Paciente=" + Paciente + "&Usuario=" + Usua;
+        }
+    }
+}
+
+<link rel="stylesheet" href="@Url.Content("~/resources/css/main.css")" />
+<style>
+    html body {
+        padding: 0px;
+        background: none;
+        background: none;
+        background: none;
+        background-attachment: fixed;
+        background-position: center;
+        font-family: tahoma,verdana,sans-serif;
+        background-color: #ffffff;
+    }
+</style>
+
+
+
+<style type="text/css">
+    /*<![CDATA[*/
+    #img_uno {
+        width: auto;
+        height: 100%;
+        align-self: center;
+        -webkit-user-select: none;
+        cursor: zoom-in;
+    }
+
+    #img_dos {
+        -webkit-user-select: none;
+        cursor: zoom-out;
+    }
+
+    .logo {
+        border: solid 3px #000;
+    }
+    /*]]>*/
+</style>
+
+
+
+<script>
+
+    var actualPrev_X = null;
+    var actualPrev_Y = null;
+    var actualPrev_H = null;
+    var actualPrev_W = null;
+
+    var panelActual = null;
+    var pathImage = "resources/IndexImagen/";
+
+    var sistemas = function (record) {
+
+        var desc = record.data.text;
+        var vector = record.data.id.split('|');
+        var showURL = "";
+        var tipo = 0;
+        if (vector.length > 3) {
+            tipo = vector[0];
+            showURL = vector[3];
+        }
+        if (tipo > 1) {
+            var cont = App.centerPanels;
+            cont.setTitle('Selección actual: ' + desc);
+            imagendiv(showURL);
+        } else {
+        }
+    };
+
+    var formSelecc = null;
+
+    var loadContenidoHist = function (record) {
+        if (record != null) {
+            var formSelecc = record.data.Accion;
+            if (formSelecc != null) {
+                var cont = App.centerPanelsCopy;
+                cont.setTitle('Selección actual: ');
+                var contX = cont.getLoader();
+                cont.getLoader().url = 'HClinica/' + formSelecc + '_View';
+                contX.load({
+                    params: {
+                    }
+                });
+            }
+
+        }
+    };
+
+    function imagendiv(showURL) {
+        var imagen = document.createElement('img');
+        /* agregamos propiedades al elemento
+        */
+        imagen.src = showURL;
+        imagen.id = 'img_uno';
+        imagen.className = 'logo';
+        imagen.title = 'titulo de la imagen';
+        imagen.alt = 'texto alternativo';
+        imagen.onclick = function () {
+            if (this.id == 'img_uno') {
+                this.id = 'img_dos';
+            } else {
+                this.id = 'img_uno';
+            }
+        };
+        /* definimos el elemento donde insertamos la imagen
+        */
+        var div = document.getElementById("centerPanels-body");
+        div.innerHTML = "";
+        div.style.overflow = "scroll";
+        /* agregamos la imagen
+        */
+        div.appendChild(imagen);
+    }
+
+    var eventoExpandir = function (window, contraer) {
+        if (contraer) {
+            if (actualPrev_X != null && actualPrev_Y != null && actualPrev_H != null && actualPrev_W != null) {
+                window.setHeight(actualPrev_H);
+                window.setWidth(actualPrev_W);
+                window.setX(actualPrev_X);
+                window.setY(actualPrev_Y);
+                App.btnContract.setVisible(false);
+                App.btnExpand.setVisible(true);
+            }
+        } else {
+            actualPrev_H = window.getHeight();
+            actualPrev_W = window.getWidth();
+            actualPrev_X = window.getX();
+            actualPrev_Y = window.getY();
+            var KK = 30;
+            var h = screen.height;
+            var w = screen.width;
+            window.setHeight(h - KK - 100);
+            window.setWidth(w);
+            window.setX(0);
+            window.setY(KK);
+            App.btnContract.setVisible(true);
+            App.btnExpand.setVisible(false);
+        }
+
+    };
+
+
+
+    var eventoCheckFiltro_VisorCopiar = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+    var eventoCheckFiltroCompuesto_VisorCopiar = function (check, componente1, componente2, componente3, btn) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente1.setDisabled(true);
+            componente1.setValue(null);
+            componente2.setDisabled(true);
+            componente2.setValue(null);
+            componente3.setDisabled(true);
+            componente3.setValue(null);
+            btn.setDisabled(true);
+        } else {
+            componente1.setDisabled(false);
+            componente2.setDisabled(false);
+            componente3.setDisabled(false);
+            btn.setDisabled(false);
+        }
+    };
+
+    function seleccionadorMedico() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorMedico"))',
+            params: {
+                AccionSeleccion: 'getSeleccionMedicoEsp_DocHC',
+                AccionListado: 'LISTARPAG'
+            }
+        });
+    };
+
+    var varTipoBuscar_VisorCopiar = "LOAD";
+    var selecRecordActual_VisorCopiar = null;
+
+    var accionBuscarFiltro_VisorCopiar = function (tipo) {
+        varTipoBuscar_VisorCopiar = tipo;
+        App.GridPanelCopiaForm.getStore().reload();
+        varTipoBuscar_VisorCopiar = 'LOAD';
+    };
+
+    var loadReporte = function (record) {
+        var desc = '';/*record.data.text;*/
+        var id = ''; /*record.data.id;*/
+
+        var showURL = '';
+        var path = '';
+        var accionReport = '';
+        var pathLocalURL = 'Reportes/VisorReportesHCE.aspx?ReportID=';
+        var showURL_end = '&Visor=I';
+
+        if (id > 1) {
+            var cont = App.centerPanels;
+            cont.setTitle('Selección actual: ' + desc);
+
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("eventoLoadReporte"))',
+                params: {
+                    containerId: '',
+                    text: id
+                },
+                success: function (resultRegla) {
+                    if (resultRegla.data != null) {
+                        if (resultRegla.data[0].TIPOMSG == 'FFIJO') {
+                            showURL_end = '&Visor=I';
+                            path = resultRegla.data[0].TITULO;
+                            accionReport = resultRegla.data[0].DESCRIPCION;
+                            if (accionReport != null) {
+                                showURL = path + pathLocalURL + accionReport + showURL_end;
+                            } else {
+                                showURL = 'http://www.sanna.pe';
+                            }
+                            var contX = cont.getLoader();
+                            cont.getLoader().url = 'http://' + showURL;
+                            contX.load({
+                                params: {
+                                }
+                            });
+                            /*
+                            showURL = 'localhost:11505/Reportes/VisorReportesHCE.aspx?ReportID=CCEP0003&Visor=I';
+                            contendiv('http://'+showURL);
+                            */
+                        } else {
+                        }
+                    }
+                }
+            });
+
+            /**
+              implementar evento load reporte
+              contendiv("http://localhost:11505/Reportes/VisorReportesHCE.aspx?ReportID=CountryListReport&dc=1464211190953");
+            */
+        } else {
+        }
+    };
+    
+
+</script>
+
+
+@(Html.X().Window()
+    .Width(400)
+    .Height(300)
+        //.X(0)
+        //.Y(0)
+    .Maximizable(false)
+    .Closable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Resizable(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+     .ID("" + idWindow)
+            .Title("Formulario Compartido:" + descOpcion)
+    .Padding(4)
+      
+        //INICIO
+    .Items(
+        X.Panel()
+        .Border(false)
+        .Layout(LayoutType.VBox)
+        .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+       
+        .Items(
+            
+           
+            X.Panel().Header(false).Border(false).Flex(1)
+            .Layout(LayoutType.Border)
+            .Items(
+                   
+                     Html.X().Panel()
+                    .Region(Region.Center)
+                    .ID("centerPanels")
+                    .Height(545)
+
+                    .Title("")
+                    .AutoDoLayout(true)
+                    .Loader(
+                        Html.X().ComponentLoader()
+                        .Listeners(l =>
+                        {
+                            //EVENTO JAVA SCRIPT
+                            l.Load.Handler = "loadReporte('');";
+                        })
+                        .ID("compLoaderReporte")
+                        .AutoLoad(true)
+        //.Url("http://www.sanna.pe")
+                                .Url(urllink)
+
+                        .Mode(LoadMode.Frame)
+                        .ReloadOnEvent(false)
+                        .DisableCaching(true)
+                    )
+
+
+            )
+        )
+    )//FIN
+        .DirectEvents(de =>
+        {
+            de.Hide.Url = Url.Action("cambioSeleccionCronologias");
+            de.Hide.ExtraParams.Add(new Parameter("indica", "DESELECCION", ParameterMode.Value));
+            de.Close.Url = Url.Action("cambioSeleccionCronologias");
+            de.Close.ExtraParams.Add(new Parameter("indica", "DESELECCION", ParameterMode.Value));
+
+        })
+    .CloseAction(CloseAction.Destroy)
+        /*.Listeners(l =>
+        {
+            l.Maximize.Handler = "alert('MAXX');";
+        })  */
+        //.Html(DateTime.Now.ToLongTimeString())
+
+)
+
+

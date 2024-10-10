@@ -1,0 +1,1909 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_HC_RESUMEN_PARTO_FE
+
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+    var indicaVisiblePrint = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_VISIBLE_IMPRESION;
+
+    var isVista = (Model.Accion == "VISTA" ? true : false);
+    var isNuevo = (Model.Accion == "NUEVO" ? true : false);
+    //var BALANCEACUMULADO = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.BalanceAcumulado;
+    var visibleImpresion = (indicaVisiblePrint == 2 ? true : false);
+
+    //var visibleImpresion = (Model.Accion == "UPDATE" ? true : false);
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VISTA" ? false : false))));
+    var selectorP = (Model.P_Selector2 != null ? Model.P_Selector2 : 0);
+    var selector1 = (Model.S_Selector1 != null ? Model.S_Selector1 : 0);
+
+
+    var COLOER_IND_OBLIGA = AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("COL_BCOBLI");
+
+
+
+}
+@section cabecera
+{
+    <link rel="stylesheet" href="@Url.Content("~/resources/css/main.css")" />
+    <style>
+        html body {
+            padding: 0px;
+            background: none;
+            background: none;
+            background: none;
+            background-attachment: fixed;
+            background-position: center;
+            font-family: tahoma,verdana,sans-serif;
+            background-color: #ffffff;
+        }
+    </style>
+
+
+    <script>
+
+
+    function eventoRenderForm() {
+
+        var kk = 195;
+        var scrH = screen.height;
+        var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+        var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+
+        if (southH == 0) {
+            southH = 30;
+        } else if (parent.App.PanelMainSouth.collapsed) {
+            southH = 30;
+        }
+        var dimCentral = (scrH - (northH + southH) - kk);
+        App.formactual.setHeight(545);
+
+        var v = '@isNuevo';
+            if (v == 'True') {
+                App.btnImpresion.setVisible(false);
+                App.btnImpresionHC.setVisible(false);
+            }
+        }
+
+        var indicaCambios = false;
+          function setIndicaCambios(value) {
+        indicaCambios = value;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("setIndicaCambiosFormulario"))',
+            params: {
+                indica: (value ? 1 : 0)
+            }
+        });
+
+
+        var val = '@visibleImpresion';
+        var vis = '@isVista';
+        if (vis == 'False') {
+            if (val == 'True') {
+
+                if (value == true) {
+                    App.btnImpresion.setDisabled(true);
+                    App.btnImpresionHC.setDisabled(true);
+                    parent.App.btnGuardarFirma.setDisabled(true);
+                    // parent.App.btnContEpisodio_HCE.setDisabled(true);//A TODOS
+
+                } else {
+                    App.btnImpresion.setDisabled(false);
+                    App.btnImpresionHC.setDisabled(false);
+                    parent.App.btnGuardarFirma.setDisabled(false);
+                    //parent.App.btnContEpisodio_HCE.setDisabled(false);//A TODOS
+                }
+            }
+        }
+    }
+
+    var seleccRecordActual = null;
+    function setSeleccionActual(record) {
+        seleccRecordActual = record;
+    }
+    var count = 0;
+    var countOtrasApgar = 0; // a counter for new records
+
+    function addRecordMain(grid) {
+
+        setIndicaCambios(true);
+
+        App.taAlerts.setVisible(false);
+
+        var secuenciaMax = 0;
+        App.storeEmbAnt.each(function (r) {
+
+          /*  if (r.get('Secuencia') > secuenciaMax) {
+                secuenciaMax = r.get('Secuencia');
+            }*/
+
+        });
+
+
+
+        App.storeEmbAnt.insert(0, { Secuencia: /*parseInt(secuenciaMax) + 1*/'', Gravidez: '', Pariedad1: 0, Pariedad2: 0, Pariedad3: 0, Pariedad4: 0, Accion: 'NUEVO' });
+        Ext.Function.defer(function () {
+            App.grillaEmbAnt.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+        }, 100);
+
+
+    }
+
+
+
+    function addRecordMain2(grid) {
+        setIndicaCambios(true);
+
+        App.taAlerts.setVisible(false);
+
+        var secuenciaMax = 0;
+        var FechaMax = 0;
+
+        App.storeEmbAct.each(function (r) {
+            var temp = r.get('Fecha');
+            if (temp > FechaMax) {
+                FechaMax = temp;
+            }
+            //if (r.get('Secuencia') > secuenciaMax) {
+            //    secuenciaMax = r.get('Secuencia');
+            //}
+
+        });
+
+        App.storeEmbAct.insert(0,
+                    {
+                        Secuencia: /*parseInt(secuenciaMax) + 1*/ '',
+                        FUR: FechaMax + 1,
+                        FPP: FechaMax + 1,
+                        EGXFUR: '',
+                        PFGECO: '',
+                        EG: '',
+                        AU:'',
+                        Accion: 'NUEVO'
+                    });
+
+
+
+          Ext.Function.defer(function () {
+              App.grillaEmbAct.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+          }, 100);
+    }
+
+
+
+    function trim(str) {
+        return str.replace(/^\s+|\s+$/g, "");
+    }
+
+    function deleteActual(record) {
+
+        seleccRecordActual = record;
+        if (seleccRecordActual != null) {
+            setIndicaCambios(true);
+
+            var store = App.grillaEmbAnt.store;
+            var par1 = seleccRecordActual.data.Secuencia;
+            var par2 = seleccRecordActual.data.Secuencia;
+
+            store.remove(seleccRecordActual);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("CCEPF505_addEliminar_SS_HC_RESPARTO_EMB_ANT_FE"))',
+                params: {
+                    MODO: 'DELETE',
+                    codigo: par1,
+                    secuencia: par2
+                }
+            });
+            seleccRecordActual = null;
+
+
+        }
+
+
+    };
+
+    function deleteActuals(record) {
+
+        seleccRecordActual = record;
+        if (seleccRecordActual != null) {
+            setIndicaCambios(true);
+            var store = App.grillaEmbAct.store;
+            var par1 = seleccRecordActual.data.Secuencia;
+            var par2 = seleccRecordActual.data.Secuencia;
+
+
+            store.remove(seleccRecordActual);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("CCEPF505_addEliminar_SS_HC_RESPARTO_EMB_ACT_FE"))',
+                params: {
+                    MODO: 'DELETE',
+                    codigo: par1,
+                    secuencia: par2
+                }
+            });
+            seleccRecordActual = null;
+        }
+
+    };
+
+
+    var onSuccess = function (data) {
+        App.btnOnEdit.setVisible(true);
+        App.btnCancel.setVisible(false);
+
+        var reload = true;
+        if (data != null) {
+            if (data.length > 0) {
+                reload = false
+                App.cmdGuardar.setDisabled(false);
+                if (data[0].TIPOMSG == 'EXCEPTION') {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: data[0].TITULO,
+                            message: data[0].DESCRIPCION,
+                            tipo: 'ERROR'
+                        }
+                    });
+                } else {
+                    accionMensajes(data);
+                }
+            }
+        }
+
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+        }
+    };
+
+    var onFailure = function (data) {
+        App.cmdGuardar.setDisabled(false);
+    };
+
+    var eventoKey = function (tf, e) {
+        if (e.getKey() == '110' || e.getKey() == '190' || e.getKey() == '100') {
+            var str = tf.getRawValue().replace('.', '');
+            tf.setValue(str);
+        } else if (e.getKey() == '109' || e.getKey() == '189') {
+            var str = tf.getRawValue().replace('-', '');
+            tf.setValue(str);
+        }
+    };
+    var eventoOnEditar = function (btn) {
+        App.cmdGuardar.setDisabled(false);
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+
+    };
+
+    function eventoCancelarTest() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("eventoCancelarForm"))',
+            params: {
+                indica: ''
+            }
+        });
+    }
+
+    function eventoCancelar(form) {
+        App.bar.setDisabled(true);
+        var reload = true;
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+            // beforeSave(form);
+        }
+    }
+
+    </script>
+    <script>
+
+        var hhValidation = function (h) {
+            str = h.value;
+            tempo = "'";
+            str = str.replace('javascript:myFunction(' + tempo, '');
+            str = str.replace('%20', ' ');
+            str = str.replace('%C3%B3', 'ó');
+            str = str.replace('%C3%A1', 'á');
+            str = str.replace('%C3%A9', 'é');
+            str = str.replace('%C3%AD', 'í');
+            str = str.replace('%C3%BA', 'ú');
+            str = str.replace('%C3%B1', 'ñ');
+
+            str = str.replace('%C3%8D', 'Í');
+            str = str.replace('%C3%93', 'Ó');
+            str = str.replace('%C3%81', 'Á');
+            str = str.replace('%C3%91', 'Ñ');
+            str = str.replace('%C3%9A', 'Ú');
+            str = str.replace(tempo + ')', '');
+            h.setValue(str);
+
+         }
+
+
+
+        var setValuesGridForm = function (r, valor) {
+            ////ESTE METODO  CAMBIA DE ACUERDO A CADA FORMULARIO:
+            var ValorCodigo1 = r.get('ValorCodigo1');
+            var CodigoElemento = r.get('CodigoElemento');
+
+
+            if (ValorCodigo1 == null || ValorCodigo1 == '') {
+
+            }
+
+        };
+
+        var accionMensajes = function (data) {
+            var mensajes = "";
+            if (data.length > 0) {
+                for (var i = 0; i < data.length; i++) {
+                    mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+                }
+                App.taAlerts.setVisible(true);
+                App.taAlerts.setValue(mensajes);
+                App.conthbIndicaError.setVisible(true);
+                App.taAlerts.focus();
+            } else {
+                App.taAlerts.setVisible(false);
+                App.conthbIndicaError.setVisible(false);
+            }
+
+        };
+
+        var getInvalidFields = function (form) {
+            var invalidFields = new Array();
+            var fields = form.getForm().getFields();
+            fields.filterBy(function (field) {
+                if (!field.isValid()) {
+                    var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                        NombreCampo: field.name,
+                        IdEvento: (field.isValid() ? 1 : 0),
+                        ValorTexto: field.name + ': ' + field.getErrors()
+                    };
+                    invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+                }
+            });
+            return invalidFields;
+        };
+
+        var beforeSave = function (form) {
+            App.taAlerts.setVisible(false);
+            App.taAlerts.setValue(null);
+            App.conthbIndicaError.setVisible(false);
+            var FieldsInvalidos = getInvalidFields(form);
+            if (FieldsInvalidos.length > 0) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("addRecursosValidacion"))',
+                    params: {
+                        data: FieldsInvalidos,
+                        indica: 'VALIDAR',
+                    },
+                    success: function (result) { accionMensajes(result.data); }
+                });
+            }
+        };
+
+        function eventoVisorReporte(param1) {
+            if(param1=='HC'){
+                window.location.href = '@Url.Action("HCEReportesView_total", "HClinica")';
+            } else {
+                window.location.href = '@Url.Action("HCEReportesView", "HClinica")';
+            }
+        }
+
+        function setImpresion(store) {
+            //App.btnImpresionHC.setVisible(false);
+            //App.btnImpresion.setVisible(false);
+            var contar = 0;
+            if (store != null) {
+                store.each(function (r) {
+                    contar++;
+                });
+            }
+            if (contar > 0) {
+               // App.btnImpresionHC.setVisible(true);
+                //App.btnImpresion.setVisible(true);
+            }
+        }
+
+        function EnviarDataServer(grid) {
+
+
+            beforeSave(App.formactual);
+
+            if (App.formactual.getForm().isValid()) {
+                App.taAlerts.setVisible(false);
+                App.taAlerts.setValue(null);
+                App.conthbIndicaError.setVisible(false);
+                var reload = true;
+
+                var numero = App.Controladora.getChecked();
+                var numeroX = numero["0"].inputValue
+
+                var numero2 = App.Membranas.getChecked();
+                var numeroY = numero2["0"].inputValue
+
+                var numero3 = App.P_Selector1.getChecked();
+                if (numero3.length > 0) {
+                    var numeroZ = numero3["0"].inputValue
+                } else {
+                    var numeroZ = App.P_Selector1.getValue()
+                }
+
+
+
+
+                var numero6 = App.S_Selector2.getChecked();
+                if (numero6.length > 0) {
+                    var numeroT = numero6["0"].inputValue
+                } else {
+                    var numeroT = App.S_Selector2.getValue()
+                }
+
+                var numero7 = App.S_Episiotomia.getChecked();
+                if (numero7.length > 0) {
+                    var numeroP = numero7["0"].inputValue
+                } else {
+                    var numeroP = App.S_Episiotomia.getValue()
+                }
+
+
+                var numero8 = App.S_Selector3.getChecked();
+                if (numero8.length > 0) {
+                    var numeroU = numero8["0"].inputValue
+                } else {
+                    var numeroU = App.S_Selector3.getValue()
+                }
+
+
+                var numero9 = App.S_Selector4.getChecked();
+                if (numero9.length > 0) {
+                    var numeroR = numero9["0"].inputValue
+                } else {
+                    var numeroR = App.S_Selector4.getValue()
+                }
+
+
+                /*-----------------------------------------------------------------*/
+                var horas = App.Fecha_Ing.getValue();
+
+                //var h1 = horas.getHours();
+                //var m1 = horas.getMinutes();
+
+                //var fecha = App.Fecha_Ing.getValue();
+                ///*fecha = fecha.setHours(0, 0, 0, 0);*/
+                //fecha = fecha.setHours(h1, m1, 0, 0);
+               // var horas = App.Hora_Ing.getValue();
+
+              //  var newFecha = new Date(fecha);
+
+                /*-----------------------------------------------------------------*/
+
+                //var horas1 = App.S_Hora_Parto.getValue();
+
+                //var h12 = horas1.getHours();
+                //var m13 = horas1.getMinutes();
+
+                //var fecha1 = App.S_Fecha_Parto.getValue();
+                ///*fecha = fecha.setHours(0, 0, 0, 0);*/
+                //fecha1 = fecha1.setHours(h12, m13, 0, 0);
+                //var horas1 = App.S_Hora_Parto.getValue();
+
+                //var newFechas = new Date(fecha1);
+
+
+
+
+                var i = 0;
+                var invalidFieldsGrid = new Array();
+                var fila = 0;
+
+            //    var crono = App.Controladora.getValue();
+
+                var ArrayListC = new Array();
+                var HC_RESUMEN_PARTO_FE = {
+
+
+                    Fecha_Ing: horas,
+                    Hora_Ing: App.Hora_Ing.getValue(),
+                    Controladora: parseInt(numeroX),
+                    Membranas: parseInt(numeroY),
+                    Horas_memb: App.Horas_memb.getValue(),
+                    P_Selector1: parseInt(numeroZ),
+                    P_Selector2: selectorP,
+                    P_Observacion: App.P_Observacion.getValue(),
+                    P_Dur_Parto: App.P_Dur_Parto.getValue(),
+                    S_Selector1:selector1,
+                    Observaciones1_S: App.Observaciones1_S.getValue(),
+                    S_Fecha_Parto: App.S_Fecha_Parto.getValue(),
+                    S_Hora_Parto: App.S_Hora_Parto.getValue(),
+                    S_Selector2: parseInt(numeroT),
+                    S_Episiotomia: parseInt(numeroP),
+                    S_Desgarro: App.S_Desgarro.getValue(),
+                    S_Selector3: parseInt(numeroU),/*App.SuperficieDescripion.getValue(),*/
+                    S_Selector4: parseInt(numeroR),
+                    Observaciones2_S: App.Observaciones2_S.getValue(),
+                    S_Dur_Parto: App.S_Dur_Parto.getValue()
+
+                }
+                ArrayListC.push(HC_RESUMEN_PARTO_FE);
+
+
+                var ArrayList0 = new Array();
+                App.storeEmbAnt.each(function (r) {
+
+                    fila = fila + 1;
+                    setValuesGridForm(r, null);
+                    invalidFieldsGrid = getInvalidFieldsGrid(App.formactual, invalidFieldsGrid, fila);
+
+                    var HC_RESPARTO_EMB_ANT_FE = {
+                        Secuencia: r.get('Secuencia'),
+                        Pariedad1: r.get('Pariedad1'),
+                        Pariedad2: r.get('Pariedad2'),
+                        Pariedad3: r.get('Pariedad3'),
+                        Pariedad4: r.get('Pariedad4'),
+                        Gravidez: r.get('Gravidez'),
+                        Accion: (r.get('Accion') == 'NUEVO' ? 'NUEVO' : 'UPDATE')
+
+                    };
+                    ArrayList0.push(HC_RESPARTO_EMB_ANT_FE);
+                    i = i + 1;
+
+                });
+
+
+                var ArrayList5 = new Array();
+                App.storeEmbAct.each(function (r) {
+                    fila = fila + 1;
+                    setValuesGridForm(r, null);
+                    invalidFieldsGrid = getInvalidFieldsGrid(App.formactual, invalidFieldsGrid, fila);
+
+                    var HC_RESPARTO_EMB_ACT_FE = {
+                        Secuencia: r.get('Secuencia'),
+                        FUR: r.get('FUR'),
+                        FPP: r.get('FPP'),
+                        EGXFUR: r.get('EGXFUR'),
+                        PFGECO: r.get('PFGECO'),
+                        EG: r.get('EG'),
+                        AU: r.get('AU'),
+                        Accion: (r.get('Accion') == 'NUEVO' ? 'NUEVO' : 'UPDATE')
+
+                    };
+                    ArrayList5.push(HC_RESPARTO_EMB_ACT_FE);
+
+                    i = i + 1;
+                });
+
+            }
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("CCEPF505_Save_SS_HC_RESUMEN_PARTO_FE"))',
+                        params: {
+                            selectionArray0: ArrayListC,
+                            selectionArray1: ArrayList0,
+                            selectionArray2: ArrayList5,
+                            Evento: 'Server',
+                            Version: 'CCEPF505'
+                        }
+                    ,
+                        success: function (result) {
+                            reload = true;
+                        }
+                ,
+                        failure: function (result) {
+                            reload = false;
+                        }
+                    });
+                    App.cmdGuardar.setDisabled(false);
+
+                    if (reload) {
+
+                        parent.App.txtRecargarX.setValue('RELOAD');
+                    }
+
+
+      }
+
+        var getInvalidFieldsGrid = function (form, invalidFields, fila) {
+            var fields = App.formactual.getForm().getFields();
+
+            fields.filterBy(function (field) {
+
+                if (!field.isValid()) {
+                    var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                        NombreCampo: field.name,
+                        IdEvento: (field.isValid() ? 1 : 0),
+                        ValorTexto: 'Fila N° ' + fila + '-' + field.name + ': ' + field.getErrors()
+                    };
+                    invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+                    field.reset();
+                }
+            });
+            return invalidFields;
+        };
+
+
+
+        function eventoRadio(radio, nivel)
+        {
+            var id = radio.getValue();
+            if (id) {
+
+
+                if (nivel == 8) {
+                    App.P_Observacion.setDisabled(true);
+                    App.P_Observacion.setValue("");
+                }
+
+                if (nivel == 9) {
+                    App.P_Observacion.setDisabled(false);
+                }
+
+                if (nivel == 1) {
+                    App.Observaciones1_S.setDisabled(true);
+                    App.Observaciones1_S.setValue("");
+                }
+
+                if (nivel == 2) {
+                    App.Observaciones1_S.setDisabled(false);
+                }
+
+
+            }
+
+
+
+        }
+
+        var calcular = function (valor) {
+
+
+
+            var id1 = 0;
+            var id2 = 0;
+            var id3 = 0;
+            var   x = 0;
+            var  x1 = 0;
+            var  x2 = 0;
+            var  x3 = 0;
+
+            var total = 0;
+
+            var grid1 = Ext.getCmp('grillaEmbAnt');
+            var store = grid1.store;
+
+            grid1.store.each(function (r) {
+                x  =  parseFloat(r.get('Secuencia'));
+                x1 =  parseFloat(r.get('Pariedad1'));
+                x2 = parseFloat(r.get('Pariedad2'));
+                x3 =  parseFloat(r.get('Pariedad3'));
+
+                total = x1 + x2 + x3;
+
+                r.set('Pariedad4', total)
+
+
+            });
+
+
+
+        };
+
+        function validargravidez(valor) {
+
+            var id1 = valor.getValue();
+            var id2 = App.Pariedad4.getValue();
+            var id3 = App.Gravidez.getValue();
+
+            if (App.Gravidez.getValue() != null) {
+
+                if (id3 < id2) {
+
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            message: 'La Gravidez debe ser mayor o igual  a la  Paridad',
+                            titulo: 'Advertencia',
+                            tipo: 'ERROR'
+                        }
+
+                    });
+                    App.Gravidez.setValue('');
+
+                }
+            }
+
+        };
+
+        function Bloquea(val, num, cantidad)
+        {
+            var numero = App.S_Selector1.getChecked();
+
+
+            var numeroX = 0;/*numero["0"].inputValue;*/
+            if (numero != null & numero !='') {
+                numeroX = numero["0"].inputValue;
+            }
+            //var campo = 'CampoValor' + num;
+
+
+            if (parseInt(num) != numeroX) {
+                /* Ext.getCmp(campTem).setDisabled(true);*/
+                val.setDisabled(true);
+            }
+            else {
+                val.setDisabled(false);
+                //Ext.getCmp(campo).setValue(cantidad);
+            }
+
+        }
+
+        function Bloquea2(val, num, cantidad) {
+            var numero = App.P_Selector2.getChecked();
+
+
+            var numeroX = 0;/*numero["0"].inputValue;*/
+            if (numero != null & numero != '') {
+                numeroX = numero["0"].inputValue;
+            }
+            //var campo = 'CampoValor' + num;
+
+
+            if (parseInt(num) != numeroX) {
+                /* Ext.getCmp(campTem).setDisabled(true);*/
+                val.setDisabled(true);
+            }
+            else {
+                val.setDisabled(false);
+                //Ext.getCmp(campo).setValue(cantidad);
+            }
+
+        }
+
+
+        function SetearHora(val) {
+
+            var fech = App.FechaControl.getValue();
+
+            alert(fech);
+
+            val.setDisabled(false);
+            Ext.getCmp('HoraControl').setValue(fech);
+
+
+        }
+
+
+        function Deshabilita(val)
+        {
+            var valor = val.value;
+            var indice = val.column.rowIndex;
+            var grid = Ext.getCmp('grillaBalanceNeo1');
+            var column = grid.columns[6];
+            var record = grid.store.getAt(indice);
+            var cell = grid.getView().getCell(record, column);
+
+            if (valor == 5) {
+                cell.show();
+            }
+            else {
+                cell.hide();
+            }
+
+
+        }
+
+        function Deshabilita2(val) {
+            var valor = val.value;
+            var indice = val.column.rowIndex;
+            var grid = Ext.getCmp('grillaBalanceNeo2');
+            var column = grid.columns[6];
+            var record = grid.store.getAt(indice);
+            var cell = grid.getView().getCell(record, column);
+
+            if (valor == 2) {
+                cell.show();
+            }
+            else {
+                cell.hide();
+            }
+
+
+        }
+
+
+        function ocultar1(ev)
+        {
+            var valor = ev.record.data.TipoSolucion;
+            var grid = Ext.getCmp('grillaBalanceNeo1');
+            var indice = grid.store.indexOf(ev.record);
+            var column = grid.columns[6];
+            var record = grid.store.getAt(indice);
+            var cell = grid.getView().getCell(record, column);
+
+            if (valor == 5) {
+                cell.show();
+            }
+            else {
+                cell.hide();
+            }
+        }
+        function ocultar2(ev) {
+            var valor = ev.record.data.TipoSolucion;
+            var grid = Ext.getCmp('grillaBalanceNeo2');
+            var indice = grid.store.indexOf(ev.record);
+            var column = grid.columns[6];
+            var record = grid.store.getAt(indice);
+            var cell = grid.getView().getCell(record, column);
+
+            if (valor == 2) {
+                cell.show();
+            }
+            else {
+                cell.hide();
+            }
+        }
+
+
+        var selectorP = '@selectorP'
+        var selector1= '@selector1'
+        var eventoCheck = function (ch1, pregunta, valor) {
+            var CheckAll = ch1.getValue();
+            if (CheckAll) {
+
+                if (pregunta == 'C10') {
+                    selectorP=2
+                    App.P_Observacion.setDisabled(false);
+                }
+                if (pregunta == 'C11') {
+                    selectorP = 1
+                    App.P_Observacion.setDisabled(true);
+                    App.P_Observacion.setValue(null);
+                }
+                if (pregunta == 'C12') {
+                    selector1=1
+                    App.Observaciones1_S.setDisabled(true);
+                    App.Observaciones1_S.setValue(null);
+                }
+                if (pregunta == 'C13') {
+                    selector1=2
+                    App.Observaciones1_S.setDisabled(false);
+
+
+                }
+                if (pregunta == 'C14') {
+                    App.Esepcificar.setDisabled(true);
+                    App.Esepcificar.setValue(null);
+
+                }
+                if (pregunta == 'C15') {
+                    App.Esepcificar.setDisabled(false);
+
+
+                }
+
+            }
+            else {
+
+                if (pregunta == 'C10') {
+                    App.P_Observacion.setDisabled(true);
+                    App.P_Observacion.setValue(null);
+
+                }
+                if (pregunta == 'C11') {
+                    App.P_Observacion.setDisabled(false);
+
+                } if (pregunta == 'C12') {
+
+                    App.RevisionInstrumentalTipo.setDisabled(false);
+                }
+                if (pregunta == 'C13') {
+                    App.RevisionInstrumentalTipo.setDisabled(true);
+                    App.RevisionInstrumentalTipo.setValue(null);
+
+                }
+                if (pregunta == 'C14') {
+                    App.Esepcificar.setDisabled(false);
+
+
+                }
+                if (pregunta == 'C15') {
+                    App.Esepcificar.setDisabled(true);
+                    App.Esepcificar.setValue(null);
+
+
+                }
+
+
+            }
+        }
+
+
+
+    </script>
+}
+
+@section cuerpo
+{
+    @(
+ Html.X().Viewport().ID("ViewportXD")
+        .Layout(LayoutType.VBox)
+        .LayoutConfig(
+            new VBoxLayoutConfig { Align = VBoxAlign.Stretch }
+        )
+        .Listeners(l =>
+        {
+            l.AfterLayout.BroadcastOnBus = "App.resize";
+            l.AfterLayout.Single = true;
+        })
+        .Items(regions =>
+        {
+
+            regions.Add(
+            Html.X()
+                .FormPanel()
+                .ItemID("center")
+                .DefaultAnchor("100%")
+                .AutoScroll(true)
+                .Height(340)
+                .Header(false)
+                .Border(true)
+                .ID("formactual")
+                .Listeners(l =>
+                {
+                    l.Render.Handler = "eventoRenderForm(); ";
+                })
+               .Items(
+                // X.Component().Height(2),
+                            X.FieldSet().Collapsible(true)
+                            .ColumnWidth(0.4).PaddingSpec("2")
+                            .Title("")
+                            .MarginSpec("0 05 0 05").Height(50)
+
+                            .Items(
+                                    Html.X().Container().Layout(LayoutType.VBox)
+                                     .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                                     .Items(
+
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+
+                                              X.Component().Width(15),
+                                              X.DateFieldFor(c => c.Fecha_Ing).FieldLabel("Fecha y Hora de Ingreso :").LabelWidth(150)
+                                              .Format("dd/MM/yyyy").ReadOnly(indicaModoLectura).Editable(false).Width(250),
+
+                                               X.Component().Width(20),
+                                               X.TimeField(/*c => c.FechaControl*/).ID("Hora_Ing").FieldLabel("").LabelWidth(50).Width(70)
+                                               .ReadOnly(indicaModoLectura).Editable(false).Format("HH:mm").Value(Model.Hora_Ing).AllowBlank(false).BlankText("Debe seleccionar una hora ")/*.Listeners(l => { l.AfterRender.Handler = "SetearHora(this)"; })*/
+                                               ,
+                                                X.Component().Width(50)
+
+
+
+                                               ,
+                                               X.Component().Width(5),
+
+
+                                                 X.RadioGroup().FieldLabel("Controladora").LabelWidth(150).ID("Controladora").AllowBlank(false).BlankText("Seleccione una pérdida insensible NEO")
+                                                     .Items(
+                                                        X.Radio().ID("Radio1").BoxLabel("Si").InputValue("1").ReadOnly(indicaModoLectura).Checked(Model.Controladora == 1 ? true : false).Width(100)/*.Handler("eventoRadio(this, 1)")*/,
+                                                        X.Radio().ID("Radio2").BoxLabel("No").InputValue("2").ReadOnly(indicaModoLectura).Checked(Model.Controladora == 2 ? true : false).Width(100)/*.Handler("eventoRadio(this, 2)")*/
+
+                                                        )
+                                                         .Vertical(false)
+                                                         .FieldLabel("Controladora")
+                                                         .Defaults(d =>
+                                                         {
+                                                             d.Add(new Parameter("LabelWidth", "100"));
+                                                             d.Add(new Parameter("DefaultAnchor", "50%"));
+                                                         })
+                                                         .AnchorVertical("100%")
+                                                        .Listeners(l => { l.Activate.Handler = "setIndicaCambios(true);"; })
+
+                                          )
+
+
+                                    )
+
+                                ),
+
+
+
+
+                                X.Component().Height(4),
+                                X.FieldSet().Collapsible(true)/*.PaddingSpec("12")*/
+                // .ColumnWidth(0.4)
+                                .Title("Embarazos Anteriores ")
+                                .MarginSpec("0 05 0 05")
+                                .Items(
+
+                                     Html.X().Container().Layout(LayoutType.VBox)
+                                     .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch }).Width(350)
+                                     .Items(
+
+
+                                                X.Component().Height(3),
+
+                                                X.GridPanel().Width(250)
+                                                .ID("grillaEmbAnt")
+                                                .Border(true)
+                                                .PaddingSpec("5")
+
+                                .Store(
+                                    Html.X().Store()
+                                        .ID("storeEmbAnt")
+                                        .Model(
+                                            Html.X().Model()
+                                                .IDProperty("Secuencia")
+                                                .Fields(
+                                                    new ModelField("Secuencia", ModelFieldType.Int),
+                                                    new ModelField("Gravidez", ModelFieldType.Int),
+                                                    new ModelField("Pariedad1", ModelFieldType.Int),
+                                                    new ModelField("Pariedad2", ModelFieldType.Int),
+                                                    new ModelField("Pariedad3", ModelFieldType.Int),
+                                                    new ModelField("Pariedad4", ModelFieldType.Int),
+
+                                                    new ModelField("Accion", ModelFieldType.String)
+
+                                                )
+                                        )
+                                        .AutoLoad(true)
+                                        .RemoteSort(false)
+                                        .IsPagingStore(true)
+                                        .RemotePaging(true)
+                                        .PageSize(5)
+                                        .Listeners(l => { l.Load.Handler = "setImpresion(this);"; })
+                                        .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                               .Url("CCEPF505_LISTAR_GRILLA_EMB_ANT")
+                                                        .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                                        .Root("data")
+                                                                        .TotalProperty("total")
+                                                                        .IDProperty("Secuencia")))
+
+                                                                        ))
+
+                                )
+                                .ColumnModel(
+
+                                    Html.X().ComponentColumn().Editor(true).Text("Secuencia").DataIndex("Secuencia").Width(20).Hidden(true)
+                                    .Component(Html.X().TextField().ReadOnly(indicaModoLectura)),
+
+                                    Html.X().ComponentColumn().Editor(true).Text("Gravidez").DataIndex("Gravidez").Width(80)
+                                    .Component(Html.X().NumberField().MinValue(1).Editable(false)
+                                    .ReadOnly(indicaModoLectura)
+                                    .Editable(false)
+
+                                    )
+                                    ,
+
+                                    Html.X().ComponentColumn().Editor(true).Text("Pariedad").DataIndex("Pariedad").Width(300)
+
+                                    .Columns(
+
+
+                                                            Html.X().ComponentColumn().DataIndex("Pariedad1").Editor(true)
+                                                            .Text("").Width(50)
+                                                            .Component(Html.X().NumberField().ReadOnly(indicaModoLectura).Editable(false)
+                                                            .Listeners(l =>
+                                                            {
+                                                                l.Blur.Handler = "calcular(this);";
+                                                                l.KeyUp.Fn = "eventoKey";
+                                                            })
+                                                            .MinValue(0)
+                                                            .Width(100)
+                                                            )
+
+                                                            ,
+
+                                                            Html.X().ComponentColumn().DataIndex("Pariedad2").Editor(true)
+                                                            .Text("").Width(50)
+                                                            .Component(Html.X().NumberField().ReadOnly(indicaModoLectura).Editable(false)
+                                                             .Listeners(l =>
+                                                             {
+                                                                 l.Blur.Handler = "calcular(this);";
+                                                                 l.KeyUp.Fn = "eventoKey";
+                                                             })
+
+                                                            )
+                                                            ,
+                                                            Html.X().ComponentColumn().DataIndex("Pariedad3").Editor(true)
+                                                            .Text("").Width(50)
+                                                            .Component(Html.X().NumberField().ReadOnly(indicaModoLectura).Editable(false)
+                                                             .Listeners(l =>
+                                                             {
+                                                                 l.Blur.Handler = "calcular(this);";
+                                                                 l.KeyUp.Fn = "eventoKey";
+                                                             })
+
+                                                            )
+                                                            ,
+
+                                                            Html.X().ComponentColumn().DataIndex("Pariedad4").Editor(true)
+                                                            .Text("").Width(50)
+                                                            .Component(Html.X().TextField().ReadOnly(true).MaxLength(2))
+
+
+
+                                    ),
+
+                                    //   .Component(Html.X().TextField().ReadOnly(indicaModoLectura)),
+
+                                    Html.X().ComponentColumn().Editor(true).Text("Accion").DataIndex("Accion").Hidden(true)
+                                    .Component(Html.X().TextField().ReadOnly(indicaModoLectura)),
+
+
+
+                                    Html.X().CommandColumn()
+                                    .Width(70)
+                                    .Text("Eliminar")
+                                    .Commands(
+                                        Html.X().GridCommand().Disabled(indicaModoLectura)
+                                            .CommandName("Delete")
+                                            .Icon(Icon.Delete)
+                                            .Text("")
+                                    )
+                                    .Listeners(ls => ls.Command.Handler = "deleteActual(record);")
+                                    , Html.X().Column().Text("ACCION")
+                                                         .DataIndex("ACCION")
+                                                         .Width(85)
+                                                         .Hidden(true)
+                                )
+                                .SelectionModel(Html.X().RowSelectionModel().Mode(SelectionMode.Multi))
+                                .Plugins(Html.X().CellEditing())
+                                .Listeners(l => l.CellClick.Handler = "setSeleccionActual(record);")
+                                .TopBar(
+                                        Html.X().Toolbar()
+                                            .Hidden(indicaModoLectura)
+                                            .Items(
+                                                    Html.X().ToolbarSeparator(),
+                                                    Html.X().Label()
+                                                       ,
+                                                    X.ToolbarFill(),
+                                                    Html.X().Button().Disabled(indicaModoLectura)
+                                                        .Text("Agregar")
+                                                        .Icon(Icon.Add)
+                                                           .Handler("addRecordMain(this.up('grid'));")
+
+                                                 )
+                                        )
+
+                                     )
+
+
+                                   ,
+                                     X.Component().Height(4)
+
+
+              ),
+                       X.Component().Height(2),
+                       X.FieldSet()
+                        .Collapsible(true)/*.PaddingSpec("2")*/
+                /* .ColumnWidth(0.4)*/.Title("Embarazo Actual")
+                /* .Layout(LayoutType.VBox)*/
+                        .MarginSpec("05 05 0 05")
+                         .Items(
+                       Html.X().Container().Layout(LayoutType.VBox)
+                                     .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch }).Width(600)
+                        .Items(
+
+
+                          X.Component().Height(2),
+                /////////////////////////////////////////////////////////////////////////////
+                           X.GridPanel()
+                                .ID("grillaEmbAct")
+                                .Border(true)
+                                .PaddingSpec("5")
+                                .Store(
+                                    Html.X().Store()
+                                        .ID("storeEmbAct")
+                                        .Model(
+                                            Html.X().Model()
+                                                .IDProperty("Secuencia")
+                                                .Fields(
+                                                    new ModelField("Secuencia", ModelFieldType.Int),
+                                                    new ModelField("FUR", ModelFieldType.Date),
+                                                    new ModelField("FPP", ModelFieldType.Date),
+                                                    new ModelField("EGXFUR", ModelFieldType.Int),
+                                                    new ModelField("PFGECO", ModelFieldType.String),
+                                                    new ModelField("EG"),
+                                                    new ModelField("AU", ModelFieldType.String),
+                                                    new ModelField("Accion", ModelFieldType.String)
+
+                                                )
+                                        )
+                                        .AutoLoad(true)
+                                        .RemoteSort(false)
+                                        .IsPagingStore(true)
+                                        .RemotePaging(true)
+                                        .PageSize(5)
+                                        .Listeners(l => { l.Load.Handler = "setImpresion(this);"; })
+                                        .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                               .Url("CCEPF505_LISTAR_GRILLA_EMB_ACT")
+                                                        .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                                        .Root("data")
+                                                                        .TotalProperty("total")
+                                                                        .IDProperty("Secuencia")))
+
+                                                                        ))
+                                         .Parameters(ps =>
+                                                                ps.Add(new
+                                                                {
+                                                                    //  tipoRecurso = 2,
+                                                                    //  tipoBalanc = 3
+
+                                                                })
+                                                            )
+                                )
+                                .ColumnModel(
+
+                                    Html.X().ComponentColumn().Editor(true).Text("Secuencia").DataIndex("Secuencia").Width(100).Hidden(true)
+                                    .Component(Html.X().TextField().ReadOnly(indicaModoLectura)
+                                    .Listeners(l => { l.KeyPress.Handler = "setIndicaCambios(true); ReplaceCaracterEspec(this);"; })
+                                    ),
+
+                                    Html.X().ComponentColumn().Editor(true).Text("FUR").DataIndex("FUR").Width(100).Hidden(false)
+                                    .Component(Html.X().DateField().ReadOnly(indicaModoLectura).Format("MM/yyyy").Editable(false)
+                                     .Listeners(l => { l.KeyPress.Handler = "setIndicaCambios(true); ReplaceCaracterEspec(this);"; })
+                                    ),
+
+                                    Html.X().ComponentColumn().Editor(true).Text("FPP").DataIndex("FPP").Width(80).Hidden(false)
+                                    .Component(Html.X().DateField().ReadOnly(indicaModoLectura).Format("dd/MM/yyyy").Editable(false)
+                                     .Listeners(l => { l.KeyPress.Handler = "setIndicaCambios(true); ReplaceCaracterEspec(this);"; })
+                                    ),
+                                    Html.X().ComponentColumn().Editor(true).Text("E.G x FUR").DataIndex("EGXFUR").Width(80).Hidden(false)
+                                    .Component(Html.X().NumberField().ReadOnly(indicaModoLectura).MinValue(0).Editable(false)
+                                    .MaxValue(45)
+                                    .Listeners(l => { l.KeyPress.Handler = "setIndicaCambios(true); ReplaceCaracterEspec(this);"; })
+                                    ),
+
+                                    Html.X().ComponentColumn().Editor(true).Text("FG x ECO").DataIndex("PFGECO").Width(80)
+                                    .Component(Html.X().NumberField().ReadOnly(indicaModoLectura).MinValue(0).Editable(false)
+                                    .MaxValue(45)
+                                    .Listeners(l => { l.KeyPress.Handler = "setIndicaCambios(true); ReplaceCaracterEspec(this);"; })
+                                    ),
+
+                                    Html.X().ComponentColumn().Editor(true).Text("E.G(sem.)").DataIndex("EG").Width(80)
+                                    .Component(Html.X().NumberField().ReadOnly(indicaModoLectura).MinValue(0).Editable(false)
+                                    .MaxValue(45)
+                                    .Listeners(l => { l.KeyPress.Handler = "setIndicaCambios(true); ReplaceCaracterEspec(this);"; })
+                                    ),
+
+                                    Html.X().ComponentColumn().Editor(true).Text("A.U(cm)").DataIndex("AU").Width(100)
+                                    .Component(Html.X().NumberField().ReadOnly(indicaModoLectura).MinValue(0).Editable(false)
+                                    .MaxValue(45)
+                                    .Listeners(l => { l.KeyPress.Handler = "setIndicaCambios(true); ReplaceCaracterEspec(this);"; })
+                                    )
+                                          ,
+
+                                    Html.X().ComponentColumn().Editor(true).Text("Accion").DataIndex("Accion").Hidden(true)
+                                    .Component(Html.X().NumberField().ReadOnly(indicaModoLectura)),
+
+
+
+                                Html.X().CommandColumn()
+                                .Width(70)
+                                .Text("Eliminar")
+                                .Commands(
+                                    Html.X().GridCommand().Disabled(indicaModoLectura)
+                                        .CommandName("Delete")
+                                        .Icon(Icon.Delete)
+                                        .Text("")
+                                )
+                                   .Listeners(ls => ls.Command.Handler = "deleteActuals(record);")
+                                )
+                                .SelectionModel(Html.X().RowSelectionModel().Mode(SelectionMode.Multi))
+                                .Plugins(Html.X().CellEditing())
+                // .Listeners(l => l.CellClick.Handler = "setSeleccionActual(record);")
+                                .TopBar(
+                                        Html.X().Toolbar()
+                                            .Hidden(indicaModoLectura)
+                                            .Items(
+                                            Html.X().ToolbarSeparator(),
+                                            Html.X().Label()
+                                               ,
+                                            X.ToolbarFill(),
+                                            Html.X().Button().Disabled(indicaModoLectura)
+                                                .Text("Agregar").ID("btnAG")
+                                                .Icon(Icon.Add)
+                                                   .Handler("addRecordMain2(this.up('grid'));")
+
+                                            )
+                                        )
+
+
+
+
+                         ,
+
+
+                                     Html.X().Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                //.LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+
+                                                X.Component().Height(20),
+                                                X.Component().Width(10)
+
+
+
+                                               ,
+
+
+
+                                 X.RadioGroup().FieldLabel("Membranas").LabelWidth(150).ID("Membranas").AllowBlank(false)
+                                                     .Items(
+                                                        X.Radio().ID("Radio3").BoxLabel("I").InputValue("1").ReadOnly(indicaModoLectura).Checked(Model.Membranas == 1 ? true : false).Width(120)/*.Handler("eventoRadio(this, 1)")*/,
+                                                        X.Radio().ID("Radio4").BoxLabel("R").InputValue("2").ReadOnly(indicaModoLectura).Checked(Model.Membranas == 2 ? true : false).Width(100)/*.Handler("eventoRadio(this, 2)")*/
+
+                                                        )
+                                                         .Vertical(false)
+                                                         .FieldLabel("Membranas")
+                                                         .Defaults(d =>
+                                                         {
+                                                             d.Add(new Parameter("LabelWidth", "100"));
+                                                             d.Add(new Parameter("DefaultAnchor", "50%"));
+                                                         })
+                                                         .AnchorVertical("100%")
+                                                         .Listeners(l => { l.Activate.Handler = "setIndicaCambios(true);"; })
+                                ,
+                                 X.Component().Width(100),
+
+                                         Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(X.Component().Width(55), X.TextFieldFor(m => m.Horas_memb).FieldLabel("").Width(80).MaxLength(250))
+                                     ,
+                                      X.Component().Width(5),
+                                               X.Label("hrs.")
+
+
+
+                                         )
+
+
+
+
+                                     , X.Component().Height(5)
+
+                         )
+                      )
+
+                       , X.FieldSet()
+                        .Collapsible(false).PaddingSpec("4").AutoScroll(true)
+                        .ColumnWidth(0.4).Title("Primer Periodo")
+                        .Layout(LayoutType.VBox)
+                        .MarginSpec("05 05 0 05")
+                //   .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                        .Items(
+                                    Html.X().Container().Layout(LayoutType.VBox)
+                                     .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                                     .Items(
+
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+
+                                                X.Component().Height(30),
+                                                X.Component().Width(120)
+
+
+
+                                //               ,
+
+                                //               X.RadioGroupFor(m => m.P_Selector1, new List<Radio.Config> {
+                //                new Radio.Config{BoxLabel = "Espontáneo", InputValue = "1", ReadOnly =indicaModoLectura,Width = 120},
+                //                new Radio.Config{BoxLabel = "Inducido", InputValue = "2", ReadOnly =indicaModoLectura,Width = 100},
+                //                new Radio.Config{BoxLabel = "Estimulado", InputValue = "3", ReadOnly =indicaModoLectura,Width = 150}
+
+
+                                //}).ID("P_Selector1").AllowBlank(false).BlankText("Debe seleccionar uno ")
+                //.Vertical(true)
+                //.FieldLabel("Inicio ")
+                //.Defaults(d =>
+                //{
+                //    d.Add(new Parameter("LabelWidth", "100"));
+                //    d.Add(new Parameter("DefaultAnchor", "50%"));
+                //})
+                //.AnchorVertical("100%")
+                                ,
+
+                                 X.RadioGroup().FieldLabel("P_Selector1").LabelWidth(100).ID("P_Selector1").MsgTarget(MessageTarget.Side).AutoFitErrors(false)
+                                 .Layout(LayoutType.Column)
+                                                     .Items(
+                                                      X.Component().Width(100),
+                                            X.Label("Inicio").Width(200).Height(50),
+
+                                                        X.Radio().ID("Radio5").BoxLabel("Espontáneo").InputValue("1").ReadOnly(indicaModoLectura).Checked(Model.P_Selector1 == 1 ? true : false).Width(105)/*.Handler("eventoRadio(this, 1)")*/,
+                                                        X.Radio().ID("Radio6").BoxLabel("Inducido").InputValue("2").ReadOnly(indicaModoLectura).Checked(Model.P_Selector1 == 2 ? true : false).Width(120)/*.Handler("eventoRadio(this, 2)")*/,
+                                                        X.Radio().ID("Radio7").BoxLabel("Estimulado").InputValue("3").ReadOnly(indicaModoLectura).Checked(Model.P_Selector1 == 3 ? true : false).Width(150)/*.Handler("eventoRadio(this, 2)")*/
+
+                                                        )
+                                                         .Vertical(false)
+                                                         .FieldLabel("")
+                                                         .Defaults(d =>
+                                                         {
+                                                             d.Add(new Parameter("LabelWidth", "100"));
+                                                             d.Add(new Parameter("DefaultAnchor", "50%"));
+                                                         }).Listeners(l => { l.Change.Handler = "setIndicaCambios(true); ReplaceCaracterEspec(this);"; })
+                                                         .AnchorVertical("100%")
+                                                         .Listeners(l => { l.Activate.Handler = "setIndicaCambios(true);"; })
+                                ,
+                                 X.Component().Width(80)
+
+                                 ,
+
+                                 X.Component().Height(30)
+                //X.Component().Width(30)
+
+
+
+
+                                 ),
+
+                                  Html.X().Container().Layout(LayoutType.VBox)
+                                     .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                                     .Items(
+
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+
+                                 X.Component().Width(320),
+                                                     X.RadioGroupFor(c => c.P_Selector2, new List<Radio.Config> {
+                            new Radio.Config{BoxLabel = "Normal" , Checked= (Model.P_Selector2==1?true:false), InputValue = "1", ReadOnly =indicaModoLectura, Width = 100, Handler="eventoCheck(this, 'C11', 'N');"}, //
+                            new Radio.Config{BoxLabel = "Anormal" , Checked= (Model.P_Selector2==2?true:false), InputValue = "2", ReadOnly =indicaModoLectura, Width = 100, Handler="eventoCheck(this, 'C10', 'N');"}
+
+                                }).FieldLabel("").LabelWidth(130),
+     X.Component().Width(30),
+                    X.TextFieldFor(m => m.P_Observacion).FieldLabel("Observaciones").ReadOnly(indicaModoLectura).MaxLength(100).Disabled(Model.P_Selector2 == 2 ? false : true)
+
+
+                                     ,
+                                      X.Component().Width(200),
+                                               X.Label("")
+
+
+
+                                ))
+
+
+                                 ),
+
+                                 X.Component().Height(15),
+
+
+                                 Html.X().Container().Layout(LayoutType.VBox)
+                                     .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                                     .Items(
+
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+
+                                              X.Component().Width(15),
+                                              X.TextField().FieldLabel("Duración del Parto :").LabelWidth(120).ID("P_Dur_Parto").Value(Model.P_Dur_Parto)
+                                              .Width(200).MaxLength(250),
+
+
+                                              X.Component().Width(5),
+                                               X.Label("hrs.")
+
+
+
+                                         )
+
+
+                                     )
+
+                                 , X.Component().Height(5)
+                        )
+                        ,
+
+                         X.FieldSet().Collapsible(true).PaddingSpec("12")
+                        .ColumnWidth(0.4).Title("Segundo Periodo")
+                        .AutoScroll(true)
+                        .Layout(LayoutType.VBox)
+                        .MarginSpec("05 05 0 05")
+                        .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                //   .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                        .Items(
+                                    Html.X().Container().Layout(LayoutType.VBox)
+                                     .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                                     .Items(
+
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+
+                                                X.Component().Height(30),
+                                                X.Component().Width(10)
+
+
+
+                                               ,
+                                                  X.RadioGroupFor(c => c.S_Selector1, new List<Radio.Config> {
+                            new Radio.Config{BoxLabel = "Normal" , Checked= (Model.S_Selector1==1?true:false), InputValue = "1", ReadOnly =indicaModoLectura, Width = 100, Handler="eventoCheck(this, 'C12', 'N');"}, //
+                            new Radio.Config{BoxLabel = "Anormal" , Checked= (Model.S_Selector1==2?true:false), InputValue = "2", ReadOnly =indicaModoLectura, Width = 100, Handler="eventoCheck(this, 'C13', 'N');"}
+
+                                }).FieldLabel("").LabelWidth(130),
+
+                                Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top }).Width(550)
+                                     .Items(X.Component().Width(5),
+                                      X.TextFieldFor(m => m.Observaciones1_S).FieldLabel("Observaciones").ReadOnly(indicaModoLectura).MaxLength(100).Disabled(Model.S_Selector1 == 2 ? false : true)
+
+
+                                     )
+                                     ,
+                                      X.Component().Width(150),
+                                               X.Label("")
+                                ,
+                                 X.Component().Width(10)
+
+                                 ,
+
+                                 X.Component().Height(30)
+                //X.Component().Width(30)
+
+
+
+
+                                 ),
+
+                                  Html.X().Container().Layout(LayoutType.VBox)
+                                     .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                                     .Items(
+
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+                                      X.Component().Width(20),
+                                            X.Label("Parto").Width(10).Height(50),
+
+                                              X.Component().Width(70),
+                                              X.DateField().ID("S_Fecha_Parto").FieldLabel("Fecha:").LabelWidth(40)
+                                              .Format("dd/MM/yyyy").ReadOnly(indicaModoLectura).Editable(false).Width(220).Value(Model.S_Fecha_Parto),
+
+                                               X.Component().Width(42),
+                                               X.TimeField().ID("S_Hora_Parto").FieldLabel("Hora").LabelWidth(65).Width(150)
+                                               .ReadOnly(indicaModoLectura).Editable(false).Format("HH:mm").Value(Model.S_Hora_Parto)/*.AllowBlank(false).BlankText("Debe seleccionar una hora ")*//*.Listeners(l => { l.AfterRender.Handler = "SetearHora(this)"; })*/
+                                               ,
+                                                X.Component().Width(50)
+
+
+
+
+
+                                         )
+
+
+                                     )
+
+
+                                 ), X.Component().Height(10),
+
+                               Html.X().Container().Layout(LayoutType.VBox)
+                                     .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                                     .Items(
+
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+
+
+                                                X.Component().Width(95)
+
+
+
+                                               ,
+
+                                               X.RadioGroupFor(m => m.S_Selector2, new List<Radio.Config> {
+                                                new Radio.Config{BoxLabel = "Espontáneo", InputValue = "1", ReadOnly =indicaModoLectura,Width = 100},
+                                                new Radio.Config{BoxLabel = "Inducido", InputValue = "2", ReadOnly =indicaModoLectura,Width = 100},
+                                                new Radio.Config{BoxLabel = "Instrumentado", InputValue = "3", ReadOnly =indicaModoLectura,Width = 150},
+                                                new Radio.Config{BoxLabel = "Sencillo", InputValue = "4", ReadOnly =indicaModoLectura,Width = 100},
+                                                new Radio.Config{BoxLabel = "Multiple", InputValue = "5", ReadOnly =indicaModoLectura,Width = 100}
+
+
+
+                                }).ID("S_Selector2")/*.AllowBlank(false).BlankText("Debe seleccionar uno ")*/
+                                .Vertical(true)
+                                .FieldLabel("")
+                                .Defaults(d =>
+                                {
+                                    d.Add(new Parameter("LabelWidth", "100"));
+                                    d.Add(new Parameter("DefaultAnchor", "50%"));
+                                }).Listeners(l => { l.Change.Handler = "setIndicaCambios(true); ReplaceCaracterEspec(this);"; })
+                                .AnchorVertical("100%"),
+
+
+                                 X.Component().Width(80)
+
+                                 ,
+
+                                 X.Component().Height(30)
+                //X.Component().Width(30)
+
+
+                               )
+
+                                 ),
+                                 X.Component().Height(10),
+
+                               Html.X().Container().Layout(LayoutType.VBox)
+                                     .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                                     .Items(
+
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+
+
+                                                X.Component().Width(100)
+
+
+
+                                               ,
+
+                                               X.CheckboxGroupFor(m => m.S_Episiotomia, new List<Checkbox.Config> {
+                                                new Checkbox.Config{BoxLabel = "M", InputValue = "1", ReadOnly =indicaModoLectura,Width = 120},
+                                                new Checkbox.Config{BoxLabel = "MI D", InputValue = "2", ReadOnly =indicaModoLectura,Width = 100},
+                                                new Checkbox.Config{BoxLabel = "MI I", InputValue = "3", ReadOnly =indicaModoLectura,Width = 150}
+
+
+
+
+                                }).ID("S_Episiotomia")/*.AllowBlank(false).BlankText("Debe seleccionar uno ")*/
+                                .Vertical(true)
+                                .FieldLabel("Episiotomía")
+                                .Defaults(d =>
+                                {
+                                    d.Add(new Parameter("LabelWidth", "100"));
+                                    d.Add(new Parameter("DefaultAnchor", "50%"));
+                                }).Listeners(l => { l.Change.Handler = "setIndicaCambios(true); ReplaceCaracterEspec(this);"; })
+                                .AnchorVertical("100%"),
+
+
+                                 X.Component().Width(98)
+
+                                 ,
+
+                                 X.Component().Height(30),
+
+
+
+
+                                   Html.X().Container().Layout(LayoutType.VBox)
+                                     .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                                     .Items(
+
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+
+                                              X.Component().Width(15),
+                                              X.ComboBoxFor(c => c.S_Desgarro).FieldLabel("Desgarro").LabelWidth(70).ID("S_Desgarro")
+                                              .ReadOnly(indicaModoLectura).Width(220)
+                                               .Editable(false)
+                                                .QueryMode(DataLoadMode.Local)
+                                                .TriggerAction(TriggerAction.All)
+                                                .EmptyText("Seleccione ")
+                                                .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboMiscelaneoLista.GetComboGenericosX("COMBOSGENERICOS", "DESGARRO").Select(d => new ListItem(d.Name, d.ID)))
+                                              .Listeners(l => { l.Select.Handler = "setIndicaCambios(true);"; })
+
+                                              ,
+
+
+                                                X.Component().Width(50)
+
+
+
+
+
+                                         )
+
+
+                                     )
+
+                               //X.Component().Width(30)
+
+
+
+
+
+                               )
+
+                                 )
+                                 ,
+
+                                 X.Component().Height(10),
+
+                               Html.X().Container().Layout(LayoutType.VBox)
+                                     .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                                     .Items(
+
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+
+
+                                                X.Component().Width(10)
+
+
+
+                                               ,
+
+                                                X.RadioGroupFor(m => m.S_Selector3, new List<Radio.Config> {
+                                                new Radio.Config{BoxLabel = "Vacum extrator", InputValue = "1", ReadOnly =indicaModoLectura,Width = 120},
+                                                new Radio.Config{BoxLabel = "Forceps", InputValue = "2", ReadOnly =indicaModoLectura,Width = 100},
+                                                new Radio.Config{BoxLabel = "Extracción podálica", InputValue = "3", ReadOnly =indicaModoLectura,Width = 150},
+                                                new Radio.Config{BoxLabel = "Cesárea", InputValue = "4", ReadOnly =indicaModoLectura,Width = 100}
+
+
+
+                                }).ID("S_Selector3")/*.AllowBlank(false).BlankText("Debe seleccionar uno ")*/
+                                .Vertical(true)
+                                .FieldLabel("Tipo")
+                                .Defaults(d =>
+                                {
+                                    d.Add(new Parameter("LabelWidth", "100"));
+                                    d.Add(new Parameter("DefaultAnchor", "50%"));
+                                }).Listeners(l => { l.Change.Handler = "setIndicaCambios(true); ReplaceCaracterEspec(this);"; })
+                                .AnchorVertical("100%"),
+
+
+                                 X.Component().Width(50)
+
+                                 ,
+
+                                 X.Component().Height(30)
+                //X.Component().Width(30)
+
+
+                               )
+
+                                 ), X.Component().Height(10),
+
+                                   Html.X().Container().Layout(LayoutType.VBox)
+                                     .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                                     .Items(
+
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+
+                                 X.Component().Width(120),
+
+                                     X.RadioGroupFor(m => m.S_Selector4, new List<Radio.Config> {
+                                                new Radio.Config{BoxLabel = "Analgesia", InputValue = "1", ReadOnly =indicaModoLectura,Width = 120},
+                                                new Radio.Config{BoxLabel = "Anestesia", InputValue = "2", ReadOnly =indicaModoLectura,Width = 100}
+
+
+
+                                }).ID("S_Selector4")/*.AllowBlank(false).BlankText("Debe seleccionar uno ")*/
+                                .Vertical(true)
+                                .FieldLabel("")
+                                .Defaults(d =>
+                                {
+                                    d.Add(new Parameter("LabelWidth", "100"));
+                                    d.Add(new Parameter("DefaultAnchor", "50%"));
+                                }).Listeners(l => { l.Change.Handler = "setIndicaCambios(true); ReplaceCaracterEspec(this);"; })
+                                .AnchorVertical("100%"),
+
+                                  Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top }).Width(550)
+                                     .Items(X.Component().Width(5), X.TextField().FieldLabel("Observaciones").ID("Observaciones2_S").Width(450).MaxLength(520).Value(Model.Observaciones2_S))
+                                     ,
+                                      X.Component().Width(200),
+                                               X.Label("")
+
+
+
+                                )),
+
+                                 X.Component().Height(15),
+
+
+                                 Html.X().Container().Layout(LayoutType.VBox)
+                                     .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                                     .Items(
+
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+
+                                              X.Component().Width(15),
+                                              X.TextField().FieldLabel("Duración del Parto :").ID("S_Dur_Parto").LabelWidth(120).Value(Model.S_Dur_Parto).MaxLength(250)
+                                              .Width(200),
+
+
+                                              X.Component().Width(5),
+                                               X.Label("hrs.")
+
+
+
+                                         )
+
+
+                                     ), X.Component().Height(5)
+
+                        )
+
+
+                        ,
+                        X.TextArea().ID("taAlerts")
+                        .Border(false)
+                        .StyleSpec("background:white;border:1px solid gray;")
+                        .FieldStyle("color: red")
+                        .Hidden(true)
+                        .ReadOnly(true)
+
+
+                        , X.Label().Hidden(false).Border(false).Html("<font  size='2.5em'; color='white'>Espacio</font>")
+                         , X.Component().Height(50)
+                     )
+                    .TopBar(X.Toolbar().ID("bar").Items(
+                            X.ToolbarSpacer(20),
+                            X.TextField().Width(15).FieldStyle("border-color: " + COLOER_IND_OBLIGA).ReadOnly(true).Hidden(indicaModoLectura),
+                            X.Label().Html("<b><font color='" + COLOER_IND_OBLIGA + "'>Campos Obligatorios</font></b>").Hidden(indicaModoLectura),
+
+                            X.ToolbarSpacer(20),
+                            Html.X().Container().Layout(LayoutType.HBox)
+                            .ID("conthbIndicaError").Hidden(true).Items(
+                                X.Label().Html("<font  size='1.9em'; color='red'>(</font>"),
+                                X.Label().Html("<font  size='3.9em'; color='red'><b>&#161;</b></font>"),
+                                X.Label().Html("<font  size='1.9em'; color='red'>) Verificar los errores presentados</font>")
+                            ),
+
+                            X.ToolbarFill(),
+
+                            X.Button()
+                            .Text("Imprimir")
+                            .Icon(Icon.Report)
+                            .Hidden(!visibleImpresion)
+                            .ID("btnImpresion")
+                            .Handler("eventoVisorReporte('');"),
+
+                            X.Button()
+                            .Text("Imprimir Todos")
+                            .Icon(Icon.ReportGo)
+                            .Hidden(!visibleImpresion)
+                            .ID("btnImpresionHC")
+                            .Handler("eventoVisorReporte('HC');"),
+
+                            X.ToolbarSpacer().Width(40),
+
+                            X.Button()
+                            .Text("Guardar")
+                            .Icon(Icon.Disk)
+                            .ID("cmdGuardar").Hidden(indicaModoLectura)
+                            .Handler("EnviarDataServer(this.up('grid'));"),
+
+                            X.Button()
+                                .Text("Cancelar")
+                                .ID("btnCancel").Hidden(indicaModoLectura)
+                                .Icon(Icon.Cancel)
+                                .Handler("eventoCancelar(this.up('form'));"),
+
+                            X.Button()
+                                .Text("Editar")
+                                .ID("btnOnEdit")
+                                .Icon(Icon.ApplicationFormEdit)
+                                .Hidden(true)
+                                .Handler("eventoOnEditar(App.btnOnEdit);")
+
+                        ))
+                .Listeners(l => l.FieldChange
+                     .Handler = "setIndicaCambios(true);"
+
+                 )
+                );
+        }
+
+           )
+    )
+
+}
+
+

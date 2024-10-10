@@ -1,0 +1,265 @@
+﻿@model SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL
+
+
+@{
+    ViewBag.Title = "Simple TreePanel";
+    Layout = "";
+    var X = Html.X();
+}
+
+<script>
+    var filterTree = function (tf, e) {
+        var tree = tf.up("treepanel"),
+            store = tree.store,
+            logic = App.FilterLogic.getValue() ? tree : store,
+            text = tf.getRawValue();
+
+        logic.clearFilter();
+
+        if (Ext.isEmpty(text, false)) {
+            return;
+        }
+
+        if (e.getKey() === Ext.EventObject.ESC) {
+            clearFilter();
+        } else {
+            var re = new RegExp(".*" + text + ".*", "i");
+
+            logic.filterBy(function (node) {
+                return re.test(node.data.text);
+            });
+        }
+    };
+
+    var clearFilter = function () {
+        var field = this,
+            tree = this.up("treepanel"),
+            store = tree.store,
+            logic = App.FilterLogic.getValue() ? tree : store;
+
+        field.setValue("");
+        logic.clearFilter(true);
+        tree.getView().focus();
+    };
+
+</script>
+
+<script>
+
+    var nodeLoad = function (view, record, item, index, event) {
+
+
+        var nodeId = record.data.id;
+        var path = record.getPath('text', '/');
+    };
+    var onItemCheck = function (item, checked) {
+
+        msg("Item Check", 'You {1} the \'{0}\' menu item.', item.text, checked ? "checked" : "unchecked");
+    };
+
+    var filterPersonales = function (checkItem, checked) {
+        var tree = App.TreeWest,
+            regex;
+
+        if (checked) {
+            tree.clearFilter(true);
+            regex = new RegExp("<span>&nbsp;</span>");
+            tree.filterBy(function (node) {
+                return regex.test(node.data.text);
+            });
+        } else {
+            tree.clearFilter(true);
+        }
+    };
+
+    function LoadFormatos(container, text) {
+        var cod = text;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("LoadFormatos"))',
+            params: {
+                text: cod,
+                containerId: container
+            }
+        });
+    };
+
+    function DoSave() {
+        return;
+    };
+    function DoCancel() {
+
+    };
+    function DoInicio() {
+        parent.window.location.href = ' @Url.Action("Index", "BandejaMedico") ';
+    };
+    function DoNoInicio() {
+
+    };
+
+    function eventoViewReportWest() {
+        var vista = 'HCReportes/HCEReportesGenerales';
+        var container = 'North1';
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("VisorHCEReportes"))',
+            params: {
+                idPaciente: 0,
+                idOrdenAtencion: 0,
+                codFormato: 0,
+                codigoOA: 0,
+                Accion: 'VER',
+                nombrePaciente: 0,
+                Form: vista,
+                FormContainer: container
+
+            }
+        });
+    }
+
+    function initLoadFormatos() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("initLoadFormatos"))',
+            params: {
+                container: 'Center1'
+            }
+        });
+    }
+
+    function initLoadFormatosArbol(opc) {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("LoadFormatosArbol"))',
+            params: {
+                containerId: 'Center1',
+                opc:opc
+            }
+        });
+    }
+
+    function cambiotab(val1,val2,val3) {
+        
+            var arbol = Ext.getCmp('TreeWest');
+            arbol.store.proxy.url = "DevolucionMedicamento/ArbolMacroProcesos";
+            arbol.store.load(arbol.getRootNode());
+            arbol.store.sync();
+            arbol.getView().refresh();
+        
+
+    }
+
+
+
+</script>
+@(
+
+ X.Panel()
+        .AutoScroll(true)
+        //  .LayoutConfig(new VBoxLayoutConfig() { Align = VBoxAlign.Center, Pack = BoxPack.Center })
+     .ID("PanelMainMP")
+     .TopBar(
+                X.Toolbar()
+                    .StyleSpec("padding-bottom:0px;")
+                    .Items(
+                                X.TabStrip().Listeners(l => { l.TabChange.Fn = "cambiotab"; })
+                            .Items(t =>
+                            {
+                                t.Add(X.Tab().TabID("Ate").ActionItemID("TreeWest").Text("Atención"));
+                               
+                            })
+                        ,
+                        X.ToolbarFill(),
+
+                               Html.X().Button().Hidden(true)
+        //.Text("Reportes")
+                                .ID("btnHCEReporteWest")
+                                .Icon(Icon.Report)
+                                .ToolTip("Despliega la vista de los Reportes H.C.E.")
+                                .Listeners(l =>
+                                {
+                                    l.Click.Handler = "eventoViewReportWest();";
+                                })
+                               ,
+                               X.Button()
+                                  .Icon(Icon.ApplicationHome)
+                                  .ToolTip("Inicio - Bandeja")
+                                  .DirectEvents(ev =>
+                                    {
+                                        //ev.Select.Url = "HClinica/LoadCentral";
+                                        ev.Click.Url = "DevolucionMedicamento/validarCambiosFormularioInicio";
+                                        ev.Click.Method = HttpMethod.GET;
+                                    }),
+                              X.Button().Hidden(true)
+                                  .Icon(Icon.Cog)
+                                  .ToolTip("Perfiles")
+                                  .Menu(
+                                        X.Menu()
+                                                  .Items(AppSaludMVC.Controllers.HClinicaController.checkMenu.getCheckMenuCHE("dd"))
+                                              .Items(X.MenuSeparator())
+                                              .Items(X.MenuItem()
+                                                    .Text("Aplicar")
+                                                    .IconCls("icon-collapse-all")
+
+                                                )
+                             )
+                    )
+     )
+    .Items(
+        Html.X().TreePanel()
+        //.BodyStyle("border: none;")
+                .Border(false)
+                .Layout(LayoutType.Fit)
+                .ID("TreeWest")
+                .TopBar(
+                    X.Toolbar().Hidden(true)
+                        .Items(
+                            X.ToolbarFill(),
+                            new TriggerField
+                                {
+                                    Hidden = true,
+                                    ID = "SearchOpciones",
+                                    AutoFocus = true,
+                                    EnableKeyEvents = true,
+                                    Flex = 1,
+                                    EmptyText = "Filter Procesos...",
+                                    Triggers =
+                            {
+                                new FieldTrigger
+                                {
+                                    HideTrigger = true,
+                                    Icon = TriggerIcon.Clear
+                                }
+                            }
+                                }
+                              )
+                         )
+                .Store(
+                    Html.X().TreeStore()
+                        .Proxy(
+                              Html.X().AjaxProxy().Url(Url.Action("ArbolMacroProcesos"))
+                        )
+                )
+                .Root(
+                    Html.X().Node().NodeID(Model.OPCION_PADRE)
+                        .Text((Model.OPCION_PADRE != null ? (Model.PERFILACTUAL + "").Trim() : "OPCIONES NO DETERMINADAS"))
+        // .Text(("MACROPROCESOS HCE"))
+                )
+                .DirectEvents(ev =>
+                            {
+                                //ev.Select.Url = "HClinica/LoadCentral";
+                                ev.Select.Url = "DevolucionMedicamento/validarCambiosFormulario";
+                                ev.Select.Method = HttpMethod.GET;
+                                ev.Select.ExtraParams.Add(new
+                                                    {
+                                                        text = JRawValue.From("record.data.id"),
+                                                        containerId = "Center1"
+                                                    });
+
+                            })
+                   .Listeners(l =>
+                    {
+                        l.ItemClick.Fn = "nodeLoad";
+                        l.BeforeRender.Handler = "initLoadFormatos();";
+                    })
+
+      
+    )
+)

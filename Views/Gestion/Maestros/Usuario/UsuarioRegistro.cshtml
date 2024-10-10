@@ -1,0 +1,265 @@
+﻿@model SoluccionSalud.Entidades.Entidades.USUARIO
+
+@{
+    var X = Html.X();
+    var modoDesc = (Model.ACCION == "NUEVO" ? "Nuevo" :
+                    (Model.ACCION == "UPDATE" ? "Modificar" :
+                        (Model.ACCION == "DELETE" ? "Eliminar" :
+                            (Model.ACCION == "VER" ? "Ver" : "--"))));
+
+    var indicaModoLectura = !(Model.ACCION == "NUEVO" ? true :
+                            (Model.ACCION == "UPDATE" ? true :
+                            (Model.ACCION == "DELETE" ? false :
+                            (Model.ACCION == "VER" ? false : false))));
+
+    var indicaModoLecturaKey = !(Model.ACCION == "NUEVO" ? true :
+                            (Model.ACCION == "UPDATE" ? false :
+                            (Model.ACCION == "DELETE" ? false :
+                            (Model.ACCION == "VER" ? false : false))));
+}
+
+<script>
+
+
+
+
+    function seleccionadorPersona() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorPersona"))',
+            params: {
+                accionSeleccion: 'getSeleccionPersonaMaestroUsuario',
+                accionListado: 'LISTARPAGSELECUSER'
+            }
+        });
+    };
+
+    var onSuccess = function (modo) {
+        var msg = '';
+        if (modo == 'UPDATE')
+            msg = 'modificó';
+        else if (modo == 'NUEVO')
+            msg = 'registró';
+        else if (modo == 'DELETE')
+            msg = 'eliminó';
+    };
+
+    var onFailure = function (modo) {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("showMensajeBox"))',
+                params: {
+                    message: 'Sucedió un error inesparado en el evento.',
+                    titulo:"Error",
+                    tipo:'ERROR'
+                }
+            });
+    };
+
+    function cerrarWindowCancel() {
+        App.WindowX.hide();
+    };
+
+    function eventoSeleccRadio(event) {
+        if (event.getValue()) {
+            App.btnSeleccUser.setVisible(true);
+            App.nfPersona.setVisible(true);
+        } else {
+            App.btnSeleccUser.setVisible(false);
+            App.nfPersona.setVisible(false);
+        }
+    };
+
+    var showResult = function (btn) {
+        Ext.Msg.notify("Aceptar", "You clicked the " + btn + " button");
+    };
+
+</script>
+
+@(Html.X().Window()
+    .Width(700)
+    .Height(400)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    //.AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowX")
+    .Title("Registro de Usuario:" + modoDesc)
+    .Padding(4)
+        //.X(0)
+        //.Y(0)
+    .Items(
+                Html.X().FormPanel()
+                             .Frame(false)
+        //.ID("pnlFlexEven")
+                            .AutoScroll(true)
+        //.Layout(LayoutType.Column)
+                            .Layout(LayoutType.HBox)
+        //.BodyPadding(5)
+                            .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+
+                            .Items(
+                                    Html.X().FormPanel()
+                                    .Layout(LayoutType.Form)
+                                    .Width(350)
+                                    .FieldDefaults(d =>
+                                    {
+                                        d.LabelWidth = 100;
+                                        d.InputWidth = 220;
+                                    })
+                                    .BodyPadding(10)
+                                    .Frame(false)
+                                    .Border(false)
+                                    .Items(
+        //X.Label().Text("    ").Width(20).Height(60),
+        //X.HiddenFor<TProper>(m => m.ACCION),
+                                        X.NumberFieldFor(m => m.PERSONA).FieldLabel("Persona")
+                                            .ID("nfPersona").ReadOnly(true)
+                                            .Hidden(((Model.USUARIOPERFIL+"").Trim() == "PE" ? true : false)),
+                                         X.TextFieldFor(m => m.USUARIO1)
+                                        .ID("tfUsuario").ReadOnly(indicaModoLecturaKey)
+                                       .FieldLabel("Usuario"),
+                                        X.TextFieldFor(m => m.NOMBRE).ID("tfNombre")
+                                        .FieldLabel("Nombre").ReadOnly(indicaModoLectura),
+                                        X.TextFieldFor(m => m.CLAVE).ID("tfPw")
+                                        .InputType(Ext.Net.InputType.Password)
+                                        .FieldLabel("Nueva Clave").ReadOnly(indicaModoLectura),
+                                        X.TextFieldFor(m => m.USUARIORED).ID("tfUsuariored")
+                                        .FieldLabel("Usuario de Red").ReadOnly(indicaModoLectura),
+                                        X.DateFieldFor(m => m.ULTIMOLOGIN).ID("dfUltimoIn")
+                                        .FieldLabel("Último ingreso")
+                                        .ReadOnly(true),
+                                        X.ComboBoxFor(m => m.ESTADO).Editable(false).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenericoTxt("ESTADOVAR").Select(d => new ListItem(d.Name, d.Codigo))).FieldLabel("Estado").Value(Model.ACCION == "NUEVO" ? "A" : (Model.ESTADO)).SimpleSubmit(true).ReadOnly(indicaModoLectura),
+                                        X.FieldSet()
+        //.Width(250)
+                                                .Title("Información Adicional")
+                                                .FieldDefaults(d =>
+                                                 {
+                                                     d.LabelWidth = 90;
+                                                     d.InputWidth = 100;
+                                                 })
+                                                .Items(
+                                                    Html.X().Container().Layout(LayoutType.HBox)
+                                                    .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+        /*.Defaults(d =>
+        {
+            d.Add(new Parameter("LabelWidth", "110"));
+        })*/
+                                                    .Items(
+                                                        X.TextFieldFor(m => m.ULTIMOUSUARIO).ID("tfUserModif")
+                                                            .FieldLabel("Modificación").ReadOnly(true),
+                                                        X.DateFieldFor(m => m.ULTIMAFECHAMODIF).ID("dfFechaModif")
+                                                        .Format("dd/MM/yyyy").ReadOnly(true).HideLabel(true)
+        //.FieldLabel("Fecha de Modificación")
+                                                    )
+                                                 )
+
+                                    ),
+                                    Html.X().FormPanel()
+                                    .Layout(LayoutType.Form)
+                                    .Width(300)
+                                    .FieldDefaults(d =>
+                                    {
+                                        d.LabelWidth = 100;
+                                    })
+                                    .BodyPadding(10)
+                                    .Frame(false)
+                                    .Border(false)
+                                    .Items(
+                                        X.FieldSet()
+                                            .Width(200)
+                                            .Title("Tipo de Usuario")
+                                            .MarginSpec("5 5 5 5")
+        //.Defaults(d =>
+        //{
+        //  d.Add(new Parameter("LabelWidth", "120"));
+        //})
+                                            .Items(
+                                                X.RadioGroupFor(m => m.USUARIOPERFIL,
+                                                new List<Radio.Config> {
+                                                    new Radio.Config{BoxLabel = "Usuario", InputValue = "US",
+                                                    Checked= ( Model.ACCION=="NUEVO"?true:(Model.USUARIOPERFIL=="US"?true:false))
+                                                    , Handler = "eventoSeleccRadio(this);",ReadOnly = indicaModoLectura
+                                                    },
+                                                    new Radio.Config{BoxLabel = "Perfil", InputValue = "PE",
+                                                    Checked= ( Model.ACCION=="NUEVO"?false:(Model.USUARIOPERFIL=="PE"?true:false))
+                                                    ,ReadOnly = indicaModoLectura
+                                                    }
+                                                })
+                                           .ID("RadioGroup1")
+                                           .FieldLabel("")
+
+                                        )
+                                        ,
+                                        X.CheckboxGroupFor(c => c.EXPIRARPASSWORDFLAG, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "Forzar expiración de la clave", InputValue="S",
+                                        Checked= ( Model.ACCION=="NUEVO"?false:(Model.EXPIRARPASSWORDFLAG=="S"?true:false))
+                                        ,ReadOnly = indicaModoLectura},
+                            }),
+                                        X.DateFieldFor(m => m.FECHAEXPIRACION).ID("dfFechaExpira")
+                                       .Format("dd/MM/yyyy")
+                                        .Width(250).ReadOnly(indicaModoLectura)
+                                        .FieldLabel("Fecha de Expiración")
+
+                                    )
+        /*,
+         Html.X().FormPanel()
+         .Layout(LayoutType.Form)
+         .Width(100)
+         .Items(
+            X.Label()
+                     .Text("")
+         ) */
+                         )
+                         .TopBar(
+                             X.Toolbar()
+                             .Height(30)
+                             .Items(
+                                X.Button()
+                                    .ID("btnSeleccUser")
+                                    .Text("Seleccionar usuario")
+                                    .Icon(Icon.ApplicationViewList)
+                                    .Handler("seleccionadorPersona();")
+                                    .Hidden((Model.USUARIOPERFIL == "PE" ? true || indicaModoLectura : false || indicaModoLectura))
+                                    ,                                    
+                                X.ToolbarFill(),
+                                X.Button()
+                                    .Text((Model.ACCION == "DELETE" ? "Eliminar" : "Guardar"))
+                                    .Icon((Model.ACCION == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave))
+                                    .Hidden((Model.ACCION == "VER" ? true :false))
+        //.Handler("save_Usuario('" + Model.ACCION + "')"),
+
+                                     .DirectEvents(de =>
+                                      {  //Model.ACCION : Posee el MODO ACTUAL
+                                          de.Click.Url = Url.Action("save_Usuario");
+                                          de.Click.Before = "App.btnSave.setDisabled(true); ";
+                                          de.Click.After = "App.btnSave.setDisabled(false); ";  
+                                          de.Click.EventMask.ShowMask = true;
+                                          de.Click.ExtraParams.Add(new Parameter("MODO", Model.ACCION, ParameterMode.Value));
+                                          de.Click.ExtraParams.Add(new Parameter("idWindow", "WindowX", ParameterMode.Value));
+                                          de.Click.Success = "onSuccess('" + Model.ACCION + "');";
+                                          de.Click.Failure = "onFailure('" + Model.ACCION + "');";
+
+                                      }),
+                                    X.Button()
+                                        .Text((Model.ACCION == "VER" ? "Aceptar" : "Cancelar"))
+                                        .Icon((Model.ACCION == "VER" ? Icon.Accept : Icon.Cancel))  
+        //.Handler("cerrarWindowCancel();")
+                                     .DirectEvents(de =>
+                                      {  //Model.ACCION : Posee el MODO ACTUAL
+                                          de.Click.Url = Url.Action("cerrarWindow");
+                                          //de.Click.EventMask.ShowMask = true;
+                                          de.Click.ExtraParams.Add(new Parameter(
+                                                "id", "WindowX", ParameterMode.Value));
+                                          //de.Click.Success = "onSuccess(result.data,'" + Model.ACCION + "');";
+                                          //de.Click.Failure = "onSuccess(result.data,'"+ Model.ACCION + "');";
+                                      }),
+                                          X.ToolbarSpacer(20)     
+                                 )
+                            )
+
+                //)
+    )
+    .CloseAction(CloseAction.Destroy)
+)

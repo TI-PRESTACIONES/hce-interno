@@ -1,0 +1,1012 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_HC_RESUMEN_PARTO_FE_2
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+
+    var indicaVisiblePrint = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_VISIBLE_IMPRESION;
+    var visibleImpresion = (indicaVisiblePrint == 2/* && Model.Accion == "UPDATE"*/ ? true : false);
+    var isVista = (Model.Accion == "VISTA" ? true : false);
+    var isNuevo = (Model.Accion == "NUEVO" ? true : false);
+    //var visibleImpresion = (Model.Accion == "UPDATE" ? true : false);
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VISTA" ? false : false))));
+
+    var COLOER_IND_OBLIGA = AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("COL_BCOBLI");
+    var MENS_NUMERO = "No se permite un valor negativo.";
+    var PAR_FORMATO02 = "999";
+    var COLOR_BLUE01 = "#284A89";
+
+}
+@section cabecera
+{
+    <link rel="stylesheet" href="@Url.Content("~/resources/css/main.css")" />
+
+    <style>
+        html body {
+            padding: 0px;
+            background: none;
+            background: none;
+            background: none;
+            background-attachment: fixed;
+            background-position: center;
+            font-family: tahoma,verdana,sans-serif;
+            background-color: #ffffff;
+        }
+    </style>
+
+    <script>
+        var keyCode2;
+        function isNumberKey() {
+            if ((event.keyCode < 48) || (event.keyCode > 57)) {
+                event.returnValue = false;
+            }
+        }
+
+        var indicaCambios = false;
+        function setIndicaCambios(value) {
+            indicaCambios = value;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("setIndicaCambiosFormulario"))',
+                params: {
+                    indica: (value ? 1 : 0)
+                }
+            });
+
+            var val = '@visibleImpresion';
+            var vis = '@isVista';
+
+            if (vis == 'False') {
+                if (val == 'True') {
+
+                    if (value == true) {
+                        App.btnImpresion.setDisabled(true);
+                        App.btnImpresionHC.setDisabled(true);
+                        parent.App.btnGuardarFirma.setDisabled(true);
+                    } else {
+                        App.btnImpresion.setDisabled(false);
+                        App.btnImpresionHC.setDisabled(false);
+                        parent.App.btnGuardarFirma.setDisabled(false);
+                    }
+                }
+            }
+
+        };
+
+        function eventoRenderForm() {
+
+
+
+            var kk = 195;
+            var scrH = screen.height;
+            var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+            var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+
+            if (southH == 0) {
+                southH = 30;
+            } else if (parent.App.PanelMainSouth.collapsed) {
+                southH = 30;
+            }
+            var dimCentral = (scrH - (northH + southH) - kk);
+            App.formactual.setHeight(545);
+
+            var v = '@isNuevo';
+            if (v == 'True') {
+                App.btnImpresion.setVisible(false);
+                App.btnImpresionHC.setVisible(false);
+            }
+        }
+
+    var count = 0; // a counter for new records
+
+    var eventoKey = function (tf, e) {
+        if (e.getKey() == '110' || e.getKey() == '190' || e.getKey() == '100') {
+            var str = tf.getRawValue().replace('.', '');
+            tf.setValue(str);
+        } else if (e.getKey() == '109' || e.getKey() == '189') {
+            var str = tf.getRawValue().replace('-', '');
+            tf.setValue(str);
+        }
+    };
+    var eventoOnEditar = function (btn) {
+        App.cmdGuardar.setDisabled(false);
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+
+    };
+
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+            App.conthbIndicaError.setVisible(true);
+            App.taAlerts.focus();
+        } else {
+            App.taAlerts.setVisible(false);
+            App.conthbIndicaError.setVisible(false);
+        }
+
+    };
+
+    var getInvalidFields = function (form) {
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+        });
+        return invalidFields;
+    };
+
+    var beforeSave = function (form) {
+        App.taAlerts.setVisible(false);
+        App.taAlerts.setValue(null);
+        App.conthbIndicaError.setVisible(false);
+        var FieldsInvalidos = getInvalidFields(form);
+        if (FieldsInvalidos.length > 0) {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("addRecursosValidacion"))',
+                params: {
+                    data: FieldsInvalidos,
+                    indica: 'VALIDAR',
+                },
+                success: function (result) { accionMensajes(result.data); }
+            });
+        }
+    };
+
+    var onSuccess = function (data) {
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+        App.formactual.setDisabled(true);
+        var reload = true;
+        if (data != null) {
+            if (data.length > 0) {
+                reload = false
+                App.cmdGuardar.setDisabled(false);
+                App.formactual.setDisabled(false);
+                if (data[0].TIPOMSG == 'EXCEPTION') {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: data[0].TITULO,
+                            message: data[0].DESCRIPCION,
+                            tipo: 'ERROR'
+                        }
+                    });
+                } else {
+                    accionMensajes(data);
+                }
+            }
+        }
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+        }
+    };
+    var onFailure = function (data) {
+        App.cmdGuardar.setDisabled(false);
+    };
+
+
+    function eventoCancelar(form) {
+        //form.getForm().reset();
+        //App.taAlerts.setVisible(false);
+        //App.conthbIndicaError.setVisible(false);
+        //setIndicaCambios(false);
+        //App.StoreEnfermedad.reload();
+        App.bar.setDisabled(true);
+        var reload = true;
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+           // beforeSave(form);
+        }
+
+    };
+
+    </script>
+    <script>
+
+    var hhValidation = function (h) {
+        str = h.value;
+
+        tempo = "'";
+        str = str.replace('javascript:myFunction(' + tempo, '');
+        str = str.replace('%20', ' ');
+        str = str.replace('%C3%B3', 'ó');
+        str = str.replace('%C3%A1', 'á');
+        str = str.replace('%C3%A9', 'é');
+        str = str.replace('%C3%AD', 'í');
+        str = str.replace('%C3%BA', 'ú');
+        str = str.replace('%C3%B1', 'ñ');
+
+        str = str.replace('%C3%8D', 'Í');
+        str = str.replace('%C3%93', 'Ó');
+        str = str.replace('%C3%81', 'Á');
+        str = str.replace('%C3%91', 'Ñ');
+        str = str.replace('%C3%9A', 'Ú');
+        str = str.replace(tempo + ')', '');
+        h.setValue(str);
+
+    }
+    var mmValidation = function (m) {
+        if (m.getValue() > 59) {
+            m.setValue(59);
+        }
+
+    };
+
+    function eventoVisorReporte(param1) {
+        if (param1 == 'HC') {
+            window.location.href = '@Url.Action("HCEReportesView_total", "HClinica")';
+        } else {
+            window.location.href = '@Url.Action("HCEReportesView", "HClinica")';
+        }
+    }
+
+    function InsertRow(valor, estado, soloLectura) {
+        if (soloLectura == '1') {
+            setIndicaCambios(false);
+        } else {
+            if (valor.getValue() != '') {
+                var fechor = new Date();
+                alert(fechor);
+                var obj = JSON.parse(valor.getValue());
+                var DescripcionLocalVar = obj.DescripcionLocal;
+                if (validaDuplicado(DescripcionLocalVar)) {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: 'Advertencia',
+                            message: 'Ya existe registro',
+                            tipo: 'WARNING'
+                        }
+                    });
+                    valor.setValue('');
+                    return;
+                }
+                var grid = Ext.getCmp("grillaExamenes");
+                setIndicaCambios(true);
+                grid.store.insert(0, {
+                    CodigoElemento: 'New' + count++,
+                    ValorCodigo1: DescripcionLocalVar,
+                    ValorFecha: new Date(),
+                    ACCION: 'NUEVO'
+                });
+                valor.setValue('');
+                Ext.Function.defer(function () {
+                    grid.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+                }, 100);
+                valor.setValue('');
+            }
+        }
+    }
+
+
+    function InsertRowNew(valor, estado, soloLectura) {
+        if (soloLectura == '1') {
+            setIndicaCambios(false);
+        } else {
+
+            var grid = Ext.getCmp("GridPanelInmunizacion");
+            var conta = grid.store.getCount();
+            if (secuenciaMax == 1 && conta > 0) {
+                App.StoreAtencion.each(function (r) {
+
+                    var secuencia = r.get('ValorCodigo3');
+                    if (parseInt(secuenciaMax) <= parseInt(secuencia)) {
+                        secuenciaMax = parseInt(secuencia) + 1;
+                    }
+                });
+            }
+
+            /*  if(secuenciaMax < parseInt(SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.IDSECUENCIA_AUX))
+              {
+                secuenciaMax = parseInt(SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.IDSECUENCIA_AUX)+1;
+              }
+          */
+
+            setIndicaCambios(true);
+            grid.store.insert(parseInt(conta), {
+                CodigoElemento: secuenciaMax,/*count++,*/
+                ValorCodigo1: '',
+                ValorCodigo3: secuenciaMax,/*count++,*/
+                ACCION: 'NUEVO'
+            }
+            );
+
+
+            Ext.Function.defer(function () {
+                grid.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+            }, 100);
+
+            secuenciaMax = secuenciaMax + 1;
+        }
+    };
+
+
+    var eventoRadio = function (radio, Tipo, Subtipo) {
+        var obj = radio.getValue();
+        if (obj) {
+
+            if (Tipo == 'Orina') {
+
+                if (Subtipo == 'A' || Subtipo == 'D') {
+                    App.IdOtrosOrina.setVisible(true);
+                    App.IdEspumosa.setVisible(true);
+                    App.IdRoja.setVisible(true);
+
+
+                }
+                else {
+                    App.IdRoja.setVisible(false);
+                    App.IdRoja.setValue(null);
+                    App.IdEspumosa.setVisible(false);
+                    App.IdEspumosa.setValue(null)
+                    App.IdOtrosOrina.setVisible(false);
+                    App.IdOtrosOrina.setValue(null);
+                }
+
+            }
+
+            else if (Tipo == 'Peso') {
+
+                if (Subtipo == 'N') {
+                    App.IdPeso.setDisabled(true);
+                    App.lblKgr.setDisabled(true);
+                    App.IdPeso.setValue(null);
+                }
+                else {
+                    App.IdPeso.setDisabled(false);
+
+                    App.lblKgr.setDisabled(false);
+
+                }
+
+            }
+
+            else if (Tipo == 'TipoAnamnesis') {
+
+                if (Subtipo == 'I') {
+                    App.IdInformante.setVisible(true);
+                    App.IdInformante.focus();
+                }
+                else {
+                    App.IdInformante.setVisible(false);
+                    App.IdInformante.setValue(null);
+                }
+
+            }
+
+
+
+        }
+
+    };
+
+
+    function addRecord(grid, grupo, IdUnidad, componenteAdd) {
+
+        grid.store.insert(0,
+            {
+                UnidadReplicacion: IdUnidad,
+                Secuencia: countOtras++,
+                OtrasVacunas: valorSelec,
+                Accion: 'NUEVO'
+            });
+
+    };
+
+    var keyCode
+    function ReplaceCaracterEspec(e) {
+        /*Capturar tecla pulsada*/
+        if (window.event) keyCode = window.event.keyCode;
+        else if (e) keyCode = e.which;
+        var prueba = keyCode;
+        // alert(keyCode);
+        //
+        if (prueba == 60) {
+            var textactual = e.getValue();
+            e.value = e.setValue(textactual + " ");
+        }
+        var texto = e.getValue();
+        var vacio = "";
+        var cadena = vacio + e.getValue();
+        var recortado = cadena.substr(-1, 1);
+       // alert(recortado + ' antes');
+        if (recortado == "<" || recortado == ">") {
+          //  alert(recortado + ' despues');
+            e.value = e.setValue(texto + " ");
+        }
+
+        }
+
+
+
+    function addRecordMain(grid) {
+        setIndicaCambios(true);
+
+        grid.store.insert(0, {
+            CODIGOELEMENTO: 'New' + count++, ValorCodigo7: '', ValorCodigo1: '', ValorCodigo2: '', ValorCodigo4:'',ValorCodigo3:'',ValorCodigo5:'',ValorCodigo6:'',ValorEntero5:'',ValorEntero6: '',ValorEntero7:'', ACCION: 'NUEVO'
+        });
+
+        Ext.Function.defer(function () {
+            grid.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+        }, 100);
+    };
+
+        function deleteActual(record) {
+            seleccRecordActual = record;
+            if (seleccRecordActual != null) {
+                setIndicaCambios(true);
+                var store = App.GridPanelInmunizacion.store;
+                var par1 = seleccRecordActual.data.ValorCodigo1;
+                var par2 = seleccRecordActual.data.CodigoElemento;
+                var par3 = seleccRecordActual.data.ValorCodigo6;
+                var accionDef = seleccRecordActual.data.ACCION;
+
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("addEliminar_CCEPF001"))',
+                    params: {
+                        MODO: 'DELETEDETALLE',
+                        codigo: par3,
+                        secuencia: par2,
+                        accion: accionDef
+                    }
+                });
+
+                store.remove(seleccRecordActual);
+                seleccRecordActual = null;
+            }
+        };
+
+
+        function EnviarData(grid) {
+            beforeSave(App.formactual);
+            if (App.formactual.getForm().isValid()) {
+                var ProximaCitay = new Array();
+                App.StoreEnfermedad.each(function (r) {
+                    var MA_MiscelaneosDetalle = {
+                        ValorCodigo1: r.get('ValorCodigo1'),
+                        ValorCodigo6: r.get('ValorCodigo6'),
+                        CodigoElemento: r.get('CodigoElemento'),
+                        ACCION: (r.get('ACCION') == 'NUEVO' ? 'NUEVO' : 'UPDATE')
+
+                    };
+                    ProximaCitay.push(MA_MiscelaneosDetalle);
+                });
+
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("Grilla_CCEPF001"))',
+                        params: {
+                            selectionArray1: ProximaCitay
+                         }
+                    });
+                    return true;
+                } else {
+                    App.cmdGuardar.setDisabled(false);
+                    return false;
+                }
+
+        }
+
+        var eventoCheck = function (ch1, pregunta, valor) {
+            var CheckAll = ch1.getValue();
+            if (CheckAll) {
+
+                if (pregunta == 'C10') {
+
+                    App.TercerPeriObservaciones.setDisabled(false);
+                }
+                if (pregunta == 'C11') {
+
+                    App.TercerPeriObservaciones.setDisabled(true);
+                    App.TercerPeriObservaciones.setValue(null);
+                }
+                if (pregunta == 'C12') {
+
+                    App.RevisionInstrumentalTipo.setDisabled(true);
+                    App.RevisionInstrumentalTipo.setValue(null);
+                }
+                if (pregunta == 'C13') {
+                    App.RevisionInstrumentalTipo.setDisabled(false);
+
+
+                }
+                if (pregunta == 'C14') {
+                    App.Esepcificar.setDisabled(true);
+                    App.Esepcificar.setValue(null);
+
+                }
+                if (pregunta == 'C15') {
+                    App.Esepcificar.setDisabled(false);
+
+
+                }
+
+            }
+            else {
+
+                if (pregunta == 'C10') {
+                    App.TercerPeriObservaciones.setDisabled(true);
+                    App.TercerPeriObservaciones.setValue(null);
+
+                }
+                if (pregunta == 'C11') {
+                    App.TercerPeriObservaciones.setDisabled(false);
+
+                } if (pregunta == 'C12') {
+
+                    App.RevisionInstrumentalTipo.setDisabled(false);
+                }
+                if (pregunta == 'C13') {
+                    App.RevisionInstrumentalTipo.setDisabled(true);
+                    App.RevisionInstrumentalTipo.setValue(null);
+
+                }
+                if (pregunta == 'C14') {
+                    App.Esepcificar.setDisabled(false);
+
+
+                }
+                if (pregunta == 'C15') {
+                    App.Esepcificar.setDisabled(true);
+                    App.Esepcificar.setValue(null);
+
+
+                }
+
+
+            }
+
+        };
+
+    </script>
+}
+
+
+@section cuerpo
+{
+
+    @(Html.X().Viewport().ID("ViewportXD")
+        .Layout(LayoutType.VBox)
+
+        .LayoutConfig(
+            new VBoxLayoutConfig { Align = VBoxAlign.Stretch }
+        )
+        .Listeners(l =>
+        {
+            l.AfterLayout.BroadcastOnBus = "App.resize";
+            l.AfterLayout.Single = true;
+        })
+        .Items(regions =>
+        {
+
+            regions.Add(Html.X().FormPanel()
+                .ItemID("center")
+                .DefaultAnchor("100%")
+                .AutoScroll(true)
+                .Height(340)
+               .Header(false)
+               .Border(true)
+                .ID("formactual")
+
+                  .Listeners(l =>
+                  {
+                      l.Render.Handler = "eventoRenderForm(); ";
+                      //  l.AfterRender.Handler = "setIndicaCambios(false);";
+                  })
+                 .Items(
+
+                     X.FormPanel()
+                      .ID("Panel1")
+                      .BodyPadding(5)
+                      .AutoScroll(false)
+                      .Border(false)
+                      .Header(false)
+
+
+
+                 .Items(
+
+
+
+                       X.FieldSet()
+                          .ColumnWidth(0.4).Collapsible(true)
+                          .Title("Tercer Periodo")
+                          .Border(true)
+                          .AutoScroll(false)
+                          .MarginSpec("05 05 0 05")
+
+                          .Defaults(d =>
+                          {
+                              d.Add(new Parameter("LabelWidth", "150"));
+                              d.Add(new Parameter("DefaultAnchor", "100%"));
+                              d.Add(new Parameter("LabelAlign", "Left"));
+                          })
+                          .DefaultAnchor("100%")
+                          .FieldDefaults(d =>
+                          {
+                              d.LabelAlign = LabelAlign.Left;
+                          })
+
+                          .Items(
+
+                             X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+
+                                            .Items(
+                 X.Component().Width(50),
+                    X.RadioGroupFor(c => c.TercerPeriNormSchultaDunca, new List<Radio.Config> {
+
+                            new Radio.Config{BoxLabel = "Schultac" , Checked= (Model.TercerPeriNormSchultaDunca=="S"?true:false), InputValue = "S", ReadOnly =indicaModoLectura, Width = 100},
+                            new Radio.Config{BoxLabel = "Duncan" , Checked= (Model.TercerPeriNormSchultaDunca=="D"?true:false), InputValue = "D", ReadOnly =indicaModoLectura, Width = 100}
+
+                                }).FieldLabel("").LabelWidth(130)
+                                    ),
+
+                                  X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+
+                                            .Items(
+
+                            X.Component().Width(50),
+                            X.RadioGroupFor(c => c.TercerPeriAnormal, new List<Radio.Config> {
+                                     new Radio.Config{BoxLabel = "Normal" , Checked= (Model.TercerPeriNormSchultaDunca=="N"?true:false), InputValue = "N", ReadOnly =indicaModoLectura, Width = 100,Handler="eventoCheck(this, 'C11', 'N');"}, //
+                                    new Radio.Config{BoxLabel = "Anormal" , Checked= (Model.TercerPeriAnormal=="A"?true:false), InputValue = "A", ReadOnly =indicaModoLectura, Width = 100, Handler="eventoCheck(this, 'C10', 'N');"}
+                                    }).FieldLabel("").LabelWidth(130),
+
+                            X.Component().Width(160),
+                            X.TextFieldFor(m => m.TercerPeriObservaciones).FieldLabel("Observaciones").ReadOnly(indicaModoLectura).MaxLength(100)
+                            .Width(480).LabelWidth(90).Disabled(Model.TercerPeriAnormal == "A" ? false : true)
+
+                                            ),
+                                       X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+
+                                   .Items(
+                                      X.Component().Width(50),
+                                     X.NumberFieldFor(c => c.TercerPerPerdidaSanguinea).FieldLabel("Perdida Sanguinea:").LabelWidth(120)
+                                     .Width(200).MaxValue(3000).MinValue(0).AllowDecimals(false).AllowExponential(false).MaskRe("/[0-9]/").ReadOnly(indicaModoLectura)
+                                     ,
+                                     X.Component().Width(3),
+                                     X.Label().Text("C.")
+
+                                     ),
+
+                                           X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+
+                                   .Items(
+                                      X.Component().Width(50),
+                                     X.NumberFieldFor(c => c.TercerPerDuracionParto).FieldLabel("Duracion del Parto:").LabelWidth(120)
+                                     .Width(200).MaxLength(3).MinValue(0).AllowDecimals(false).AllowExponential(false).MaskRe("/[0-9]/").ReadOnly(indicaModoLectura)
+                                     ,
+                                     X.Component().Width(3),
+                                     X.Label().Text("Hrs.")
+
+                                     )
+                                    ),
+
+                       X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+
+                                   .Items(
+                           X.Component().Width(300),
+                            X.NumberFieldFor(m => m.TotalHorasParto).FieldLabel("TOTAL DE HORAS DE PARTO")
+                            .LabelWidth(200)
+                            .ReadOnly(indicaModoLectura).MaxLength(100)
+                        )
+
+                        ),
+
+
+                       X.FormPanel()
+                      .ID("Panel2")
+                      .BodyPadding(5)
+                      .AutoScroll(false)
+                      .Border(false)
+                      .Header(false)
+
+
+
+                 .Items(
+
+
+
+                       X.FieldSet()
+                          .ColumnWidth(0.4).Collapsible(true)
+                          .Title("Anexos")
+                          .Border(true)
+                          .AutoScroll(false)
+                          .MarginSpec("05 05 0 05")
+
+                          .Defaults(d =>
+                          {
+                              d.Add(new Parameter("LabelWidth", "150"));
+                              d.Add(new Parameter("DefaultAnchor", "100%"));
+                              d.Add(new Parameter("LabelAlign", "Left"));
+                          })
+                          .DefaultAnchor("100%")
+                          .FieldDefaults(d =>
+                          {
+                              d.LabelAlign = LabelAlign.Left;
+                          })
+
+                          .Items(
+
+                             X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+
+                                   .Items(
+
+                                   X.Component().Width(50),
+                                     X.Label().Text("Placenta"),
+
+
+                                     X.Component().Width(30),
+                            X.NumberFieldFor(m => m.PlacentaDiametros1).FieldLabel("Diametros").ReadOnly(indicaModoLectura).MaxLength(4)
+                             .EnableKeyEvents(true) //agregar estas 3 lineas de codigo para numeros
+                               .MinValue(1).MaskRe("/-+/").AllowExponential(false)//agregar estas 3 lineas de codigo para numeros
+                            .Listeners(l => { l.KeyPress.Handler = "isNumberKey()"; }),//agregar estas 3 lineas de codigo para numeros
+
+                                  X.Component().Width(5),
+                                     X.Label().Text("X"),
+
+                                       X.NumberFieldFor(m => m.PlacentaDiametros2).FieldLabel("").ReadOnly(indicaModoLectura).MaxLength(4)
+                                       .EnableKeyEvents(true) //agregar estas 3 lineas de codigo para numeros
+                               .MinValue(1).MaskRe("/-+/").AllowExponential(false)//agregar estas 3 lineas de codigo para numeros
+                            .Listeners(l => { l.KeyPress.Handler = "isNumberKey()"; }),//agregar estas 3 lineas de codigo para numeros
+
+                                         X.Component().Width(5),
+                                     X.Label().Text("cm"),
+
+                                     X.Component().Width(20),
+                                     X.TextFieldFor(m => m.Peso).FieldLabel("Peso").LabelWidth(50)
+                                     .ReadOnly(indicaModoLectura).MaxLength(100),
+
+                                     X.Component().Width(5),
+                                     X.Label().Text("Kg.")
+
+                                    ),
+
+                              X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+
+                                   .Items(
+
+
+                                      X.Component().Width(50),
+                    X.RadioGroupFor(c => c.AnexosCompletaIncompleta, new List<Radio.Config> {
+                            new Radio.Config{BoxLabel = "Completa" , Checked= (Model.AnexosCompletaIncompleta=="C"?true:false), InputValue = "C", ReadOnly =indicaModoLectura, Width = 100}, //
+                            new Radio.Config{BoxLabel = "Incompleta" , Checked= (Model.AnexosCompletaIncompleta=="I"?true:false), InputValue = "I", ReadOnly =indicaModoLectura, Width = 100}
+                                }).FieldLabel("").LabelWidth(20),
+
+
+                       X.Component().Width(30),
+                            X.CheckboxGroupFor(m => m.AnexosInfartos, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "Infartos", InputValue="R", Checked=(Model.AnexosInfartos=="R"?true:false) , ReadOnly=indicaModoLectura, Width = 70}
+                                    }).ID("IdRoja").Hidden(Model.AnexosInfartos == "N" ? true : false)
+
+                                  ),
+
+
+                                  X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+
+                                   .Items(
+
+                                        X.Component().Width(50),
+                                     X.Label().Text("Membranas"),
+                    X.Component().Width(20),
+                    X.RadioGroupFor(c => c.AnexosMenbranasCI, new List<Radio.Config> {
+                            new Radio.Config{BoxLabel = "C" , Checked= (Model.AnexosMenbranasCI=="C"?true:false), InputValue = "C", ReadOnly =indicaModoLectura, Width = 100}, //
+                            new Radio.Config{BoxLabel = "I" , Checked= (Model.AnexosMenbranasCI=="I"?true:false), InputValue = "I", ReadOnly =indicaModoLectura, Width = 100}
+                                }).FieldLabel("").LabelWidth(20),
+
+                       X.Component().Width(20),
+
+                                  X.CheckboxFor(c => c.AnexosD).ReadOnly(indicaModoLectura).Checked(Model.AnexosD == "A" ? true : false).InputValue("A")
+                                                .FieldLabel("D").LabelWidth(20),
+
+
+
+                                     X.Component().Width(20),
+                                     X.TextFieldFor(m => m.AnexosRuptura).FieldLabel("Ruptura a").LabelWidth(100)
+                                     .ReadOnly(indicaModoLectura).MaxLength(80),
+                                     X.Component().Width(5),
+                                     X.Label().Text("cm. del borde")
+                                      ),
+
+
+                                  X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+
+                                   .Items(
+
+                                        X.Component().Width(50),
+                                     X.Label().Text("Cordón"),
+                   X.Component().Width(20),
+
+                                     X.NumberFieldFor(m => m.AnexosCordonLong).FieldLabel("Long.").LabelWidth(50)
+                                     .ReadOnly(indicaModoLectura).MaxLength(100)
+
+                                      ),
+
+
+                                     X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+
+                                   .Items(
+
+                                          X.Component().Width(50),
+
+                                           X.CheckboxFor(c => c.Velamentoso).ReadOnly(indicaModoLectura).Checked(Model.Velamentoso == "V" ? true : false).InputValue("V")
+                                                .FieldLabel("Velamentoso").LabelWidth(90),
+                                           X.Component().Width(20),
+                                             X.CheckboxFor(c => c.Nudos).ReadOnly(indicaModoLectura).Checked(Model.Nudos == "N" ? true : false).InputValue("N")
+                                                .FieldLabel("Nudos").LabelWidth(60),
+                                              X.Component().Width(20),
+                                             X.CheckboxFor(c => c.Centrico).ReadOnly(indicaModoLectura).Checked(Model.Centrico == "C" ? true : false).InputValue("C")
+                                                .FieldLabel("Céntrico").LabelWidth(60),
+
+                                              X.Component().Width(20),
+                                             X.CheckboxFor(c => c.Exentrico).ReadOnly(indicaModoLectura).Checked(Model.Exentrico == "E" ? true : false).InputValue("E")
+                                                .FieldLabel("Excéntrico").LabelWidth(80),
+
+                                             X.Component().Width(20),
+                                             X.CheckboxFor(c => c.Marg).ReadOnly(indicaModoLectura).Checked(Model.Marg == "M" ? true : false).InputValue("M")
+                                                .FieldLabel("Marg").LabelWidth(50)
+
+
+                                         ),
+
+                                        X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+
+                                            .Items(
+
+                            X.Component().Width(50),
+                            X.RadioGroupFor(c => c.AnexosCircular, new List<Radio.Config> {
+                                    new Radio.Config{BoxLabel = "Simple" , Checked= (Model.AnexosCircular=="S"?true:false), InputValue = "S", ReadOnly =indicaModoLectura, Width = 100},
+                                     new Radio.Config{BoxLabel = "Doble" , Checked= (Model.AnexosCircular=="D"?true:false), InputValue = "D", ReadOnly =indicaModoLectura, Width = 100},
+                                     new Radio.Config{BoxLabel = "Triple" , Checked= (Model.AnexosCircular=="T"?true:false), InputValue = "T", ReadOnly =indicaModoLectura, Width = 100}
+
+                            }).FieldLabel("Circular").LabelWidth(130),
+
+                            X.Component().Width(160),
+                            X.TextFieldFor(m => m.Observaciones).FieldLabel("Observaciones").ReadOnly(indicaModoLectura).MaxLength(100)
+                            .Width(480).LabelWidth(90)
+
+                                            ),
+
+
+                                         X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+
+                                            .Items(
+
+                                             X.Component().Width(50),
+
+                                     X.NumberFieldFor(m => m.LiquidoAmniotico).FieldLabel("Liquido amniótico").MaxLength(4)
+                                     .EnableKeyEvents(true) //agregar estas 3 lineas de codigo para numeros
+                               .MinValue(1).MaskRe("/-+/").AllowExponential(false)//agregar estas 3 lineas de codigo para numeros
+                            .Listeners(l => { l.KeyPress.Handler = "isNumberKey()"; }),//agregar estas 3 lineas de codigo para numeros
+
+                                     X.Component().Width(20),
+
+
+                                       X.CheckboxFor(c => c.MalOlor).ReadOnly(indicaModoLectura).Checked(Model.MalOlor == "M" ? true : false).InputValue("M")
+                                                .FieldLabel("Mal olor").LabelWidth(70),
+                                           X.Component().Width(20),
+                                             X.CheckboxFor(c => c.Claro).ReadOnly(indicaModoLectura).Checked(Model.Claro == "C" ? true : false).InputValue("C")
+                                                .FieldLabel("Claro").LabelWidth(60),
+                                              X.Component().Width(20),
+                                             X.CheckboxFor(c => c.Meconial).ReadOnly(indicaModoLectura).Checked(Model.Meconial == "M" ? true : false).InputValue("M")
+                                                .FieldLabel("Meconial").LabelWidth(60),
+
+                                              X.Component().Width(20),
+                                             X.CheckboxFor(c => c.Otros).ReadOnly(indicaModoLectura).Checked(Model.Otros == "O" ? true : false).InputValue("O")
+                                                .FieldLabel("otros").LabelWidth(40),
+                                              X.Component().Width(20),
+
+                                                X.TextFieldFor(m => m.AnexosObservaciones).FieldLabel("Observaciones").ReadOnly(indicaModoLectura).MaxLength(100)
+                            .Width(480).LabelWidth(90)
+
+
+
+                                             )
+
+
+
+
+
+
+                                    )
+                        ),
+                        X.TextFieldFor(m => m.FechaCreacion).Hidden(true),
+                        X.DateFieldFor(m => m.FechaModificacion).Hidden(true),
+                        X.TextFieldFor(m => m.UsuarioCreacion).Hidden(true),
+                        X.TextFieldFor(m => m.UsuarioModificacion).Hidden(true),
+                        X.TextFieldFor(m => m.Estado).Hidden(true),
+                        X.TextArea().ID("taAlerts")
+                        .Border(false)
+                        .StyleSpec("background:white;border:1px solid gray;")
+                        .FieldStyle("color: red").Height(150)
+                        .Hidden(true)
+                        .ReadOnly(true)
+                     )
+
+                    .TopBar(X.Toolbar().ID("bar").Items(
+                                X.ToolbarSpacer(20),
+                                X.TextField().Width(15).FieldStyle("border-color: " + COLOER_IND_OBLIGA).ReadOnly(true).Hidden(indicaModoLectura),
+                                X.Label().Html("<b><font color='" + COLOER_IND_OBLIGA + "'>Campos Obligatorios</font></b>").Hidden(indicaModoLectura),
+
+                                X.ToolbarSpacer(20)
+                                ,
+                                Html.X().Container().Layout(LayoutType.HBox)
+                                .ID("conthbIndicaError").Hidden(true).Items(
+                                    X.Label().Html("<font  size='1.9em'; color='red'>(</font>"),
+                                    X.Label().Html("<font  size='3.9em'; color='red'><b>&#161;</b></font>"),
+                                    X.Label().Html("<font  size='1.9em'; color='red'>) Verificar los errores presentados</font>")
+                                ),
+                                X.ToolbarFill(),
+                               X.Button()
+                                .Text("Imprimir")
+                                .Icon(Icon.Report)
+                                .Hidden(!visibleImpresion)
+                                .ID("btnImpresion")
+                                .Handler("eventoVisorReporte('');")
+                                ,
+                                X.Button()
+                                .Text("Imprimir Todos")
+                                .Icon(Icon.ReportGo)
+                                .Hidden(!visibleImpresion)
+                                .ID("btnImpresionHC")
+                                .Handler("eventoVisorReporte('HC');")
+                                ,
+                                X.ToolbarSpacer().Width(40)
+                                ,
+                            X.Button()
+                                .Text("Guardar")
+                                .Icon(Icon.Disk)
+                //.DirectClickAction("Grilla_CCEPF001")
+                                .ID("cmdGuardar").Hidden(indicaModoLectura)
+
+                                .DirectEvents(de =>
+                                {  //Model.ACCION : Posee el MODO ACTUAL
+                                    de.Click.Url = Url.Action("CCEPF505_2_Save_ResumParto");
+                                    de.Click.EventMask.ShowMask = true;
+                                    de.Click.Before = "beforeSave(App.formactual); return App.formactual.getForm().isValid();";
+
+                                    de.Click.Success = "onSuccess(result.data);";
+                                    de.Click.Failure = "onFailure();";
+                                }),
+
+                            X.Button()
+                                .Text("Cancelar")
+                                .ID("btnCancel").Hidden(indicaModoLectura)
+                                .Icon(Icon.Cancel)
+                                .Handler("eventoCancelar(this.up('form'));")
+                                ,
+                            X.Button()
+                                .Text("Editar")
+                                .ID("btnOnEdit")
+                                .Icon(Icon.ApplicationFormEdit)
+                                .Hidden(true)
+                                .Handler("eventoOnEditar(App.btnOnEdit);")
+
+                        ))
+                        .Listeners(l => l.FieldChange
+                            .Handler = "setIndicaCambios(true);"
+                        )
+                );
+        }
+        )
+
+
+    )
+
+}
+

@@ -1,0 +1,314 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_HC_RegistroAcompanante
+
+@{
+    var X = Html.X();
+    var COLOR_BLUE01_temp = "#284A89";
+    var COLOR_RED01_temp = "#848484";
+}
+
+<script>
+    var varTipoBuscar = "LOAD";
+    var template = 'color:{0};';
+    var cuenta = 0;
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+    var change = function (value, meta) { return value; };
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 2)
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+
+    var changeTipoDoc = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == "D")
+            return Ext.String.format(template, COLOR_BLUE01, "DNI");
+        if (value == "R")
+            return Ext.String.format(template, COLOR_BLUE01, "RUC");
+        if (value == "P")
+            return Ext.String.format(template, COLOR_BLUE01, "PASAPORTE");
+        if (value == "O")
+            return Ext.String.format(template, COLOR_BLUE01, "OTROS");
+    };
+
+    var changeTipoParent = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 1)
+            return Ext.String.format(template, COLOR_BLUE01, "PADRE");
+        if (value == 2)
+            return Ext.String.format(template, COLOR_BLUE01, "MADRE");
+        if (value == 3)
+            return Ext.String.format(template, COLOR_BLUE01, "HIJO");
+        if (value == 4)
+            return Ext.String.format(template, COLOR_BLUE01, "HIJA");
+        if (value == 5)
+            return Ext.String.format(template, COLOR_BLUE01, "ABUELA");
+        if (value == 6)
+            return Ext.String.format(template, COLOR_BLUE01, "ABUELO");
+        if (value == 7)
+            return Ext.String.format(template, COLOR_BLUE01, "TIO");
+        if (value == 8)
+            return Ext.String.format(template, COLOR_BLUE01, "TIA");
+        if (value == 9)
+            return Ext.String.format(template, COLOR_BLUE01, "PRIMO");
+        if (value == 10)
+            return Ext.String.format(template, COLOR_BLUE01, "PRIMA");
+        if (value == 11)
+            return Ext.String.format(template, COLOR_BLUE01, "NIETO");
+        if (value == 12)
+            return Ext.String.format(template, COLOR_BLUE01, "NIETA");
+        if (value == 13)
+            return Ext.String.format(template, COLOR_BLUE01, "HERMANA");
+        if (value == 14)
+            return Ext.String.format(template, COLOR_BLUE01, "HERMANO");
+        if (value == 15)
+            return Ext.String.format(template, COLOR_BLUE01, "SOBRINO");
+        if (value == 16)
+            return Ext.String.format(template, COLOR_BLUE01, "SOBRINA");
+    };
+
+    var accionBuscarFiltro = function (tipo) {
+        varTipoBuscar = tipo;
+        App.GridPanelVer.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+
+
+    var eventoCargarMain = function () {
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("addPermisosFormatos"))',
+            params: {
+                data: 'FORMATO',
+                indica: 'PERMISO',
+            },
+            success: function (result) { accionSetPermisos(result.data); }
+        });
+    };
+    var accionSetPermisos = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                if (data[i].ACCION == 'BUSCAR' && App.compoBUSCAR != null) {
+                    App.compoBUSCAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'NUEVO' && App.compoNUEVO != null) {
+                    App.compoNUEVO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'MODIFICAR' && App.compoMODIFICAR != null) {
+                    App.compoMODIFICAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'ELIMINAR' && App.compoELIMINAR != null) {
+                    App.compoELIMINAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'VER' && App.compoVER != null) {
+
+                } else if (data[i].ACCION == 'VER2' && App.compoVER != null) {
+                    App.compoVER.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'ACCESO' && App.compoACCESO != null) {
+                    App.compoACCESO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'HABILITADO' && App.compoHABILITADO != null) {
+                    App.compoHABILITADO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'OBLIGA' && App.compoOBLIGA != null) {
+                    App.compoOBLIGA.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'PRIORIDADAGOPCION' && App.compoPRIORIDADAGOPCION != null) {
+                    App.compoPRIORIDADAGOPCION.setVisible((data[i].campoInt01 == 2 ? true : false));
+                }
+
+            }
+        }
+    };
+
+
+
+    function trim(str) { return str.replace(/^\s+|\s+$/g, ""); }
+
+
+
+
+    var eventoCheckFiltro = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+
+
+    function enviarSeleccionDirect(param1, param2) {
+        var status = param1;
+        var status2 = param2;
+        var status3 = param3;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action(Model.Accion))',
+            params: {
+                MODO: 'get',
+                id: status,
+                IdAcompanante: status2,
+               
+                idWindow: "WindowVerAcompanante"
+            }
+        });
+    }
+
+</script>
+
+
+@(Html.X().Window().Width(800).Height(400).
+Maximizable(true).Modal(true).OnEsc("false")
+.AutoScroll(true).Layout(LayoutType.Fit)
+.CloseAction(CloseAction.Destroy).Icon(Icon.ApplicationForm)
+    .ID("WindowVerAcompanante").Title("Ver Acompañantes del Paciente").Padding(4).TopBar(
+X.Toolbar().Height(30)
+    .Items(
+        X.ToolbarSpacer(),
+        X.Label().Html("<b><span style='color:" + COLOR_BLUE01_temp + ";'>" + "PACIENTE" + ": " + Model.Nombres + "  </span> </b>"),
+            X.ToolbarSpacer(),
+                 X.ToolbarSpacer(),
+                      X.ToolbarSpacer(),
+        X.Label().Html("<b><span style='color:" + COLOR_RED01_temp + ";'>" + "HC" + ": " + Model.CodigoOA + "</span> </b>"),
+             X.ToolbarSpacer(),
+                     X.ToolbarSpacer(),
+                          X.ToolbarSpacer(),
+       
+        
+        X.Button().Text("Cancelar").Icon(Icon.Cancel).DirectEvents(de =>
+        {
+            de.Click.Url = Url.Action("cerrarWindow");
+            de.Click.ExtraParams.Add(new Parameter("id", "WindowVerAcompanante", ParameterMode.Value));
+        }),
+        X.ToolbarSpacer(20))
+
+        )
+        .Items(
+            X.Panel()
+            .Border(false)
+            .Layout(LayoutType.VBox)
+            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+            .Items(
+                X.Panel()
+                .Header(false).Border(false).Flex(1)
+                    .Layout(LayoutType.Border).TopBar(
+                                X.Toolbar()
+
+                                     .Items(X.Panel()
+                                .Layout(LayoutType.HBox)
+                                .BodyPadding(5)
+                                .Width(1110)
+                                .Border(false)
+                                .MarginSpec("1 20 1 1")
+                               
+                             )
+
+                            )
+                .Items(
+
+
+
+                        Html.X().Panel()
+                        .Region(Region.Center)
+                        .ID("centerPanels")
+                        .Height(600)
+                        .Title("Vista de Reporte")
+                        .AutoDoLayout(true)
+                             .Items(
+                       X.GridPanel()
+                            .AllowDeselect(true)
+                            .Border(false)
+                            .Scroll(ScrollMode.Both)
+                            .AutoScroll(true)
+                            .ID("GridPanelVer")
+                            .Height(300)
+                            .Margins("0 0 0 0")
+        ///CONFIGURAR EL STORE
+                            .Store(store => store.Add(
+                                     Html.X().Store()
+                                         .ID("StoreVer")
+                                         .AutoLoad(true)
+                                         .RemoteSort(false)
+                                         .IsPagingStore(true)
+                                         .RemotePaging(true)
+                                         .PageSize(10)////CAMBIAR DE ACUERDO A ALGÚN UN CRITERIO
+                                         .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                           .Url("HClinica/getGrillaVerAcompanantes")
+                                                .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                .Root("data")
+                                                .TotalProperty("total")
+                                                                 .IDProperty("IdAcompanante"))))
+                                          )
+
+                                                 .Parameters(ps =>
+                                                        ps.Add(new
+                                                        {
+                                                            idPaciente = Model.IdPaciente
+
+                                                            //Usuario = JRawValue.From("App.tfIdUsuario.getValue()"),
+                                                            //FechaUno1 = JRawValue.From("App.FechaUno1.getValue()"),
+                                                            //Proceso = JRawValue.From("App.tfBuscarProceso.getValue()"),
+                                                            //codigoOA = JRawValue.From("App.tfcodigoOA.getValue()"),
+
+
+                                                            //tipoBuscar = JRawValue.From("varTipoBuscar")
+                                                        })
+                                                 )
+                                        .Model(model => model.Add(Html.X().Model()
+                                                 .Fields(fields =>
+                                                 {
+                                                     fields.Add(Html.X().ModelField().Name("IdAcompanante"));
+                                                     fields.Add(Html.X().ModelField().Name("IdPaciente"));
+                                                     fields.Add(Html.X().ModelField().Name("CodigoOA"));
+                                                     fields.Add(Html.X().ModelField().Name("Tipo"));
+                                                     fields.Add(Html.X().ModelField().Name("numero"));
+                                                     fields.Add(Html.X().ModelField().Name("TipoParentesco"));
+                                                     fields.Add(Html.X().ModelField().Name("ApePat"));
+                                                     fields.Add(Html.X().ModelField().Name("ApeMat"));
+                                                     fields.Add(Html.X().ModelField().Name("Nombres"));
+                                                     fields.Add(Html.X().ModelField().Name("Telefono"));
+                                                     fields.Add(Html.X().ModelField().Name("Observaciones"));
+                                                     fields.Add(Html.X().ModelField().Name("Estado"));
+                                                     
+
+
+                                                 }))
+                                                )
+                                              )
+                                   )
+
+                                ///CONFIGURAR LAS COLUMNAS
+                                .ColumnModel(columnModel =>
+                                {
+                                    columnModel.Columns.Add(Html.X().Column().Text("IdAcompanante").DataIndex("IdAcompanante").Width(100).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("IdPaciente").Width(100).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("CodigoOA").DataIndex("CodigoOA").Width(80).Hidden(false));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Tipo").DataIndex("Tipo").Width(50).Renderer("changeTipoDoc"));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Numero").DataIndex("numero").Width(80));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Parentesco").DataIndex("TipoParentesco").Width(80).Renderer("changeTipoParent"));
+                                    columnModel.Columns.Add(Html.X().Column().Text("ApePat").DataIndex("ApePat").Width(80));
+                                    columnModel.Columns.Add(Html.X().Column().Text("ApeMat").DataIndex("ApeMat").Width(80));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Nombres").DataIndex("Nombres").Width(80));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Telefono").DataIndex("Telefono").Width(80));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Observaciones").DataIndex("Observaciones").Width(80));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(80).Renderer("changeEstado"));
+                                    ;
+
+
+                                })
+                                 .View(Html.X().GridView().TrackOver(false))
+                                 .Border(false)
+                               .Listeners(l => l.CellClick.Handler = "setSeleccion(record.data);")
+                                   .Listeners(l => l.CellDblClick.Handler = "eventoVerSelected(record.data.IdAcompanante);")
+
+
+                                .BottomBar(bar => bar.Add(
+                                    Html.X().PagingToolbar()
+                                ))
+
+                    )
+                )
+            )
+                  .Listeners(l => l.Render.Handler = "eventoCargarMain();")
+        ).CloseAction(CloseAction.Destroy)
+)
+
+

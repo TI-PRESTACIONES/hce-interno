@@ -1,0 +1,395 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SEGURIDADCONCEPTO
+
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+}
+@section cabecera
+{
+    <script>
+        var varTipoBuscar = "LOAD";
+
+        var seleccionActual1 = null;
+        var seleccionActual2 = null;
+        var seleccionActual3 = null;
+
+      function setSeleccion(param1,param2,param3) {
+            seleccionActual1 = param1;
+            seleccionActual2 = param2;
+            seleccionActual3 = param3;
+        }
+
+      var Valores;
+      var template = '<span style="color:{0};">{1}</span>';
+
+      var COLOR_BLUE01 = "#284A89";
+      var COLOR_RED01 = "#990000";
+      var COLOR_GREEN01 = "#177506";
+      var COLOR_YELLOW02 = "#D9A407";
+
+      var changeEstado = function (value) {
+          var template = '<span style="color:{0};">{1}</span>';
+          if (value == 'A')
+              return Ext.String.format(template, COLOR_BLUE01, "Activo");
+          if (value == 'I')
+              return Ext.String.format(template, COLOR_RED01, "Inactivo");
+      };
+
+      var pctChange = function (value) {
+          return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+      };
+      // funciones relacionadas a al GRILLA
+      var onSuccess = function (grid, data) {
+          grid.show();
+          grid.getStore().loadData(data);
+      };
+
+    function deleteSelected(grid) {
+        var store = grid.store,
+           records = grid.selModel.getSelection();
+        store.remove(records);
+        App.Window1.AutoDestroy(true);
+
+    };
+    function nuevo() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("ConceptoSeguridadRegistro"))',
+            params: {
+                MODO: 'NUEVO',
+                aplicacion: '',
+                concepto: '',
+                grupo: ''
+
+            }
+        });
+    };
+        function modificarSelected(grid) {
+            if (seleccionActual1 != null && seleccionActual2 != null && seleccionActual3!= null) {
+                var status = seleccionActual1;
+                var status1 = seleccionActual2;
+                var status2 = seleccionActual3;
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("ConceptoSeguridadRegistro"))',
+                    params: {
+                        MODO: 'UPDATE',
+                        aplicacion: status,
+                        concepto: status1,
+                        grupo: status2
+
+                    }
+                });
+            } else {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Debe Seleccionar un Elemento.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+        }
+        function eliminarSelected(grid) {
+            if (seleccionActual1 != null && seleccionActual2 != null && seleccionActual3!= null) {
+         var status = seleccionActual1;
+         var status1 = seleccionActual2;
+         var status2 = seleccionActual3;
+
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("ConceptoSeguridadRegistro"))',
+                params: {
+                    MODO: 'DELETE',
+                    aplicacion: status,
+                    concepto: status1,
+                    grupo: status2
+
+                }
+            });
+            } else {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Debe Seleccionar un Elemento.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+     }
+
+        function verSelected() {
+            eventoVerSelected(seleccionActual);
+        }
+
+        function eventoVerSelected(param1) {
+            if (param1 != null) {
+                var status = param1;
+                var status1 = seleccionActual2;
+                var status2 = seleccionActual3;
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("ConceptoSeguridadRegistro"))',
+                    params: {
+                        MODO: 'VER',
+                        aplicacion: status,
+                        concepto: status1,
+                        grupo: status2
+                    }
+                });
+            } else {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Debe Seleccionar un Elemento.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+        }
+
+        var accionBuscarFiltro = function (tipo) {
+            varTipoBuscar = tipo;
+            App.GridPanel1.getStore().reload();
+            varTipoBuscar = 'LOAD';
+        };
+
+        var accionFinal = function (btn) {
+            App.GridPanel1.getStore().reload();
+        };
+
+
+    </script>
+}
+
+@section cuerpo
+{
+    @(
+ Html.X().Viewport()
+        .AutoScroll(true)
+        .Layout(LayoutType.Border)
+        .Items(
+           X.Panel()
+              .Title("Conceptos de Seguridad")
+        //.Header(false)
+              .Border(false)
+              .Region(Region.North)
+              .Split(true)
+             .Collapsible(true)
+        //.Header(false)
+              .Height(150)
+              .TopBar(
+                         X.Toolbar()
+                        .Height(30)
+                        .Items(
+                               X.Button()
+                                .Text("Buscar")
+                                    .Icon(Icon.Find)
+                                     .Handler("accionBuscarFiltro('FILTRO');"), 
+                                X.ToolbarSeparator(),
+                                X.ToolbarSpacer(),    
+                                    X.Button()
+                                        .Text("Nuevo")
+                                        .Icon(Icon.ApplicationFormAdd)
+                                        .Handler("nuevo(); "),
+                                    X.Button()
+                                        .Text("Modificar")
+                                        .Icon(Icon.ApplicationFormEdit)
+                                        .Handler("modificarSelected();")
+                                             ,
+                                    X.Button()
+                                        .Text("Eliminar")
+                                        .Icon(Icon.ApplicationFormDelete)
+                                    .Handler("eliminarSelected();"),
+                                       X.ToolbarSeparator(),
+                                        X.Button()
+                                            .Text("Ver")
+                                            .Icon(Icon.ApplicationViewDetail)
+                                            .Handler("verSelected();"),
+                                     X.ToolbarFill()
+                              )
+              )
+             .Items(X.Panel()
+                    .Layout(LayoutType.HBox)
+                        .BodyPadding(5)
+                        .Border(false)
+                        .MarginSpec("1 20 1 1")
+                    .Items(
+                            X.FieldSet()
+                                .Flex(1)
+                                .Title("Filtros")
+                                .MarginSpec("5 5 5 10")
+                                .Defaults(d =>
+                                {
+                                    d.Add(new Parameter("LabelWidth", "120"));
+                                })
+                                .Items(
+
+                                   Html.X().Container().Layout(LayoutType.HBox)
+                                   .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                       .Items(
+                                               X.Checkbox()
+                                                   .FieldLabel("Concepto")
+                                               .ID("concep")
+                                                   .Listeners(l => l.Change.Handler = @"var checkAll = #{concep}.getValue();
+                                                if(checkAll){            
+                                                    #{tfBuscarCod}.setDisabled(true);
+                                                    #{tfBuscarCod}.setValue(null);
+                                                }else{
+                                                    #{tfBuscarCod}.setDisabled(false);                        
+                                                }")
+                                              .Checked(false),    
+                                   X.TextField()
+                                   .ID("tfBuscarCod")
+                                   .Name("buscarCod")
+                                       .FieldLabel(""),
+                                                   X.Checkbox()
+                                                           .FieldLabel("Descripción")
+                                                   .ID("desc")
+                                                       .Listeners(l => l.Change.Handler = @"var checkAll = #{desc}.getValue();
+                                                if(checkAll){            
+                                                    #{tfBuscarDesc}.setDisabled(true);
+                                                    #{tfBuscarDesc}.setValue(null);
+                                                }else{
+                                                    #{tfBuscarDesc}.setDisabled(false);                        
+                                                }")
+                                                  .Checked(false),  
+
+                                   X.TextField()
+                                   .ID("tfBuscarDesc")
+                                   .Name("buscarDesc")
+                                   .FieldLabel("")),
+
+                                   Html.X().Container().Layout(LayoutType.HBox)
+                                   .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                       .Items(
+                                                       X.Checkbox()
+                                                                   .FieldLabel("Estado")
+                                                       .ID("es")
+                                                           .Listeners(l => l.Change.Handler = @"var checkAll = #{es}.getValue();
+                                                if(checkAll){            
+                                                    #{tfBuscarEst}.setDisabled(true);
+                                                    #{tfBuscarEst}.setValue(null);
+                                                }else{
+                                                    #{tfBuscarEst}.setDisabled(false);                        
+                                                }")
+                                                      .Checked(false),  
+                                   X.ComboBox()
+                                  .ID("tfBuscarEst")
+                                  .Name("buscarEst")
+                                  .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenericoTxt("ESTADOCONCEPTOSEGURI").Select(d => new ListItem(d.Name, d.Codigo)))
+                                  .FieldLabel("")
+                                  .SimpleSubmit(true)
+
+                                        )
+                                )
+                                
+        /*.DirectEvents(directEvents =>
+         {
+             directEvents.Click.Url = "getGrillaConceptoSeguridad";
+             directEvents.Click.CleanRequest = true;
+             directEvents.Click.Method = HttpMethod.POST;
+             directEvents.Click.Success = "onSuccess(App.GridPanel1, result.data);";
+             directEvents.Click.EventMask.ShowMask = true;
+             directEvents.Click.EventMask.Msg = "Espere un momento...";
+             directEvents.Click.ExtraParams.Add(new
+             {
+                 start = 0,
+                 limit = 10,
+                 descripcion = JRawValue.From("App.tfBuscarDesc.getValue()"),
+                 codigo = JRawValue.From("App.tfBuscarCod.getValue()")
+             });
+         }
+        )*/
+                    )
+             ),
+            X.Panel()
+                .Region(Region.Center)
+                .ItemID("center")
+               .Header(false)
+               .Border(false)
+               .Items(
+                   X.GridPanel()
+                        .Border(false)
+                        .Scroll(ScrollMode.Both)
+                        .AutoScroll(true)
+                        .ID("GridPanel1")
+                        .Margins("0 0 0 0")
+        ///CONFIGURAR EL STORE
+                        .Store(store => store.Add(
+                                 Html.X().Store()
+                                     .ID("Store1")
+                                     .AutoLoad(true)
+                                     .RemoteSort(false)
+                                     .IsPagingStore(true)
+                                     .RemotePaging(true)
+                                     .PageSize(15)
+                                     .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                    .Url("getGrillaConceptoSeguridad")
+                                            .Reader(reader => reader.Add(Html.X().JsonReader()
+                                            .Root("data")
+                                                .TotalProperty("total")
+                                                                 .IDProperty("APLICACIONCODIGO")
+                                                                 .IDProperty("GRUPO")
+                                                                 .IDProperty("CONCEPTO")
+                                                 )))
+                                                )
+
+                                         // .Writer(writer => writer.Add(Html.X().JsonWriter().AllowSingle(true)))
+                                         .Parameters(ps =>
+                                                ps.Add(new
+                                                {
+                                                    //start = 0,
+                                                    //limit = 10,
+                                                    descripcion = JRawValue.From("App.tfBuscarDesc.getValue()"),
+                                                    codigo = JRawValue.From("App.tfBuscarCod.getValue()"),
+                                                    estado = JRawValue.From("App.tfBuscarEst.getValue()"),
+                                                    tipoBuscar = JRawValue.From("varTipoBuscar")
+                                                })
+                                         )
+                                     .Model(model => model.Add(Html.X().Model()
+                                             .Fields(fields =>
+                                             {
+                                                 fields.Add(Html.X().ModelField().Name("APLICACIONCODIGO"));
+                                                 fields.Add(Html.X().ModelField().Name("GRUPO"));
+                                                 fields.Add(Html.X().ModelField().Name("CONCEPTO"));
+                                                 fields.Add(Html.X().ModelField().Name("CONCEPTOPADRE"));
+                                                 fields.Add(Html.X().ModelField().Name("ESTADO"));
+                                                 fields.Add(Html.X().ModelField().Name("DESCRIPCION"));
+                                             }))
+                                            )
+                                          )
+                               )
+
+                            ///CONFIGURAR LAS COLUMNAS
+                            .ColumnModel(columnModel =>
+                            {
+                                columnModel.Columns.Add(Html.X().Column().Text("CODIGO").DataIndex("APLICACIONCODIGO").Width(80));
+                                columnModel.Columns.Add(Html.X().Column().Text("GRUPO").DataIndex("GRUPO").Width(80));
+                                columnModel.Columns.Add(Html.X().Column().Text("CONCEPTO").DataIndex("CONCEPTO").Width(100));
+                                columnModel.Columns.Add(Html.X().Column().Text("DESCRIPCION").DataIndex("DESCRIPCION").Width(200));
+                                columnModel.Columns.Add(Html.X().Column().Text("CONCEPTOPADRE").DataIndex("CONCEPTOPADRE").Width(100));
+                                columnModel.Columns.Add(Html.X().Column().Text("ESTADO").DataIndex("ESTADO").Width(100)
+                                .Renderer("changeEstado")
+                                    );
+
+
+                            })
+                             .View(Html.X().GridView().TrackOver(false))
+                                 .Border(false)
+                                  .Listeners(l => l.CellClick
+                                                  .Handler = "setSeleccion(record.data.APLICACIONCODIGO,record.data.CONCEPTO,record.data.GRUPO);")
+                                    .Listeners(l => l.CellDblClick
+                                            .Handler = "eventoVerSelected(record.data.APLICACIONCODIGO,record.data.CONCEPTO,record.data.GRUPO);")
+
+                            .BottomBar(bar => bar.Add(
+                                Html.X().PagingToolbar()
+                            ))
+
+                )
+        )
+    )
+
+    @(X.KeyNav()
+                    .Target("={document.body}")
+                    .Enter(a => a.Handler = "accionBuscarFiltro('FILTRO');")
+    )
+}

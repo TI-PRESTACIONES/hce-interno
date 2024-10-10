@@ -1,0 +1,97 @@
+﻿@model SoluccionSalud.Entidades.Entidades.ENTITY_GENERALHCE
+@{
+    var X = Html.X();
+    var idWindow = "WindowConfirmacionGen";
+
+    var TEXTBTN_YES = Model.campoStr01;
+    var TEXTBTN_NO = Model.campoStr02;
+    var TEXTBTN_CANCEL = Model.campoStr03;
+
+    var EVENTBTN_YES = Model.campoStr04;
+    var EVENTBTN_NO = Model.campoStr05;
+    var EVENTBTN_CANCEL = Model.campoStr06;
+
+    var TITULO = Model.campoStr10;
+    var MENSAJE_CONFIRM = Model.campoStr11;
+    var VALOR_Y = (int)((Model.campoInt01 == null || Model.campoInt01 == 0) ? 10 : Model.campoInt01);
+    var VALOR_WIDTH = (int)((Model.campoInt02 == null || Model.campoInt02 == 0) ? 450 : Model.campoInt02);
+    var VALOR_HEIGTH = (int)((Model.campoInt03 == null || Model.campoInt03 == 0) ? 120 : Model.campoInt03);
+
+
+
+    var STYLE_LABEL = "' Border : none; background: none; width:100px;height: 18px; margin-right:5px; font: bold 11px tahoma ;' >";
+    var STYLE_ETQ_ABR = "<label style= ";
+    var STYLE_ETQ_CER = "</label>";
+}
+
+<script>
+
+    var cerrarConfirmacionGen = function () {
+        App.WindowConfirmacionGen.close();
+    };
+
+</script>
+
+
+
+@(Html.X().Window()
+     .Width(VALOR_WIDTH)
+     .Height(VALOR_HEIGTH)
+    .Maximizable(false)
+    .Modal(true)
+    .Y(VALOR_Y)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+        //.Frame(true)
+        //.Icon(Icon.ApplicationForm)
+     .ID(idWindow)
+    .Title(TITULO)
+        //.X(0)
+        //.Y(0)
+    .Items(
+        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch })
+        .Items(
+            Html.X().Container().Layout(LayoutType.VBox).LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Center })
+            .Width(50)
+            .Items(
+                X.Label().Text("").Width(10),
+                X.Image()
+                .ImageUrl("~/resources/images/question.png")
+               .Width(32)
+               .Height(32)
+               .ApplyStyles("position: absolute")
+               ,
+               X.Label().Text("").Width(10)
+            )
+            ,
+                    X.Label().StyleHtmlCls("font-style: italic;")
+                  .Text(MENSAJE_CONFIRM).Flex(1)
+        //.Html(STYLE_ETQ_ABR + STYLE_LABEL + " XXXXXXXXXXXXXXXXXXXXXXXXX?" + STYLE_ETQ_CER)
+        )
+    )
+        .ButtonAlign(Alignment.Center)
+    .Buttons(
+        X.Button().Text(TEXTBTN_YES)
+            .Handler(EVENTBTN_YES).Listeners(d => d.Click.Fn = "cerrarConfirmacionGen")
+        ,
+        X.Button().Text(TEXTBTN_NO)
+            .Handler(EVENTBTN_NO).Listeners(d => d.Click.Fn = "cerrarConfirmacionGen")
+        ,
+        X.Button().Text(TEXTBTN_CANCEL)
+            .Handler(EVENTBTN_CANCEL).Listeners(d => d.Click.Fn = "cerrarConfirmacionGen")
+    )
+  //  .CloseAction(CloseAction.Destroy)
+
+)
+@(
+ X.KeyNav()
+        .Target("WindowConfirmacionGen")
+        .Enter(a =>
+        {
+            a.Handler = EVENTBTN_YES;
+            a.Fn = "cerrarConfirmacionGen";
+        })
+)
+

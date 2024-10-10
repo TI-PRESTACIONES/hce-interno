@@ -1,0 +1,28 @@
+﻿@model List<Ext.Net.Node>
+
+@{
+    ViewBag.Title = "FormEdit";
+    Layout = "";
+
+}
+ 
+@(
+
+ Html.X().TreePanel()
+                        .Region(Region.East)
+                        .Width(300)
+                        .Title("Site Map - Dynamic")
+                        .Icon(Icon.ChartOrganisation)
+                        .Listeners(l =>
+                        {
+                            l.ItemClick.Handler = "if (record.data.href) { e.stopEvent(); loadPage(this.prev('tabpanel'), record); }";
+                        })
+                        .RootVisible(false)
+                        .Store(
+                            Html.X().TreeStore()
+                                .DefaultRootId("_root")
+                                .Proxy(
+                                        Html.X().AjaxProxy().Url(Url.Action("ViewTree"))
+                                )
+                        )
+)

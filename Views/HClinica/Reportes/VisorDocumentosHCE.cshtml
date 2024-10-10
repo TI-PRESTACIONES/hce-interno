@@ -1,0 +1,137 @@
+﻿@model SoluccionSalud.Entidades.Entidades.ENTITY_GENERALHCE
+
+
+@{
+    var X = Html.X();
+    var COLOR_BLUE01_temp = "#284A89";
+    var COLOR_RED01_temp = "#990000";
+    var COLOR_GREEN01_temp = "#177506";
+    var COLOR_YELLOW02_temp = "#D9A407";
+
+}
+
+<script>
+
+    var actualPrev_X = null;
+    var actualPrev_Y = null;
+    var actualPrev_H = null;
+    var actualPrev_W = null;
+
+    var panelActual = null;
+    var pathFile = "resources/Temporal/";
+
+
+    var loadPage = function (UrlFile, nombreFile, urlHost) {
+        
+        var cont = App.panelDocumentoHCE;
+        cont.remove();
+        var cargado = false;
+        
+        alert('TEST::' + UrlFile);
+        if (cont != null && !cargado) {            
+            cont.add({
+                id: nombreFile,
+                title: '' + UrlFile,
+                closable: false,
+                loader: {
+                    url: ''+UrlFile,
+                    renderer: "frame",
+                    loadMask: {
+                        showMask: true,
+                        msg: "Cargando " + nombreFile + "..."
+                    }
+                },
+                autoScroll: false
+            });
+        }
+    };
+
+
+
+
+</script>
+
+
+@(Html.X().Window()
+    .Width(700)
+    .Height(400)
+        //.X(0)
+        .Y(10)
+    .Maximizable(true)
+    .Closable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Resizable(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowVerDocumentoHCE")
+        .Title("Informe: "+Model.campoStr05)
+    .Padding(4)
+        .TopBar(
+            X.Toolbar()
+            .Height(30)
+            .Items(
+                /*X.ToolbarSpacer(),
+                  X.Label().Html("<b><span style='color:" + COLOR_BLUE01_temp + ";'>" +
+                    "Paciente" + ": " + Model.NombreCompleto + "</span> </b>")
+                ,
+                X.ToolbarSpacer(40),
+                  X.Label().Html("<b><span style='color:" + COLOR_BLUE01_temp + ";'>" +
+                        "Código OA" + ": " + Model.UnidadReplicacionEC + "</span> </b>")
+                ,*/
+                X.ToolbarFill(),
+                X.Button().ID("btnReload")
+                    .Text("Recargar")
+                    .Icon(Icon.Reload)
+                     .Handler("loadPage('" + Model .campoStr01+ "', '" + Model.campoStr02 + "' ,'"+Model.campoStr03+"' );")
+        //.Handler("eventoExpandir (App.WindowVerDocumentoHCE,false);")
+                            ,
+                X.Button().ID("btnContract")
+                    .Text("Restaurar").Hidden(true)
+                    .Icon(Icon.ApplicationSideContract)
+                    .Handler("eventoExpandir (App.WindowVerDocumentoHCE,true);")
+                            ,
+                X.Button()
+                    .Text("Aceptar")
+                    .Icon(Icon.Accept)
+                        .Handler("App.WindowVerDocumentoHCE.close();")
+                    /*.DirectEvents(de =>
+                     {  //Model.ACCION : Posee el MODO ACTUAL
+                         de.Click.Url = Url.Action("cerrarWindow");
+                         //de.Click.EventMask.ShowMask = true;
+                         de.Click.ExtraParams.Add(new Parameter(
+                               "id", "WindowVerDocumentoHCE", ParameterMode.Value));
+                     })*/
+
+                )
+          )
+    .Items(
+        X.Panel()
+        .Layout(LayoutType.Fit).Header(false)                    
+        .AutoScroll(true)
+        .ID("panelDocumentoHCE")
+        .TopBar(
+                        X.Toolbar()
+                        .StyleSpec("padding-bottom:0px;")
+                        .Items(
+                            X.TabStrip()
+                                .Items(t =>
+                                {
+                                    t.Add(X.Tab().ActionItemID("PanelSupDocExt").Text("Visor de Documento"));
+                                    //t.Add(X.Tab().ActionItemID("pnlData").Text("Data"));
+                                })
+                        )
+        )
+    )
+    .CloseAction(CloseAction.Destroy)
+        .Listeners(l =>
+        {
+            //l.Close.Handler = "alert('CLOSE');";
+        })  
+        //.Html(DateTime.Now.ToLongTimeString())
+
+)
+
+

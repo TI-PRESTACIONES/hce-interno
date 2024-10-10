@@ -1,0 +1,211 @@
+﻿@model SoluccionSalud.Entidades.Entidades.PERSONAMAST
+@{
+    var X = Html.X();
+    var COLOR_BLUE01_temp = "#284A89";
+}
+
+<script>
+
+    var template = 'color:{0};';
+    var cuenta = 0;
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+    var change = function (value, meta) {return value;};
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 'A')
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == 'I')
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+
+    function addRecord(grid) {
+        var idHCE = App.Persona.getValue();
+        var codEXT = App.tfIdComp.getValue();
+        var app = App.cmbParentesco.getValue();
+        var nombre = App.tfNomComp.getValue();
+        var parent = App.cmbParentesco.getRawValue();
+        var usu = App.UltimoUsuario.getValue();
+        if (codEXT != null && codEXT != '') {
+            if (validaDuplicado('' + app, '' + codEXT)) {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Ya existe el Registro",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            } else {
+                cuenta = cuenta + 1;
+                grid.store.insert(0,
+                        {
+                            Persona: cuenta,
+                            personanew: idHCE,
+                            IndicadorAutogenerado: codEXT,
+                            IdPersonaUnificado: app,
+                            NombreCompleto: nombre,
+                            NombreEmergencia: parent,
+                            UltimoUsuario: usu,
+                            Estado: '2',
+                            Accion: 'INSERTGRUPOFAM'
+                        });
+            }
+        }
+        else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Ingresar el familiar",
+                icon: Ext.Msg.INFO,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+    };
+
+    function validaDuplicado(valor1, valor2) {
+        var estados = false;
+        App.StoreGrupoFam.each(function (r) {
+            if ((r.get('IdPersonaUnificado')) == (valor1)
+                && (r.get('IndicadorAutogenerado')) == (valor2)
+                ) {
+                estados = true;
+            }
+        });
+        return estados;
+    };
+
+    function trim(str) {return str.replace(/^\s+|\s+$/g, "");}
+
+    function deleteActual(record) {
+        var store = App.GridPanelGrupoFam.store;
+        store.remove(record);
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("add_DataDeleteGrupoFam"))',
+            params: {
+                MODO: 'DELETEGRUPOFAM',
+                appEXT: record.data.IdPersonaUnificado,
+                idHCE: record.data.Persona,
+                idPacHCE: record.data.personanew,
+                codigoEXT: record.data.IndicadorAutogenerado
+            }
+        });
+
+    };
+
+    function save_GrupoFam(agente, idAg) {
+        var id = 0;
+        var store = App.StoreGrupoFam;
+        var status;
+        var grupoFamArray = new Array();
+        store.each(function (r) {
+            var PERSONAMAST = {
+                Persona: r.get('Persona'),
+                personanew: r.get('personanew'),
+                IndicadorAutogenerado: r.get('IndicadorAutogenerado'),
+                IdPersonaUnificado: r.get('IdPersonaUnificado'),
+                UltimoUsuario: r.get('UltimoUsuario'),
+                Estado: r.get('Estado'),
+                Accion: r.get('Accion')
+            };
+            grupoFamArray.push(PERSONAMAST);
+        });
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("save_GrupoFam"))',
+            params: {
+                MODO: 'NUEVO',
+                idWindow: "WindowGrupoFam",
+                data: grupoFamArray,
+                id: 0
+            }
+        });
+    };
+
+    function seleccionadorPersonas() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorPersonas"))',
+            params: {
+                accionSeleccion: 'getSeleccionadorPersonasGrupo',
+                accionListado: 'LISTARPAG'
+            }
+        });
+    };
+</script>
+
+@(Html.X().Window().Width(620).Height(400).Maximizable(true).Modal(true).OnEsc("false").AutoScroll(true).Layout(LayoutType.Fit).CloseAction(CloseAction.Destroy).Icon(Icon.ApplicationForm).ID("WindowGrupoFam").Title("Asignación de Grupo Familiar").Padding(4).TopBar(
+X.Toolbar().Height(30)
+    .Items(
+        X.ToolbarSpacer(),
+        X.Label().Html("<b><span style='color:" + COLOR_BLUE01_temp + ";'>" + "Paciente" + ": " + Model.NombreCompleto + "</span> </b>"),
+        X.ToolbarFill(),
+        X.Button().Text((Model.ACCION == "DELETE" ? "Eliminar" : "Guardar")).Icon((Model.ACCION == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave)).Handler("save_GrupoFam('" + Model.Estado + "' , " + Model.Persona + ");"),
+        X.Button().Text("Cancelar").Icon(Icon.Cancel).DirectEvents(de =>{
+            de.Click.Url = Url.Action("cerrarWindow");
+            de.Click.ExtraParams.Add(new Parameter("id", "WindowGrupoFam", ParameterMode.Value));}),
+        X.ToolbarSpacer(20))
+        )
+    .Items(
+        X.Panel().Border(false).Layout(LayoutType.VBox).LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+        .Items(
+            X.FieldSet().Height(100).ColumnWidth(0.4).Title("Agregar Grupo Familiar para:").MarginSpec("0 05 0 05")
+            .Items(
+            Html.X().Container().Layout(LayoutType.HBox).Defaults(d =>{d.Add(new Parameter("LabelWidth", "90"));})
+                .Items(
+                    X.TextField().ID("tfNomComp").FieldLabel("Familiar").Flex(1).ReadOnly(true).RightButtons(X.Button().Text("...").Handler("seleccionadorPersonas();")),
+                    X.TextField().ID("tfIdComp").FieldLabel("Id Familiar").ReadOnly(true).Hidden(true)                  
+                    ),
+            Html.X().Container().Layout(LayoutType.HBox).Defaults(d =>{d.Add(new Parameter("LabelWidth", "90"));})
+                .Items(
+                        X.ComboBox().ID("cmbParentesco").Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboMiscelaneoLista.GetComboGenericoTxt("TIPOPARENT").Select(d => new ListItem(d.Name, d.Codigo))).Value("1").FieldLabel("Parentesco").Editable(false).SimpleSubmit(true),
+                    X.Button().Text("Agregar").Icon(Icon.Add).Handler("addRecord(App.GridPanelGrupoFam);")),                    
+            Html.X().Container().Layout(LayoutType.HBox).Defaults(d =>{d.Add(new Parameter("LabelWidth", "90"));})
+                .Items(
+                        X.TextFieldFor(m => m.Persona).FieldLabel("Persona").ReadOnly(true).Hidden(true),
+                        X.TextFieldFor(m => m.UltimoUsuario).FieldLabel("model").ReadOnly(true).Hidden(true))
+                ),
+                X.GridPanel().Flex(1).ID("GridPanelGrupoFam").Border(false).Store(Html.X().Store().ID("StoreGrupoFam").Model(
+                Html.X().Model().IDProperty("Persona").Fields(
+                Html.X().ModelField().Name("Persona"),
+                Html.X().ModelField().Name("personanew"),
+                Html.X().ModelField().Name("IndicadorAutogenerado"),
+                Html.X().ModelField().Name("IdPersonaUnificado"),
+                Html.X().ModelField().Name("Estado"),
+                Html.X().ModelField().Name("NombreCompleto"),
+                Html.X().ModelField().Name("NombreEmergencia"),
+                Html.X().ModelField().Name("UltimoUsuario"),
+                Html.X().ModelField().Name("Accion")
+                )).Proxy(proxy => proxy.Add(Html.X().AjaxProxy().Url("getGrillaListaGrupoFam")
+                        .Reader(reader => reader.Add(Html.X().JsonReader().Root("data").TotalProperty("total").IDProperty("Persona")))))
+                    .Parameters(ps =>ps.Add(new{
+                        id = Model.Persona,
+                        codigo = Model.personanew,
+                        tipo = "" })
+                        ).AutoLoad(true)).ColumnModel(
+                        Html.X().ComponentColumn().Editor(true).DataIndex("Persona").Text("Sec.").Width(60).Hidden(true).Component(
+                        Html.X().TextField().ReadOnly(true)),
+                        Html.X().ComponentColumn().Editor(true).DataIndex("personanew").Text("Persona").Width(60).Hidden(true).Component(
+                        Html.X().TextField().ReadOnly(true)),
+                        Html.X().ComponentColumn().Editor(true).DataIndex("IndicadorAutogenerado").Text("Id. Fam.").Width(60).Hidden(true).Component(
+                        Html.X().TextField().ReadOnly(true)),
+                        Html.X().ComponentColumn().Editor(true).DataIndex("IdPersonaUnificado").Text("Id Parent.").Width(60).Hidden(true).Component(
+                        Html.X().TextField().ReadOnly(true)),
+                        Html.X().ComponentColumn().Editor(true).DataIndex("NombreCompleto").Text("Familiar").Width(200).Hidden(false).Component(
+                        Html.X().TextField().ReadOnly(true)),
+                        Html.X().ComponentColumn().Editor(true).DataIndex("NombreEmergencia").Text("Parentesco").Width(150).Hidden(false).Component(
+                        Html.X().TextField().ReadOnly(true)),
+                        Html.X().ComponentColumn().Editor(true).DataIndex("UltimoUsuario").Text("UltimoUsuario").Width(60).Hidden(true).Component(
+                        Html.X().TextField().ReadOnly(true)),
+                        Html.X().ComponentColumn().Editor(true).DataIndex("Estado").Width(100).Text("Estado").Component(
+                        Html.X().ComboBox().Editable(false).Items(new ListItem("Activo", '2'),new ListItem("Inactivo", '1'))),
+                        Html.X().CommandColumn().Width(80).Commands(
+                        Html.X().GridCommand().CommandName("Delete").Icon(Icon.Delete).Text("Eliminar")).Listeners(ls => ls.Command.Handler = "deleteActual(record);"),
+                        Html.X().ComponentColumn().Editor(true).DataIndex("Accion").Text("Acción").Hidden(true).Component(
+                        Html.X().TextField().ReadOnly(true)))
+                        .SelectionModel(Html.X().RowSelectionModel().Mode(SelectionMode.Multi))
+                        .Plugins(Html.X().CellEditing())
+                )
+        ).CloseAction(CloseAction.Destroy)
+)
+
+

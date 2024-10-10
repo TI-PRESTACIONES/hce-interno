@@ -1,0 +1,741 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL
+
+@{
+    ViewBag.Title = "";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+
+    var IndicaActivo1 = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.PERFILADMIN;
+    var IndicaActivo = (IndicaActivo1 == -2 ? false : true);
+
+    var ESTADO_EPI_PENDIENTE = AppSaludMVC.Controllers.UTILES_MENSAJES.ESTADO_EPI_PENDIENTE;
+    var ESTADO_EPI_ENATENCION = AppSaludMVC.Controllers.UTILES_MENSAJES.ESTADO_EPI_ENATENCION;
+    var ESTADO_EPI_ATENDIDO = AppSaludMVC.Controllers.UTILES_MENSAJES.ESTADO_EPI_ATENDIDO;
+
+    var COLOR_RED02 = "#F05F5F";
+    var COLOR_GRAY = "gray";
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_YELLOW02 = "#D9A407";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_ROSADO2 = "#F5A9D0";
+    var COLOR_NARANJA = "#FE642E";
+    var COLOR_MARRON = "#61210B";
+}
+@section cabecera
+{
+
+    <script>
+
+    var Valores;
+    var template = '<span style="color:{0};">{1}</span>';
+
+    var change = function (value) {
+        return Ext.String.format(template, (value > 0) ? "green" : "red", value);
+    };
+
+    var pctChange = function (value) {
+        return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+    };
+    function eventoRenderForm() {
+        var kk = 140;
+        var scrH = screen.height;
+        var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+        var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+        if (southH == 0) {
+            southH = 30;
+        }
+        var dimCentral = (scrH - (northH + southH) - kk);
+        App.formactual.setHeight(dimCentral);
+    }
+
+    var ALTURADEF = screen.height;
+    var indicaCambios = false;
+    function setIndicaCambios(value) {
+        indicaCambios = value;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("setIndicaCambiosFormulario"))',
+            params: {
+                indica: (value ? 1 : 0)
+            }
+        });
+    }
+
+    var Valores;
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_YELLOW02 = "#D9A407";
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 'CC')
+            return Ext.String.format(template, COLOR_YELLOW02, "Pendiente");
+        if (value == 'CA')
+            return Ext.String.format(template, COLOR_BLUE01, "Atendido");
+        if (value == 'AN')
+            return Ext.String.format(template, COLOR_RED01, "Anulado");
+        if (value == 'FI')
+            return Ext.String.format(template, COLOR_GREEN01, "Firmado");
+    };
+
+    var changeEstadoOA = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01, "Anulado");
+        if (value == 2)
+            return Ext.String.format(template, COLOR_GREEN01, "En Atención");
+        if (value == 3)
+            return Ext.String.format(template, COLOR_BLUE01, "Atendido");
+        if (value == 0)
+            return Ext.String.format(template, COLOR_YELLOW02, "Pendiente");
+    };
+
+    var redirect = function () {
+        window.location.href = ' @Url.Action("Index", "HClinica") ';
+    }
+
+
+
+    var change = function (value) {
+        return Ext.String.format(template, (value > 0) ? "green" : "red", value);
+    };
+
+    var pctChange = function (value) {
+        return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+    };
+
+    var onSuccess = function (grid, data) {
+        grid.show();
+        grid.getStore().loadData(data);
+    };
+
+
+    var seleccionDataActual = null;
+
+    function modelClikActiva(model) {
+        if (model.IdPaciente > 0) {
+            seleccionDataActual = model;
+        }
+        // alert(model.IdPaciente);
+        var ArrayList = new Array();
+        var PERSONAMAST = {
+            Persona: model.IdPaciente,
+            IndicadorFallecido: model.EpisodioClinico,
+            IndicadorSinCorreo: model.IdEpisodioAtencion
+        };
+        ArrayList.push(PERSONAMAST);
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("SelectPaciente"))',
+            params: {
+                selection: ArrayList
+            }
+        });
+
+    };
+
+
+    var RecordSelector = {
+        add: function (source, destination) {
+            source = source || App.GridPanel1;
+            destination = destination || App.GridPanel2;
+            if (source.getSelectionModel().hasSelection()) {
+                var records = source.getSelectionModel().getSelection();
+                //alert(records[0].data);
+                alert(record.get('RecordID'));
+                //source.store.remove(records);
+                // destination.store.add(records);
+            }
+        }
+    };
+
+    var varTipoBuscar = "LOAD";
+
+
+    var accionBuscarFiltro = function (tipo, fechaActual) {
+        if (App.txtFecha1.getValue() == null) {
+            App.txtFecha1.setValue(fechaActual);
+        }
+        if (App.txtFecha2.getValue() == null) {
+            App.txtFecha2.setValue(fechaActual);
+        }
+        varTipoBuscar = tipo;
+        App.GridPanel1.getStore().reload();
+        varTipoBuscar = 'LOAD';
+
+    };
+
+
+    var onFailure = function (modo) {
+        App.btnSave.setDisabled(false);
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+                params: {
+                    message: 'Un error en el evento ',
+                    titulo: "Error",
+                    tipo: 'ERROR'
+                }
+            });
+        };
+
+        var onSuccess = function (data) {
+        };
+
+         function firmaMedicoSelected() {
+            if (seleccionDataActual != null) {
+                var status = seleccionDataActual.IdPaciente;
+                var varidEpiAtencion = seleccionDataActual.IdEpisodioAtencion;
+                var varEpiAtencion = seleccionDataActual.EpisodioAtencion;
+                var varepisodioclinico = seleccionDataActual.EpisodioClinico;
+                var varcodigoepisodioatencion = seleccionDataActual.IdEspecialidadProxima;
+                var varCodigoOA = seleccionDataActual.CodigoOA;
+                var varPaciente = seleccionDataActual.NombreCompleto;
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("eventoFirmaActoMedicoRegistro"))',
+                    params: {
+                        MODO: 'UPDATE',
+                        idpaciente: status,
+                        paciente: varPaciente,
+                        codigooa: varCodigoOA,
+                        idEpiAtencion : varidEpiAtencion,
+                        EpiAtencion: varEpiAtencion,
+                        episodioclinico: varepisodioclinico,
+                        codigoepisodioatencion: varcodigoepisodioatencion
+                    }
+                });
+            } else {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Debe Seleccionar un Elemento.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+        }
+
+
+        function chkFechasActosFiltros(fechaActual) {
+            var checkAll = App.chFechas.getValue();
+            if (checkAll) {
+                App.txtFecha1.setDisabled(true);
+                App.txtFecha1.setValue(null);
+                App.txtFecha2.setDisabled(true);
+                App.txtFecha2.setValue(null);
+            } else {
+                App.txtFecha1.setValue(fechaActual);
+                App.txtFecha2.setValue(fechaActual);
+                App.txtFecha1.setDisabled(false);
+                App.txtFecha2.setDisabled(false);
+            }
+        }
+        function getFormatDate(fecha, parent) {
+            var fechaForm = null;
+            if (fecha != null) {
+                var diaFec = fecha.getDate();
+                var mmFec = fecha.getMonth() + 1;
+                var yyyyFec = fecha.getFullYear();
+                var diaForm = '' + diaFec;
+                var mmForm = '' + mmFec;
+                var yyyyForm = '' + yyyyFec;
+                if (diaFec < 10) {
+                    diaForm = '0' + diaFec;
+                }
+                if (mmFec < 10) {
+                    mmForm = '0' + mmFec;
+                }
+                fechaForm = diaForm + '/' + mmForm + '/' + yyyyForm;
+            }
+            return fechaForm;
+        };
+        function setDateFormat(compo, fecha) {
+            compo.setValue(getFormatDate(fecha, '99/99/9999'));
+        };
+
+    </script>
+}
+@section cuerpo
+{
+
+
+    @(Html.X().Viewport()
+        .Layout(LayoutType.VBox)
+
+        .LayoutConfig(
+            new VBoxLayoutConfig { Align = VBoxAlign.Stretch }
+        )
+        .Listeners(l =>
+        {
+            //l.Render.Handler = "eventoRenderForm();";
+            l.AfterLayout.BroadcastOnBus = "App.resize";
+            l.AfterLayout.Single = true;
+        })
+
+        .Items(regions =>
+        {
+
+            regions
+                .Add(
+                Html.X().FormPanel()
+                 .TopBar(
+
+                    X.Toolbar()
+                        .Height(30)
+                            .Items(
+                                 X.Button()
+                                    .Text("Buscar Pacientes")
+                                    .Icon(Icon.PageWhiteFind)
+                                     .Handler("accionBuscarFiltro('FILTRO',new Date());")
+                                    ,
+                                X.ToolbarFill(),
+                                X.ToolbarSeparator(),
+                                X.Button()
+                                    .Text("Firmar acto Médico")
+                                    .Icon(Icon.PencilGo)
+                                    .Handler("firmaMedicoSelected();")
+                                    ,
+                                X.Button().ID("btnInterop")
+                                    .Text("Proc. Interoperabilidad")
+                                    .ToolTip("Ejecuta el proceso de Interoperabilidad")
+                                    .Icon(Icon.ShapeSquareAdd)
+                                     .DirectEvents(de =>
+                                      {  //Model.ACCION : Posee el MODO ACTUAL
+                                          de.Click.Url = Url.Action("eventoProcesoInteroperabilidad");
+                                          de.Click.EventMask.ShowMask = true;
+                                          de.Click.Before = "App.btnInterop.setDisabled(true); ";
+                                          de.Click.After = "App.btnInterop.setDisabled(false); ";
+                                          de.Click.ExtraParams.Add(new Parameter("MODO", "INTEROP", ParameterMode.Value));
+                                          de.Click.Success = "onSuccess('');";
+                                          de.Click.Failure = "onFailure('');";
+
+                                      })
+                //  ,
+                //X.ToolbarFill()
+                              ))
+
+                .ItemID("center")
+                .DefaultAnchor("100%")
+                .AutoScroll(true)
+                .Height(340)
+                .Header(false)
+                .Border(true)
+                .ID("formactual")
+                .Listeners(l =>
+                {
+                    l.Render.Handler = "eventoRenderForm();";
+                })
+               .Items(Html.X().Panel()
+                    .ItemID("north")
+                    .Margins("0 2 0 2")
+                    .Header(true)
+                    .Border(false)
+                    .Layout(LayoutType.VBox).LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                    .Items(
+                              Html.X().FieldSet()
+                               .ColumnWidth(0.4)
+                               .Title("Filtro de Busqueda")
+                //.Border(false)
+                               .MarginSpec("05 05 05 05")
+                               .Defaults(d =>
+                               {
+                                   d.Add(new Parameter("LabelWidth", "170"));
+                                   d.Add(new Parameter("DefaultAnchor", "100%"));
+                                   d.Add(new Parameter("LabelAlign", "Left"));
+                               })
+
+                               .DefaultAnchor("100%")
+                               .FieldDefaults(d =>
+                               {
+                                   d.LabelAlign = LabelAlign.Left;
+                               })
+                                .Items(
+                                     X.TextField().ID("txtEventoAutenticaEpi").Hidden(true)
+                                    ,
+                                    Html.X().Container()
+                                       .Layout(LayoutType.HBox)
+                                       .Defaults(d =>
+                                       {
+                                           d.Add(new Parameter("LabelWidth", "110"));
+                                       })
+                                       .Items(
+                                           X.Checkbox()
+                                             .FieldLabel("Nro HC")
+                                             .ID("chHC")
+                                              .Listeners(l => l.Change.Handler = @"var checkAll = #{chHC}.getValue();
+                                                if(checkAll){
+                                                    #{txtHC}.setDisabled(true);
+                                                    #{txtHC}.setValue(null);
+                                                }else{
+                                                    #{txtHC}.setDisabled(false);
+                                                }")
+                                             .Checked(true),
+                                           X.TextField()
+                                             .ID("txtHC")
+                                             .Disabled(true),
+                                           X.Component().Width(30),
+                                           X.Checkbox()
+                                             .FieldLabel("Fecha Cita")
+                                             .ID("chFechas")
+                                              .Listeners(l => l.Change.Handler = "chkFechasActosFiltros('" + (DateTime.Now.Day < 10 ? "0" : "") + DateTime.Now.Day +
+                                            "/" + (DateTime.Now.Month < 10 ? "0" : "") + DateTime.Now.Month + "/" + DateTime.Now.Year + "');")
+                                             .Checked(false).ReadOnly(true)
+                                             ,
+                                           X.TextField().Plugins(X.InputMask().Mask("99/99/9999"))
+                                            .ID("txtFecha1")
+                                             .Width(75).Value((DateTime.Now.Day < 10 ? "0" : "") + DateTime.Now.Day +
+                                            "/" + (DateTime.Now.Month < 10 ? "0" : "") + DateTime.Now.Month + "/" + DateTime.Now.Year)
+                                             .Disabled(false),
+                //////
+                                            X.SplitButton()
+                                            .Handler("if( this.bin[0].isVisible()){this.bin[0].hide();};")
+                                            .IconUrl("~/resources/images/iconcalendext.png")
+                                            .Bin(
+                                                X.Panel().Width(185).Height(200).Layout(LayoutType.Fit).Floating(true)
+                                                .Items(
+                                                    X.DatePicker()
+                                                    .Listeners(l =>
+                                                    {
+                                                        l.Select.Handler = "this.up('panel').hide();" +
+                                                            "setDateFormat( App.txtFecha1,this.getValue() )";
+                                                    })
+                                                 )
+                                             )
+                                             .Listeners(l => l.ArrowClick.Handler =
+                                                 "if( this.bin[0].isVisible()){this.bin[0].hide();}else{this.bin[0].show(); this.bin[0].alignTo(this.el);} ;  ")
+                //////////
+                                             ,
+                                           X.TextField().Plugins(X.InputMask().Mask("99/99/9999"))
+                                            .ID("txtFecha2")
+                                            .Width(75).Value((DateTime.Now.Day < 10 ? "0" : "") + DateTime.Now.Day +
+                                            "/" + (DateTime.Now.Month < 10 ? "0" : "") + DateTime.Now.Month + "/" + DateTime.Now.Year)
+                                             .Disabled(false)
+                                            , X.SplitButton()
+                                            .Handler("if( this.bin[0].isVisible()){this.bin[0].hide();};")
+                                            .IconUrl("~/resources/images/iconcalendext.png")
+                                            .Bin(
+                                                X.Panel().Width(185).Height(200).Layout(LayoutType.Fit).Floating(true)
+                                                .Items(
+                                                    X.DatePicker()
+                                                    .Listeners(l =>
+                                                    {
+                                                        l.Select.Handler = "this.up('panel').hide();" +
+                                                            "setDateFormat( App.txtFecha2,this.getValue() )";
+                                                    })
+                                                 )
+                                             )
+                                             .Listeners(l => l.ArrowClick.Handler =
+                                                 "if( this.bin[0].isVisible()){this.bin[0].hide();}else{this.bin[0].show(); this.bin[0].alignTo(this.el);} ;  ")
+                //////////
+                                         ),
+                                  Html.X().Container()
+                                       .Layout(LayoutType.HBox)
+                                       .Defaults(d =>
+                                       {
+                                           d.Add(new Parameter("LabelWidth", "110"));
+                                       })
+                                       .Items(
+
+
+                                               X.Checkbox()
+                                                 .FieldLabel("Código OA")
+                                                 .ID("chOA")
+                                                 .Listeners(l => l.Change.Handler = @"var checkAll = #{chOA}.getValue();
+                                                    if(checkAll){
+                                                        #{txtCodigoOA}.setDisabled(true);
+                                                        #{txtCodigoOA}.setValue(null);
+                                                    }else{
+                                                        #{txtCodigoOA}.setDisabled(false);
+                                                    }")
+                                                 .Checked(true),
+                                              X.TextField()
+                                                 .ID("txtCodigoOA")
+                                                 .Disabled(true),
+                                                 X.Component().Width(30),
+                                               X.Checkbox()
+                                                 .FieldLabel("Médico")
+                                                 .ID("chMe").ReadOnly(IndicaActivo)
+                                                 .Listeners(l => l.Change.Handler = @"var checkAll = #{chMe}.getValue();
+                                                    if(checkAll){
+                                                        #{txtMedico}.setDisabled(true);
+                                                        #{txtMedico}.setValue(null);
+                                                    }else{
+                                                        #{txtMedico}.setDisabled(false);
+                                                    }")
+                                                 .Checked(!IndicaActivo),
+                                              X.TextField()
+                                                  .Width(220)
+                                                 .ID("txtMedico")
+                /*   .Disabled(true).*/.ReadOnly(IndicaActivo)
+                                        ),
+                                     Html.X().Container()
+                                       .Layout(LayoutType.HBox)
+                                       .Defaults(d =>
+                                       {
+                                           d.Add(new Parameter("LabelWidth", "110"));
+                                       })
+                                       .Items(
+                                                X.Checkbox()
+                                                 .FieldLabel("Paciente")
+                                                 .ID("chPaciente")
+                                                 .Listeners(l => l.Change.Handler = @"var checkAll = #{chPaciente}.getValue();
+                                                    if(checkAll){
+                                                        #{txtPaciente}.setDisabled(true);
+                                                        #{txtPaciente}.setValue(null);
+                                                    }else{
+                                                        #{txtPaciente}.setDisabled(false);
+                                                    }")
+                                                 .Checked(true),
+                                               X.TextField()
+                                                 .ID("txtPaciente")
+                //.Width(350)
+                                                 .Disabled(true),
+                                              X.Component().Width(30),
+                                                X.Checkbox()
+                                                 .FieldLabel("Estado de Episodio")
+                                                 .ID("chkTipoConsulta")
+                                                 .Listeners(l => l.Change.Handler = @"var checkAll = #{chkTipoConsulta}.getValue();
+                                                    if(checkAll){
+                                                        #{cmbTipoConsulta}.setDisabled(true);
+                                                        #{cmbTipoConsulta}.setValue(null);
+                                                    }else{
+                                                        #{cmbTipoConsulta}.setDisabled(false);
+                                                    }")
+                                                 .Checked(false),
+
+
+
+                                               X.ComboBox().Editable(false).Value(2)
+                                                 .ID("cmbTipoConsulta")
+                                                 .Width(220)
+                                                 .Items(
+                // new ListItem("Anulado", 1), //CA -AT
+                                                    new ListItem("En Atención", ESTADO_EPI_ENATENCION), //CC -PE
+                                                    new ListItem("Atendido/Firmado", ESTADO_EPI_ATENDIDO)
+                                                  )
+                                                 .Disabled(false),
+                                                 X.Component().Width(30),
+                                                  X.Checkbox().FieldLabel("Especialidad").ID("chHEsp")
+
+
+                                           .Listeners(l => l.Change.Handler = @"var checkAll = #{chHEsp}.getValue();
+                                                    if(checkAll){
+                                                        #{cmbBuscarEsp}.setDisabled(true);
+                                                        #{cmbBuscarEsp}.setValue(null);
+                                                    }else{
+                                                        #{cmbBuscarEsp}.setDisabled(false);
+                                                    }").Checked(true),
+
+
+
+
+
+
+                                          X.ComboBox()
+                                           .ID("cmbBuscarEsp").Disabled(true).Name("buscarEsp").Width(220)
+                                           .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("ESPECIALI").Select(d => new ListItem(d.Name, d.ID)))
+                                           .FieldLabel("").Editable(true).SimpleSubmit(true)
+
+
+
+
+                                       )
+                                 ),
+
+                                 Html.X().FieldSet().ColumnWidth(0.4).Title("Leyenda").Hidden(true)
+                               .MarginSpec("05 05 05 05")
+                               .Defaults(d =>
+                               {
+                                   d.Add(new Parameter("LabelWidth", "170"));
+                                   d.Add(new Parameter("DefaultAnchor", "100%"));
+                                   d.Add(new Parameter("LabelAlign", "Left"));
+
+                               })
+                               .DefaultAnchor("100%")
+                               .FieldDefaults(d =>
+                               {
+                                   d.LabelAlign = LabelAlign.Top;
+                               })
+                                .Items(
+                                    Html.X().Container().Layout(LayoutType.HBox).MarginSpec("00 00 10 00")
+                                    .Items(
+                                        X.Label().Html("<div  style='padding-right:10px;Color:#FE642E;'> <font></font></div>"),
+                                        X.Label().Html("<div unselectable='on' class='circulo' style='background: " + COLOR_YELLOW02 + "; width: 10px;top: 10px;margin: 5px; height: 10px;'></div>"),
+                                        X.Label().Html("<div  style='padding-right:20px;' ><small class ='lbLeyenda' >CPM</small></div>"),
+                                        X.Label().Html("<div unselectable='on' class='circulo' style='background: " + COLOR_GREEN01 + "; width: 10px;top: 10px;margin: 5px; height: 10px; '></div>"),
+                                        X.Label().Html("<div  style='padding-right:20px;' ><small class ='lbLeyenda' >PPS</small></div>"),
+                                        X.Label().Html("<div unselectable='on' class='circulo' style='background: " + COLOR_ROSADO2 + "; width: 10px;top: 10px;margin: 5px; height: 10px;'></div>"),
+                                        X.Label().Html("<div  style='padding-right:20px;' ><small class ='lbLeyenda' >Plan de Salud</small></div>"),
+                                         X.Label().Html("<div unselectable='on' class='circulo' style='background: " + COLOR_NARANJA + "; width: 10px;top: 10px;margin: 5px; height: 10px;'></div>"),
+                                       X.Label().Html("<div  style='padding-right:20px;' ><small class ='lbLeyenda' >Sin Seguro</small></div>"),
+                                         X.Label().Html("<div unselectable='on' class='circulo' style='background: " + COLOR_BLUE01 + "; width: 10px;top: 10px;margin: 5px; height: 10px;'></div>"),
+                                        X.Label().Html("<div  style='padding-right:20px;' ><small class ='lbLeyenda' >Convenios</small></div>")
+
+
+
+                                    )
+                                )
+                       ),
+                       Html.X().Panel()
+                .ItemID("center")
+
+               .Header(false)
+               .Border(false)
+               .Items(
+                        Html.X().GridPanel()
+                                        .Title("Listado de Pacientes")
+                                         .Scroll(ScrollMode.Both)
+                                         .AutoScroll(true)
+                                        .Layout(LayoutType.Anchor)
+
+                                         .Anchor("100% 100%")
+
+                                        .ID("GridPanel1")
+
+                                        .Margins("0 0 2 2")
+                                        .Border(false)
+
+                                       .Store(store => store.Add(
+                                           Html.X().Store()
+                                                    .ID("StoreTasks")
+
+                                       .AutoLoad(true)
+                                       .RemoteSort(false)
+                                       .IsPagingStore(true)
+                                       .RemotePaging(true)
+                                       .PageSize(10)
+
+                                       .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                           .Url("GrillaListadoAtencionPacientes")
+                                                           .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                                                                  .Root("data")
+                                                                                                  .TotalProperty("total")
+                                                                                                  .IDProperty("PersonaAnt")))))
+
+                                        .Parameters(ps =>
+                                        ps.Add(
+                                                new
+                                                {
+                                                    //start = 0,
+                                                    //limit = 5,
+                                                    txtHC = JRawValue.From("App.txtHC.getValue()"),
+                                                    txtFecha1 = JRawValue.From("App.txtFecha1.getValue()"),
+                                                    txtFecha2 = JRawValue.From("App.txtFecha2.getValue()"),
+                                                    //txtHCA = JRawValue.From("App.txtHCA.getValue()"),
+                                                    txtMedico = JRawValue.From("App.txtMedico.getValue()"),
+                                                    txtCodigoOA = JRawValue.From("App.txtCodigoOA.getValue()"),
+                                                    txtPaciente = JRawValue.From("App.txtPaciente.getValue()"),
+                                                    tipoConsulta = "FIRMAACTOS",
+                                                    //tipoConsulta = JRawValue.From("App.cmbTipoConsulta.getValue()"),
+                                                    tipoEstado = JRawValue.From("App.cmbTipoConsulta.getValue()"),
+                                                    tipoBuscar = JRawValue.From("varTipoBuscar"),
+                                                    estadoAsigMedico = 0 //ASIIG MEDICO ACTIVO
+                                                }
+                                            )
+                                        )
+                                        .Model(model => model.Add(Html.X().Model()
+                                                       .Fields(fields =>
+                                                       {
+
+                                                           fields.Add(Html.X().ModelField().Name("Persona").Type(ModelFieldType.Int));
+                                                           fields.Add(Html.X().ModelField().Name("personanew").Type(ModelFieldType.Int));
+                                                           fields.Add(Html.X().ModelField().Name("PersonaAnt").Type(ModelFieldType.String));
+                                                           fields.Add(Html.X().ModelField().Name("IdPaciente").Type(ModelFieldType.Int));
+                                                           fields.Add(Html.X().ModelField().Name("FechaAtencion").Type(ModelFieldType.Date));
+                                                           fields.Add(Html.X().ModelField().Name("FecIniDiscamec").Type(ModelFieldType.Date));
+                                                           fields.Add(Html.X().ModelField().Name("FecFinDiscamec").Type(ModelFieldType.Date));
+                                                           fields.Add(Html.X().ModelField().Name("FechaOrden").Type(ModelFieldType.Date));
+                                                           fields.Add(Html.X().ModelField().Name("CodigoOA"));
+                                                           fields.Add(Html.X().ModelField().Name("TipoPaciente"));
+                                                           fields.Add(Html.X().ModelField().Name("CodigoHC"));
+                                                           fields.Add(Html.X().ModelField().Name("NombreCompleto"));
+                                                           fields.Add(Html.X().ModelField().Name("EpisodioClinico"));
+                                                           fields.Add(Html.X().ModelField().Name("IdEpisodioAtencion"));
+                                                           fields.Add(Html.X().ModelField().Name("EpisodioAtencion"));
+                                                           fields.Add(Html.X().ModelField().Name("Servicio"));
+                                                           fields.Add(Html.X().ModelField().Name("Estado"));
+                                                           fields.Add(Html.X().ModelField().Name("TipoPaciente"));
+                                                           fields.Add(Html.X().ModelField().Name("EsPaciente"));
+                                                           fields.Add(Html.X().ModelField().Name("TipoAtencion"));
+                                                           fields.Add(Html.X().ModelField().Name("Version"));
+                                                           fields.Add(Html.X().ModelField().Name("ObservacionOrden")); //AUX para Tipo de Atención DESC
+                                                           fields.Add(Html.X().ModelField().Name("IdEspecialidadProxima")); 
+                                                       }
+                                                       )
+                                                       ))))
+
+
+                                       .ColumnModel(columnModel =>
+                                       {
+                                           columnModel.Columns.Add(Html.X().RowNumbererColumn());
+                                           columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("Persona").Hidden(true));
+                                           columnModel.Columns.Add(Html.X().Column().Text("IDs").DataIndex("personanew").Hidden(true));
+                                           columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("PersonaAnt").Width(150).Hidden(true));
+                                           columnModel.Columns.Add(Html.X().Column().Text("IdPaciente").DataIndex("IdPaciente").Width(150).Hidden(true));
+                                           columnModel.Columns.Add(Html.X().DateColumn().Text("Fecha Cita").DataIndex("FechaOrden").Width(85).Format("dd/MM/yyyy"));
+                                           columnModel.Columns.Add(Html.X().DateColumn().Text("Fecha Cita").DataIndex("FechaAtencion").Width(85).Format("dd/MM/yyyy").Hidden(true));
+
+                                           columnModel.Columns.Add(Html.X().DateColumn().Text("Hora Inicio").DataIndex("FecIniDiscamec").Width(70).Format("HH:mm:ss").Hidden(true));
+                                           columnModel.Columns.Add(Html.X().DateColumn().Text("Hora Fin").DataIndex("FecFinDiscamec").Width(70).Format("HH:mm:ss").Hidden(true));
+
+                                           columnModel.Columns.Add(Html.X().Column().Text("Codigo OA").DataIndex("CodigoOA").Width(80));
+
+                                           columnModel.Columns.Add(Html.X().Column().Text("Tipo Paciente").DataIndex("TipoPaciente").Flex(1).Hidden(true));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Tipo Paciente").DataIndex("EsPaciente").Flex(1).Hidden(true));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Tipo Atencion").DataIndex("ObservacionOrden").Flex(1));
+                                           columnModel.Columns.Add(Html.X().Column().Text("EpisodioAtencionCodigo").DataIndex("IdEspecialidadProxima").Hidden(true));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Tipo Atencion").DataIndex("TipoAtencion").Flex(1).Hidden(true));
+                                           //columnModel.Columns.Add(Html.X().Column().Text("Tipo Paciente").DataIndex("TipoPaciente").Width(90));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Codigo HC").DataIndex("CodigoHC").Width(80));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Paciente").DataIndex("NombreCompleto").Width(210));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Epidosio Clínico").DataIndex("EpisodioClinico").Width(95));//IndicadorFallecido
+                                           columnModel.Columns.Add(Html.X().Column().Text("Episodio Atención").DataIndex("IdEpisodioAtencion").Width(95));//IndicadorSinCorreo
+                                           columnModel.Columns.Add(Html.X().Column().Text("Episodio_Atencion").DataIndex("EpisodioAtencion").Width(95));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Estado Consulta").DataIndex("Servicio").Flex(1)//Width(90)
+                                               .Renderer("changeEstado").Hidden(true)
+                                            );
+                                           columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Flex(1)//Width(90)
+                                               .Renderer("changeEstadoOA")
+                                            );
+
+                                       })
+                                       .BottomBar(bar => bar.Add(Html.X().PagingToolbar()
+                                                                         .DisplayInfo(true)
+                                           //.DisplayMsg("Displaying customers {0} - {1} of {2}")
+                                                                         ))
+                                       .View(view => view.Add(Html.X().GridView().TrackOver(false)))
+                                       .Border(false)
+
+
+                                       .Listeners(l => l.CellClick.Handler = "modelClikActiva(record.data);")
+                //.Listeners(l => l.CellClick.Handler = "aRecordSelector.add(App.GridPanel1.getSelectionSubmit().getSelectionModelField().getValue());")
+
+
+                    )
+
+
+
+
+
+
+
+
+                       )
+
+                );
+        }
+        )
+
+
+    )
+
+    @(X.KeyNav()
+                        .Target("={document.body}")
+            /*.Down(a => a.Handler = "move(#{Window1}, 'down');")
+            .Home(a => a.Handler = "move(#{Window1}, 'home');")*/
+                            .Enter(a => a.Handler = "accionBuscarFiltro('FILTRO',new Date());")
+    )
+
+}
+

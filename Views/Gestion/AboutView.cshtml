@@ -1,0 +1,188 @@
+﻿@model SoluccionSalud.Entidades.Entidades.ENTITY_GENERALHCE
+
+@{
+    var X = Html.X();
+    var idWindow = "WindowABOUT";
+    var modoDesc = (Model.ACCION == "NUEVO" ? "Nuevo" :
+                    (Model.ACCION == "UPDATE" ? "Firmar" :
+                        (Model.ACCION == "DELETE" ? "Eliminar" :
+                            (Model.ACCION == "VER" ? "Ver" : "--"))));
+
+    var indicaModoNuevo = (Model.ACCION == "NUEVO" ? true : false);
+
+    var indicaModoLectura = !(Model.ACCION == "NUEVO" ? true :
+                            (Model.ACCION == "UPDATE" ? true :
+                            (Model.ACCION == "DELETE" ? false :
+                            (Model.ACCION == "VER" ? false : false))));
+
+
+    var VAR_AGNO_SYS = "2022"; 
+    var VAR_VERSION_SYS = "2.0";
+
+    var STYLE_TEXT = "Border : none; background: none; font: normal 11px tahoma; height: 18px;";
+
+    var STYLE_LABEL = "'width:140px;height: 18px; margin-right:5px; font: bold 11px tahoma ; color: #284A89 ' >";
+    var STYLE_LABEL_SMALL = "'width:10px;height: 18px; margin-right:5px; font: bold 11px tahoma ; color: #284A89 ' >";
+
+    var STYLE_ETQ_ABR = "<label style= ";
+    var STYLE_ETQ_CER = "</label>";
+    var COLORBLU01 = "#284A89";
+}
+
+<script>
+
+
+    var template = 'color:{0};';
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_RED01 = "#990000";
+
+    var COLOR_BORDER_ERROR = "red";
+    var COLOR_BORDER_DEF = "#b5b8c8";
+    var COLOR_BACKGROUND_NOEDIT = "#9FBCB9";
+
+
+    var change = function (value, meta) {
+        return value;
+
+    };
+
+  
+    function cerrarWindow(win) {
+        win.hide();
+    }
+
+
+        var onSuccess = function (data) {
+
+        };
+
+        var onFailure = function (modo) {
+            App.btnSave.setDisabled(false);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("showMensajeBox"))',
+                params: {
+                    message: 'Un error en el evento ',
+                    titulo: "Error",
+                    tipo: 'ERROR'
+                }
+            });
+        };
+   
+</script>
+
+
+
+@(Html.X().Window()
+    .Width(500)
+    .Height(290)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+        //.LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.StretchMax })
+
+    .CloseAction(CloseAction.Destroy)
+        .Icon(Icon.Information)
+    .ID(idWindow)
+    .Title("Acerca de ...")
+        //.Padding(4)
+        //.X(0)
+        //.Y(0)
+    .Items(
+            Html.X().FormPanel()
+            .Frame(false)
+            .Border(false)
+            .Layout(LayoutType.VBox)
+            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+            .Items(
+                                X.FieldSet().Collapsible(true)
+                                //.ColumnWidth(0.4)
+                                .Title("<b>Información General:</b>")
+
+                                .ID("fsAlergias")
+                                .MarginSpec("0 5 0 5")
+                                //.Layout(LayoutType.VBox)
+                                //.DefaultAnchor("100% 100%")
+                                //.LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                                .Items(
+                                     Html.X().TextField().ReadOnly(true).LabelSeparator("")
+                                    .FieldStyle(STYLE_TEXT).LabelWidth(110)
+                                    .FieldLabel(STYLE_ETQ_ABR + STYLE_LABEL + "Módulo :" + STYLE_ETQ_CER)
+                                        .Text(Model.campoStr08),
+                                     X.Container().Layout(LayoutType.HBox)
+                                     .MarginSpec("0 0 5 0")
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch })
+                                     .Items(
+                                             Html.X().TextField().ReadOnly(true).LabelSeparator("")
+                                         .FieldStyle(STYLE_TEXT).LabelWidth(110)
+                                        .FieldLabel(STYLE_ETQ_ABR + STYLE_LABEL + " Sistema :" + STYLE_ETQ_CER)
+                                        .Text(Model.campoStr09).Width(350)
+                                        //.Rows(1)
+                                        ,
+                                         Html.X().TextField().ReadOnly(true).LabelSeparator("")
+                                        .FieldStyle(STYLE_TEXT).LabelWidth(70)
+                                        .FieldLabel(STYLE_ETQ_ABR + STYLE_LABEL_SMALL + " Versión :" + STYLE_ETQ_CER)
+                                        .Text(VAR_VERSION_SYS)                                                                                                             
+                                     ),
+                                     X.Container().Layout(LayoutType.HBox)
+                                     .MarginSpec("0 0 5 0")
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch })
+                                     .Items(
+                                         Html.X().TextField().ReadOnly(true).LabelSeparator("")
+                                        .FieldStyle(STYLE_TEXT).LabelWidth(110)
+                                        .FieldLabel(STYLE_ETQ_ABR + STYLE_LABEL + "Desarrollado por :" + STYLE_ETQ_CER)
+                                         .Text(Model.campoStr10).Width(350)
+                                        ,
+                                        Html.X().TextField().ReadOnly(true).LabelSeparator("")
+                                        .FieldStyle(STYLE_TEXT).LabelWidth(70)
+                                        .FieldLabel(STYLE_ETQ_ABR + STYLE_LABEL_SMALL + " Año :" + STYLE_ETQ_CER)
+                                        .Text(VAR_AGNO_SYS)
+                                     )                                  
+
+                                    
+                                ),
+                                    X.FieldSet().Title("<b>Información de la Sesión</b>").Collapsible(true).MarginSpec("5 5 5 5")
+                                .Items(
+                                        Html.X().Container().Layout(LayoutType.VBox).LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                                        .Items(
+                                        Html.X().TextField().LabelWidth(110).ReadOnly(true).LabelSeparator("").FieldStyle(STYLE_TEXT).FieldLabel(STYLE_ETQ_ABR + STYLE_LABEL + "Compañía :" + STYLE_ETQ_CER).Text(Model.campoStr01).MaxWidth(350),
+                                        Html.X().TextField().LabelWidth(110).ReadOnly(true).LabelSeparator("").FieldStyle(STYLE_TEXT).FieldLabel(STYLE_ETQ_ABR + STYLE_LABEL + "Establecimiento :" + STYLE_ETQ_CER).Text(Model.campoStr04).MaxWidth(350),
+                                        Html.X().TextField().LabelWidth(110).ReadOnly(true).LabelSeparator("").FieldStyle(STYLE_TEXT).FieldLabel(STYLE_ETQ_ABR + STYLE_LABEL + "Periodo :" + STYLE_ETQ_CER).Text(Model.campoStr05),
+                                        Html.X().TextField().LabelWidth(110).ReadOnly(true).LabelSeparator("").FieldStyle(STYLE_TEXT).FieldLabel(STYLE_ETQ_ABR + STYLE_LABEL + "Base Datos :" + STYLE_ETQ_CER).Text(Model.campoStr06)
+                                        )
+                                    )
+                                )
+                .TopBar(
+                X.Toolbar()
+                .Height(30)
+                .Items(
+                                X.ToolbarFill(),                               
+                                X.Button()
+                                            .Text("Aceptar")
+                                            .Icon(Icon.Accept )
+                                     .DirectEvents(de =>
+                                      {  //Model.ACCION : Posee el MODO ACTUAL
+                                          de.Click.Url = Url.Action("cerrarWindow");
+                                          //de.Click.EventMask.ShowMask = true;
+                                          de.Click.ExtraParams.Add(new Parameter(
+                                                "id", idWindow, ParameterMode.Value));
+                                          //de.Click.Success = "onSuccess(result.data,'" + Model.ACCION + "');";
+                                          //de.Click.Failure = "onSuccess(result.data,'"+ Model.ACCION + "');";
+                                      })
+                                 )
+                            )
+
+                //)
+    )
+        /*.DirectEvents(de =>
+        {
+            de.Render.Url = Url.Action("postWindowAgente");
+            de.Render.ExtraParams.Add(new Parameter(
+                  "idGrupo", "" + Model.IdGrupo, ParameterMode.Value));
+        })*/
+    .CloseAction(CloseAction.Destroy)
+)
+

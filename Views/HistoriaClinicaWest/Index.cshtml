@@ -1,0 +1,2116 @@
+﻿@model List<SoluccionSalud.Entidades.Entidades.SS_HC_Diagnostico_FE>
+@{
+    ViewBag.Title = ViewBag.Prueba;
+
+    var OPCION_SUCURSAL = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.Sucursal;
+    var copystring = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.COPIADO_DISABLED;
+    var copy = copystring == "BN" ? true : false;
+    var bandejita = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.COD_BANDEJA;
+    var hiden = bandejita == "MED_EMERGENCIA" ? "S" : "N";
+    
+}
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8" />
+    <title>@ViewBag.Lista</title>
+    <meta name="keywords" content="HTML5 Admin Template" />
+    <meta name="description" content="Porto Admin - Responsive HTML5 Template" />
+    <meta name="author" content="okler.net" />
+    <!-- Mobile Metas -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <!-- Web Fonts  -->
+    <!-- Vendor CSS
+    <link rel="stylesheet" href="assets/vendor/bootstrap/css/bootstrap.css" />-->
+    <link href="~/assets/vendor/bootstrap/css/bootstrap.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/assets/vendor/font-awesome/css/font-awesome.css" />
+    <link rel="stylesheet" href="~/assets/vendor/magnific-popup/magnific-popup.css" />
+    <link rel="stylesheet" href="~/assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
+    <!-- Specific Page Vendor CSS -->
+    <link rel="stylesheet" href="~/assets/vendor/select2/select2.css" />
+    <link rel="stylesheet" href="~/assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
+    <!--Tamaño Columnas -->
+    <!-- Consumo JSON
+
+
+    <script src="~/assets/functions.js"></script>
+       -->
+    <link href="~/assets/stylesheets/size.css" rel="stylesheet" />
+    <!-- Theme CSS />-->
+    <link rel="stylesheet" href="~/assets/stylesheets/theme.css" />
+    <!-- Skin CSS -->
+    <link rel="stylesheet" href="~/assets/stylesheets/skins/default.css" />
+    <!-- Theme Custom CSS -->
+    <link rel="stylesheet" href="~/assets/stylesheets/theme-custom.css" />
+    <!-- Head Libs -->
+    <script src="~/assets/vendor/modernizr/modernizr.js"></script>
+    <script src="~/HistoriaClinicaWest/jquery-1.8.3.js"></script>
+    <style>
+        .content {
+            display: none;
+        }
+
+        .preload {
+            margin: 0;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-right: -50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="preload">
+        <img src="~/HistoriaClinicaWest/loading.gif" />
+    </div>
+
+    <div class="content">
+
+        <br />
+        <div class="col-lg-6 col-sm-5">
+            <div class="panel-body">
+                <div class="row">
+
+                    <div class="col-sm-12">
+                        <div class="form-group">
+                            <label class="control-label">Paciente </label>
+
+                            <input id="TxtPacienteOA" type="text" disabled=disabled  class="form-control" value="@ViewBag.TxtPacienteOA" />
+
+                        </div>
+                    </div>
+
+                    <div class="col-sm-5">
+                        <div class="form-group">
+                            <label class="control-label">Sucursal </label>
+                            <select class="form-control" id="cboSucursal"></select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-5">
+                        <div class="form-group">
+                            <label class="control-label">Fecha Inicio</label>
+                            <input type="date" id="TxtFechaInicio" name="website" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="col-sm-5">
+                        <div class="form-group">
+                            <label class="control-label">Fecha Fin</label>
+                            <input type="date" id="TxtFechaFin" name="website" class="form-control" />
+                        </div>
+                    </div>
+
+
+
+                    <div class="col-sm-1">
+                        <div class="form-group">
+                            <label class="control-label">&nbsp &nbsp </label>
+
+                            <button type="submit" class="btn btn-primary" id="BtnBuscarOAS">Buscar</button>
+
+                        </div>
+                    </div>
+
+
+                </div>
+                <br />
+
+                <table id="table_id" class="table table-bordered table-striped mb-none" cellspacing="1" width="100%">
+                    <thead>
+                        <tr>
+                            <th style="font-size: 13px; padding-left: 20px;">Acciones</th>
+                            <th style="font-size:13px;">Sucursal</th>
+                            <th style="font-size:13px;">Fecha Atención</th>
+                            <th style="font-size:13px;">Tipo Atención</th>
+                            <th style="font-size:13px;">Tipo OA</th>
+                            <th style="font-size:13px;">OA</th>
+                            <th style="font-size:13px;">Especialidad</th>
+                            <th style="font-size:13px;" class="center hidden-phone">Estado</th>
+
+                            <th style="font-size:13px;">PRO</th>
+                            <th style="font-size:13px;">LAB</th>
+                            <th style="font-size:13px;">IMG</th>
+
+
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+
+
+                <section class="panel">
+                    <header class="panel-heading">
+                        <h2 class="panel-title">Leyenda</h2>
+                    </header>
+                    <br />
+                    <ul class="simple-bullet-list mb-xlg">
+                        <li class="green" style="display:inline;">
+                            <span class="title" style="display:inline;">En Atención &nbsp;</span>
+                        </li>
+                        <li class="blue" style="display:inline;">
+                            <span class="title" style="display:inline;">Atendido &nbsp;</span>
+                        </li>
+                        <li class="orange" style="display:inline;">
+                            <span class="title" style="display:inline;">Pendiente &nbsp;</span>
+
+                        </li>
+                        <li class="red" style="display:inline;">
+                            <span class="title" style="display:inline;">Anulado</span>
+                            <br />
+                        </li>
+
+                    </ul>
+                    <ul>
+                        <li style="display:inline;" style="list-style: none">
+                            <strong><font size=3 color="black">C:Consulta Externa &nbsp; </font></strong>
+
+                        </li>
+                        <li style="display:inline;">
+                            <strong><font size=3 color="black">&nbsp; P:Procedimiento</font></strong>
+                        </li>
+                    </ul>
+                </section>
+                </nav>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <section class="panel">
+                <header class="panel-heading">
+                    <h2 class="panel-title"<!--style="font-size:16px;"-->Ambulatorio</h2>
+                </header>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-sm-7">
+                            <div class="form-group">
+                                <label class="control-label">Médico</label>
+                                <input disabled=disabled type="text" id="TxtMedico" class="form-control" />
+
+                                <label class="control-label">Paciente</label>
+                                <input disabled=disabled type="text" id="TxtPaciente" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="col-sm-5">
+                            <div class="form-group">
+                                <label class="control-label">Aseguradora</label>
+                                <input disabled=disabled type="text" id="TxtAseguradora" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="form-group">
+                                <label class="control-label">Edad</label>
+                                <br />
+                                <input disabled=disabled type="text" id="TxtEdadPaciente" value=@ViewBag.TxtEdadPaciente name="lastname" class="form-control" />
+                            </div>
+
+                        </div>
+                        <div class="col-sm-3">
+                            <div class="form-group">
+                                <label class="control-label">H.C</label>
+                                <input disabled=disabled id="TxtHC" name="email" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-2">
+                            <div class="form-group">
+                                <label class="control-label">Sexo</label>
+                                <input disabled=disabled id="TxtSexo" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="form-group">
+                                <label class="control-label">F.Consulta</label>
+                                <input disabled=disabled id="TxtFechaConsulta" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="col-sm-3">
+                            <div class="form-group">
+                                <label class="control-label">Código OA</label>
+                                <input disabled=disabled id="TxtOA" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="form-group">
+                                <label class="control-label">&nbsp &nbsp &nbsp</label>
+                                <br />
+                                @*<input disabled=disabled type="text" id="TxtEdadPaciente" value=@ViewBag.TxtEdadPaciente name="lastname" class="form-control" />*@
+                                <button type="submit" class="btn btn-primary" id="Btndirigircopiado" style=@hiden disabled=@copy>Copiar </button>
+                                <input type="hidden" id="hiddCopy" name="hiddCopy" class="form-control" value=@copystring />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <footer class="panel-footer">
+
+                    <div class="col-md-15">
+                        <div class="tabs tabs-primary">
+                            <ul class="nav nav-tabs">
+                                <li class="active">
+                                    <a href="#popular1" data-toggle="tab">Ananmesis</a>
+                                </li>
+                                <li>
+                                    <a href="#recent1" data-toggle="tab">Receta</a>
+                                </li>
+                                <li>
+                                    <a href="#recent12" data-toggle="tab">Diagnóstico</a>
+                                </li>
+                                <li>
+                                    <a href="#recent13" data-toggle="tab">Plan de trabajo</a>
+                                </li>
+                            </ul>
+                            <div class="tab-content">
+                                <div id="popular1" class="tab-pane active">
+                                    <ul class="nav nav-tabs">
+                                        <li class="active">
+                                            <a href="#Ananmesis1" data-toggle="tab">General</a>
+                                        </li>
+                                        <li>
+                                            <a href="#Ananmesis2" data-toggle="tab">Fisico</a>
+                                        </li>
+                                        <li>
+                                            <a href="#Ananmesis3" data-toggle="tab">Oftalmologico</a>
+                                        </li>
+                                    </ul>
+                                    <div class="tab-content">
+                                        <div id="Ananmesis1" class="tab-pane active">
+                                            <section class="panel">
+                                                <header class="panel-heading">
+                                                    <h2 class="panel-title">Enfermedad Actual</h2>
+                                                </header>
+                                                <div class="panel-body">
+                                                    <div class="row">
+                                                        <div class="col-sm-12">
+                                                            <div class="form-group">
+                                                                <label class="control-label">Tiempo Enfermedad</label>
+                                                                <input type="text" disabled=disabled name="firstname" id="TxtTipoEnfermedad" class="form-control" />
+
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+
+                                                        <div class="col-sm-12">
+                                                            <div class="form-group">
+                                                                <label class="control-label">Relato</label>
+                                                                <textarea class="form-control" disabled=disabled rows="5" id="TxtRelato" placeholder="Type your message">@ViewBag.responseRelato</textarea>
+
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </section>
+                                            <section class="panel">
+                                                <header class="panel-heading">
+                                                    <h2 class="panel-title">Antecedentes de Importancia</h2>
+                                                </header>
+                                                <div class="panel-body">
+                                                    <div class="row">
+                                                        <div class="col-sm-12">
+                                                            <div class="form-group">
+                                                                <textarea class="form-control" disabled=disabled id="TxtAntecedentes" rows="5" placeholder="Type your message"></textarea>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </section>
+
+
+                                        </div>
+                                        <div id="Ananmesis2" class="tab-pane ">
+                                            <section class="panel">
+                                                <header class="panel-heading">
+                                                    <h2 class="panel-title">Exámen Físico</h2>
+                                                </header>
+                                                <div class="panel-body">
+                                                    <div class="row">
+                                                        <div class="col-sm-3">
+                                                            <div class="form-group">
+                                                                <label class="control-label">PA</label>
+                                                                <input type="text" disabled=disabled id="TxtPA" name="firstname" class="form-control" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-3">
+                                                            <div class="form-group">
+                                                                <label class="control-label">mmHg</label>
+                                                                <input type="text" disabled=disabled id="TxtmmHg" name="lastname" class="form-control" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-3">
+                                                            <div class="form-group">
+                                                                <label class="control-label">FC</label>
+                                                                <div class="input-group mb-md">
+                                                                    <input type="text" disabled=disabled id="TxtFc" class="form-control" />
+                                                                    <span class="input-group-addon ">X'</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-3">
+                                                            <div class="form-group">
+                                                                <label class="control-label">FR</label>
+                                                                <div class="input-group mb-md">
+                                                                    <input disabled=disabled type="text" id="TxtFR" class="form-control" />
+                                                                    <span class="input-group-addon ">X'</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-sm-3">
+                                                            <div class="form-group">
+                                                                <label class="control-label">Peso</label>
+                                                                <div class="input-group mb-md">
+                                                                    <input disabled=disabled type="text" id="TxtPeso" class="form-control" />
+                                                                    <span class="input-group-addon ">Kg</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-3">
+                                                            <div class="form-group">
+                                                                <label class="control-label">T°</label>
+                                                                <div class="input-group mb-md">
+                                                                    <input disabled=disabled  type="text" id="TxtTemperatura" class="form-control" />
+
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-6">
+                                                            <div class="form-group">
+                                                                <label class="control-label">SAT</label>
+                                                                <input type="text" disabled=disabled  name="firstname" id="TxtSat" class="form-control" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-6">
+                                                            <div class="form-group">
+                                                                <label class="control-label">Talla</label>
+                                                                <input type="text" disabled=disabled name="firstname" id="TxtFC" class="form-control" />
+                                                                <label class="control-label">IMC</label>
+                                                                <input type="text" disabled=disabled name="firstname" id="TxtFC" class="form-control" />
+                                                            </div>
+                                                        </div>
+                                                      
+                                                    </div>
+                                                   
+                                                    <div class="row">
+                                                        <div class="col-sm-12">
+                                                            <div class="form-group">
+                                                                <label class="control-label">Evolución</label>
+                                                                <textarea disabled=disabled class="form-control" id="TxtEvolucion" rows="5" placeholder="Type your message"></textarea>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </section>
+                                            <section class="panel">
+                                                <header class="panel-heading">
+                                                    <h2 class="panel-title">Descripción de Examen Físico</h2>
+                                                </header>
+                                                <div class="panel-body">
+                                                    <div class="row">
+                                                        <div class="col-sm-12">
+                                                            <div class="form-group">
+                                                                <textarea class="form-control" disabled=disabled id="TxtExamenFisico" rows="5" placeholder="Type your message"></textarea>
+                                                            </div>
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </section>
+                                        </div>
+                                        <div id="Ananmesis3" class="tab-pane ">
+                                            <section class="panel">
+                                                <header class="panel-heading">
+                                                    <h2 class="panel-title">Exámen Oftalmologico</h2>
+                                                </header>
+                                                <div class="panel-body">
+                                                    <div class="row">
+                                                        <div class="col-sm-3">
+                                                            <div class="form-group">
+                                                                <label class="control-label">AVOD s/c</label>
+                                                                <input type="text" disabled=disabled id="txtAVODsc" name="txtAVODsc" class="form-control" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-3">
+                                                            <div class="form-group">
+                                                                <label class="control-label">AVOD C/c</label>
+                                                                <input type="text" disabled=disabled id="txtAVODCc" name="txtAVODCc" class="form-control" />
+
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-3">
+                                                            <div class="form-group">
+                                                                <label class="control-label">AVOD A.E.</label>
+                                                                <div class="input-group mb-md">
+                                                                    <input type="text" disabled=disabled id="txtAVODAE" name="txtAVODAE" class="form-control" />
+
+
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-3">
+                                                            <div class="form-group">
+                                                                <label class="control-label">AVOD CERCA</label>
+                                                                <div class="input-group mb-md">
+
+                                                                    <input type="text" id="txtAVODCERCA" name="txtAVODCERCA" class="form-control" />
+                                                                    @*<span class="input-group-addon ">X'</span>*@
+
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-sm-3">
+                                                            <div class="form-group">
+                                                                <label class="control-label">AVOI s/c</label>
+                                                                <div class="input-group mb-md">
+
+                                                                    <input type="text" id="txtAVOISc" name="txtAVOISc" class="form-control" />
+                                                                    @* <span class="input-group-addon ">Kg</span>*@
+
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-sm-3">
+                                                            <div class="form-group">
+                                                                <label class="control-label">AVOI C/c</label>
+                                                                <div class="input-group mb-md">
+
+                                                                    <input type="text" id="TxtAVOICc" name="TxtAVOICc" class="form-control" />
+
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-3">
+                                                            <div class="form-group">
+                                                                <label class="control-label">AVOI A.E.</label>
+                                                                <input type="text" id="TxtAVOIAE" name="TxtAVOIAE" class="form-control" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-3">
+                                                            <div class="form-group">
+                                                                <label class="control-label">AVOI CERCA</label>
+                                                                <input type="text" id="TxtAVOICERCA" name="TxtAVOICERCA" class="form-control" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+
+                                                        <div class="col-sm-2">
+                                                            <div class="form-group">
+                                                                <label class="control-label">OD SPH</label>
+                                                                <input type="text" id="TxtODSPH" name="TxtAVOICERCA" class="form-control" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-2">
+                                                            <div class="form-group">
+                                                                <label class="control-label">OD CIL</label>
+                                                                <input type="text" id="TxtODCIL" name="TxtODCIL" class="form-control" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-2">
+                                                            <div class="form-group">
+                                                                <label class="control-label">OD EJE</label>
+                                                                <input type="text" id="TxtODEJE" name="TxtODEJE" class="form-control" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-2">
+                                                            <div class="form-group">
+                                                                <label class="control-label">OD AV</label>
+                                                                <input type="text" id="TxtODAV" name="TxtODAV" class="form-control" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-2">
+                                                            <div class="form-group">
+                                                                <label class="control-label">OD ADD</label>
+                                                                <input type="text" id="TxtODADD" name="TxtODADD" class="form-control" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-2">
+                                                            <div class="form-group">
+                                                                <label class="control-label">OD DIP</label>
+                                                                <input type="text" id="TxtODDIP" name="TxtODDIP" class="form-control" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-sm-2">
+                                                            <div class="form-group">
+                                                                <label class="control-label">OI SPH</label>
+                                                                <input type="text" id="TxtOISPH" name="TxtOISPH" class="form-control" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-2">
+                                                            <div class="form-group">
+                                                                <label class="control-label">OI CIL</label>
+                                                                <input type="text" id="TxtOICIL" name="TxtOICIL" class="form-control" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-2">
+                                                            <div class="form-group">
+                                                                <label class="control-label">OI EJE</label>
+                                                                <input type="text" id="TxtOIEJE" name="TxtOIEJE" class="form-control" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-2">
+                                                            <div class="form-group">
+                                                                <label class="control-label">OI AV</label>
+                                                                <input type="text" id="TxtOIAV" name="TxtOIAV" class="form-control" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-2">
+                                                            <div class="form-group">
+                                                                <label class="control-label">OI ADD</label>
+                                                                <input type="text" id="TxtOIADD" name="TxtOIADD" class="form-control" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-2">
+                                                            <div class="form-group">
+                                                                <label class="control-label">OI DIP</label>
+                                                                <input type="text" id="TxtOIDIP" name="TxtOIDIP" class="form-control" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+
+                                                        <div class="col-sm-100">
+                                                            <div class="form-group">
+
+                                                                <br />
+                                                                <label class="control-label">PARPADOS Y ANEXOS</label>
+                                                                <input type="text" id="TxtPARPADOSYANEXOS" name="TxtPARPADOSYANEXOS" class="form-control" />
+                                                            </div>
+                                                        </div>
+
+
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-sm-100">
+                                                            <div class="form-group">
+
+                                                                <br />
+                                                                <label class="control-label">CORNEA,CRISTALINO,ESCLERA</label>
+                                                                <input type="text" id="TxtCORNEACRISTALINOESCLERA" name="TxtCORNEACRISTALINOESCLERA" class="form-control" />
+                                                            </div>
+                                                        </div>
+
+
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-sm-100">
+                                                            <div class="form-group">
+
+                                                                <br />
+                                                                <label class="control-label">IRIS,PUPILA</label>
+                                                                <input type="text" id="TxtIRISPUPILA" name="TxtIRISPUPILA" class="form-control" />
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+
+                                                    <div class="row">
+
+                                                        <div class="col-sm-2">
+                                                            <div class="form-group">
+                                                                <br />
+                                                                <label size="3" title="MOTALIDAD OCULAR" class="control-label">Motalidad Ocultar</label>
+
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-2">
+                                                            <div class="form-group">
+
+                                                                <br />
+
+                                                                <label class="control-label">Tonometría</label>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-2">
+                                                            <div class="form-group">
+                                                                <label class="control-label">OD</label>
+                                                                <input type="text" id="TxtTONOMETRIAOD" name="TxtTONOMETRIAOD" class="form-control" />
+
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-2">
+                                                            <div class="form-group">
+                                                                <label class="control-label">OI</label>
+                                                                <input type="text" id="TxtTONOMETRIAOI" name="TxtTONOMETRIAOI" class="form-control" />
+
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-2">
+                                                            <div class="form-group">
+                                                                <label class="control-label">mmHg</label>
+                                                                <input type="text" id="TxtTONOMETRIAmmHg" name="TxtTONOMETRIAmmHg" class="form-control" />
+
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-sm-6">
+                                                            <div class="form-group">
+                                                                <label class="control-label">FONDO DE OJO</label>
+                                                                <input type="text" id="TxtFONDODEOJO1" name="TxtFONDODEOJO1" class="form-control" />
+
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-6">
+                                                            <div class="form-group">
+                                                                <label class="control-label">FONDO DE OJO</label>
+                                                                <input type="text" id="TxtFONDODEOJO2" name="TxtFONDODEOJO2" class="form-control" />
+
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+
+
+                                                </div>
+                                                @*<div class="row">
+                                                        <div class="col-sm-12">
+                                                            <div class="form-group">
+                                                                <label class="control-label">Evolución</label>
+                                                                <textarea disabled=disabled class="form-control" id="TxtEvolucion" rows="5" placeholder="Type your message"></textarea>
+                                                            </div>
+                                                        </div>
+                                                    </div>*@
+                                                <div class="col-sm-6">
+
+                                                </div>
+                                            </section>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div id="recent1" class="tab-pane">
+                                    <header class="panel-heading">
+                                        <h2 class="panel-title">
+                                            Receta Indicada
+
+                                        </h2>
+                                    </header>
+                                    <div id="containerValidaReceta">
+                                        <h2 class="panel-title">
+
+                                            <br />
+
+                                            No hay información para mostrar..
+
+                                        </h2>
+                                    </div>
+
+                                    <table id="dataTable2" class="table table-striped table-bordered nowrap">
+                                        <thead>
+                                            <tr>
+
+                                                <th style="font-size:13px;"><div class="cab02"></div></th>
+                                                <th style="font-size:13px;"></th>
+                                                <th style="font-size:13px;"></th>
+                                                <th style="font-size:13px;" class="center hidden-phone"></th>
+                                                <th style="font-size:13px;"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td style="font-size:13px;"></td>
+                                                <td style="font-size:13px;"></td>
+                                                <td style="font-size:13px;"></td>
+                                                <td style="font-size:13px;"></td>
+                                                <td style="font-size:13px;" class="center hidden-phone"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div id="recent12" class="tab-pane">
+                                    <header class="panel-heading">
+                                        <h2 class="panel-title">Diagnóstico</h2>
+                                    </header>
+                                    <div id="containerValidaDiagnostico">
+                                        <h2 class="panel-title">
+                                            <br />
+                                            No hay información para mostrar..
+                                        </h2>
+                                    </div>
+
+                                    <table id="dataTable3" class="table table-striped table-bordered nowrap">
+                                        <thead>
+                                            <tr>
+
+                                                <th style="font-size:13px;"><div class="cab02"></div></th>
+                                                <th style="font-size:13px;"></th>
+                                                <th style="font-size:13px;"></th>
+                                                <th style="font-size:13px;" class="center hidden-phone"></th>
+                                                <th style="font-size:13px;"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td style="font-size:13px;"></td>
+                                                <td style="font-size:13px;"></td>
+                                                <td style="font-size:13px;"></td>
+                                                <td style="font-size:13px;"></td>
+                                                <td style="font-size:13px;" class="center hidden-phone"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div id="recent13" class="tab-pane">
+
+                                    <header class="panel-heading">
+                                        <h2 class="panel-title">Prestación</h2>
+                                    </header>
+
+                                    <div id="containerValidaExamenes">
+                                        <h2 class="panel-title">
+
+                                            <br />
+
+                                            No hay información para mostrar..
+
+                                        </h2>
+                                    </div>
+
+                                    <table id="dataTable4" class="table table-striped table-bordered nowrap">
+                                        <thead>
+                                            <tr>
+
+                                                <th style="font-size:13px;"><div class="cab02"></div></th>
+                                                <th style="font-size:13px;"></th>
+                                                <th style="font-size:13px;"></th>
+                                                <th style="font-size:13px;" class="center hidden-phone"></th>
+                                                @*<th style="font-size:13px;"></th>*@
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td style="font-size:13px;"></td>
+                                                <td style="font-size:13px;"></td>
+                                                <td style="font-size:13px;"></td>
+                                                @*<td style="font-size:13px;"></td>*@
+                                                <td style="font-size:13px;" class="center hidden-phone"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <br />
+                </footer>
+            </section>
+        </div>
+    </div>
+
+
+    <style>
+        .modal-dialog-center {
+            margin-top: 15%;
+        }
+
+        .anyClass {
+            height: 560px;
+            overflow-y: scroll;
+        }
+    </style>
+
+
+
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-center" role="document">
+
+            <form id="FrmData">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel"></h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="panel-body">
+
+
+                            <div class="center">
+
+                                <div class="panel-body">
+                                    <div class="row">
+                                        <div class="col-sm-6">
+                                            <div class="form-group">
+                                                <label class="control-label">Cargando...</label>
+
+                                                <img style="width:50px;height:50px;" class="form-control" src="~/resources/images/loading_dos.gif" />
+
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="modal-footer">
+
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+
+        </div>
+    </div>
+
+
+    <script>
+        $(function () {
+            $(".preload").fadeOut(2000, function () {
+                $(".content").fadeIn(1000);
+            });
+        });
+    </script>
+
+    <!-- Vendor -->
+    <script src="~/assets/vendor/jquery/jquery.js"></script>
+    <script src="~/assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
+    <script src="~/assets/vendor/bootstrap/js/bootstrap.js"></script>
+    <script src="~/assets/vendor/nanoscroller/nanoscroller.js"></script>
+    <script src="~/assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+    <script src="~/assets/vendor/magnific-popup/magnific-popup.js"></script>
+    <script src="~/assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
+
+    <!-- Specific Page Vendor -->
+    <script src="~/assets/vendor/select2/select2.js"></script>
+    <script src="~/assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
+    <script src="~/assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
+    <script src="~/assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
+
+    <!-- Theme Base, Components and Settings -->
+    <script src="~/assets/javascripts/theme.js"></script>
+
+    <!-- Theme Custom -->
+    <script src="~/assets/javascripts/theme.custom.js"></script>
+
+    <!-- Theme Initialization Files -->
+    <script src="~/assets/javascripts/theme.init.js"></script>
+
+
+    <!-- Examples -->
+    <script src="~/assets/javascripts/tables/examples.datatables.default.js"></script>
+    <script src="~/assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
+    <script src="~/assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+
+    <style type="text/css">
+        .highlighted {
+            background: red;
+        }
+
+        #data tr {
+            background: white;
+        }
+    </style>
+
+
+    <style>
+        tr {
+            cursor: pointer;
+            transition: all .25s ease-in-out;
+        }
+
+        .selected {
+            background-color: red;
+            font-weight: bold;
+            color: #fff;
+        }
+    </style>
+
+    <!-- Consumo JSON :D -->
+
+    <script>
+
+        let ccopiar = JSON.parse('@copy'.toLowerCase());
+        let idtemp = null;
+        LoadComboSucursal();
+
+
+        function LoadMaestroTable() {
+            FTNombre = $('#hiddCopy').val();
+
+            dt = $("#table_id").DataTable({
+                destroy: true,
+                responsive: true,
+                searching: true,
+                ordering: false,
+                lengthChange: false,
+                ajax: {
+                    method: "POST",
+                    url: "@Url.Content("~/HistoriaClinicaWest/getUsers")",
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+
+                    data: function (d) {
+                        console.log("entro");
+                        console.log(d);
+                        return JSON.stringify(d);
+                    },
+                    dataSrc: "data",
+                    error: function (XMLHttpRequest, textStatus, errorThrown) { // función que va a ejecutar si hubo algún tipo de error en el pedido
+                        alert("Por favor vuelva a cargar la Historia Clinica si el problema persiste consulte con su Administrador.")
+                    }
+                },
+                columns: [
+
+                       {
+                           "data": "TipoAntecedente", 'orderable': false,
+                           'render': function (data, type, full, meta) {
+                               if (FTNombre == 'BN' || '@hiden'=="S") {
+                                   var html = '<button class="btn btn-primary"  data-toggle="tooltip" data-placement="top"  data-codigo="' + data + '" title="Consultar OA" id="BtnShow" type="button"><i class="fa fa-eye "></i></button>';
+                                   return html;
+                               } else {
+                                   var html = '<button class="btn btn-primary"  data-toggle="tooltip" data-placement="top"  data-codigo="' + data + '" title="Consultar OA" id="BtnShow" type="button"><i class="fa fa-eye "></i></button>' +
+                                  '<button  class="btn btn-dark"  data-toggle="tooltip" data-placement="top"  data-codigo="' + data + '" title="Copiar" id="BtnCopiar" type="button" ><i class="fa fa-file "></i></button>';
+                                   return html;
+                               }
+                           }
+                       },
+
+
+                    { "data": "Sucursal", "name": "Sucursal", "autoWidth": true },
+                    { "data": "CitaFecha", "name": "CitaFecha", "autoWidth": true },
+                    { "data": "UsuarioCreacion", "name": "UsuarioCreacion", "autoWidth": true },
+                    { "data": "Origen", "name": "Origen", "autoWidth": true },
+                    { "data": "Observacion", "name": "Observacion", "autoWidth": true },
+                    { "data": "UnidadReplicacion", "name": "UnidadReplicacion", "autoWidth": true },
+                        //{ "data": "UnidadReplicacion", "name": "UnidadReplicacion", "autoWidth": true },
+                    {
+                        "data": "Estado", 'orderable': false,
+                        'render': function (data, type, full, meta) {
+
+                            if (data == 1) {
+                                var html = ' <a class="text-danger"><i class="fa fa-circle"></i></a>';
+                                return html;
+                            }
+                            else if (data == 2) {
+                                var html = ' <a class="text-success"><i class="fa fa-circle"></i></a>';
+                                return html;
+                            }
+                            else if (data == 3) {
+                                var html = ' <a class="text-primary"><i class="fa fa-circle"></i></a>';
+                                return html;
+                            }
+                            else {
+                                var html = ' <a class="text-warning"><i class="fa fa-circle"></i></a>';
+                                return html;
+                            }
+                        }
+                    },
+                         {
+                             "data": "EpisodioClinico", 'orderable': false,
+                             'render': function (data, type, full, meta) {
+                                 if (data == 1) {
+                                     var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-success"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                     return html;
+                                 }
+                                 else if (data == 2 || data == 3) {
+                                     var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-secondary"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                     return html;
+                                 } else {
+                                     var html = '';
+                                     return html;
+                                 }
+                             }
+                         },
+                        {
+                            "data": "IdDiagnostico", 'orderable': false,
+                            'render': function (data, type, full, meta) {
+                                if (data == 1) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-success"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                }
+                                else if (data == 2 || data == 3) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-secondary"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                } else {
+                                    var html = '';
+                                    return html;
+                                }
+                            }
+                        },
+                        {
+                            "data": "IdDiagnosticoValoracion", 'orderable': false,
+                            'render': function (data, type, full, meta) {
+                                if (data == 1) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-success"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                }
+                                else if (data == 2 || data == 3) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-secondary"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                } else {
+                                    var html = '';
+                                    return html;
+                                }
+                            }
+                        }
+                ]
+
+            });
+        }
+
+        function dtUsers() {
+            FTNombre = $('#hiddCopy').val();
+            $(document).ready(function () {
+                $("#table_id").DataTable({
+                    "processing": true,
+                    "serverSide": true,
+                    "ordering": false,
+                    "searching": true,
+                    "lengthChange": false,
+                    "ajax": {
+                        "url": "@Url.Content("~/HistoriaClinicaWest/Json")",
+                        "type": "POST",
+                        "datatype": "json"
+                    },
+                    "pageLength": 10,
+                    "filter": true,
+                    "responsivePriority": 1,
+                    "data": null,
+                    "columns": [
+                    { "data": "Sucursal", "name": "Sucursal", "autoWidth": true },
+                    { "data": "CitaFecha", "name": "CitaFecha", "autoWidth": true },
+                    { "data": "UsuarioCreacion", "name": "UsuarioCreacion", "autoWidth": true },
+                    { "data": "Origen", "name": "Origen", "autoWidth": true },
+                    { "data": "Observacion", "name": "Observacion", "autoWidth": true },
+                    { "data": "UnidadReplicacion", "name": "UnidadReplicacion", "autoWidth": true },
+                        {
+                            "data": "Estado", 'orderable': false,
+                            'render': function (data, type, full, meta) {
+                                if (data == 1) {
+                                    var html = ' <a class="text-danger"><i class="fa fa-circle"></i></a>';
+                                    return html;
+                                }
+                                else if (data == 2) {
+                                    var html = ' <a class="text-success"><i class="fa fa-circle"></i></a>';
+                                    return html;
+                                }
+                                else if (data == 3) {
+                                    var html = ' <a class="text-primary"><i class="fa fa-circle"></i></a>';
+                                    return html;
+                                }
+                                else {
+                                    var html = ' <a class="text-warning"><i class="fa fa-circle"></i></a>';
+
+                                    return html;
+                                }
+                            }
+                        },
+                        {
+                            "data": "TipoAntecedente", 'orderable': false,
+                            'render': function (data, type, full, meta) {
+                                if (FTNombre == "BN" || '@hiden' == "S") {
+                                    var html = '<button class="btn btn-primary"  data-toggle="tooltip" data-placement="top"  data-codigo="' + data + '" title="Consultar OA" id="BtnShow" type="button"><i class="fa fa-eye "></i></button>';
+                                    return html;
+                                } else {
+                                    var html = '<button class="btn btn-primary"  data-toggle="tooltip" data-placement="top"  data-codigo="' + data + '" title="Consultar OA" id="BtnShow" type="button"><i class="fa fa-eye "></i></button>' +
+                                   '<button  class="btn btn-dark"  data-toggle="tooltip" data-placement="top"  data-codigo="' + data + '" title="Copiar" id="BtnCopiar" type="button" ><i class="fa fa-file "></i></button>';
+                                    return html;
+                                }
+
+                            }
+                        },
+                        {
+                            "data": "EpisodioClinico", 'orderable': false,
+                            'render': function (data, type, full, meta) {
+                                if (data == 1) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-success"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                }
+                                else if (data == 2 || data == 3) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-secondary"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                } else {
+                                    var html = '';
+                                    return html;
+                                }
+                            }
+                        },
+                        {
+                            "data": "IdDiagnostico", 'orderable': false,
+                            'render': function (data, type, full, meta) {
+                                if (data == 1) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-success"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                }
+                                else if (data == 2 || data == 3) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-secondary"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                } else {
+                                    var html = '';
+                                    return html;
+                                }
+                            }
+                        },
+                        {
+                            "data": "IdDiagnosticoValoracion", 'orderable': false,
+                            'render': function (data, type, full, meta) {
+                                if (data == 1) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-success"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                }
+                                else if (data == 2 || data == 3) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-secondary"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                } else {
+                                    var html = '';
+                                    return html;
+                                }
+                            }
+                        }
+                    ]
+                });
+            })
+
+        }
+
+
+        $('#table_id').on('click', '#BtnShow', function (e) {
+            var capId = $(this).data('codigo');
+            idtemp = capId;
+            getId(capId);
+        });
+
+
+        $('#table_id').on('click', '#BtnCopiar', function (e) {
+            var capId = $(this).data('codigo');
+            $.ajax({
+                url: "/VisorCopiado/setSessionData/" + capId,
+                data: {},
+                type: 'GET',
+                dataType: 'json',
+                success: function (respJson) {
+
+                    if (respJson == 0) {
+                        alert('Disculpe, el código de OA no existe en el HCE');
+                    } else {
+                        window.location.href = "/VisorCopiado/Index";
+                    }
+                },
+                error: function (xhr, status) {
+                    alert('Disculpe, existió un problema');
+
+                }
+
+            });
+        });
+
+
+        function getOas() {
+            FTNombre = $('#hiddCopy').val();
+            dt = $("#datatable").DataTable({
+                destroy: true,
+                responsive: true,
+
+                ajax: {
+                    method: "POST",
+                    url: "/HistoriaClinicaWest/ListDate",
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    data: function (d) {
+
+                        d.Codigo = $('#TxtFechaInicio').val();
+                        d.Nombre = $('#TxtFechaFin').val();
+
+                        return JSON.stringify(d);
+                    },
+
+                    dataSrc: "data"
+                },
+                "columns": [
+                            { "data": "Sucursal", "name": "Sucursal", "autoWidth": true },
+                            { "data": "CitaFecha", "name": "CitaFecha", "autoWidth": true },
+                            { "data": "UsuarioCreacion", "name": "UsuarioCreacion", "autoWidth": true },
+                            { "data": "Origen", "name": "Origen", "autoWidth": true },
+                            { "data": "Observacion", "name": "Observacion", "autoWidth": true },
+                            { "data": "UnidadReplicacion", "name": "UnidadReplicacion", "autoWidth": true },
+                         {
+                             "data": "Estado", 'orderable': false,
+                             'render': function (data, type, full, meta) {
+                                 if (data == 1) {
+                                     var html = ' <a class="text-danger"><i class="fa fa-circle"></i></a>';
+                                     return html;
+                                 }
+                                 else if (data == 2) {
+                                     var html = ' <a class="text-success"><i class="fa fa-circle"></i></a>';
+                                     return html;
+                                 }
+                                 else if (data == 3) {
+                                     var html = ' <a class="text-primary"><i class="fa fa-circle"></i></a>';
+                                     return html;
+                                 }
+                                 else {
+                                     var html = ' <a class="text-warning"><i class="fa fa-circle"></i></a>';
+
+                                     return html;
+                                 }
+                             }
+                         },
+                        {
+                            "data": "TipoAntecedente", 'orderable': false,
+                            'render': function (data, type, full, meta) {
+                                if (FTNombre == "BN") {
+                                    var html = '<button class="btn btn-primary"  data-toggle="tooltip" data-placement="top"  data-codigo="' + data + '" title="Consultar OA" id="BtnShow" type="button"><i class="fa fa-eye "></i></button>';
+                                    return html;
+                                } else {
+                                    var html = '<button class="btn btn-primary"  data-toggle="tooltip" data-placement="top"  data-codigo="' + data + '" title="Consultar OA" id="BtnShow" type="button"><i class="fa fa-eye "></i></button>' +
+                                   '<button  class="btn btn-dark"  data-toggle="tooltip" data-placement="top"  data-codigo="' + data + '" title="Copiar" id="BtnCopiar" type="button" ><i class="fa fa-file "></i></button>';
+                                    return html;
+                                }
+
+                            }
+                        },
+                        {
+                            "data": "EpisodioClinico", 'orderable': false,
+                            'render': function (data, type, full, meta) {
+                                if (data == 1) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-success"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                }
+                                else if (data == 2 || data == 3) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-secondary"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                } else {
+                                    var html = '';
+                                    return html;
+                                }
+
+                            }
+                        },
+                        {
+                            "data": "IdDiagnostico", 'orderable': false,
+                            'render': function (data, type, full, meta) {
+                                if (data == 1) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-success"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                }
+                                else if (data == 2 || data == 3) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-secondary"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                } else {
+                                    var html = '';
+                                    return html;
+                                }
+                            }
+                        },
+                        {
+                            "data": "IdDiagnosticoValoracion", 'orderable': false,
+                            'render': function (data, type, full, meta) {
+                                if (data == 1) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-success"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                }
+                                else if (data == 2 || data == 3) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-secondary"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                } else {
+                                    var html = '';
+                                    return html;
+                                }
+
+                            }
+                        }
+                ]
+            });
+        }
+
+        $(document).ready(function () {
+            $('#dataTable').DataTable({
+                "searching": false,
+                "paging": true,
+                "info": false,
+                "lengthChange": false
+            });
+        });
+        $(document).ready(function () {
+            $('#dataTable2').DataTable({
+                "searching": false,
+                "paging": true,
+                "info": false,
+                "lengthChange": false
+            });
+        });
+        $(document).ready(function () {
+            $('#dataTable3').DataTable({
+                "searching": false,
+                "paging": true,
+                "info": false,
+                "lengthChange": false
+            });
+        });
+
+        $(document).ready(function () {
+            $('#dataTable4').DataTable({
+                "searching": false,
+                "paging": true,
+                "info": false,
+                "lengthChange": false
+            });
+        });
+
+        $(document).ready(function () {
+            $('body').on('click', '#BtnBuscarOAS', function (e) {
+                // $('#BtnBuscarOAS').button('loading');
+                SendDataDate();
+            });
+        });
+
+        $(document).ready(function () {
+            $('body').on('click', '#Btndirigircopiado', function (e) {
+                var capId = idtemp;
+                $.ajax({
+                    url: "/VisorCopiado/setSessionData/" + capId,
+                    data: {},
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function (respJson) {
+
+                        if (respJson == 0) {
+                            alert('Disculpe, el código de OA no existe en el HCE');
+                        } else {
+                            window.location.href = "/VisorCopiado/Index";
+                        }
+                    },
+                    error: function (xhr, status) {
+                        alert('Disculpe, existió un problema');
+
+                    }
+
+                });
+
+            });
+        });
+
+        function SendDataDate() {
+            FTNombre = $('#hiddCopy').val();
+
+            dt = $("#table_id").DataTable({
+                destroy: true,
+                responsive: true,
+                ordering: false,
+                searching: true,
+                lengthChange: false,
+                ajax: {
+                    method: "POST",
+                    url: "@Url.Content("~/HistoriaClinicaWest/getUsersDate")",
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    data: function (d) {
+                        console.log(d);
+                        d.FechaInicio = $('#TxtFechaInicio').val();
+                        d.FechaFin = $('#TxtFechaFin').val();
+                        d.CodigoSucursal = $('#cboSucursal').val();
+                        return JSON.stringify(d);
+                    },
+                    dataSrc: "data"
+                },
+                columns: [
+                      {
+                          "data": "TipoAntecedente", 'orderable': false,
+                          'render': function (data, type, full, meta) {
+                              if (FTNombre == "BN") {
+                                  var html = '<button class="btn btn-primary"  data-toggle="tooltip" data-placement="top"  data-codigo="' + data + '" title="Consultar OA" id="BtnShow" type="button"><i class="fa fa-eye "></i></button>';
+                                  return html;
+                              } else {
+                                  var html = '<button class="btn btn-primary"  data-toggle="tooltip" data-placement="top"  data-codigo="' + data + '" title="Consultar OA" id="BtnShow" type="button"><i class="fa fa-eye "></i></button>' +
+                                 '<button  class="btn btn-dark"  data-toggle="tooltip" data-placement="top"  data-codigo="' + data + '" title="Copiar" id="BtnCopiar" type="button" ><i class="fa fa-file "></i></button>';
+                                  return html;
+                              }
+                          }
+                      },
+                    { "data": "Sucursal", "name": "Sucursal", "autoWidth": true },
+                    { "data": "CitaFecha", "name": "CitaFecha", "autoWidth": true },
+                    { "data": "UsuarioCreacion", "name": "UsuarioCreacion", "autoWidth": true },
+                    { "data": "Origen", "name": "Origen", "autoWidth": true },
+                    { "data": "Observacion", "name": "Observacion", "autoWidth": true },
+                    { "data": "UnidadReplicacion", "name": "UnidadReplicacion", "autoWidth": true },
+                             {
+                                 "data": "Estado", 'orderable': false,
+                                 'render': function (data, type, full, meta) {
+                                     if (data == 1) {
+                                         var html = ' <a class="text-danger"><i class="fa fa-circle"></i></a>';
+                                         return html;
+                                     }
+                                     else if (data == 2) {
+                                         var html = ' <a class="text-success"><i class="fa fa-circle"></i></a>';
+                                         return html;
+                                     }
+                                     else if (data == 3) {
+                                         var html = ' <a class="text-primary"><i class="fa fa-circle"></i></a>';
+                                         return html;
+                                     }
+                                     else {
+                                         var html = ' <a class="text-warning"><i class="fa fa-circle"></i></a>';
+                                         return html;
+                                     }
+                                 }
+                             },
+                        {
+                            "data": "EpisodioClinico", 'orderable': false,
+                            'render': function (data, type, full, meta) {
+                                if (data == 1) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-success"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                }
+                                else if (data == 2 || data == 3) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-secondary"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                } else {
+                                    var html = '';
+                                    return html;
+                                }
+                            }
+                        },
+                        {
+                            "data": "IdDiagnostico", 'orderable': false,
+                            'render': function (data, type, full, meta) {
+                                if (data == 1) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-success"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                }
+                                else if (data == 2 || data == 3) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-secondary"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                } else {
+                                    var html = '';
+                                    return html;
+                                }
+                            }
+                        },
+                        {
+                            "data": "IdDiagnosticoValoracion", 'orderable': false,
+                            'render': function (data, type, full, meta) {
+                                if (data == 1) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-success"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                }
+                                else if (data == 2 || data == 3) {
+                                    var html = '<a href="#" class="mb-xs mt-xs mr-xs btn btn-xs btn-secondary"  data-toggle="tooltip" data-placement="top"   title="Laboratorio" ><i class="fa fa-file-pdf-o"></i></a>';
+                                    return html;
+                                } else {
+                                    var html = '';
+                                    return html;
+                                }
+                            }
+                        }
+                ]
+
+            });
+        }
+
+        function cleanTexbox() {
+
+
+            $("#TxtTipoEnfermedad").val("");
+            $("#TxtRelato").val("");
+            $("#TxtAntecedentes").val("");
+            $("#TxtPA").val("");
+            $("#TxtFc").val("");
+            $("#TxtmmHg").val("");
+            $("#TxtEstado").val("");
+            $("#TxtSat").val("");
+            $("#TxtFC").val("");
+            $("#TxtExamenFisico").val("");
+            $("#TxtEvolucion").val("");
+            $("#TxtTemperatura").val("");
+            $("#TxtPeso").val("");
+            //OFTALMOLOGIA
+            $("#txtAVODsc").val("");
+            $("#txtAVODCc").val("");
+            $("#txtAVODAE").val("");
+            $("#txtAVODCERCA").val("");
+            $("#txtAVOISc").val("");
+            $("#TxtAVOICc").val("");
+            $("#TxtAVOIAE").val("");
+            $("#TxtAVOICERCA").val("");
+            $("#TxtODSPH").val("");
+            $("#TxtODCIL").val("");
+            $("#TxtODEJE").val("");
+            $("#TxtODAV").val("");
+            $("#TxtODADD").val("");
+            $("#TxtODDIP").val("");
+            $("#TxtOISPH").val("");
+            $("#TxtOICIL").val("");
+            $("#TxtOIEJE").val("");
+            $("#TxtOIAV").val("");
+            $("#TxtOIADD").val("");
+            $("#TxtOIDIP").val("");
+            $("#TxtPARPADOSYANEXOS").val("");
+            $("#TxtCORNEACRISTALINOESCLERA").val("");
+            $("#TxtIRISPUPILA").val("");
+            $("#TxtTONOMETRIAOD").val("");
+            $("#TxtTONOMETRIAOI").val("");
+            $("#TxtTONOMETRIAmmHg").val("");
+            $("#TxtFONDODEOJO1").val("");
+            $("#TxtFONDODEOJO2").val("");
+        }
+
+
+        $(document).ready(function () {
+            $('#datatable tr').click(function () {
+
+                $(this).css('background-color', "#D6D5C3");
+            });
+        });
+
+        function getId(idLinea) {
+            cleanTexbox();
+            $(this).parent().parent().css('background-color', 'orange');
+            $('#exampleModal').modal('show');
+
+            $.ajax({
+                url: "/HistoriaClinicaWest/getDataHistoriaClinica/" + idLinea,
+                data: {},
+                type: 'GET',
+                dataType: 'json',
+                success: function (respJson) {
+
+                    $('#exampleModal').modal('hide');
+
+                    if ($.isEmptyObject(respJson)) {
+
+                        alert("No se encontró información con esta órden de atención..!");
+                        swal.close();
+                    } else {
+
+                        for (var i in respJson) {
+
+                            var Dato2 = respJson[i];
+                            $("#TxtPaciente").val(Dato2.PacienteNombre);
+                            $("#TxtMedico").val(Dato2.MedicoNombre);
+                            $("#TxtHC").val(Dato2.CodigoHC);
+                            $("#TxtAseguradora").val(Dato2.Aseguradora);
+                            if (Dato2.sexo == "F") { $("#TxtSexo").val("Femenino"); } else if (Dato2.sexo == "M") { $("#TxtSexo").val("Masculino"); }
+                            $("#TxtFechaConsulta").val(Dato2.CitaFecha);
+                            $("#TxtOA").val(Dato2.CodigoOA);
+
+                            var resRe = respJson[i].list_VW_SS_HCE_VisorReceta;
+                            $("#dataTable2").html("");
+                            $("#dataTable2").html(
+                                "<thead>" +
+                                "<tr>" +
+                                "<th scope='col'>Medicamento</th>" +
+                                "<th scope='col'>Línea de Medicamento</th>" +
+                                "<th scope='col'>Familia de Medicamento</th>" +
+                                "<th scope='col'>Dosis</th>" +
+                                    "<th scope='col'>Cantidad</th>" +
+                                    "<th scope='col'>Via</th>" +
+                                    "<th scope='col'>UnidadMedida</th>" +
+                                         "<th scope='col'>C/</th>" +
+                                "<th scope='col'>Días de Tratamiento</th>" +
+                                "</tr>" +
+                                "</thead>" +
+                                "<tbody>" +
+                                "</tbody>"
+
+                            ); //Agregar la tabla a la estructura HTML
+                            for (var i3 in resRe) {
+                                var DatoRecera = resRe[i3];
+                                //if (DatoRecera.Componente == "") {
+                                //    $("#dataTable2").html("");
+                                //    $("#containerValidaReceta").show();
+                                //} else {
+                                $("#containerValidaReceta").hide();
+
+                                $("#dataTable2 tbody").append("<tr>" +
+                                   "<td>" + DatoRecera.DCI + "</td>" +
+                                   "<td>" + DatoRecera.LIN + "</td>" +
+                                   "<td>" + DatoRecera.FAM + "</td>" +
+                                    //"<td>" + Dato2.NombreEspecialidad + "</td>" +
+                                    "<td>" + DatoRecera.Dosis + "</td>" +
+                                     "<td>" + DatoRecera.Cantidad + "</td>" +
+                                         "<td>" + DatoRecera.DesVia + "</td>" +
+                                            "<td>" + DatoRecera.DesUnidad + "</td>" +
+                                             "<td>" + DatoRecera.Frecuencia + "</td>" +
+                                   "<td>" + DatoRecera.DiasTratamiento + "</td>" +
+                                   "</td>" +
+                                   "</tr>"
+                               );
+                                //}
+                            }
+                            //dataTable3
+
+                            var resDiag = respJson[i].list_VW_SS_HCE_VisorDiagnostico;
+                            $("#dataTable3").html("");
+                            $("#dataTable3").html(
+                                "<thead>" +
+                                "<tr>" +
+                            "<th scope='col'>CODIGO</th>" +
+                                "<th scope='col'>Tipo</th>" +
+                                "<th scope='col'>Especialidad</th>" +
+                                "<th scope='col'>Diagnóstico</th>" +
+                                "<th scope='col'>Tipo Diagnóstico</th>" +
+                                "</tr>" +
+                                "</thead>" +
+                                "<tbody>" +
+                                "</tbody>"
+
+                            );
+                            for (var i4 in resDiag) {
+                                var DatoDiagnostico = resDiag[i4];
+                                var cap = DatoDiagnostico;
+                                if (DatoDiagnostico.Nombre == "") {
+                                    $("#dataTable3").html("");
+
+                                    $("#containerValidaDiagnostico").show();
+                                } else {
+
+                                    $("#containerValidaDiagnostico").hide();
+
+                                    var responseDiagnostico = DatoDiagnostico.TipoDiagnostico;
+                                    var resTipo = DatoDiagnostico.TAB;
+                                    var resCodigo = DatoDiagnostico.CodigoDiagnostico;
+                                    var TipoDiagnosticoRe = "";
+                                    var resEspecia = DatoDiagnostico.UsuarioCreacion;
+                                    var reponseName = DatoDiagnostico.Nombre;
+
+                                    if (responseDiagnostico == "P") {
+                                        TipoDiagnosticoRe = "Presuntivo";
+                                    } else if (responseDiagnostico == "D") {
+                                        TipoDiagnosticoRe = "Definitivo";
+                                    } else if (responseDiagnostico == "P") {
+                                        TipoDiagnosticoRe = "Repetitivo";
+                                    }
+                                    $("#dataTable3 tbody").append("<tr>" +
+                                          "<td>" + resCodigo + "</td>" +
+                                          "<td>" + resTipo + "</td>" +
+                                             //"<td>" + Dato2.NombreEspecialidad + "</td>" +
+                                              "<td>" + resEspecia + "</td>" +
+                                            "<td>" + reponseName + "</td>" +
+                                            "<td>" + TipoDiagnosticoRe + "</td>" +
+                                            "</td>" +
+                                            "</tr>"
+                                        );
+                                }
+                            }
+                            var res = respJson[i].list_VW_SS_HCE_VisorAnamnesis;
+                            for (var i2 in res) {
+
+                                var Dato = res[i2];
+                                if (Dato.Descripcion == "Relato" || Dato.Descripcion == "RESPUESTA INTERCONSULTA"
+                                    || Dato.Descripcion == "SEGUIMIENTO RELEVO") {
+
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtRelato").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtRelato").val(Dato.ValorNumerico);
+                                    }
+                                } else if (Dato.Descripcion == "Antecedente") {
+
+
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtAntecedentes").val(Dato.ValorCadena);
+
+                                    } else {
+                                        $("#TxtAntecedentes").val(Dato.ValorNumerico);
+
+                                    }
+                                } else if (Dato.Descripcion == "Antecedente") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtAntecedentes").val(Dato.ValorCadena);
+
+                                    } else {
+                                        $("#TxtAntecedentes").val(Dato.ValorNumerico);
+                                    }
+                                } else if (Dato.Descripcion == "Descripcion") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtExamenFisico").val(Dato.ValorCadena);
+
+                                    } else {
+                                        $("#TxtExamenFisico").val(Dato.ValorNumerico);
+                                    }
+
+                                } else if (Dato.Descripcion == "Tiempo Transcurrido") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtTipoEnfermedad").val(Dato.ValorCadena);
+
+                                    } else {
+                                        $("#TxtTipoEnfermedad").val(Dato.ValorNumerico);
+                                    }
+                                } else if (Dato.Descripcion == "PA") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtPA").val(Dato.ValorCadena);
+
+                                    } else {
+                                        $("#TxtPA").val(Dato.ValorNumerico);
+                                    }
+                                } else if (Dato.Descripcion == "SATURACION") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtSat").val(Dato.ValorCadena);
+
+                                    } else {
+                                        $("#TxtSat").val(Dato.ValorNumerico);
+                                    }
+                                } else if (Dato.Descripcion == "Talla") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtFC").val(Dato.ValorCadena);
+                                      //  if (Txpeso.length)
+                                        //$("#TxtFC").val(TxtFC / Txpeso);
+
+                                    } else {
+                                        $("#TxtFC").val(Dato.ValorNumerico);
+                                    }
+
+                                } else if (Dato.Descripcion == "FR") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtFR").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtFR").val(Dato.ValorNumerico);
+                                    }
+                                } else if (Dato.Descripcion == "PA MIN") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtmmHg").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtmmHg").val(Dato.ValorNumerico);
+                                    }
+
+                                } else if (Dato.Descripcion == "Peso") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtPeso").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtPeso").val(Dato.ValorNumerico);
+                                    }
+
+                                } else if (Dato.Descripcion == "EVOLUCION") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtEvolucion").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtEvolucion").val(Dato.ValorNumerico);
+                                    }
+                                } else if (Dato.Descripcion == "FC") {
+                                 
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtFc").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtFc").val(Dato.ValorNumerico);
+                                    }
+                                } else if (Dato.Descripcion == "Temperatura") {
+                                   
+                                    if (Dato.TipoDato == "N") {                                   
+                                        $("#TxtTemperatura").val(Dato.ValorNumerico);
+                                    } else {
+                                        $("#TxtTemperatura").val(Dato.ValorCadena);
+                                      
+                                    }
+                                }
+                                    ////////////////////oftalmologia
+                                else if (Dato.Descripcion == "AVOD s/c") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#txtAVODsc").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#txtAVODsc").val(Dato.ValorNumerico);
+                                    }
+
+                                }
+
+                                else if (Dato.Descripcion == "AVOD C/c") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#txtAVODCc").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#txtAVODCc").val(Dato.ValorNumerico);
+                                    }
+
+                                }
+                                else if (Dato.Descripcion == "AVOD A.E.") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#txtAVODAE").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#txtAVODAE").val(Dato.ValorNumerico);
+                                    }
+
+                                }
+                                else if (Dato.Descripcion == "AVOD CERCA") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#txtAVODCERCA").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#txtAVODCERCA").val(Dato.ValorNumerico);
+                                    }
+
+                                }
+
+                                else if (Dato.Descripcion == "AVOI s/c") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#txtAVOISc").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#txtAVOISc").val(Dato.ValorNumerico);
+                                    }
+
+                                }
+
+                                else if (Dato.Descripcion == "AVOI C/c") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtAVOICc").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtAVOICc").val(Dato.ValorNumerico);
+                                    }
+
+                                }
+                                else if (Dato.Descripcion == "AVOI A.E.") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtAVOIAE").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtAVOIAE").val(Dato.ValorNumerico);
+                                    }
+
+                                }
+
+                                else if (Dato.Descripcion == "AVOI CERCA") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtAVOICERCA").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtAVOICERCA").val(Dato.ValorNumerico);
+                                    }
+
+                                }
+                                else if (Dato.Descripcion == "OD SPH") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtODSPH").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtODSPH").val(Dato.ValorNumerico);
+                                    }
+
+                                }
+                                else if (Dato.Descripcion == "OD CIL") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtODCIL").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtODCIL").val(Dato.ValorNumerico);
+                                    }
+
+                                }
+                                else if (Dato.Descripcion == "OD EJE") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtODEJE").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtODEJE").val(Dato.ValorNumerico);
+                                    }
+
+                                }
+                                else if (Dato.Descripcion == "OD AV") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtODAV").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtODAV").val(Dato.ValorNumerico);
+                                    }
+
+                                }
+                                else if (Dato.Descripcion == "OD ADD") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtODADD").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtODADD").val(Dato.ValorNumerico);
+                                    }
+
+                                }
+                                else if (Dato.Descripcion == "OD DIP") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtODDIP").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtODDIP").val(Dato.ValorNumerico);
+                                    }
+
+                                }
+                                else if (Dato.Descripcion == "OI SPH") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtOISPH").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtOISPH").val(Dato.ValorNumerico);
+                                    }
+
+                                }
+                                else if (Dato.Descripcion == "OI CIL") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtOICIL").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtOICIL").val(Dato.ValorNumerico);
+                                    }
+
+                                }
+                                else if (Dato.Descripcion == "OI EJE") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtOIEJE").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtOIEJE").val(Dato.ValorNumerico);
+                                    }
+
+                                }
+                                else if (Dato.Descripcion == "OI AV") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtOIAV").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtOIAV").val(Dato.ValorNumerico);
+                                    }
+
+                                }
+                                else if (Dato.Descripcion == "OI ADD") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtOIADD").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtOIADD").val(Dato.ValorNumerico);
+                                    }
+
+                                }
+                                else if (Dato.Descripcion == "OI DIP") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtOIDIP").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtOIDIP").val(Dato.ValorNumerico);
+                                    }
+
+                                }
+                                else if (Dato.Descripcion == "PARPADOS Y ANEXOS") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtPARPADOSYANEXOS").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtPARPADOSYANEXOS").val(Dato.ValorNumerico);
+                                    }
+
+                                }
+                                else if (Dato.Descripcion == "CORNEA,CRISTALINO,ESCLERA") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtCORNEACRISTALINOESCLERA").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtCORNEACRISTALINOESCLERA").val(Dato.ValorNumerico);
+                                    }
+
+                                }
+                                else if (Dato.Descripcion == "IRIS,PUPILA") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtIRISPUPILA").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtIRISPUPILA").val(Dato.ValorNumerico);
+                                    }
+
+                                }
+                                else if (Dato.Descripcion == "TONOMETRIA OD") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtTONOMETRIAOD").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtTONOMETRIAOD").val(Dato.ValorNumerico);
+                                    }
+                                }
+                                else if (Dato.Descripcion == "TONOMETRIA OI") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtTONOMETRIAOI").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtTONOMETRIAOI").val(Dato.ValorNumerico);
+                                    }
+                                }
+                                else if (Dato.Descripcion == "TONOMETRIA mmHg") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtTONOMETRIAmmHg").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtTONOMETRIAmmHg").val(Dato.ValorNumerico);
+                                    }
+                                }
+                                else if (Dato.Descripcion == "FONDO DE OJO 1") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtFONDODEOJO1").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtFONDODEOJO1").val(Dato.ValorNumerico);
+                                    }
+                                }
+                                else if (Dato.Descripcion == "FONDO DE OJO 2") {
+                                    if (Dato.TipoDato == "T") {
+                                        $("#TxtFONDODEOJO2").val(Dato.ValorCadena);
+                                    } else {
+                                        $("#TxtFONDODEOJO2").val(Dato.ValorNumerico);
+                                    }
+                                }
+                            }
+
+                            ///DATATABLE 4
+                            var resExam = respJson[i].list_VW_SS_HCE_VisorExamen;
+                            $("#dataTable4").html("");
+                            $("#dataTable4").html(
+                                "<thead>" +
+                                "<tr>" +
+                                "<th scope='col'>Servicio</th>" +
+                                "<th scope='col'>Número Ítem</th>" +
+                                "<th scope='col'>Nombre</th>" +
+                                //"<th scope='col'>Especialidad </th>" +
+                                "<th scope='col'>Fecha </th>" +
+                                //"<th scope='col'>Acciones</th>" +
+                                "</tr>" +
+                                "</thead>" +
+                                "<tbody>" +
+                                "</tbody>"
+
+                            ); //Agregar la tabla a la estructura HTML
+                            for (var i4 in resExam) {
+                                var ResponseExam = resExam[i4];
+                                $("#containerValidaExamenes").show();
+                                $("#containerValidaExamenes").hide();
+                                $("#dataTable4 tbody").append("<tr>" +
+                              "<td>" + ResponseExam.IdServicio_Nombre + "</td>" +
+                              "<td>" + ResponseExam.Nombre + "</td>" +
+                              "<td>" + ResponseExam.Componente_Nombre + "</td>" +
+                                //"<td>" + ResponseExam.IdEspecialidad_Nombre + "</td>" +
+                               "<td>" + ResponseExam.Observacion + "</td>" +
+                                //"<td class='center hidden-phone'>" +
+                                //"<img src='resources/images/ic_pdf_file_royal.png'  />" +
+                                //"</td>" +
+                              "</tr>"
+                          );
+                            }
+                        }
+                    }
+                },
+                error: function (xhr, status) {
+                    alert('Error...!!!!');
+                    $('#exampleModal').modal('hide');
+
+                }
+            });
+        }
+
+        function LoadComboSucursal() {
+            var copiar = '@hiden';
+            if(copiar =="S"){
+                $("#Btndirigircopiado").css("display", "none");
+                $("#BtnCopiar").css("display", "none");
+                
+            }else{
+                $("#Btndirigircopiado").css("display", "block");
+                $("#BtnCopiar").css("display", "block");
+            }
+            $.ajax({
+                url: "/HistoriaClinicaWest/getEstados",
+                data: {},
+                type: 'GET',
+                dataType: 'json',
+                success: function (respJson) {
+                    $("#cboSucursal").empty();
+                    $.each(respJson, function (index, value) {
+                        $("#cboSucursal").append("<option value='" + value.CodigoElemento + "'>" + value.DescripcionLocal + "</option>");
+                    });
+                    var cap = respJson[0].UsuarioActual;
+                    $("#cboSucursal").val('@OPCION_SUCURSAL');
+                    LoadMaestroTable();
+                },
+                error: function (xhr, status) {
+                    alert('Disculpe, existió un problema');
+
+                }
+            });
+        }
+    </script>
+</body>
+</html>

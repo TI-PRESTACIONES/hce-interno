@@ -1,0 +1,200 @@
+﻿@model SoluccionSalud.Entidades.Entidades.VW_SS_HC_ASIGNACIONMEDICO
+
+@{
+    var X = Html.X();
+    var modoDesc = (Model.accion == "NUEVO" ? "Asignar" :
+                    (Model.accion == "INSERT" ? "Re Asignar" :
+                        (Model.accion == "DELETE" ? "Eliminar" :
+                            (Model.accion == "VER" ? "Ver" : "--"))));
+
+    var indicaModoLectura = !(Model.accion == "NUEVO" ? true :
+                            (Model.accion == "INSERT" ? true :
+                            (Model.accion == "UPDATE" ? true :
+                            (Model.accion == "DELETE" ? false :
+                            (Model.accion == "VER" ? false : false)))));
+}
+
+<script>
+    var template = 'color:{0};';
+
+    var change = function (value, meta) {
+        return value;
+
+    };
+
+    function seleccionadorPaciente() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorPersona"))',
+            params: {
+                accionSeleccion: 'getGrillaSeleccionarPaciente',
+                accionListado: 'LISTARPAGPACIENTE'
+            }
+        });
+    };
+
+    function seleccionadorMedico() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorPersona"))',
+            params: {
+                accionSeleccion: 'getGrillaSeleccionarMedico',
+                accionListado: 'LISTARPAGMEDICO'
+            }
+        });
+    };
+
+    function seleccionadorMedicoR() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorPersona"))',
+            params: {
+                accionSeleccion: 'getGrillaSeleccionarMedicoR',
+                accionListado: 'LISTARPAGMEDICO'
+            }
+        });
+    };
+
+    var onSuccess = function (modo) {
+    };
+
+    var onFailure = function (modo) {
+        App.btnSave.setDisabled(false);
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Un error en el evento ',
+                titulo: "Error",
+                tipo: 'ERROR'
+            }
+        });
+    };
+
+    function cerrarWindow() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Se registró correctamente la atención.',
+                accion: null
+
+            }
+        });
+    }
+
+    var showResult = function (btn) {
+        Ext.Msg.notify("Aceptar", "You clicked the " + btn + " button");
+    };
+</script>
+
+@(Html.X().Window()
+    .Width(500)
+    .Height(350)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+        .ID("WindowX")
+                .Title("Asignación Médico:" + modoDesc)
+    .Padding(4)
+    .Items(
+    Html.X().FormPanel().Frame(false).Border(false).AutoScroll(true).Layout(LayoutType.VBox).LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+    
+    .Items(
+    Html.X().FormPanel().Frame(false).Border(false).Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+    
+    .Items(
+    Html.X().FormPanel().Layout(LayoutType.Form).Width(500).FieldDefaults(d =>{d.LabelWidth = 120;}).BodyPadding(10).Frame(false).Border(false)        
+    .Items(
+        X.TextFieldFor(m => m.unidadreplicacion).ID("nfUni").Width(200).Hidden(true),
+        X.TextFieldFor(m => m.secuencia).ID("nfEpi").Width(200).Hidden(true),
+    Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })    
+    .Items(
+        X.TextFieldFor(m => m.idpaciente).FieldLabel("Paciente").ID("nfIdEmp").Width(200).ReadOnly(true),
+        X.TextField().ID("tfDescEmp").ReadOnly(true).RightButtons(X.Button().Text("...").Handler("seleccionadorPaciente();").Disabled(Model.accion == "NUEVO" ? false : true))),
+
+        X.ComboBoxFor(m => m.tipoasignacion).ID("cmbTipoAsig").Width(368).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("TIPOASIGNA").Select(d => new ListItem(d.Name, d.ID))).FieldLabel("Tipo Asignación").ReadOnly(indicaModoLectura).Editable(false).SimpleSubmit(true).Value(Model.accion=="NUEVO"?1:2),
+                                                
+        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+        .Items(
+            X.TextFieldFor(m => m.idasignacionmedico).FieldLabel("Médico").ID("nfIdMed").Width(200).ReadOnly(true),
+            X.TextField().ID("txtMedico").ReadOnly(true).RightButtons(X.Button().Text("...").Handler("seleccionadorMedico();"))),
+
+        //X.NumberFieldFor(m => m.episodioclinico).ReadOnly(indicaModoLectura).FieldLabel("N° Reasignación").Width(300).Hidden(true),//.Hidden(Model.accion == "NUEVO" ? true : false),
+        X.TextFieldFor(m => m.observaciones).ID("tfDinam").FieldLabel("Mot. Reasignación").Width(368).Hidden(true).Hidden(Model.accion == "NUEVO" ? true : false).ReadOnly(indicaModoLectura),
+
+        X.RadioGroupFor(m => m.estado, new List<Radio.Config> {
+            new Radio.Config{BoxLabel = "Activo", InputValue = "0",
+                Checked= ( Model.accion=="NUEVO"?true:(Model.estado==0?true:false))
+                ,ReadOnly = indicaModoLectura},
+            new Radio.Config{BoxLabel = "Inactivo", InputValue = "1",
+                Checked= ( Model.accion=="NUEVO"?false:(Model.estado==1?true:false))
+                ,ReadOnly = indicaModoLectura},
+            new Radio.Config{BoxLabel = "Anulado", InputValue = "2",
+                Checked= ( Model.accion=="NUEVO"?false:(Model.estado==2?true:false))
+                ,ReadOnly = indicaModoLectura}}).FieldLabel("Estado").AutomaticGrouping(false).Hidden(true)
+                
+                )
+                ),
+        
+                Html.X().FormPanel().Layout(LayoutType.Form).Width(500).FieldDefaults(d =>{d.LabelWidth = 150;}).BodyPadding(10).Frame(false).Border(false)
+                .Items(
+                X.FieldSet().Title("Información Adicional").FieldDefaults(d =>{d.LabelWidth = 110;d.InputWidth = 120;})
+                .Items(
+                Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                .Items(
+                X.TextFieldFor(m => m.usuariocreacion).ID("tfUserCrea").FieldLabel("Creación").ReadOnly(true),
+                X.DateFieldFor(m => m.fechacreacion).ID("dfFechaCrea").Format("dd/MM/yyyy").ReadOnly(true).HideLabel(true)),
+                Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                .Items(
+                X.TextFieldFor(m => m.usuariomodificacion).ID("tfUserModif").FieldLabel("Modificación").ReadOnly(true),
+                X.DateFieldFor(m => m.fechamodificacion).ID("dfFechaModif").Format("dd/MM/yyyy").ReadOnly(true).HideLabel(true)))
+                )
+                )
+                .TopBar(
+                    X.Toolbar()
+                    .Height(30)
+                    .Items(
+                    X.ToolbarFill(),
+                    X.Button().Hidden((Model.accion == "VER" ? true : false)).ID("btnSave")
+                    .Text((Model.accion == "DELETE" ? "Eliminar" : "Guardar"))
+                    .Icon((Model.accion == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave))
+                    .DirectEvents(de =>{
+                        de.Click.Url = Url.Action("save_AsigMedico");
+                        de.Click.Before = "App.btnSave.setDisabled(true); ";
+                        de.Click.After = "App.btnSave.setDisabled(false); ";
+                        de.Click.EventMask.ShowMask = true;
+                        de.Click.ExtraParams.Add(new Parameter("MODO", Model.accion, ParameterMode.Value));
+                        de.Click.ExtraParams.Add(new Parameter("idWindow", "WindowX", ParameterMode.Value));
+                        de.Click.Success = "onSuccess('" + Model.accion + "');";
+                        de.Click.Failure = "onFailure('" + Model.accion + "');";
+                    }),
+                                X.Button()
+                                            .Text((Model.accion == "VER" ? "Aceptar" : "Cancelar"))
+                                            .Icon((Model.accion == "VER" ? Icon.Accept : Icon.Cancel))
+                                     .DirectEvents(de =>
+                                      {  
+                                          de.Click.Url = Url.Action("cerrarWindow");                                         
+                                          de.Click.ExtraParams.Add(new Parameter("id", "WindowX", ParameterMode.Value));                                          
+                                      })
+                                 )
+                            )
+        )
+        
+        .DirectEvents(de =>
+        {
+            de.Render.Url = Url.Action("postWindowAsigMedico");
+            de.Render.ExtraParams.Add(new Parameter("ur", "" + Model.unidadreplicacion, ParameterMode.Value));
+            de.Render.ExtraParams.Add(new Parameter("idpaciente", "" + Model.idpaciente, ParameterMode.Value));
+            de.Render.ExtraParams.Add(new Parameter("idepisodio", "" + Model.tipoasignacion, ParameterMode.Value));
+            de.Render.ExtraParams.Add(new Parameter("idasignacion", "" + Model.idasignacionmedico, ParameterMode.Value));
+            de.Render.ExtraParams.Add(new Parameter("episodio", "" + Model.secuencia, ParameterMode.Value));
+            de.Render.ExtraParams.Add(new Parameter("codigooa", "" + Model.CodigoOA, ParameterMode.Value));
+
+            de.Render.ExtraParams.Add(new Parameter("nombre", "" + Model.idpaciente, ParameterMode.Value));
+            de.Render.ExtraParams.Add(new Parameter("medico", "" + Model.idasignacionmedico, ParameterMode.Value));
+
+        })
+
+        
+    .CloseAction(CloseAction.Destroy)
+)

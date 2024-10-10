@@ -1,0 +1,234 @@
+﻿@model List<Ext.Net.Node>
+@{
+    var X = Html.X();
+}
+
+@(X.Panel()
+        .Region(Region.North)
+        .ID("North001")
+        .Layout(Ext.Net.LayoutType.Fit)
+        .Layout(LayoutType.Border)
+        .Layout(LayoutType.HBox)
+        .AutoScroll(true)
+        .DefaultAnchor("100% 100%")
+        .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+        .Listeners(l =>
+            {
+                l.AfterLayout.BroadcastOnBus = "App.resize";
+                l.AfterLayout.Single = true;
+            })
+        .Items(
+                X.Panel()
+                           .Title("Datos básicos del paciente")
+                            .ResizableConfig(new Resizer() { MinHeight = 120, MinWidth = 120, Transparent = true })
+                           .Region(Region.West)
+                            .ID("West1.1")
+                           .Width(450)
+                           .MinWidth(225)
+                           .MaxWidth(500)
+                           .Split(true)
+                           .Collapsible(true)
+                           .Border(true)
+                           .SetAutoScroll(true)
+                           .Items(
+                                     X.Panel()
+                                       //.Title("Center")
+                                       .Border(false)
+                                       .BodyPadding(6)
+                                       .Items(
+                                            X.FieldSet()
+                                                    .ColumnWidth(0.4)
+                                                    //.Title("Enfermedad Actual")
+                                                    //.Border(false)
+                                                   // .MarginSpec("0 0 0 5")
+                                                    .Defaults(d =>
+                                                    {
+                                                       // d.Add(new Parameter("Width", "200"));
+                                                       // d.Add(new Parameter("LabelWidth", "100"));
+                                                    })
+
+                                                   // .DefaultAnchor("100%")
+                                                    .FieldDefaults(d =>
+                                                    {
+                                                        d.LabelAlign = LabelAlign.Left;
+                                                    })
+            
+                                                    .Items(
+                                                                            
+                                                Html.X().Container()
+                                                    .Layout(LayoutType.Column)
+                                                     .Items( 
+                                                             Html.X().TextFieldFor("Nombre")
+                                                                //left, top, right, bottom
+                                                                // .Margins("2 0 0 10")
+                                                               .FieldLabel("Nombre")
+                                                               .FieldStyle("Border : none")
+                                                               .Text("Vargas Vargas, Rosa")
+                                                               //.ColSpan(10)
+                                                              // .RowSpan(10)
+                                                               .Width(310),
+                                                               
+                                                             Html.X().Label()
+                                                                 //.Margins("2 0 0 10")
+                                                                .Text(" Foto"),
+                                                                 
+                                                             Html.X().Container()
+                                                                        .Layout(LayoutType.Absolute)
+                                                                                .Items(Html.X().Image()
+                                                                                        .ImageUrl("~/Content/Imagen/pacientes/PAC001.jpg")
+                                                                                        .ApplyStyles("position: relative")
+                                                                                        )
+                                                                                                                        
+                                                         ),
+
+                                                    Html.X().Container()
+                                                    .Layout(LayoutType.HBox)
+                                                     .Items(
+                                                        Html.X().TextFieldFor("Nacio")
+                                                            .FieldStyle("Border : none")
+                                                               // .Margins("2 0 0 10")
+                                                               .FieldLabel("Nacio")
+                                                               .Text("01/05/1985")
+                                                               .Width(180),
+                                                        Html.X().TextFieldFor("Edad")
+                                                            .FieldStyle("Border : none")
+                                                              // .Margins("2 0 10 0")
+                                                               .FieldLabel(" Edad")
+                                                               .Text("29")
+                                                               .Width(130)
+                                                    ),
+                                               Html.X().TextFieldFor("sexo")
+                                                       // .Margins("2 0 0 10")
+                                                           .FieldStyle("Border : none")
+                                                       .FieldLabel(" Sexo")
+                                                       .Text("Femenina")
+                                                       .Width(310),
+                                                Html.X().TextFieldFor("TP")
+                                                   // .Margins("2 0 0 10")
+                                                       .FieldStyle("Border : none")
+                                                   .FieldLabel(" Tipo Paciente")
+                                                   .Text("Privado")
+                                                   .Width(310),
+                                               Html.X().TextFieldFor("EA")
+                                                     //.Margins("2 0 0 10")
+                                                         .FieldStyle("Border : none")
+                                                     .FieldLabel("Empresa Asegurado")
+                                                     .Text("La Positiva")
+                                                     .Width(310)
+ 
+                                           )
+                                           )
+                                        ),
+
+                             X.Panel()
+                               .Region(Region.Center)
+                               .ID("Center1.1")
+                               .ResizableConfig(new Resizer() { MinHeight = 120, MinWidth = 120, Transparent = true })
+                               .Split(true)
+                               .Collapsible(true)
+                               .Border(true)
+                               .Width(450)
+                               .Title("Alergia a:")
+                               .Layout(LayoutType.Fit)
+                                .AutoScroll(true)
+                               .Items(
+                                   X.Panel()
+                                        //.Title("Center")
+                                       .Border(false)
+                                       .BodyPadding(6)
+                                       .Items(
+                                 
+                                            X.FieldSet()
+                                                  .ColumnWidth(0.4)
+                                                  //  .Title("Enfermedad Actual")
+                                                  //.Border(false)
+                                                  .MarginSpec("0 0 0 5")
+                                                  .Defaults(d =>
+                                                  {
+                                                      d.Add(new Parameter("Width", "500"));
+                                                      d.Add(new Parameter("LabelWidth", "200"));
+                                                  })
+
+                                                  .DefaultAnchor("100%")
+                                                  .FieldDefaults(d =>
+                                                  {
+                                                      d.LabelAlign = LabelAlign.Left;
+                                                  })
+            
+                                                  .Items(
+                                                    Html.X().TextFieldFor("A")
+                                                          .FieldStyle("Border : none")
+                                                          .FieldLabel(" Medicamentos")
+                                                          .Text("Tabletas")
+                                                          .Width(310),
+                                                        Html.X().TextFieldFor("B")
+                                                              .FieldStyle("Border : none")
+                                                              .FieldLabel(" Alimentos")
+                                                              .Text("Crustáceos")
+                                                       .Width(310), Html.X().TextFieldFor("C")
+                                                              .FieldStyle("Border : none")
+                                                              .FieldLabel(" Sustencias q están en el ambiente")
+                                                              .Text("Polvo")
+                                                              .Width(310), 
+                                                       Html.X().TextFieldFor("D")
+                                                              .FieldStyle("Border : none")
+                                                              .FieldLabel(" Sustencias q contactan con el piel")
+                                                              .Text("Pelusas de los gotas, detergente")
+                                                              .Width(310)  
+                                                 )                                                                   
+                                        )),
+
+                           X.Panel()
+                               .Title("Preexistente")
+                               .Region(Region.East)
+                                .ID("East1.1")
+                               .ResizableConfig(new Resizer() { MinHeight = 120, MinWidth = 120, Transparent = true })
+                               .Width(450)
+                               .MinWidth(225)
+                               .MaxWidth(500)
+                               .Split(true)
+                               .SetAutoScroll(true)
+                               .Collapsible(true)
+                               .Border(true)
+                               .Layout(LayoutType.Fit)
+                               .AutoScroll(true)
+                               .Items(
+                                    X.Panel()
+                                            //.Title("Center")
+                                            .Border(false)
+                                            .BodyPadding(6)
+                                            .Items(
+                                                   X.FieldSet()
+                                                        .ColumnWidth(0.4)
+                                                //  .Title("Enfermedad Actual")
+                                                //.Border(false)
+                                                      .MarginSpec("0 0 0 5")
+                                                      .Defaults(d =>
+                                                      {
+                                                          d.Add(new Parameter("Width", "500"));
+                                                          d.Add(new Parameter("LabelWidth", "200"));
+                                                      })
+
+                                                      .DefaultAnchor("100%")
+                                                      .FieldDefaults(d =>
+                                                      {
+                                                          d.LabelAlign = LabelAlign.Left;
+                                                      })
+
+                                                      .Items(
+                                                        Html.X().TextFieldFor("AA")
+                                                              .FieldStyle("Border : none")
+                                                                  .FieldLabel("Diabetes")
+                                                                  .Text("Mellitus Tipo 1")
+                                                              .Width(310)
+                                                     )
+                                                    )
+                                            )
+
+             )
+             
+          
+) 
+
+ 
+ 

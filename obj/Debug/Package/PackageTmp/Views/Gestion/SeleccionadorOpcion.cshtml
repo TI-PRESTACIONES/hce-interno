@@ -1,0 +1,208 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SG_Opcion
+
+@{
+    ViewBag.Title = "SeleccionadorOpcion";
+    var X = Html.X();
+}
+
+<script>
+
+    var varTipoBuscar = "LOAD";
+
+    var accionBuscarFiltroOpcion = function (tipo) {
+        varTipoBuscar = tipo;
+        App.TreePanelOpciones.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+
+    var template = '<span style="color:{0};">{1}</span>';
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+
+    var changeNivel = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 1)
+            return Ext.String.format(template, COLOR_BLACK, "Dominio");
+        if (value == 2)
+            return Ext.String.format(template, COLOR_BLACK, "Clase");
+        if (value == 3)
+            return Ext.String.format(template, COLOR_BLACK, "Intervención");
+        if (value == 4)
+            return Ext.String.format(template, COLOR_BLACK, "Actividad");
+    };
+
+    var seleccionActual =null;
+    var seleccionActualDesc = null;
+    var seleccionActualCod = null;
+    function setSeleccion(param1, param2) {
+        seleccionActual = param1;
+        seleccionActualDesc = param2;
+    }
+    var onSuccess = function (grid, data) {
+        grid.show();
+        grid.getStore().loadData(data);
+    };
+
+    var onFailure = function (modo) {
+        Ext.Msg.notify("EVENTO: FAILURE", "MODEL::" + modo);
+    };
+
+    function enviarSeleccion() {
+        if (seleccionActual != null) {
+            enviarSeleccionDirect(seleccionActual, seleccionActualDesc);
+        } else {
+            Ext.Msg.alert('Debe Seleccionar un elemento.');
+        }
+    }
+
+    var validar = function (colIndex) {
+        var bool = true;        
+        var texto = colIndex;
+        var vector = texto.split('|');
+        var show = "";
+        if (vector.length > 1) {
+            show = vector[0];
+        }
+        if (show == 1) {
+            bool = false
+        } else {
+            bool = true
+        }
+        return bool;
+    };
+
+    function enviarSeleccionDirect(param1, param2) {
+        var status = param1;
+        var status2 = param2;
+        var funcionValidar = validar(param2);
+        if (funcionValidar == true) {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action(Model.Accion))',
+                params: {
+                    MODO: 'get',
+                    id: status,
+                    descripcion: status2,
+                    idWindow: "WindowSelec"
+                }
+            });
+        }
+    }
+    
+    var eventoCheckFiltro = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+
+    var changeDescripcion = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+        var template = '<span style="color:{0};">{1}</span>';
+        var texto = colIndex.data.text;
+        var vector = texto.split('|');
+        var show = "";
+        if (vector.length > 1) {
+            show = vector[1];
+        }
+        return Ext.String.format(template, 'black', show);
+    };
+
+    var changeCodigo = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+        var template = '<span style="color:{0};">{1}</span>';
+        var texto = colIndex.data.text;
+        var vector = texto.split('|');
+        var show = "";
+        if (vector.length > 2) {
+            show = vector[2];
+        }
+        return Ext.String.format(template, 'black', show);
+    };
+
+    var changeEstado = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+        var template = '<span style="color:{0};">{1}</span>';
+        var texto = colIndex.data.text;
+        var vector = texto.split('|');
+        var show = "";
+        if (vector.length > 5) {
+            show = vector[5];
+            var template = '<span style="color:{0};">{1}</span>';
+            if (show == '2') {
+                return Ext.String.format(template, COLOR_BLUE01, "Activo");
+            }
+            if (show == '1') {
+                return Ext.String.format(template, COLOR_RED01, "Inactivo");
+            }
+        }
+        return Ext.String.format(template, 'black', show);
+    };
+</script>
+
+@(Html.X().Window()
+    .Width(480)
+    .Height(450)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowSelec")
+    .Title("Seleccionar Opción")
+    .Padding(4)
+    .TopBar(
+    X.Toolbar().Height(30)
+    .Items(
+    X.Button().Border(true).Text("Buscar").Icon(Icon.Find).Handler("accionBuscarFiltroOpcion('FILTRO');").Hidden(true),
+    X.ToolbarFill(),
+    X.Button().Text("Aceptar").Icon(Icon.Accept).Handler("enviarSeleccion();"),
+    X.Button().Text("Cancelar").Icon(Icon.Cancel).DirectEvents(de =>
+    {
+        de.Click.Url = Url.Action("cerrarWindow");
+        de.Click.ExtraParams.Add(new Parameter("id", "WindowSelec", ParameterMode.Value));
+    })
+        ))
+        .Items(
+        X.Panel().Region(Region.Center).ItemID("center").Header(false).Border(false)
+            .TopBar(
+                                        X.Toolbar()
+                                        .Items(
+                                          X.Checkbox().FieldLabel("Id Opción").LabelWidth(60).ID("chkID").Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chkID,App.tfBuscarId);").Checked(true),
+                                          X.TextField().ID("tfBuscarId").Disabled(true).FieldLabel("").Width(100),
+                                          X.Checkbox().FieldLabel("Nombre").LabelWidth(60).ID("chkNombre").Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chkNombre,App.tfBuscarNombre);").Checked(true),
+                                          X.TriggerField().ID("tfBuscarNombre").Disabled(true).AutoFocus(true).EnableKeyEvents(true).FieldLabel("").Triggers(X.FieldTrigger().HideTrigger(true)),                                
+                                          X.ToolbarFill()
+                                          ).Hidden(true)
+                                    )
+                .Items(
+                    X.TreePanel().Header(false).ID("TreePanelOpciones").AutoScroll(true).Collapsible(true).UseArrows(true).RootVisible(true).MultiSelect(true).SingleExpand(true).FolderSort(true).Height(380).Border(false)
+                .ColumnModel(
+                X.TreeColumn().Text("Opciones - Nombre").Flex(1).Renderer("changeDescripcion").DataIndex("Nombre"),
+                X.Column().Text("Id Opción").Width(150).Renderer("changeCodigo").DataIndex("IdOpcion").ID("codigo"),
+                X.Column().Text("Estado").Width(150).Renderer("changeEstado").DataIndex("Estado").ID("estaodo")).Store(
+                    X.TreeStore().ID("StoreOpcion").Proxy(
+                    X.AjaxProxy().Url(Url.Action("GetTreeViewSG_Opciones"))).Parameters(ps => ps.Add(new
+                    {
+                        id = JRawValue.From("App.tfBuscarId.getValue()"),
+                        nombre = JRawValue.From("App.tfBuscarNombre.getValue()"),                                                                                                        
+                        //codigo = JRawValue.From("App.tfBuscarCod.getValue()"),                                                    
+                        //estado = JRawValue.From("App.tfBuscarEst.getValue()"),
+                        //tipoBuscar = JRawValue.From("varTipoBuscar")
+                    })
+                    ).LoadProxy()
+                    ).Root(
+                    Html.X().Node().NodeID("WA").Text("1|Sistema HCE")).Listeners(l =>
+                    {
+                        l.CellDblClick.Handler = "enviarSeleccionDirect(record.data.id,record.data.text);";
+                        l.CellClick.Handler = "setSeleccion(record.data.id,record.data.text);";
+                    }).Expand()
+                    )).CloseAction(CloseAction.Destroy)
+                )
+@(
+ X.KeyNav()
+    .Target("WindowSelec")
+    .Enter(a => a.Handler = "accionBuscarFiltroOpcion('FILTRO');")
+)
+

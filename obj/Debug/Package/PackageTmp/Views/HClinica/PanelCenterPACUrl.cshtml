@@ -1,0 +1,52 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_HC_EpisodioAtenciones
+@{
+    ViewBag.Title = "Partial Content";
+    Layout = "";
+    var X = Html.X();
+}
+
+
+@(
+ X.TabPanel()
+        //.Region(Region.Center)
+
+    .Items(
+    X.Panel()
+        //  .LayoutConfig(new VBoxLayoutConfig() { Align = VBoxAlign.Center, Pack = BoxPack.Center })
+         .Height(600)
+         .Title(Model.DESCRIPCION)
+        .Layout(LayoutType.Fit)
+        .Layout(Ext.Net.LayoutType.Fit)
+        .Region(Region.Center)
+        
+        .Loader(
+            Html.X().ComponentLoader()
+                .AutoLoad(true)
+                        .Url(Model.Url)
+                 .Mode(LoadMode.Frame)
+            )
+        )
+     .Listeners(l =>
+            {
+                l.TabChange.Fn = "addToken";
+            })
+            .Plugins(plugins => plugins.Add(new TabCloseMenu()))
+)
+
+
+ @(   X.Panel()
+        //  .LayoutConfig(new VBoxLayoutConfig() { Align = VBoxAlign.Center, Pack = BoxPack.Center })
+         .Height(600)
+        //.Title(Model.DESCRIPCION)
+        .Layout(LayoutType.Fit)
+        .Layout(Ext.Net.LayoutType.Fit)
+        .Region(Region.East)
+        //.Margins("2 2 2 2")
+        //.Border(false)
+         .Loader(Html.X().ComponentLoader()
+                            .Url(Url.Action("PanelEast"))
+                            .Mode(LoadMode.Script)
+                            .Params(new { containerId = "East1" })
+             )
+             
+)

@@ -1,0 +1,179 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_HC_Favorito
+@{
+    var X = Html.X();
+}
+
+<script>
+    var varTipoBuscar = "LOAD";
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_RED01 = "#990000";
+
+    var COLOR_BORDER_ERROR = "red";
+    var COLOR_BORDER_DEF = "#b5b8c8";
+    var COLOR_BACKGROUND_NOEDIT = "#9FBCB9";
+
+    var change = function (value, meta) {
+        return value;
+    };
+
+    var changeEstadoFavorito = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 2)
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+
+    var accionBuscarFiltroFav = function (tipo) {
+        varTipoBuscar = tipo;
+        App.GridPanelSelTablaCampo.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+
+    var seleccionActual = null;
+    var seleccionActualDesc = null;
+
+    function setSeleccionFavorito(param1, param2) {
+        seleccionActual = param1;
+        seleccionActualDesc = param2;
+    }
+
+    var onSuccess = function (grid, data) {
+        grid.show();
+        grid.getStore().loadData(data);
+    };
+
+    var onFailure = function (modo) {
+        Ext.Msg.notify("EVENTO: FAILURE", "MODEL::" + modo);
+    };
+
+    function enviarSeleccion(grid) {
+        if (seleccionActual != null) {
+            var status = seleccionActual;
+            var status2 = seleccionActualDesc;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action(Model.Accion))',
+                params: {
+                    MODO: 'get',
+                    id: status,
+                    descripcion: status2,
+                    idWindow: "WindowSelecFavoritos"
+                }
+            });
+        } else {
+            Ext.Msg.alert('Debe Seleccionar un elemento.');
+        }
+
+    }
+
+    function enviarSeleccionDirectFavorito(param1, param2) {
+        var status = param1;
+        var status2 = param2;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action(Model.Accion))',
+            params: {
+                MODO: 'get',
+                id: status,
+                descripcion: status2,
+                idWindow: "WindowSelecFavoritos"
+            }
+        });
+    }
+    var eventoCheckFiltro = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+
+    function nuevo() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("FavoritoRegistro"))',
+            params: {
+                MODO: 'NUEVO',
+                idFavorito: 0
+            }
+        });
+    };
+    var accionFinales = function (btn) {
+        App.GridPanelSelTablaCampo.getStore().reload();
+    };
+</script>
+
+@(Html.X().Window()
+    .Width(505)
+    .Height(450)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowSelecFavoritos")
+    .Title("Seleccionar Favoritos")
+    .Padding(4)
+        .TopBar(
+        X.Toolbar().Height(30).Items(
+        X.Button().Text("Buscar").ID("btnBuscar").Icon(Icon.Find).Handler("accionBuscarFiltroFav('FILTRO');"),
+        X.Button().Text("Nuevo").Icon(Icon.ApplicationFormAdd).Handler("nuevo(); "),
+        X.ToolbarFill(),
+        X.Button().Text("Aceptar").Icon(Icon.Accept).Handler("enviarSeleccion(App.GridPanelSelTablaCampo.getSelectionSubmit().getSelectionModelField().getValue());"),
+        X.Button().Text("Cancelar").Icon(Icon.Cancel).DirectEvents(de =>
+            {
+                de.Click.Url = Url.Action("cerrarWindow");
+                de.Click.ExtraParams.Add(new Parameter("id", "WindowSelecFavoritos", ParameterMode.Value));
+            }))).Items(
+            X.GridPanel().TopBar(
+            X.Toolbar()
+            .Items(
+            X.Checkbox().FieldLabel("Tipo").ID("chkId").Checked(true).Handler("eventoCheckFiltro(App.chkId,App.tfBuscarSeleccId);").LabelWidth(70),
+            X.ComboBox().ID("tfBuscarSeleccId").Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("TIPOFAVORI").Select(d => new ListItem(d.Name, d.ID))).FieldLabel("").Disabled(true).SimpleSubmit(true),
+            X.Checkbox().FieldLabel("Descripción").ID("chkDesc").Checked(true).Handler("eventoCheckFiltro(App.chkDesc,App.tfBuscarSeleccDesc);").LabelWidth(70),
+            X.TextField().FieldLabel("Descripción").ID("tfBuscarSeleccDesc").Disabled(true).FieldLabel(""),
+            X.ToolbarFill())).Border(false).Scroll(ScrollMode.Both).AutoScroll(true).ID("GridPanelSelTablaCampo")
+            .Margins("0 0 0 0").Store(store => store.Add(
+                Html.X().Store().ID("StoreSelTablaCampo").AutoLoad(true).RemoteSort(false).IsPagingStore(true).RemotePaging(true).PageSize(10)
+                .Proxy(proxy => proxy.Add(
+                    Html.X().AjaxProxy().Url("getGrillaFavorito").Reader(reader => reader.Add(Html.X().JsonReader()
+                        .Root("data")
+                        .TotalProperty("total")
+                        .IDProperty("IdFavorito")))))
+                        .Parameters(ps => ps.Add(new
+                            {
+                                id = JRawValue.From("App.tfBuscarSeleccId.getValue()"),
+                                descripcion = JRawValue.From("App.tfBuscarSeleccDesc.getValue()"),
+                                tipoBuscar = JRawValue.From("varTipoBuscar")
+                            }))
+                                .Model(model => model.Add(
+                                    Html.X().Model().Fields(fields =>
+                                    {
+                                        fields.Add(Html.X().ModelField().Name("IdFavorito"));
+                                        fields.Add(Html.X().ModelField().Name("Descripcion"));
+                                        fields.Add(Html.X().ModelField().Name("DescripcionExtranjera"));
+                                        fields.Add(Html.X().ModelField().Name("Estado"));
+                                    })))))
+                                        .ColumnModel(columnModel =>
+                                        {
+                                            columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("IdFavorito").Hidden(true).Width(80));
+                                            columnModel.Columns.Add(Html.X().Column().Text("Descripción").DataIndex("Descripcion").Width(200));
+                                            columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(100).Renderer("changeEstadoFavorito"));
+                                        }).View(
+                                        Html.X().GridView().TrackOver(false)).Border(false)
+                                        .Listeners(l => l.CellDblClick.Handler = "enviarSeleccionDirectFavorito(record.data.IdFavorito,record.data.Descripcion);")
+                                        .Listeners(l => l.CellClick.Handler = "setSeleccionFavorito(record.data.IdFavorito,record.data.Descripcion);")
+                                        .BottomBar(bar => bar.Add(
+                                            Html.X().PagingToolbar())))
+                                            .CloseAction(CloseAction.Destroy)
+
+)
+@(
+X.KeyNav()
+.Target("WindowSelecFavoritos")
+.Enter(a => a.Handler = "accionBuscarFiltroFav('FILTRO');")
+)

@@ -1,0 +1,406 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.PERSONAMAST
+
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+}
+@section cabecera
+{
+    <script>
+        //LÒGICA DE UNA COLUMAN DE GRILLA
+        //var template = '<span style="color:{0};">{1}</span>';
+        var template = 'color:{0};';
+
+        var change = function (value, meta) {
+            var show;
+            var format;
+            if (value = 'A') {
+                show = 'Activo';
+                format = '#284A89';
+            } else if (value = 'I') {
+                show = 'Inactivo';
+                format = '#990000';
+            } else {
+                show = '--';
+                format = 'black';
+            }
+            //return Ext.String.format(template, format, show);
+            meta.style = Ext.String.format(template, format);
+            return value;
+
+        };
+        var pctChange = function (value) {
+            return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+        };
+        // funciones relacionadas a al GRILLA
+        var onSuccess = function (grid, data) {
+            grid.show();
+            grid.getStore().loadData(data);
+        };
+
+        function deleteSelected(grid) {
+            var store = grid.store,
+                records = grid.selModel.getSelection();
+
+            store.remove(records);
+            store.load(true);
+        }
+
+
+    </script>
+}
+
+@section cuerpo
+{
+    @(
+ Html.X().Viewport()
+        .AutoScroll(true)
+        .Layout(LayoutType.Border)
+        .Items(
+           X.Panel()
+              .Title("Listado de usuarios")
+        //.Header(false)
+              .Border(false)
+              .Region(Region.North)
+              .Split(true)
+             .Collapsible(true)
+        //.Header(false)
+              .Height(120)
+              .TopBar(
+                         X.Toolbar()
+                        .Height(30)
+                            .Items(
+                                X.Button()
+                                    .Text("Nuevo")
+                                    .Icon(Icon.Add)
+        //.Handler("#{Window1}.load('http://forums.ext.net');"),
+                                        .Handler("App.Window1.show()"),
+        //.Handler("App.Window1.show(form)"),
+
+                                X.Button()
+                                    .Text("Modificar")
+                                    .Icon(Icon.ApplicationFormEdit),
+        //.Handler("#{Window1}.reload();")
+                                X.Button()
+                                    .Text("Eliminar")
+                                    .Icon(Icon.Delete)
+        //.Handler("#{Window1}.reload();")
+                                    .Handler("deleteSelected(App.GridPanel1);"),
+                                 X.ToolbarFill()
+                              )
+              )
+             .Items(X.Panel()
+                    .Layout(LayoutType.HBox)
+                    .BodyPadding(5)
+                    .Items(
+                            X.FieldSet()
+                                .Flex(1)
+                                .Title("Filtros")
+                                .MarginSpec("5 5 5 5")
+                                .Defaults(d =>
+                                {
+                                    d.Add(new Parameter("LabelWidth", "120"));
+                                })
+                                .Items(
+                                    X.TextField()
+                                    .ID("tfBuscar")
+                                    .Name("buscar")
+                                    .FieldLabel("Descripción")
+                                )
+                                ,
+                           X.Button()
+                            .Text("Buscar")
+                            .Icon(Icon.Find)
+        //.Handler("#{Window1}.load('http://forums.ext.net');"),
+                            .DirectEvents(directEvents =>
+                             {
+                                 directEvents.Click.Url = "../LPacientes/GrillaListadoPacientes";
+                                 //directEvents.Click.Url = "../Controllers/Maestros/Usuario/UsuarioController/GrillaListadoPacientes";
+
+                                 directEvents.Click.CleanRequest = true;
+                                 directEvents.Click.Method = HttpMethod.POST;
+                                 // directEvents.Click.Confirmation.ConfirmRequest = true;
+                                 directEvents.Click.Success = "onSuccess(App.GridPanel1, result.data);";
+                                 directEvents.Click.EventMask.ShowMask = true;
+                                 directEvents.Click.EventMask.Msg = "Espere un momento...";
+                                 directEvents.Click.ExtraParams.Add(new
+                                 {
+                                     start = 1,
+                                     limit = 20,
+                                     /*
+                                     txtHC = JRawValue.From("App.txtHC.getValue()"),
+                                     txtFecha1 = JRawValue.From("App.txtFecha1.getValue()"),
+                                     txtFecha2 = JRawValue.From("App.txtFecha2.getValue()"),
+                                     txtHCA = JRawValue.From("App.txtHCA.getValue()"),
+                                     txtCodigoOA = JRawValue.From("App.txtCodigoOA.getValue()"),
+                                     */
+                                     txtPaciente = JRawValue.From("App.tfBuscar.getValue()")
+                                 });
+                             }
+                            )
+                    )
+             ),
+            X.Panel()
+        //.BaseCls("x-plain").Flex(1)
+                .Region(Region.Center)
+        //.AutoScroll(true)
+        //.Scroll(ScrollMode.Both)
+                .ItemID("center")
+        //.Height(600)
+               .Header(false)
+               .Border(false)
+               .Items(
+                   X.GridPanel()
+                        .Border(false)
+                        .Scroll(ScrollMode.Both)
+                        .AutoScroll(true)
+                        .ID("GridPanel1")
+        // .DefaultAnchor("100%")
+        //.Anchor("100% 100%")
+                        .Margins("0 0 0 0")
+        ///CONFIGURAR EL STORE
+                        .Store(store => store.Add(
+                                 Html.X().Store()
+                                     .ID("StoreTasks")
+                                     .AutoLoad(true)
+                                     .RemoteSort(false)
+                                     .IsPagingStore(true)
+                                     .RemotePaging(true)
+                                     .PageSize(20)////CAMBIAR DE ACUERDO A ALGÚN UN CRITERIO
+                                     .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                            .Url("../LPacientes/GrillaListadoPacientes")
+                                         //.Url("../Controllers/Maestros/Usuario/UsuarioController/GrillaListadoPacientes")
+
+                                            .Reader(reader => reader.Add(Html.X().JsonReader()
+                                            .Root("data")
+                                            .TotalProperty("total")
+                                            .IDProperty("Persona"))))
+                                            )
+                            //.Reader(reader => reader.Add(Html.X().JsonReader().Root("data").IDProperty("P_ID")))
+                            // .Writer(writer => writer.Add(Html.X().JsonWriter().AllowSingle(true)))
+                                     .Model(model => model.Add(Html.X().Model()
+                                             .Fields(fields =>
+                                             {
+                                                 fields.Add(Html.X().ModelField().Name("Persona"));
+                                                 fields.Add(Html.X().ModelField().Name("NombreCompleto"));
+                                                 fields.Add(Html.X().ModelField().Name("Estado"));
+                                             }))
+                                            )
+                                          )
+                               )
+
+                            ///CONFIGURAR LAS COLUMNAS
+                            .ColumnModel(columnModel =>
+                             {
+                                 columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("Persona").Flex(1).Hidden(true));
+                                 columnModel.Columns.Add(Html.X().Column().Text("Usuario").DataIndex("NombreCompleto").Width(300));
+                                 columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(100)
+                                         .Renderer("change")
+                                         );
+
+                             })
+                             .View(Html.X().GridView().TrackOver(false))
+        //.View(view => view.Add(Html.X().GridView().TrackOver(false)))
+                             .Border(false)
+                            .BottomBar(bar => bar.Add(
+                                Html.X().PagingToolbar()
+                                //.DisplayInfo(true)
+                                //.DisplayMsg("Displaying customers {0} - {1} of {2}"))
+                            ))
+
+                           /*.TopBar(X.Panel()
+                                .Height(50)
+                                .Title("Buscador")
+                                .Border(false)
+                            )   */
+                )
+        //     ,
+        //X.Panel()
+        //    .Region(Region.South)
+        //     //.Split(true)
+        //     //.Collapsible(true)
+        //     .Header(false)
+        //     .Height(30)
+        //     .Border(false)
+        //     //.BodyPadding(6)
+        //     //.Html("South")
+        //     .Items(
+        //         X.PagingToolbar()
+        //         .DisplayInfo(true)
+        //         .DisplayMsg("Displaying customers {0} - {1} of {2}")
+        //                         //.Height(40)
+
+           //     )
+
+        )
+    )
+    @(Html.X().Window()
+            .ID("Window1")
+            .Title("Registro de Usuario")
+            .Layout(LayoutType.Fit)
+            .Width(800)
+            .Height(350)
+            .Modal(true)
+            .OnEsc("false")
+
+            .AutoRender(true)
+            //.Collapsible(true)
+            .Maximizable(true)
+            .Hidden(true)
+            /*
+            .Loader(Html.X().ComponentLoader()
+                    .Url("CCEP0902_ViewRegistro")
+                    .Mode(LoadMode.Frame)
+                    .LoadMask(lm => lm.ShowMask = true)
+                    .Params(new
+                             {
+                                 Eventos = "selection",
+                                 //selection = new JRawValue("App.GridPanel1.getSelectionModel().selectRow(0)"),
+                                 selection = new JRawValue("App.GridPanel1.getSelectionSubmit().getSelectionModelField().getValue()"),
+                                 Mode = ParameterMode.Raw
+                             })
+    )*/
+            .Items(
+                 X.Panel()
+                 .Frame(false)
+            //.ID("pnlFlexEven")
+                .AutoScroll(true)
+            //.Layout(LayoutType.Column)
+                .Layout(LayoutType.HBox)
+                .BodyPadding(5)
+                .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                .Items(
+                        Html.X().FormPanel()
+                        .Layout(LayoutType.Form)
+                        .Width(300)
+                        .FieldDefaults(d =>
+                        {
+                            d.LabelWidth = 100;
+                        })
+                        .BodyPadding(10)
+                        .Frame(false)
+                        .Border(false)
+                        .Items(
+                            X.TextField().ID("tfUsuario")
+                           .Name("Usuario")
+                           .FieldLabel("Usuario"),
+                            X.TextField().ID("tfNombre")
+                           .Name("Nombre")
+                           .FieldLabel("Nombre"),
+                            X.TextField().ID("tfPw")
+                            .InputType(Ext.Net.InputType.Password)
+                            .Name("Nueva clave")
+                            .FieldLabel("Nueva Clave"),
+                            X.TextField().ID("tfUsuariored")
+                           .Name("tfUsuariored")
+                           .FieldLabel("Usuario de Red"),
+                            X.DateField().ID("dfUltimoIn")
+                            .Name("UltimoIngreso")
+                            .FieldLabel("Último ingreso"),
+                            X.RadioGroup()
+                            .FieldLabel("Estado")
+                            .ColumnsNumber(2)
+                            .AutomaticGrouping(false)
+                            .Items(
+                                X.Radio().Name("rating").InputValue("0").BoxLabel("Activo").Checked(true),
+                                X.Radio().Name("rating").InputValue("1").BoxLabel("Inactivo")
+                            )
+
+                        ),
+                        Html.X().FormPanel()
+                        .Layout(LayoutType.Form)
+                        .Width(300)
+                        .FieldDefaults(d =>
+                        {
+                            d.LabelWidth = 100;
+                        })
+                        .BodyPadding(10)
+                        .Frame(false)
+                        .Border(false)
+
+                        .Items(
+                            X.FieldSet()
+            //.Flex(1)
+                                .Width(200)
+                                .Title("Tipo de Usuario")
+                                .MarginSpec("5 5 5 5")
+            //.Defaults(d =>
+            //{
+            //  d.Add(new Parameter("LabelWidth", "120"));
+            //})
+                                .Items(
+                                 X.RadioGroup()
+                                    .ID("RadioGroup1")
+                                    .FieldLabel("")
+            //.Cls("x-check-group-alt")
+                                    .Items(
+                                        X.Radio().ID("rdUser").BoxLabel("Usuario").Checked(true),
+                                        X.Radio().ID("rdPerfil").BoxLabel("Perfil")
+                                    )
+                            )
+                            ,
+                            X.Checkbox().ID("Checkbox28")
+                                .BoxLabel("Forzar expiración de la clave").Checked(false),
+                            X.DateField().ID("dfFechaExpira")
+                            .Width(250)
+                            .Name("dfFechaExpira")
+                            .FieldLabel("Fecha de Expiración")
+                        )
+            /*,
+             Html.X().FormPanel()
+             .Layout(LayoutType.Form)
+             .Width(100)
+             .Items(
+                X.Label()
+                         .Text("")
+             ) */
+             )
+             .TopBar(
+                 X.Toolbar()
+                 .Height(30)
+                 .Items(
+                    X.Button()
+                        .Text("Seleccionar usuario")
+                        .Icon(Icon.ApplicationViewList),
+                    X.ToolbarFill(),
+                     X.Button()
+                        .Text("Guardar")
+                        .Icon(Icon.DatabaseSave),
+            //.Icon(Icon.ApplicationFormEdit),
+            //.Handler("#{Window1}.reload();")
+                      X.Button()
+                        .Text("Cancelar")
+                        .Icon(Icon.Cancel)
+            //.Handler("#{Window1}.reload();")
+                        .Handler("App.Window1.close()")
+                     )
+                )
+             )
+
+            /*.Buttons(
+                Html.X().Button()
+                    .Text("Guardar")
+                    .Width(100),
+               Html.X().Button()
+                    .Text("Cancelar")
+                    .Width(100)
+                ) */
+
+    )
+
+    @(Html.X().Window()
+            .ID("Window2")
+            .Title("Selección de Usuario")
+            .Layout(LayoutType.Fit)
+            .Width(400)
+            .Height(400)
+            .Modal(true)
+            .Hidden(true)
+
+
+
+    )
+
+}

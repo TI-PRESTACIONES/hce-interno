@@ -1,0 +1,93 @@
+﻿@model SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL
+@{
+    ViewBag.Title = "Simple TreePanel";
+    Layout = "";
+    var X = Html.X();
+}
+<script>
+    var filterTree = function (tf, e) {
+        var tree = tf.up("treepanel"),
+            store = tree.store,
+            logic = App.FilterLogic.getValue() ? tree : store,
+            text = tf.getRawValue();
+
+        logic.clearFilter();
+
+        if (Ext.isEmpty(text, false)) {
+            return;
+        }
+
+        if (e.getKey() === Ext.EventObject.ESC) {
+            clearFilter();
+        } else {
+            var re = new RegExp(".*" + text + ".*", "i");
+
+            logic.filterBy(function (node) {
+                return re.test(node.data.text);
+            });
+        }
+    };
+
+    var clearFilter = function () {
+        var field = this,
+            tree = this.up("treepanel"),
+            store = tree.store,
+            logic = App.FilterLogic.getValue() ? tree : store;
+
+        field.setValue("");
+        logic.clearFilter(true);
+        tree.getView().focus();
+    };
+
+</script>
+
+
+
+
+@( X.Panel()
+        .ID("Panel3")
+        //.Height(150)
+        //.Width(350)
+        .Layout(LayoutType.Border)
+        .Title("Acceso Directos")
+            .Loader(X.ComponentLoader()
+        //.Url(Url.Action("RenderChild"))
+                .Mode(LoadMode.Frame)
+                .LoadMask(lm => lm.ShowMask = true)
+            )
+         .TopBar(Html.X().Toolbar()
+             .Margin(5)
+                                .Vertical(true)
+                                .Items(Html.X().Button()
+                                    .Text("Historia Clínica (HCE)")
+                                    .Icon(Icon.Add)
+                                    .AlignTo("Left")
+                                    .TextAlign(ButtonTextAlign.Left)
+                                    .DirectEvents(de =>
+                                    {
+                                        de.Click.Url = Url.Action("ActivaModuloHCE");
+                                        de.Click.ExtraParams.Add(new { containerId = "Window1" });
+                                        de.Click.EventMask.ShowMask = true;
+                                        de.Click.EventMask.Target = MaskTarget.CustomTarget;
+                                       // de.Click.EventMask.CustomTarget = "Window1";
+                                       // de.Click.Before = "this.disable()";
+                                    }),
+
+                                   Html.X().Button()
+                                        .Text("Datos de Pacientes")
+                                        .Icon(Icon.Add)
+                                         .TextAlign(ButtonTextAlign.Left)
+                                        .DirectEvents(de =>
+                                        {
+                                            de.Click.Url = Url.Action("GetSelectPaciente");
+                                            de.Click.ExtraParams.Add(new { containerId = "Window1" });
+                                            de.Click.EventMask.ShowMask = true;
+                                            de.Click.EventMask.Target = MaskTarget.CustomTarget;
+                                            de.Click.EventMask.CustomTarget = "Window1";
+                                            de.Click.Before = "this.disable()";
+                                        })
+                                )
+
+       )
+)
+

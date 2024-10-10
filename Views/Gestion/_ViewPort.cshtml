@@ -1,0 +1,96 @@
+﻿@model List<Ext.Net.Node>
+@(
+ Html.X().Viewport()
+
+.Layout(LayoutType.Border)
+.Border(true)
+ .Items(p =>
+ {
+     p.Add(Html.X().Panel()
+         //.Title("North")
+         .ID("PanelMainNorth") 
+        .Height(60)
+        .MaxHeight(60)
+        .MinHeight(60)
+        .Region(Region.North)
+        .Header(false)
+        .Collapsible(false)
+        .Split(true)
+        .Border(false)
+        .CollapseMode(CollapseMode.Mini)
+        .Margins("0 0 0 0")
+       .Resizable(false)
+        .Items(
+           Html.X().Container()
+           .ID("North1")
+         //.StyleSpec("border:solid 1px black; height:150px; width:300px;")
+           .Loader(Html.X().ComponentLoader()
+               .Url(Url.Action("PanelNorth"))
+               .Mode(LoadMode.Script)
+               .Params(new { containerId = "North1" })
+
+              )
+           )
+        );
+      p.Add(
+          Html.X().Panel()
+          .Title("Center")
+
+        //.Layout(LayoutType.Anchor)
+          // .Layout(Ext.Net.LayoutType.Fit)
+          //.Height(100)
+         
+       .Region(Region.Center)
+       .Header(false)
+       .Collapsible(true)
+       .Split(true)
+       .Collapsible(true)
+          //.Margins("0 5 5 5")
+       .Border(true)
+   
+       .Items(items =>
+       {
+           items.Add(new Panel
+           {
+               ID = "Center1",
+               Region = Region.Center,
+               Border = false,
+               //BodyPadding = 10,
+               Header = false
+           });
+       }));
+     
+     p.Add(Html.X().Panel()
+         .Title("Menú Principal")
+          .Width(100)
+          .Region(Region.West)
+          .Layout(LayoutType.Fit)
+          .Width(250)
+         //.Header(false)
+         .Collapsible(true)
+         .Split(true)
+         //.CollapseMode(CollapseMode.Mini)
+         .Margins("0 0 0 0")
+         .Border(false)
+
+         .Items(items =>
+         {
+             items.Add(new Panel
+             {
+                 ID = "West1",
+                 //Title = "Menú Principal",
+                 Width = 240,
+                 Border = true,
+                 Layout = "Fit",
+                 Region = Region.West,
+                 Loader = Html.X().ComponentLoader()
+                     .Url(Url.Action("PanelWest"))
+                     .Mode(LoadMode.Script)
+                     .Params(new { containerId = "West1" })
+             });
+
+         })
+
+         );
+      
+ }))

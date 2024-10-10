@@ -1,0 +1,165 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_CE_DICCIONARIO
+
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+    }
+@section cabecera
+{
+<style>
+    html body {
+        padding: 0px;
+        background: none;
+        background: none;
+        background: none;
+        background-attachment: fixed;
+        background-position: center;
+        font-family: tahoma,verdana,sans-serif;
+        background-color: #ffffff;
+    }
+</style>
+
+    <script>
+        var Valores;
+        var template = '<span style="color:{0};">{1}</span>';
+
+        var change = function (value) {
+            return Ext.String.format(template, (value > 0) ? "green" : "red", value);
+        };
+
+        var pctChange = function (value) {
+            return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+        };
+
+        var onSuccess = function (grid, data) {
+            grid.show();
+            grid.getStore().loadData(data);
+        };
+
+        function deleteSelected(grid) {
+            var store = grid.store,
+                records = grid.selModel.getSelection();
+
+            store.remove(records);
+            store.load(true);
+        }
+
+
+    </script>
+
+}
+
+@section cuerpo
+{
+
+    @(Html.X().Viewport()
+        .Layout(LayoutType.VBox)
+        .LayoutConfig(
+            new VBoxLayoutConfig { Align = VBoxAlign.Stretch }
+        )
+        .Listeners(l =>
+        {
+            l.AfterLayout.BroadcastOnBus = "App.resize";
+            l.AfterLayout.Single = true;
+        })
+        .Items(regions =>
+        {
+        
+            regions.Add(Html.X().Panel()
+                .ItemID("center")
+               //.Height(600)
+                .DefaultAnchor("100%")
+               .Header(false)
+               .Border(false)
+               .Items(
+                      X.FieldSet()
+                            .ColumnWidth(0.4)
+                            .Title("Fisiológicos")
+                            //.Border(false)
+                            .MarginSpec("0 0 0 10")
+                            .Defaults(d =>
+                            {
+                                d.Add(new Parameter("Width", "500"));
+                                d.Add(new Parameter("LabelWidth", "200"));
+                            })
+
+                            .DefaultAnchor("100%")
+                                .FieldDefaults(d =>
+                                {
+                                    d.LabelAlign = LabelAlign.Left;
+                                })
+            
+                            .Items( 
+                            
+                                X.TextField()
+                                    .Name("Prenatales")
+                                    .FieldLabel("Prenatales"),
+                                X.TextField()
+                                    .Name("Parto")
+                                    .FieldLabel("Parto"),
+                                X.TextField()
+                                    .Name("P.N.")
+                                    .FieldLabel("P.N."),
+                                X.TextField()
+                                    .Name("DMS_Escolaridad")
+                                    .FieldLabel("DMS / Escolaridad"),
+                                X.TextField()
+                                    .Name("Inmunizaciones")
+                                    .FieldLabel("Inmunizaciones")
+                              ), 
+                              
+                           X.FieldSet()
+                            .ColumnWidth(0.4)
+                            .Title("Generales")
+                             //.Border(false)
+                            .MarginSpec("0 0 0 10")
+                            .Defaults(d =>
+                            {
+                                d.Add(new Parameter("Width", "500"));
+                                d.Add(new Parameter("LabelWidth", "200"));
+                            })
+
+                            .DefaultAnchor("100%")
+                                .FieldDefaults(d =>
+                                {
+                                    d.LabelAlign = LabelAlign.Left;
+                                })
+
+                            .Items(
+
+                                X.TextField()
+                                    .Name("Alimentacion")
+                                    .FieldLabel("Alimentacion"),
+                                X.TextField()
+                                    .Name("Ejercicio")
+                                    .FieldLabel("Ejercicio"),
+                                X.TextField()
+                                    .Name("Habitos_Nocivos")
+                                    .FieldLabel("Habitos Nocivos")
+    
+                              )
+                       )
+                    .Buttons(
+                            X.Button()
+                                .Text("Guardar")
+                                .Icon(Icon.Add)
+                                .OnClientClick("var form = this.up('form'); form.getForm().updateRecord(form.down('grid').getSelectionModel().getLastSelected());"),
+                            X.Button()
+                                .Text("Cancelar")
+                                .Icon(Icon.Cancel)
+                                .OnClientClick("this.up('form').getForm().reset();")
+               
+                        )
+                         
+                );
+        }
+        )
+        
+            
+      )
+    
+    }
+      
+ 

@@ -1,0 +1,490 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_HC_Anamnesis_EA
+
+@{
+    ViewBag.Title = "";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+}
+@section cabecera
+{
+    <script>
+    var GlobalSelect = false;
+    var Valores;
+    var template = '<span style="color:{0};">{1}</span>';
+    var varTipoBuscar = "LOAD";
+    var Valores;
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_YELLOW02 = "#D9A407";
+    var ALTURADEF = screen.height;
+    var indicaCambios = false;
+
+    var change = function (value) {
+        return Ext.String.format(template, (value > 0) ? "green" : "red", value);
+    };
+
+    var pctChange = function (value) {
+        return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+    };
+
+    var redirect = function () {
+        window.location.href = ' @Url.Action("Index", "HClinica") ';
+    }
+
+    var change = function (value) {
+        return Ext.String.format(template, (value > 0) ? "green" : "red", value);
+    };
+
+    var pctChange = function (value) {
+        return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+    };
+
+    var onSuccess = function (grid, data) {
+        grid.show();
+        grid.getStore().loadData(data);
+    };
+
+    var RecordSelector = {
+        add: function (source, destination) {
+            source = source || App.GridPanel1;
+            destination = destination || App.GridPanel2;
+            if (source.getSelectionModel().hasSelection()) {
+                var records = source.getSelectionModel().getSelection();
+                alert(record.get('aaaaAtencion'));
+
+            }
+        }
+    };
+
+    var accionBuscarFiltro = function (tipo) {
+        varTipoBuscar = tipo;
+        App.GridPanel1.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 'CC')
+            return Ext.String.format(template, COLOR_YELLOW02, "Pendiente");
+        if (value == 'CA')
+            return Ext.String.format(template, COLOR_BLUE01, "Atendido");
+        if (value == 'AN')
+            return Ext.String.format(template, COLOR_RED01, "Anulado");
+        if (value == 'FI')
+            return Ext.String.format(template, COLOR_GREEN01, "Firmado");
+    };
+
+    var changeEstadoOA = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01, "Anulado");
+        if (value == 2)
+            return Ext.String.format(template, COLOR_GREEN01, "En Atención");
+        if (value == 3)
+            return Ext.String.format(template, COLOR_BLUE01, "Atendido");
+        if (value == 0)
+            return Ext.String.format(template, COLOR_YELLOW02, "Pendiente");
+    };
+
+    function modelClikActiva(model) {
+        if (model.IdPaciente > 0) GlobalSelect = true;
+        var ArrayList = new Array();
+        var SS_HC_Anamnesis_AP = {
+            IdPaciente: model.IdPaciente,
+            EpisodioClinico: model.EpisodioClinico,
+            IdEpisodioAtencion: model.IdEpisodioAtencion,
+            PatologiaGestacion: model.CodigoOA,
+            Estado: model.Estado,
+            Accion: model.TipoAtencion
+        };
+        ArrayList.push(SS_HC_Anamnesis_AP);
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("SelectPersonaEpisodio"))',
+            params: {
+                selection: ArrayList
+            }
+        });
+    }
+
+    function LoadUrl() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("ListadoAtenciones"))',
+            params: {
+                MODO: "Consulta",
+                idCuerpo: 1
+            }
+        });
+    }
+
+    function ActivaUrl(valores) {
+        if (GlobalSelect == true) {
+            switch (valores) {
+                case "N":
+                    parent.window.location.href = ' @Url.Action("Index", "HClinica") ';
+                    break;
+                case "C":
+                    LoadUrl();
+                    break;
+                case "M":
+                    parent.window.location.href = ' @Url.Action("Index", "HClinica") ';
+                        break;
+                case "V":
+                    parent.window.location.href = ' @Url.Action("Index", "HClinica") ';
+                        break;
+                case "F":
+                        break;
+                    default:
+                }
+
+            } else {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Debe seleccionar un paciente.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+        }
+
+        function eventoRenderForm() {
+            var kk = 140;
+            var scrH = screen.height;
+            var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+            var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+            if (southH == 0) {
+                southH = 30;
+            }
+            var dimCentral = (scrH - (northH + southH) - kk);
+            App.formactual.setHeight(dimCentral);
+        }
+
+        function setIndicaCambios(value) {
+            indicaCambios = value;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("setIndicaCambiosFormulario"))',
+            params: {
+                indica: (value ? 1 : 0)
+            }
+        });
+    }
+            
+    function deleteSelected(grid) {
+        var store = grid.store,
+            records = grid.selModel.getSelection();
+
+        store.remove(records);
+        store.load(true);
+    }
+    function showResult() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("EstadoClinico"))',
+            params: {
+                selection: "",
+                accion: "Finalizar"
+            }
+        });
+    }
+
+    function VistaAtencion() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("EstadoClinico"))',
+            params: {
+                selection: "",
+                accion: "Vista"
+            }
+        });
+    }
+        function setSeleccion(param1) {            
+            seleccionActual1 = param1.UnidadReplicacion;
+            seleccionActual2 = param1.IdEpisodioAtencion;
+            seleccionActual3 = param1.IdPaciente;
+            seleccionActual4 = param1.EpisodioClinico;
+            seleccionActual5 = param1.CodigoOA;
+            if (param1.aaaaAtencion != null) {
+                App.btnAsig.setDisabled(true);
+                App.btnReasig.setDisabled(false);                
+            } else {
+                App.btnAsig.setDisabled(false);
+                App.btnReasig.setDisabled(true);
+            }
+        }
+        function verSelected() {
+            eventoVerSelected(seleccionActual1);
+        }
+        function nuevo() {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("AsigMedicoRegistro"))',
+                params: {
+                    MODO: 'NUEVO',
+                    unidad: '',
+                    idepisodio: 0,
+                    paciente: 0,
+                    episodio: 0,
+                    idasignacion: 0
+                }
+            });
+        };
+        function evento() {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("AsigMedicoRegistro"))',
+                params: {
+                    MODO: 'NUEVO',
+                    unidad: '',
+                    idepisodio: 0,
+                    paciente: 0,
+                    episodio: 0,
+                    idasignacion: 0
+                }
+            });
+        };
+        function modificarSelected() {
+                if (seleccionActual1 != null && seleccionActual2 != null && seleccionActual3 != null && seleccionActual4 != null) {
+                    var status1 = seleccionActual1;
+                    var status2 = seleccionActual2;
+                    var status3 = seleccionActual3;
+                    var status4 = seleccionActual4;
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("AsigMedicoRegistro"))',
+                        params: {
+                            MODO: 'INSERT',
+                            unidad: status1,
+                            idepisodio: status2,
+                            paciente: status3,
+                            episodio: status4,
+                        }
+                    });
+                } else {
+                    Ext.Msg.show({
+                        title: "Advertencia",
+                        msg: "Debe Seleccionar un Elemento.",
+                        icon: Ext.Msg.WARNING,
+                        minWidth: 200,
+                        buttons: Ext.Msg.OK
+                    });
+                }
+        }
+
+        function AsignarSelected() {
+            if (seleccionActual1 != null && seleccionActual2 != null && seleccionActual3 != null && seleccionActual4 != null) {
+                var status1 = seleccionActual1;
+                var status2 = seleccionActual2;
+                var status3 = seleccionActual3;
+                var status4 = seleccionActual4;
+
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("AsigMedicoRegistro"))',
+                    params: {
+                        MODO: 'NUEVO',
+                        unidad: status1,
+                        idepisodio: status2,
+                        paciente: status3,
+                        episodio: status4,
+                    }
+                });
+            } else {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Debe Seleccionar un Elemento.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+        }
+        function eliminarSelected() {
+            if (seleccionActual1 != null && seleccionActual2 != null && seleccionActual3 != null && seleccionActual4 != null) {
+                var status1 = seleccionActual1;
+                var status2 = seleccionActual2;
+                var status3 = seleccionActual3;
+                var status4 = seleccionActual4;
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("AsigMedicoRegistro"))',
+                    params: {
+                        MODO: 'DELETE',
+                        unidad: status1,
+                        idepisodio: status2,
+                        paciente: status3,
+                        episodio: status4,
+                    }
+                });
+            } else {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Debe Seleccionar un Elemento.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+        }
+        
+        function eventoVerSelected() {
+            if (seleccionActual1 != null && seleccionActual2 != null && seleccionActual3 != null && seleccionActual4 != null) {
+                var status1 = seleccionActual1;
+                var status2 = seleccionActual2;
+                var status3 = seleccionActual3;
+                var status4 = seleccionActual4;
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("AsigMedicoRegistro"))',
+                    params: {
+                        MODO: 'VER',
+                        unidad: status1,
+                        idepisodio: status2,
+                        paciente: status3,
+                        episodio: status4,
+                    }
+                });
+            } else {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Debe Seleccionar un Elemento.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+        }
+        
+    </script>
+}
+@section cuerpo
+{
+    @(Html.X().Viewport()
+        .Layout(LayoutType.VBox)
+        .LayoutConfig(new VBoxLayoutConfig {Align = VBoxAlign.Stretch})
+        .Listeners(l =>{
+            l.AfterLayout.BroadcastOnBus = "App.resize";
+            l.AfterLayout.Single = true;
+        })
+        .Items(regions =>
+        {regions.Add(
+            Html.X().FormPanel().TopBar(
+            X.Toolbar().Height(30)
+            .Items(
+            X.Button().Text("Buscar Pacientes").Icon(Icon.PageWhiteFind).Handler("accionBuscarFiltro('FILTRO');"),           
+            X.ToolbarSeparator(),
+            X.Button().Text("Nuevo").Icon(Icon.ApplicationFormAdd).Handler("nuevo(); ").Hidden(true),
+            X.Button().ID("btnAsig").Text("Asignar").Icon(Icon.ApplicationFormEdit).Handler("AsignarSelected();"),             
+            X.Button().ID("btnReasig").Text("Reasignar").Icon(Icon.ApplicationFormEdit).Handler("modificarSelected();"),
+            //.Disable("App.GridPanel1.getSelectionSubmit().getSelectionModelField().getValue().getAaaaAtencion()"==null?true:false),
+            X.Button().Text("Eliminar").Icon(Icon.ApplicationFormDelete).Handler("eliminarSelected();").Hidden(true),
+            X.ToolbarSeparator(),
+            X.Button().Text("Ver").Icon(Icon.ApplicationViewDetail).Handler("verSelected();").Hidden(true),
+            X.ToolbarFill()))
+            .ItemID("center").DefaultAnchor("100%").AutoScroll(true).Height(340).Header(false).Border(true).ID("formactual").Listeners(l =>{l.Render.Handler = "eventoRenderForm();";})
+            .Items(
+            Html.X().Panel().ItemID("north").Margins("0 2 0 2").Header(true).Border(false).Layout(LayoutType.Card)
+            .Items(
+                Html.X().FieldSet().ColumnWidth(0.4).Title("Filtro de Busqueda").MarginSpec("05 05 05 05").Defaults(d =>{d.Add(new Parameter("LabelWidth", "170"));d.Add(new Parameter("DefaultAnchor", "100%"));d.Add(new Parameter("LabelAlign", "Left"));}).DefaultAnchor("100%").FieldDefaults(d =>{d.LabelAlign = LabelAlign.Left;})
+                .Items(
+                Html.X().Container().Layout(LayoutType.HBox).Defaults(d =>{d.Add(new Parameter("LabelWidth", "110"));})
+                .Items(
+                X.Checkbox().FieldLabel("Nro HC").ID("chHC").Listeners(l => l.Change.Handler = @"var checkAll = #{chHC}.getValue();if(checkAll){#{txtHC}.setDisabled(true);#{txtHC}.setValue(null);}else{#{txtHC}.setDisabled(false);}").Checked(true),
+                X.TextField().ID("txtHC").Disabled(true),
+                X.Component().Width(30),
+                X.Checkbox().FieldLabel("Fecha Cita").ID("chFechas").Listeners(l => l.Change.Handler = @"var checkAll = #{chFechas}.getValue();if(checkAll){#{txtFecha1}.setDisabled(true);#{txtFecha1}.setValue(null);#{txtFecha2}.setDisabled(true);#{txtFecha2}.setValue(null);}else{#{txtFecha1}.setDisabled(false);#{txtFecha2}.setDisabled(false);}").Checked(false),
+                X.DateField().ID("txtFecha1").Width(110).Value(DateTime.Now).Disabled(false),
+                X.DateField().ID("txtFecha2").Width(110).Value(DateTime.Now).Disabled(false)),
+                Html.X().Container().Layout(LayoutType.HBox).Defaults(d =>{d.Add(new Parameter("LabelWidth", "110"));})
+                .Items(
+                X.Checkbox().FieldLabel("Nro HC Anterior").ID("chHCA").Listeners(l => l.Change.Handler = @"var checkAll = #{chHCA}.getValue();if(checkAll){#{txtHCA}.setDisabled(true);#{txtHCA}.setValue(null);}else{#{txtHCA}.setDisabled(false);}").Checked(true),
+                X.TextField().ID("txtHCA").Disabled(true),X.Component().Width(30),
+                X.Checkbox().FieldLabel("Codigo OA").ID("chOA").Listeners(l => l.Change.Handler = @"var checkAll = #{chOA}.getValue();if(checkAll){#{txtCodigoOA}.setDisabled(true);#{txtCodigoOA}.setValue(null);}else{#{txtCodigoOA}.setDisabled(false);}").Checked(true),
+                X.TextField().Width(220).ID("txtCodigoOA").Disabled(true)),
+                Html.X().Container().Layout(LayoutType.HBox).Defaults(d =>{d.Add(new Parameter("LabelWidth", "110"));})
+                .Items(
+                X.Checkbox().FieldLabel("Paciente").ID("chPaciente").Listeners(l => l.Change.Handler = @"var checkAll = #{chPaciente}.getValue();if(checkAll){#{txtPaciente}.setDisabled(true);#{txtPaciente}.setValue(null);}else{#{txtPaciente}.setDisabled(false);}").Checked(true),
+                X.TextField().ID("txtPaciente").Disabled(true),
+                X.Component().Width(30),
+                X.Checkbox().FieldLabel("Estado de Episodio").ID("chkTipoConsulta").Listeners(l => l.Change.Handler = @"var checkAll = #{chkTipoConsulta}.getValue();if(checkAll){#{cmbTipoConsulta}.setDisabled(true);#{cmbTipoConsulta}.setValue(null);}else{#{cmbTipoConsulta}.setDisabled(false);}").Checked(true),
+                X.ComboBox().ID("cmbTipoConsulta").Width(220)
+                .Items(new ListItem("Anulado", 1), new ListItem("En Atención", 2), new ListItem("Atendido", 3),new ListItem("Pendiente", 0)).Disabled(true)))),
+                Html.X().Panel().ItemID("center").Header(false).Border(false)
+                .Items(Html.X().GridPanel().Title("Listado de Pacientes").Scroll(ScrollMode.Both).AutoScroll(true).Layout(LayoutType.Anchor).Anchor("100% 100%").ID("GridPanel1").Margins("0 0 2 2").Border(false).Store(store => store.Add(
+                    Html.X().Store().ID("StoreTasks").AutoLoad(true).RemoteSort(false).IsPagingStore(true).RemotePaging(true).PageSize(20)
+                    .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                        .Url("GrillaListadoAsignacionMed")
+                        .Reader(reader => reader.Add(Html.X().JsonReader()
+                            .Root("data")
+                            .TotalProperty("total")
+                           .IDProperty("Persona")
+                            ))))
+                            .Parameters(ps =>ps.Add(new{
+                                txtHC = JRawValue.From("App.txtHC.getValue()"),
+                                txtFecha1 = JRawValue.From("App.txtFecha1.getValue()"),
+                                txtFecha2 = JRawValue.From("App.txtFecha2.getValue()"),
+                                txtHCA = JRawValue.From("App.txtHCA.getValue()"),
+                                txtCodigoOA = JRawValue.From("App.txtCodigoOA.getValue()"),
+                                txtPaciente = JRawValue.From("App.txtPaciente.getValue()"),
+                                tipoConsulta = "CA",
+                                tipoEstado = JRawValue.From("App.cmbTipoConsulta.getValue()"),
+                                tipoBuscar = JRawValue.From("varTipoBuscar")}
+                                )
+                                )
+                                .Model(model => model.Add(Html.X().Model()
+                                    .Fields(fields =>
+                                    {
+                                        fields.Add(Html.X().ModelField().Name("Persona").Type(ModelFieldType.Int));
+                                        fields.Add(Html.X().ModelField().Name("personanew").Type(ModelFieldType.Int));
+                                        fields.Add(Html.X().ModelField().Name("PersonaAnt").Type(ModelFieldType.String));
+                                        fields.Add(Html.X().ModelField().Name("IdPaciente").Type(ModelFieldType.Int));
+                                        fields.Add(Html.X().ModelField().Name("FechaAtencion"));
+                                        fields.Add(Html.X().ModelField().Name("FecIniDiscamec"));
+                                        fields.Add(Html.X().ModelField().Name("FecFinDiscamec"));
+                                        fields.Add(Html.X().ModelField().Name("CodigoOA"));
+                                        fields.Add(Html.X().ModelField().Name("TipoPaciente"));
+                                        fields.Add(Html.X().ModelField().Name("CodigoHC"));
+                                        fields.Add(Html.X().ModelField().Name("NombreCompleto"));
+                                        fields.Add(Html.X().ModelField().Name("EpisodioClinico"));
+                                        fields.Add(Html.X().ModelField().Name("IdEpisodioAtencion"));
+                                        fields.Add(Html.X().ModelField().Name("Servicio"));
+                                        fields.Add(Html.X().ModelField().Name("Estado"));
+                                        fields.Add(Html.X().ModelField().Name("TipoPaciente"));
+                                        fields.Add(Html.X().ModelField().Name("EsPaciente"));
+                                        fields.Add(Html.X().ModelField().Name("TipoAtencion"));
+                                        fields.Add(Html.X().ModelField().Name("Version"));
+                                        fields.Add(Html.X().ModelField().Name("UnidadReplicacion"));
+                                        fields.Add(Html.X().ModelField().Name("CorreoElectronico"));
+                                        fields.Add(Html.X().ModelField().Name("aaaaAtencion"));
+                                    }
+                                    )
+                                    ))))
+                                    .ColumnModel(columnModel =>
+                                    {
+                                        columnModel.Columns.Add(Html.X().RowNumbererColumn());
+                                        columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("Persona").Hidden(true));
+                                        columnModel.Columns.Add(Html.X().Column().Text("IDs").DataIndex("personanew").Hidden(true));
+                                        columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("PersonaAnt").Width(150).Hidden(true));
+                                        columnModel.Columns.Add(Html.X().Column().Text("IdPaciente").DataIndex("IdPaciente").Width(150).Hidden(true));
+                                        columnModel.Columns.Add(Html.X().DateColumn().Text("Fecha Cita").DataIndex("FechaAtencion").Width(85).Hidden(true));
+                                        columnModel.Columns.Add(Html.X().DateColumn().Text("Hora Inicio").DataIndex("FecIniDiscamec").Width(70).Format("HH:mm:ss").Hidden(true));
+                                        columnModel.Columns.Add(Html.X().DateColumn().Text("Hora Fin").DataIndex("FecFinDiscamec").Width(70).Format("HH:mm:ss").Hidden(true));
+                                        columnModel.Columns.Add(Html.X().Column().Text("Codigo OA").DataIndex("CodigoOA").Width(80).Hidden(true));
+                                        columnModel.Columns.Add(Html.X().Column().Text("Tipo Paciente").DataIndex("TipoPaciente").Flex(1).Hidden(true));
+                                        columnModel.Columns.Add(Html.X().Column().Text("Tipo Paciente").DataIndex("EsPaciente").Flex(1).Hidden(true));
+                                        columnModel.Columns.Add(Html.X().Column().Text("Tipo Atencion").DataIndex("Version").Flex(1).Hidden(true));
+                                        columnModel.Columns.Add(Html.X().Column().Text("Tipo Atencion").DataIndex("TipoAtencion").Flex(1).Hidden(true).Hidden(true));
+                                        columnModel.Columns.Add(Html.X().Column().Text("Codigo HC").DataIndex("CodigoHC").Width(80).Hidden(true));
+                                        columnModel.Columns.Add(Html.X().Column().Text("Paciente").DataIndex("NombreCompleto").Width(300));
+                                        columnModel.Columns.Add(Html.X().Column().Text("Epidosio Clínico").DataIndex("EpisodioClinico").Width(150));
+                                        columnModel.Columns.Add(Html.X().Column().Text("Episodio Atención").DataIndex("IdEpisodioAtencion").Width(150));
+                                        columnModel.Columns.Add(Html.X().Column().Text("Estado Consulta").DataIndex("Servicio").Flex(1).Renderer("changeEstado").Hidden(true));
+                                        columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Flex(1).Renderer("changeEstadoOA").Width(100));
+                                        columnModel.Columns.Add(Html.X().Column().Text("UR").DataIndex("UnidadReplicacion").Hidden(true));
+                                        columnModel.Columns.Add(Html.X().Column().Text("Médico").DataIndex("CorreoElectronico").Width(300));
+                                        columnModel.Columns.Add(Html.X().Column().Text("IdMédico").DataIndex("aaaaAtencion").Hidden(true));
+                                    })
+                                    .View(Html.X().GridView().TrackOver(false))
+                                    .Border(false).Listeners(l => l.CellClick.Handler = "setSeleccion(record.data);")
+                                    .Listeners(l => l.CellDblClick.Handler = "eventoVerSelected(record.data.UnidadReplicacion,record.data.IdEpisodioAtencion,record.data.IdPaciente,record.data.EpisodioClinico,record.data.CodigoOA);")                                   
+                                    .BottomBar(bar => bar.Add(
+                                        Html.X().PagingToolbar()))                                    
+                                    )));
+        })
+        )@(X.KeyNav().Target("={document.body}").Enter(a => a.Handler = "accionBuscarFiltro('FILTRO');")
+    )
+}
+

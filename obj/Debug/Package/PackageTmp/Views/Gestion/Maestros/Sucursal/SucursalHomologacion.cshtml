@@ -1,0 +1,207 @@
+﻿@model SoluccionSalud.Entidades.Entidades.AC_Sucursal
+
+@{
+    var X = Html.X();
+    var COLOR_BLUE01_temp = "#284A89";
+    var COLOR_RED01_temp = "#990000";
+    var COLOR_GREEN01_temp = "#177506";
+    var COLOR_YELLOW02_temp = "#D9A407";
+}
+
+<script>
+    var template = 'color:{0};';
+    var cuenta = 0;
+    var change = function (value, meta) {return value;};
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 'A')
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == 'I')
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+
+    function addRecord(grid) {
+        var codEXT = App.txtCodigoExterno.getValue();
+        var app = App.cmbAppExterna.getValue();
+        var idHCE = App.Sucursal.getValue();
+        var descripcion = '@(Model.DescripcionLocal)';
+        if (codEXT != null && codEXT != '') {
+            if (validaDuplicado('' + app, '' + codEXT)) {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Ya existe el Registro",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            } else {
+                cuenta = cuenta - 1;
+                grid.store.insert(0,
+                        {
+                            Sucursal: cuenta,
+                            DireccionAdicional: codEXT,
+                            DescripcionLocal: descripcion,
+                            Estado: app,
+                            SucursalGrupo: idHCE,
+                            ACCION: 'INSERTHOMOLOGACION'
+                        });
+            }
+        }else{
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Ingresar el Código del Elemento Externo.",
+                icon: Ext.Msg.INFO,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+    };
+
+    function validaDuplicado(valor1, valor2) {
+        var estados = false;
+        App.StoreHomologacion_Suc.each(function (r) {
+            if (trim('' + r.get('Estado')) == trim(valor1)
+                && trim('' + r.get('DireccionAdicional')) == trim(valor2)
+                ) {
+                estados = true;
+            }
+        });
+        return estados;
+    };
+
+    function trim(str) {return str.replace(/^\s+|\s+$/g, "");}
+
+    function deleteActual(record) {
+        var store = App.GridPanelHomologacion_Suc.store;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("add_DataDeleteSucursalHomologacion"))',
+            params: {
+                MODO: 'DELETEHOMOLOGACION',
+                appEXT: record.data.Estado,
+                idHCE: record.data.SucursalGrupo,
+                codigoEXT: record.data.DireccionAdicional
+            }
+        });
+        store.remove(record);
+    };
+
+    function save_HomologacionSuc() {
+        var store = App.StoreHomologacion_Suc;
+        var status;
+        var sysArray = new Array();
+        store.each(function (r) {
+            if (r.get('ACCION') != null && r.get('ACCION') != '') {
+                var AC_Sucursal = {
+                    Sucursal: r.get('SucursalGrupo'),
+                    DireccionAdicional: r.get('DireccionAdicional'),
+                    Estado: r.get('Estado'),
+                    ACCION: r.get('ACCION')
+                };
+                sysArray.push(AC_Sucursal);
+            }
+        });
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("save_Sucursal_Homologacion"))',
+            params: {
+                MODO: 'NUEVO',
+                idWindow: "WindowHomologacion_Suc",
+                data: sysArray,
+                id: 0
+            }
+        });
+    };
+</script>
+
+@(Html.X().Window()
+    .Width(650)
+    .Height(400)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowHomologacion_Suc")
+    .Title("Recurso de Homologación")
+    .Padding(4)
+    .TopBar(
+        X.Toolbar().Height(30)
+        .Items(
+            X.ToolbarSpacer(),
+            X.Label().Html("<b><span style='color:" + COLOR_BLUE01_temp + ";'>" + "" + "Sucursal: " + Model.DescripcionLocal + "</span> </b>"),
+            X.ToolbarFill(),
+            X.Button().Text((Model.ACCION == "DELETE" ? "Eliminar" : "Guardar")).Icon((Model.ACCION == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave)).Handler("save_HomologacionSuc();"),
+            X.Button().Text("Cancelar").Icon(Icon.Cancel).DirectEvents(de =>{
+                de.Click.Url = Url.Action("cerrarWindow");
+                de.Click.ExtraParams.Add(new Parameter("id", "WindowHomologacion_Suc", ParameterMode.Value));}),
+            X.ToolbarSpacer(20)
+            ))
+        .Items(
+            X.Panel().Border(false).Layout(LayoutType.VBox).LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+            .Items(
+                X.FieldSet().Height(100).ColumnWidth(0.4).Title("Agregar Recurso de Homologación:").MarginSpec("0 05 0 05")
+                .Items(
+                Html.X().Container().Layout(LayoutType.HBox).MarginSpec("00 00 05 00").LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch }).Defaults(d =>{
+                    d.Add(new Parameter("LabelWidth", "150"));
+                    d.Add(new Parameter("Width", "450"));})
+                .Items(
+                    Html.X().ComboBox().ID("cmbAppExterna").Value(1).Editable(false).FieldLabel("Aplicativo Externo")
+                    .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenericoMiscelaneos("WA", "999999", "APPPEXTERN").Select(d => new ListItem(d.Name, d.ID))).SimpleSubmit(true),
+                    X.Component().Flex(1),
+                    X.Button().Text("Agregar").Icon(Icon.Add).Width(100).Handler("addRecord(App.GridPanelHomologacion_Suc);")),
+                    Html.X().Container().Layout(LayoutType.HBox).MarginSpec("00 00 05 00").Defaults(d =>{
+                        d.Add(new Parameter("LabelWidth", "150"));
+                        d.Add(new Parameter("Width", "300"));})
+                    .Items(
+                        X.TextField().ID("txtCodigoExterno").FieldLabel("Cód. Sucursal Externo")),
+                    Html.X().Container().Layout(LayoutType.HBox).MarginSpec("00 00 05 00").Defaults(d =>{
+                        d.Add(new Parameter("LabelWidth", "150"));
+                        d.Add(new Parameter("Width", "300"));})
+                    .Items(
+                        X.TextFieldFor(m => m.Sucursal).FieldLabel("ID Sucursal HCE").ReadOnly(true))
+                        ),
+                X.GridPanel().Flex(1).ID("GridPanelHomologacion_Suc").Border(false).Store(
+                Html.X().Store().ID("StoreHomologacion_Suc").Model(
+                Html.X().Model().IDProperty("Sucursal").Fields(
+                Html.X().ModelField().Name("Sucursal").Type(ModelFieldType.String),
+                Html.X().ModelField().Name("SucursalGrupo").Type(ModelFieldType.String),
+                Html.X().ModelField().Name("DescripcionLocal").Type(ModelFieldType.String),
+                Html.X().ModelField().Name("Estado").Type(ModelFieldType.String),
+                Html.X().ModelField().Name("DireccionAdicional").Type(ModelFieldType.String), 
+                Html.X().ModelField().Name("ACCION").Type(ModelFieldType.String))).Proxy(proxy => proxy.Add(Html.X().AjaxProxy().Url("getGrillaSucursalHomologacion")
+                    .Reader(reader => reader.Add(Html.X().JsonReader().Root("data").TotalProperty("total").IDProperty("Sucursal")))))
+                    .Parameters(ps =>ps.Add(new{
+                        id = Model.Sucursal,
+                        codigo = Model.SucursalGrupo,
+                        tipo = ""})).AutoLoad(true)
+                        ).ColumnModel(
+                        Html.X().ComponentColumn().Editor(true).DataIndex("Sucursal").Text("ID").Width(80).Hidden(true).Component(
+                        Html.X().TextField().ReadOnly(true)),
+                        Html.X().ComponentColumn().Editor(true).DataIndex("Estado").Text("Aplicativo Externo").Flex(1).Hidden(false).Component(
+                        Html.X().ComboBox().ReadOnly(true).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenericoMiscelaneos("WA", "999999", "APPPEXTERN")
+                        .Select(d => new ListItem(d.Name, d.ID))).SimpleSubmit(true)),
+                        Html.X().ComponentColumn().Editor(true).DataIndex("DescripcionLocal").Text("Descripción").Flex(1).Hidden(true).Component(
+                        Html.X().TextField().ReadOnly(true)),
+                        Html.X().ComponentColumn().Editor(true).DataIndex("DireccionAdicional").Text("Codigo Externo").Width(100).Hidden(false).Component(
+                        Html.X().TextField().ReadOnly(true)),
+                        Html.X().ComponentColumn().Editor(true).DataIndex("SucursalGrupo").Text("Id Sucursal").Width(100).Hidden(false).Component(
+                        Html.X().NumberField().ReadOnly(true)),
+                        Html.X().CommandColumn().Width(80).Commands(
+                        Html.X().GridCommand().CommandName("Delete").Icon(Icon.Delete).Text("Eliminar")
+                        ).Listeners(ls => ls.Command.Handler = "deleteActual(record);"),
+                        Html.X().ComponentColumn().Editor(true).DataIndex("Accion").Text("Acción").Hidden(true).Component(
+                        Html.X().TextField().ReadOnly(true))
+                        ).SelectionModel(
+                        Html.X().RowSelectionModel().Mode(SelectionMode.Multi)
+                        ).Plugins(
+                        Html.X().CellEditing())
+                    )
+                ).CloseAction(CloseAction.Destroy)
+)
+
+

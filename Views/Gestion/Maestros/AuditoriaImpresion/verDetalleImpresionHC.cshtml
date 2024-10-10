@@ -1,0 +1,402 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_HC_ImpresionHC_Detalle
+           
+@{
+    var X = Html.X();
+    var COLOR_BLUE01_temp = "#284A89";
+    var COLOR_RED01_temp = "#000000";
+}
+
+<script>
+    var varTipoBuscar = "LOAD";
+    var template = 'color:{0};';
+    var cuenta = 0;
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+    var change = function (value, meta) { return value; };
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 2)
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+
+
+    var loadReporte = function (record) {
+        var desc = record.data.text;
+        var id = record.data.id;
+
+        var showURL = '';
+        var path = '';
+        var accionReport = '';
+        var pathLocalURL = 'Reportes/VisorReportesHCE.aspx?ReportID=';
+        var pathLocalURLGrilla = 'Reportes/Grilla.aspx';
+        var showURL_end = '&Visor=I';
+
+        if (id > 1) {
+            var cont = App.centerPanels;
+            cont.setTitle('Selección actual: ' + desc);
+
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("eventoLoadReporte"))',
+                params: {
+                    containerId: '',
+                    text: id
+                },
+                success: function (resultRegla) {
+                    if (resultRegla.data != null) {
+                        if (resultRegla.data[0].TIPOMSG == 'FFIJO') {
+                            showURL_end = '&Visor=I';
+                            path = resultRegla.data[0].TITULO;
+                            accionReport = resultRegla.data[0].DESCRIPCION;
+                            if (accionReport != null) {
+                                showURL = path + pathLocalURL + accionReport + showURL_end;
+                            } else {
+                                showURL = pathLocalURLGrilla;
+
+                                
+                            }
+                            var contX = cont.getLoader();
+                            cont.getLoader().url = 'http://' + showURL;
+                            contX.load({
+                                params: {
+                                }
+                            });
+                            /*
+                            showURL = 'localhost:11505/Reportes/VisorReportesHCE.aspx?ReportID=CCEP0003&Visor=I';
+                            contendiv('http://'+showURL);
+                            */
+                        } else {
+                        }
+                    }
+                }
+            });
+
+            /**
+              implementar evento load reporte
+              contendiv("http://localhost:11505/Reportes/VisorReportesHCE.aspx?ReportID=CountryListReport&dc=1464211190953");
+            */
+        } else {
+        }
+    };
+
+
+    var accionBuscarFiltro = function (tipo) {
+        varTipoBuscar = tipo;
+        App.GridPanelDetalle.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+
+
+    var eventoCargarMain = function () {
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("addPermisosFormatos"))',
+            params: {
+                data: 'FORMATO',
+                indica: 'PERMISO',
+            },
+            success: function (result) { accionSetPermisos(result.data); }
+        });
+    };
+    var accionSetPermisos = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                if (data[i].ACCION == 'BUSCAR' && App.compoBUSCAR != null) {
+                    App.compoBUSCAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'NUEVO' && App.compoNUEVO != null) {
+                    App.compoNUEVO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'MODIFICAR' && App.compoMODIFICAR != null) {
+                    App.compoMODIFICAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'ELIMINAR' && App.compoELIMINAR != null) {
+                    App.compoELIMINAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'VER' && App.compoVER != null) {
+
+                } else if (data[i].ACCION == 'VER2' && App.compoVER != null) {
+                    App.compoVER.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'ACCESO' && App.compoACCESO != null) {
+                    App.compoACCESO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'HABILITADO' && App.compoHABILITADO != null) {
+                    App.compoHABILITADO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'OBLIGA' && App.compoOBLIGA != null) {
+                    App.compoOBLIGA.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'PRIORIDADAGOPCION' && App.compoPRIORIDADAGOPCION != null) {
+                    App.compoPRIORIDADAGOPCION.setVisible((data[i].campoInt01 == 2 ? true : false));
+                }
+
+            }
+        }
+    };
+
+
+
+    function trim(str) { return str.replace(/^\s+|\s+$/g, ""); }
+
+   
+
+
+    var eventoCheckFiltro = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+
+
+    function enviarSeleccionDirect(param1, param2, param3) {
+        var status = param1;
+        var status2 = param2;
+        var status3 = param3;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action(Model.Accion))',
+            params: {
+                MODO: 'get',
+                id: status,
+                IdImpresion: status2,
+                IdImpresion: status3,
+                idWindow: "WindowDetalleImpresion"
+            }
+        });
+    }
+
+</script>
+
+
+@(Html.X().Window().Width(750).Height(500).
+Maximizable(true).Modal(true).OnEsc("false")
+.AutoScroll(true).Layout(LayoutType.Fit)
+.CloseAction(CloseAction.Destroy).Icon(Icon.ApplicationForm)
+.ID("WindowDetalleImpresion").Title("Auditoria de Impresion HC").Padding(4).TopBar(
+X.Toolbar().Height(30)
+    .Items(
+        X.ToolbarSpacer(),
+        X.Label().Html("<b><span style='color:" + COLOR_BLUE01_temp + ";'>" + "PACIENTE" + ": " + Model.HostImpresion + "  </span> </b>"),
+            X.ToolbarSpacer(),
+                 X.ToolbarSpacer(),
+                      X.ToolbarSpacer(),
+        X.Label().Html("<b><span style='color:" + COLOR_RED01_temp + ";'>" + "HC" + ": " + Model.UsuarioImpresion + "</span> </b>"),
+             X.ToolbarSpacer(),
+                     X.ToolbarSpacer(),
+                          X.ToolbarSpacer(),
+        //X.Label().Html("<b><span style='color:" + COLOR_RED01_temp + ";'>" + "HC" + ": " + Model.IdImpresion + "</span> </b>"),
+        X.ToolbarFill(),
+            //X.Button().Text((Model.Accion == "DELETE" ? "Eliminar" : "Guardar")).Icon((Model.Accion == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave)).Handler("save_grupoFactorRelacionadoNanda('" + Model.Estado + "' , " + Model.IdNanda + " );"),
+        X.Button().Text("Cancelar").Icon(Icon.Cancel).DirectEvents(de =>
+        {
+            de.Click.Url = Url.Action("cerrarWindow");
+            de.Click.ExtraParams.Add(new Parameter("id", "WindowDetalleImpresion", ParameterMode.Value));
+        }),
+        X.ToolbarSpacer(20))
+       
+        )
+        .Items(
+            X.Panel()
+            .Border(false)
+            .Layout(LayoutType.VBox)
+            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+            .Items(
+                X.Panel()
+                .Header(false).Border(false).Flex(1)
+                    .Layout(LayoutType.Border).TopBar(
+                                X.Toolbar()
+
+                                     .Items(X.Panel()
+                                .Layout(LayoutType.HBox)
+                                .BodyPadding(5)
+                                .Width(1110)
+                                .Border(false)
+                                .MarginSpec("1 20 1 1")
+                                .Items(
+                                        X.FieldSet()
+                                            .Flex(1)
+                                            .Title("Filtros")
+                                            .MarginSpec("5 5 5 5")
+                                            .Defaults(d =>
+                                            {
+                                                d.Add(new Parameter("LabelWidth", "120"));
+                                            })
+                                            .Items(
+
+                                           Html.X().Container().Layout(LayoutType.HBox)
+                                           .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                           .Items(
+
+
+
+                                           X.Checkbox()
+                                          .FieldLabel("Usuario").LabelWidth(40)
+                                          .ID("IdUsuario")
+                                                      .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.IdUsuario,App.tfIdUsuario);")
+                                          .Checked(true),
+
+                                          X.TextField()
+                                                .ID("tfIdUsuario").Width(80)
+                                            .Disabled(true)
+                                            .Name("buscarUsuario")
+                                            .FieldLabel(""),
+                                            X.ToolbarSpacer(10),
+                                            X.Checkbox()
+                                            .FieldLabel("Fecha de Impresion").LabelWidth(100)
+                                                .ID("fecha")
+                                                .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.fecha,App.FechaUno1);")
+                                             .Checked(true),
+
+                                          X.DateField().Width(100)
+                                                .ID("FechaUno1")
+                                                .Disabled(true)
+                                                .FieldLabel("")
+                                              ,
+                                         X.ToolbarSpacer(10)
+
+
+
+
+
+                                               ),
+
+                                                Html.X().Container().Layout(LayoutType.HBox)
+                                               .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                                   .Items(
+                                                                  X.Checkbox()
+                                                                       .FieldLabel("Proceso").LabelWidth(40)
+                                                                       .ID("IdProceso")
+                                                                               .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.IdProceso,App.tfBuscarProceso);")
+                                                                       .Checked(true),
+
+                                                                       X.ComboBox().ID("tfBuscarProceso").Disabled(true)
+                                                                       .Name("buscarproceso")
+                                              .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("TIPOATENCION").Select(d => new ListItem(d.Name, d.ID)))
+                                          .FieldLabel("").SimpleSubmit(true)
+                                                                       
+                                                                       ,
+                                                                           X.ToolbarSpacer(10)
+                                                                            ,
+                                                                           X.Checkbox()
+                                                                       .FieldLabel("OA").LabelWidth(37)
+                                                                       .ID("codigoOA")
+                                                                       .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.codigoOA,App.tfcodigoOA);")
+                                                                        .Checked(true),
+
+                                                                         X.TextField().Width(100)
+                                                                        .ID("tfcodigoOA")
+                                                                        .Disabled(true)
+                                                                        .Name("buscarOA")
+                                                                        .FieldLabel("")
+                                                                               ,
+                                                                        X.ToolbarSpacer(153)
+
+
+
+                                          )
+
+
+                                     )
+                                 )
+                             )
+
+                            )
+                .Items(
+                                               
+                        
+
+                        Html.X().Panel()
+                        .Region(Region.Center)
+                        .ID("centerPanels")
+                        .Height(600)
+                        .Title("Vista de Reporte")
+                        .AutoDoLayout(true)
+                             .Items(
+                       X.GridPanel()
+                            .AllowDeselect(true)
+                            .Border(false)
+                            .Scroll(ScrollMode.Both)
+                            .AutoScroll(true)
+                            .ID("GridPanelDetalle")
+                            .Height(300)
+                            .Margins("0 0 0 0")
+        ///CONFIGURAR EL STORE
+                            .Store(store => store.Add(
+                                     Html.X().Store()
+                                         .ID("StoreDetalle")
+                                         .AutoLoad(true)
+                                         .RemoteSort(false)
+                                         .IsPagingStore(true)
+                                         .RemotePaging(true)
+                                         .PageSize(10)////CAMBIAR DE ACUERDO A ALGÚN UN CRITERIO
+                                         .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                            .Url("getGrillaAuditoriaImpresionDetalle")
+                                                .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                .Root("data")
+                                                .TotalProperty("total")
+                                                                 .IDProperty("Secuencial"))))
+                                          )
+
+                                                 .Parameters(ps =>
+                                                        ps.Add(new
+                                                        {
+                                                            
+                                                            IdImpresion = Model.IdImpresion,
+                                                            
+                                                            Usuario = JRawValue.From("App.tfIdUsuario.getValue()"),
+                                                            FechaUno1 = JRawValue.From("App.FechaUno1.getValue()"),
+                                                            Proceso = JRawValue.From("App.tfBuscarProceso.getValue()"),
+                                                            codigoOA = JRawValue.From("App.tfcodigoOA.getValue()"),
+                                                            
+                                                            
+                                                            tipoBuscar = JRawValue.From("varTipoBuscar")
+                                                        })
+                                                 )
+                                        .Model(model => model.Add(Html.X().Model()
+                                                 .Fields(fields =>
+                                                 {
+                                                     fields.Add(Html.X().ModelField().Name("IdImpresion"));
+                                                     fields.Add(Html.X().ModelField().Name("CodigoOpcion"));
+                                                     fields.Add(Html.X().ModelField().Name("FechaImpresion"));
+                                                     fields.Add(Html.X().ModelField().Name("UsuarioImpresion"));
+                                                     fields.Add(Html.X().ModelField().Name("IdUnidadServicio"));
+                                                     fields.Add(Html.X().ModelField().Name("HostImpresion"));
+                                                     fields.Add(Html.X().ModelField().Name("Accion"));                                                     
+                                                    
+                                                                                                         
+
+                                                 }))
+                                                )
+                                              )
+                                   )
+
+                                ///CONFIGURAR LAS COLUMNAS
+                                .ColumnModel(columnModel =>
+                                {
+
+                                    columnModel.Columns.Add(Html.X().RowNumbererColumn());
+                                    columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("IdImpresion").Width(100).Hidden(false));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Formato HC Impreso").DataIndex("CodigoOpcion").Width(150).Hidden(false));
+                                    columnModel.Columns.Add(Html.X().DateColumn().Text("Fecha Impresion").DataIndex("FechaImpresion").Width(100).Format("dd/MM/yyyy hh:mm"));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Usuario Impresion").DataIndex("UsuarioImpresion").Width(120));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Host").DataIndex("HostImpresion").Width(100));
+                                    columnModel.Columns.Add(Html.X().Column().Text("TipoAtencion").DataIndex("Accion").Width(80));
+                                    ;
+
+
+                                })
+                                // .View(Html.X().GridView().TrackOver(false))
+                                 .Border(false)
+                               .Listeners(l => l.CellClick.Handler = "setSeleccion(record.data);")
+                               //.Listeners(l => l.CellDblClick.Handler = "eventoVerSelected(record.data.IdImpresion);")
+
+
+                                .BottomBar(bar => bar.Add( Html.X().PagingToolbar().DisplayInfo(true)
+                                ))
+
+                    )
+                )
+            )
+                  .Listeners(l => l.Render.Handler = "eventoCargarMain();")
+        ).CloseAction(CloseAction.Destroy)
+)
+

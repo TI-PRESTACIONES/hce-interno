@@ -1,0 +1,232 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_HC_EpisodioAtenciones
+@{
+    ViewBag.Title = "Partial Content";
+    Layout = "";
+    var X = Html.X();
+
+    var PAR_CODTRABAJADORMEDICO = "" + (AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("CODTRABMED") != null ?
+       AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("CODTRABMED") : "08");
+
+    var CODIGO_TRANSACT_HCE = Model.DescansoMedico;
+
+    var CODIGO_OA = Model.CodigoOA;
+
+    var IDPACIENTE = Model.IdPaciente;
+    var NOMBREPAC = Model.ObservacionFirma;
+
+    var indicaEPiClinicoAsignado = (Model.FlagFirma != null ? true : false);
+    var indicaEsMedico = (Model.TipoTrabajador == PAR_CODTRABAJADORMEDICO ? true : false);
+    var indicaSoloLectura = (Model.ESTADOFORMULARIO == "VISTA" ? true : false);
+
+    var indicaEpiClinicoVisible = indicaEsMedico && !indicaEPiClinicoAsignado && !indicaSoloLectura;
+    var indicaContinuarEpiClinicoVisible = indicaEsMedico && !indicaEPiClinicoAsignado
+        && (Model.IdTipoInterConsulta > 0) && !indicaSoloLectura;
+
+    var indicaVisibleCopy = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_VISIBLE_COPY;
+    var indicaVisibleHistorialComp = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_FORM_COMPARTIDO;
+
+    var indicaVisiblePrint = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.ESTADOFORMULARIO_ACCION;
+
+    var visibleImpresionGen = (indicaVisiblePrint == "VISTA" ? true : false);
+}
+<script>
+
+    var ActivaUrlHCE = function (value) {
+
+        window.location.href = ' @Url.Action("Index", "DevolucionMedicamento") ';
+    };
+
+    function preReloadNorth() {
+        window.setTimeout("reloadPanelNorth();", 300);
+    }
+    function preReloadWest() {
+        window.setTimeout("reloadPanelWest();", 300);
+    }
+
+    function preReloadFormato() {
+        window.setTimeout("reloadFormato();", 2000);
+    }
+
+    function reloadFormato() {
+        if (App.txtRecargarX.getValue() == 'RELOAD') {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("reloadFormatos"))',
+                params: {
+                    indica: ''
+                }
+            });
+            App.txtRecargarX.setValue(null);
+        }
+    }
+
+
+    function reloadPanelNorth() {
+        if (App.txtRecargarNorth.getValue() == 'RECARGA') {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("reloadPanelNorthC"))',
+                params: {
+                    indica: ''
+                }
+            });
+            App.txtRecargarNorth.setValue(null);
+        }
+    }
+    function reloadPanelWest() {
+        if (App.txtRecargarWest.getValue() == 'RECARGA') {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("reloadPanelWestC"))',
+                params: {
+                    indica: ''
+                }
+            });
+            App.txtRecargarWest.setValue(null);
+        }
+    }
+
+    function eventoVisorReporte(param1) {
+        if (param1 == 'HC') {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("HCEReportesView_total"))',
+                params: {
+                }
+            });
+
+        }
+    }
+
+    function eventoBienesServicios(compon) {
+        if (compon.getValue() != null && compon.getValue() != '') {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("eventoSeleccionarBienServicio"))',
+                params: {
+                    codigoFormato: compon.getValue(),
+                    codigoFiltro: compon.getValue()
+                }
+                , success: function (result) { onSuccessSeleccBienServicio(result.data); }
+
+            });
+            compon.setValue(null);
+        }
+
+    }
+
+    function celdaActiva() {
+
+        var valor = App.txtCelda.getValue();
+        writeCookie("10", valor, 1);
+
+
+    }
+
+    function writeCookie(name, value, days) {
+        var date, expires;
+        if (days) {
+            date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            expires = "; expires=" + date.toGMTString();
+        } else {
+            expires = "";
+        }
+        document.cookie = name + "=" + value + expires + "; path=/";
+    }
+
+</script>
+@(
+
+
+      
+ X.Panel()
+    .Border(false)  
+    .ID("TabPanelForm")
+     .Border(true)
+    .Items(
+    X.Panel()
+
+        .TopBar(X.Toolbar()
+                    .StyleSpec("padding-bottom:0px;")
+                    .Items(
+                        X.TextField().ID("txtRecargarNorth").Hidden(true).Listeners(l => { l.Change.Handler = "preReloadNorth();"; }),
+                        X.TextField().ID("txtRecargarWest").Hidden(true).Listeners(l => { l.Change.Handler = "preReloadWest();"; }),
+                        X.TabStrip()
+                      
+                       , X.ToolbarFill()
+                        , X.Button()
+                         .Text("Imprimir Todos")
+                         .Icon(Icon.ReportGo)
+                         .Hidden(true)
+                         .ID("btnImpresionHC")
+                         .Handler("eventoVisorReporte('HC');")
+                       
+                       ,
+                               X.TextField()
+                                    .ID("txtCelda")
+                                        .Hidden(true)
+                                        .Listeners(l =>
+                                        {
+                                            l.Change.Handler = "celdaActiva();";
+                                        })
+                       ,
+                        X.TextField()
+                                    .ID("txtRecargarX")
+                                    .Hidden(true)
+                                    .Listeners(l =>
+                                    {
+                                        l.Change.Handler = "preReloadFormato();";
+                                    })
+                                    ,
+                     X.TextField()
+                                    .ID("txtEventoBienes").Hidden(true)
+                                    .Listeners(l =>
+                                    {
+                                        l.Change.Handler = "eventoBienesServicios(this);";
+                                    })
+                    )
+                )
+       
+        .ID("PanelA")
+         .Height(600)
+        
+         .Header(false)
+        .Layout(LayoutType.Fit)
+      
+        .Border(false)
+        .Items(
+                 X.TextField()
+                  .ID("RutaUrl")
+                  .Listeners(l =>
+                  {
+                      l.Change.Handler = "ActivaUrlHCE('valor');";
+                  })
+                  .Hidden(true)
+        )
+        .Loader(
+            Html.X().ComponentLoader()
+                        .AutoLoad(true)
+                       .Url(Url.Action(Model.CONCEPTO))
+
+                        .Mode(LoadMode.Frame)
+
+            )
+        )
+
+     
+    .Plugins(plugins => plugins.Add(new TabCloseMenu()))
+)
+
+
+@(   X.Panel()
+       
+       .ID("PanelB")
+         .Height(600)
+    
+        .Layout(LayoutType.Fit)
+        .Layout(Ext.Net.LayoutType.Fit)
+        .Region(Region.East)
+       
+         .Loader(Html.X().ComponentLoader()
+                            .Url(Url.Action("PanelEast"))
+                            .Mode(LoadMode.Script)
+                            .Params(new { containerId = "East1" })
+             )
+
+)

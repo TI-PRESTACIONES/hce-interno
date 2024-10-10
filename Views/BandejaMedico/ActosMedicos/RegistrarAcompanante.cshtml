@@ -1,0 +1,256 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_HC_RegistroAcompanante
+
+@{
+    var X = Html.X();
+    var modoDesc = (Model.Accion == "NUEVO" ? "Nuevo" :
+                   (Model.Accion == "UPDATE" ? "Modificar" :
+                   (Model.Accion == "DELETE" ? "Eliminar" :
+                   (Model.Accion == "VER" ? "Ver" : "--"))));
+
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VER" ? false : false))));
+
+    var indicaModoLecturaKey = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? false :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VER" ? false : false))));
+
+    var STYLE_BACKGROUND_NODEIT = "background: #BBD8D6";
+    var COLOR_BORDER_DEFAULT = "#b5b8c8";
+
+    var STYLE_BORDER_DEF_VALID01 = (Model.IdAcompanante != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+    var STYLE_BORDER_DEF_VALID02 = (Model.Nombres != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+       
+
+}
+
+
+
+
+
+
+
+
+
+
+
+<script>
+
+
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_RED01 = "#990000";
+
+    var COLOR_BORDER_ERROR = "red";
+    var COLOR_BORDER_DEF = "#b5b8c8";
+    var COLOR_BACKGROUND_NOEDIT = "#9FBCB9";
+
+    function cerrarWindow() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Se registró correctamente el Acompanante.',
+                accion: null
+            }
+        });
+    }
+
+    var change = function (value, meta) {
+        return value;
+    };
+
+    var onSuccess = function (data) {
+        accionMensajes(data);
+    };
+
+
+
+
+   var onFailure = function (modo) {
+        App.btnSave.setDisabled(false);
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Un error en el evento ',
+                titulo: "Error",
+                tipo: 'ERROR'
+            }
+        });
+    };
+
+
+
+
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "\t *" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+        } else {
+            App.taAlerts.setVisible(false);
+        }
+
+    };
+
+
+
+    function validarCantidadDoc(objDoc, valorDoc, valorCombo) {
+
+
+        if (valorCombo == "D") {
+            if (valorDoc.length > 8) {
+                objDoc.setValue(valorDoc.substring(0, 8));
+
+                return;
+            }
+
+
+        }
+        if (valorCombo == "R") {
+            if (valorDoc.length > 11) {
+                objDoc.setValue(valorDoc.substring(0, 11));
+                return;
+            }
+        }
+    };
+
+    function numbersOnly(oToCheckField, oKeyEvent) {
+        return oKeyEvent.charCode === 0 || /\d/.test(String.fromCharCode(oKeyEvent.charCode));
+    }
+
+
+</script>
+
+@(Html.X().Window()
+    .Width(435)
+    .Height(450)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+        //.AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+        .ID("WindowAcompanante")
+                .Title("Registrar Acompanante:" + modoDesc)
+    .Padding(4)
+    .Items(
+                    Html.X().FormPanel().ID("FormPanel1")
+                             .Frame(false)
+                             .Border(false)
+                            .AutoScroll(true)
+                            .Layout(LayoutType.VBox)
+                            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                    .Items(
+                        Html.X().FormPanel()
+                             .Frame(false)
+                             .Border(false)
+                            .Layout(LayoutType.HBox)
+                            .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+
+                            .Items(
+
+
+                                Html.X().FormPanel().Layout(LayoutType.Form).Width(420).Height(360).FieldDefaults(d => { d.LabelWidth = 100; }).BodyPadding(10).Frame(false).Border(false)
+
+                                .Items(
+                                     X.TextFieldFor(m => m.CodigoOA).Width(200).FieldLabel("Codigo OA").ReadOnly(true),
+                                 X.TextField().ID("txtPacienteN").ReadOnly(true).FieldLabel("Paciente"),
+
+                                X.FieldSet().Title("Datos del Acompanante").FieldDefaults(d => { d.LabelWidth = 100; })
+                                .Items(
+
+
+                                Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                .Items(
+                                X.ToolbarTextItem(),
+
+                                X.ComboBoxFor(x => x.Tipo).Width(200).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboMiscelaneoLista.GetComboGenericoTxt("TIPODOCUME")
+                                .Select(d => new ListItem(d.Name, d.Codigo))).FieldLabel("Tipo Documento").LabelWidth(100).Value("D").Editable(true).SimpleSubmit(true),
+                                X.ToolbarSpacer(),
+
+                                     X.TextFieldFor(m => m.numero).Width(150).FieldLabel("Numero").EnableKeyEvents(true).LabelWidth(50).Listeners(l => l.Change.Handler = "validarCantidadDoc(App.numero,App.numero.getValue(),App.Tipo.getValue());")
+
+                                ),
+
+                                Html.X().FormPanel().Layout(LayoutType.Form).Width(450).FieldDefaults(d => { d.LabelWidth = 100; }).BodyPadding(10).Frame(false).Border(false)
+                                .Items(
+
+                                X.ComboBoxFor(x => x.TipoParentesco).Width(350).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboMiscelaneoLista.GetComboGenericoTxt("TIPOPARENTESCO")
+                                .Select(d => new ListItem(d.Name, d.Codigo))).FieldLabel("Parentesco").Value("1").Editable(true).SimpleSubmit(true),
+
+                                X.TextFieldFor(m => m.ApePat).FieldLabel("Apellido Paterno").Width(350),
+                                X.TextFieldFor(m => m.ApeMat).FieldLabel("Apellido Materno").Width(350),
+                                X.TextFieldFor(m => m.Nombres).FieldLabel("Nombres").Width(350),
+                                X.TextFieldFor(m => m.Telefono).FieldLabel("Telefono/Celular").Width(350).MaxLength(10),
+                                X.TextAreaFor(m => m.Observaciones).FieldLabel("Observacion").Width(350),
+                                X.ComboBoxFor(m => m.Estado).Width(350).Editable(false).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("ESTADOINT").Select(d => new ListItem(d.Name, d.ID))).FieldLabel("Estado").Value(Model.Accion == "NUEVO" ? 2 : (Model.Estado)).SimpleSubmit(true).ReadOnly(indicaModoLectura)
+                                )
+                                )),
+
+                                    Html.X().FormPanel().Layout(LayoutType.Form).Width(300).FieldDefaults(d => { d.LabelWidth = 60; }).BodyPadding(10).Frame(false).Border(false)
+                                    .Items(
+                                    X.NumberFieldFor(m => m.IdAcompanante).FieldLabel("Id").Width(120).ReadOnly(true).Hidden(true),
+                                     X.TextFieldFor(m => m.IdPaciente).Width(200).ReadOnly(indicaModoLectura).FieldLabel("Paciente").Hidden(true)
+
+                                    )
+
+                               )
+
+
+                         )
+                         .TopBar(
+                             X.Toolbar()
+                             .Height(30)
+                             .Items(
+                                X.ToolbarFill(),
+                                X.Button()
+                                        .Hidden((Model.Accion == "VER" ? true : false))
+                                        .ID("btnSave")
+                                        .Text((Model.Accion == "DELETE" ? "Eliminar" : "Guardar"))
+                                        .Icon((Model.Accion == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave))
+                                     .DirectEvents(d =>
+                                      {
+
+                                          d.Click.Url = Url.Action("save_Acompanante");
+                                          d.Click.Before = "App.btnSave.setDisabled(true); ";
+                                          d.Click.After = "App.btnSave.setDisabled(false); ";
+                                          d.Click.EventMask.ShowMask = true;
+                                          d.Click.ExtraParams.Add(new Parameter("MODO", Model.Accion, ParameterMode.Value));
+                                          d.Click.ExtraParams.Add(new Parameter("idWindow", "WindowAcompanante", ParameterMode.Value));
+                                          //     d.Click.Success = "onSuccess(result.data);";
+                                          d.Click.Failure = "onFailure('" + Model.Accion + "');";
+
+                                      }),
+                                X.Button()
+                                            .Text((Model.Accion == "VER" ? "Aceptar" : "Cancelar"))
+                                            .Icon((Model.Accion == "VER" ? Icon.Accept : Icon.Cancel))
+                                     .DirectEvents(d =>
+                                      {
+                                          d.Click.Url = Url.Action("cerrarWindow");
+                                          d.Click.ExtraParams.Add(new Parameter(
+                                                "id", "WindowAcompanante", ParameterMode.Value));
+                                      }),
+                                          X.ToolbarSpacer(20)
+                                 )
+                            )
+        )
+        .DirectEvents(d =>
+        {
+            d.Render.Url = Url.Action("postWindowAcompanante");
+            d.Render.ExtraParams.Add(new Parameter(
+           "id", "" + Model.IdPaciente, ParameterMode.Value));
+
+
+
+        })
+    .CloseAction(CloseAction.Destroy)
+)

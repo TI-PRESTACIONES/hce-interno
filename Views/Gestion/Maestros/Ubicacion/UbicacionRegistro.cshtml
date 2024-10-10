@@ -1,0 +1,244 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_HC_Ubicacion
+@{
+    var X = Html.X();
+    var modoDesc = (Model.Accion == "NUEVO" ? "Nuevo" :
+                    (Model.Accion == "UPDATE" ? "Modificar" :
+                        (Model.Accion == "DELETE" ? "Eliminar" :
+                            (Model.Accion == "VER" ? "Ver" : "--"))));
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VER" ? false : false))));
+    var indicaModoLecturaKey = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? false :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VER" ? false : false))));                            
+    var COLOR_BORDER_DEFAULT = "#b5b8c8";
+    var STYLE_BORDER_DEF_VALID01 = (Model.Codigo != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+    var STYLE_BORDER_DEF_VALID02 = (Model.Descripcion != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+}
+
+
+<script>
+    var change = function (value, meta) {
+        return value;
+    };
+
+    var onSuccess = function (modo) {
+        accionMensajes(modo);
+    };
+
+    var onFailure = function (modo) {
+        App.btnSave.setDisabled(false);
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Un error en el evento ',
+                titulo: "Error",
+                tipo: 'ERROR'
+            }
+        });
+    };
+
+    function cerrarWindow() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Se registró correctamente',
+                Accion: null
+            }
+        });
+    }
+
+    var showResult = function (btn) {
+        Ext.Msg.notify("Aceptar", "You clicked the " + btn + " button");
+    };
+
+    function seleccionadorUbicacion() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorUbicacion"))',
+            params: {
+                AccionSeleccion: 'getSeleccionUbicacion',
+                AccionListado: 'LISTARPAG'
+            }
+        });
+    };
+    
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+        } else {
+            App.taAlerts.setVisible(false);
+        }
+
+    };
+
+    var getInvalidFields = function (form) {
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+        });
+        return invalidFields;
+    };
+
+    var beforeSave = function (form) {
+        var FieldsInvalidos = getInvalidFields(form);
+        if (!form.getForm().isValid()) {
+            if (FieldsInvalidos.length > 0) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("addRecursosValidacion"))',
+                    params: {
+                        data: FieldsInvalidos,
+                        indica: 'VALIDAR',
+                    },
+                    success: function (result) {
+                        accionMensajes(result.data);
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("addRecursosValidacion"))',
+                            params: {
+                                data: FieldsInvalidos,
+                                indica: 'RESTART',
+                            }
+                        });
+                    }
+                });
+
+            }
+        }
+    };
+</script>
+@(Html.X().Window()
+    .Width(500)
+    .Height(420)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowX")
+    .Title("Maestro Ubicación:  " + modoDesc)
+    .Padding(4)
+    .Items(
+    Html.X().FormPanel().ID("FormPanel1").Frame(false).Border(false).AutoScroll(true).Layout(LayoutType.VBox).LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+    .Items(
+        Html.X().FormPanel().Layout(LayoutType.Form).FieldDefaults(d => { d.LabelWidth = 100; }).BodyPadding(10).Frame(false).Border(false)
+        .Items(
+            Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+            .Items(
+                X.NumberFieldFor(m => m.IdUbicacion).FieldLabel("Id. Ubicación").ReadOnly(true).Editable(false).Width(170).MarginSpec("0 80 0 0"),
+                X.TextFieldFor(m => m.Codigo).FieldLabel("Código").ReadOnly(indicaModoLectura).Width(170)
+                ),
+            Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top }).MarginSpec("0 0 -18 0")
+            .Items(
+                X.NumberFieldFor(m => m.IdUbicacionPadre).FieldLabel("Id Ubic. Padre").Width(170).ReadOnly(true),
+                X.TextField().ID("tfUbicacionPadre").ReadOnly(true).HideLabel(true).Width(250).RightButtons(X.Button().Text("...").Handler("seleccionadorUbicacion();").Disabled(Model.Accion != "NUEVO" ? true : false))
+                ),
+                 X.ComboBox().Width(250).ID("UnidadReplicacion")
+                .ReadOnly(indicaModoLecturaKey)
+            .FieldLabel("Sucursal").TypeAhead(true).QueryMode(DataLoadMode.Local).ForceSelection(true)
+            .TriggerAction(TriggerAction.All).DisplayField("name").ValueField("codigo").EmptyText("Loading...").ValueNotFoundText("Loading...").Store(
+            Html.X().Store().AutoLoad(true).Model(
+                Html.X().Model().IDProperty("Codigo").Fields(
+                new ModelField("codigo", ModelFieldType.String) { Mapping = "Codigo" },
+                new ModelField("name", ModelFieldType.String) { Mapping = "Name" })
+             )
+            .Proxy(Html.X().AjaxProxy().Url(Url.Action("Combos")).Reader(Html.X().JsonReader().Root("data")))
+            .Parameters(ps => ps.Add(new { Accion = "SUCURSAL", Par1 = "", Par2 = "", }))
+            .Listeners(ls => ls.Load.Handler = @"var combo = App.UnidadReplicacion;App.UnidadReplicacion.setValue('" + (Model.UnidadReplicacion+"").Trim() + "'); ")
+            )
+            ,                
+            X.ComboBoxFor(m => m.TipoUbicacion).Editable(false).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboMiscelaneoLista.GetComboGenericoTxt("TPOUBICACI").Select(d => new ListItem(d.Name, d.Codigo))).FieldLabel("Tipo Ubicación").SimpleSubmit(true).ReadOnly(indicaModoLectura).Width(250),
+            X.TextFieldFor(m => m.Nombre).FieldLabel("Nombre").ReadOnly(indicaModoLectura).Width(250),
+            X.NumberFieldFor(m => m.Nivel).FieldLabel("Nivel").ReadOnly(indicaModoLectura).Width(170),
+            X.TextAreaFor(m => m.Ruta).FieldLabel("Ruta").ReadOnly(indicaModoLectura).Width(250).Height(50),
+            X.TextAreaFor(m => m.RutaDescripcion).FieldLabel("Ruta Descripción").ReadOnly(indicaModoLectura).Width(250).Height(50),
+            X.ComboBoxFor(m => m.Estado).Editable(false).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("ESTADOINT").Select(d => new ListItem(d.Name, d.ID))).FieldLabel("Estado").Value(Model.Accion == "NUEVO" ? 2 : (Model.Estado)).SimpleSubmit(true).ReadOnly(indicaModoLectura).Width(250)
+            
+            ),
+            Html.X().FormPanel().Layout(LayoutType.Form).Width(500).FieldDefaults(d => { d.LabelWidth = 150; }).BodyPadding(10).Frame(false).Border(false)
+            .Items(
+                X.FieldSet().Title("Información Adicional").FieldDefaults(d => { d.LabelWidth = 90; d.InputWidth = 120; })
+                .Items(
+                    Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                    .Items(
+                    
+                        X.TextFieldFor(m => m.UsuarioCreacion).FieldLabel("Creación").ReadOnly(true),
+                        X.DateFieldFor(m => m.FechaCreacion).Format("dd/MM/yyyy").ReadOnly(true).HideLabel(true).Width(80),
+                        X.TimeFieldFor(m => m.FechaCreacion).ID("dfHoraCreacion").Format("H:mm:ss").ReadOnly(true).HideLabel(true).Width(80)
+                        
+                        ),
+                    Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                    .Items(
+                    
+                        X.TextFieldFor(m => m.UsuarioModificacion).FieldLabel("Modificación").ReadOnly(true),
+                        X.DateFieldFor(m => m.FechaModificacion).Format("dd/MM/yyyy").ReadOnly(true).HideLabel(true).Width(80),
+                        X.TimeFieldFor(m => m.FechaModificacion).ID("dfHoraModificacion").Format("H:mm:ss").ReadOnly(true).HideLabel(true).Width(80)
+                        
+                        )
+                        )
+                        ),
+                    X.TextArea().ID("taAlerts")
+                    .Border(false)
+                    .StyleSpec("background:white;border:1px solid gray;")
+                    .FieldStyle("color: red")
+                    .Hidden(true)
+                    .ReadOnly(true)
+                    )
+                    .TopBar(
+                        X.Toolbar()
+                        .Height(30)
+                        .Items(
+                            X.ToolbarFill(),
+                            X.Button().Hidden(
+                                (Model.Accion == "VER" ? true : false))
+                                .ID("btnSave")
+                                .Text((Model.Accion == "DELETE" ? "Eliminar" : "Guardar"))
+                                .Icon((Model.Accion == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave))
+                                .DirectEvents(de =>
+                                {
+                                    de.Click.Url = Url.Action("save_UbicacionServ");
+                                    de.Click.Before = "App.btnSave.setDisabled(true); " + "beforeSave(App.FormPanel1); return App.FormPanel1.getForm().isValid(); ";
+                                    de.Click.After = "App.btnSave.setDisabled(false); ";
+                                    de.Click.EventMask.ShowMask = true;
+                                    de.Click.ExtraParams.Add(new Parameter("MODO", Model.Accion, ParameterMode.Value));
+                                    de.Click.ExtraParams.Add(new Parameter("idWindow", "WindowX", ParameterMode.Value));
+                                    de.Click.Success = "onSuccess(result.data);";
+                                    de.Click.Failure = "onFailure('" + Model.Accion + "');";
+                                }),
+                                      X.Button().Text((Model.Accion == "VER" ? "Aceptar" : "Cancelar")).Icon((Model.Accion == "VER" ? Icon.Accept : Icon.Cancel))
+                                      .DirectEvents(de =>
+                                      {
+                                          de.Click.Url = Url.Action("cerrarWindow");
+                                          de.Click.ExtraParams.Add(new Parameter("id", "WindowX", ParameterMode.Value));
+                                      }),
+                                          X.ToolbarSpacer(20)
+                                 )
+                            )
+        )
+        .DirectEvents(de =>
+        {
+            de.Render.Url = Url.Action("postWindowUbicacion");
+            de.Render.ExtraParams.Add(new Parameter("id", "" + Model.IdUbicacionPadre, ParameterMode.Value));
+            de.Render.ExtraParams.Add(new Parameter("id2", "" + Model.UnidadReplicacion, ParameterMode.Value));
+            de.Render.ExtraParams.Add(new Parameter("id3", "" + Model.Codigo, ParameterMode.Value));
+        })
+    .CloseAction(CloseAction.Destroy)
+)
+
+
+
+

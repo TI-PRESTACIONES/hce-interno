@@ -1,0 +1,356 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.USUARIO
+
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();    
+}
+@section cabecera
+{
+    <script>
+    //LÒGICA DE UNA COLUMAN DE GRILLA
+    //var template = '<span style="color:{0};">{1}</span>';
+    var template = 'color:{0};';
+
+    var change = function (value, meta) {
+        var show;
+        var format;
+        if (value = 'A') {
+            show = 'Activo';
+            format = '#284A89';
+        } else if (value = 'I') {
+            show = 'Inactivo';
+            format = '#990000';
+        } else {
+            show = '--';
+            format = 'black';
+        }
+        //return Ext.String.format(template, format, show);
+        meta.style = Ext.String.format(template, format);
+        return value;
+
+    };
+    var changePerfil = function (value) {
+        var show;
+        var format;
+        if (value = 'US')
+            show = 'Usuario'
+        else if (value = 'PE')
+            show = 'Perfil'
+        else
+            show = '--'
+        return show;
+
+    };
+    
+    var pctChange = function (value) {
+        return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+    };
+    // funciones relacionadas a al GRILLA
+    var onSuccess = function (grid, data) {
+        grid.show();
+        grid.getStore().loadData(data);
+    };
+
+    function deleteSelected(grid) {
+        var store = grid.store,
+           records = grid.selModel.getSelection();
+        store.remove(records);
+        App.Window1.AutoDestroy(true);
+        //store.load(true);
+
+    };
+    function nuevo() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("UsuarioRegistro"))',
+            params: {
+                MODO: 'NUEVO',
+                usuario: null            
+                //MODO: 'UPDATE',
+                //usuario: status
+            }
+        });
+    };
+    function modificarSelected(grid) {
+        var status = getCampoSelected(grid, 'USUARIO1')
+        //alert("USER::" + status);
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("UsuarioRegistro"))',
+                params: {
+                    MODO: 'UPDATE',
+                    usuario: status                    
+                    //MODO: 'UPDATE',
+                    //usuario: status
+                }
+            });
+        }
+     function eliminarSelected(grid) {
+            var status = getCampoSelected(grid, 'USUARIO1')
+            //alert("USER::" + status);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("UsuarioRegistro"))',
+                params: {
+                    MODO: 'DELETE',
+                    usuario: status                    
+                    //MODO: 'UPDATE',
+                    //usuario: status
+                }
+            });
+        }
+        ////
+        ////
+        function asignarPerfil(grid) {            
+            var status = getCampoSelected(grid, 'USUARIO1')
+            var usuarioperfil = getCampoSelected(grid, 'USUARIOPERFIL')            
+            if (usuarioperfil=='PE')
+                Ext.Msg.notify("Advertencia", "Asegúrese de seleccionar un usuario y no un perfil.");
+            else if (usuarioperfil == 'US')
+            {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("AsignarPerfilUsuarioRegistro"))',
+                    params: {
+                        MODO: 'NUEVO',
+                        usuario: status
+                        //MODO: 'UPDATE',
+                        //usuario: status
+                    }
+                });
+            }
+        };
+
+    function modificarSelectedX(grid) {
+        var status = getCampoSelected(grid, 'USUARIO1')
+        //alert("USER::" + status);
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("crearWindowRegistro"))',
+            params: {
+                urlLoad: 'UsuarioRegistro',
+                titulo: 'Registro de Usuario',
+                id: 'Window1',
+                parametrosNombres: 'MODO,usuario',
+                parametrosValores: 'UPDATE,' + status,
+                width: '700',
+                height: '400'
+                //MODO: 'UPDATE',
+                //usuario: status
+            }
+        });
+    }
+
+
+    var getCampoSelected = function (grid, campo) {
+        var rango = grid.split('RowIndex');
+        var rango = rango[1].split(':');
+        var rango = rango[1].split('}');
+        source = App.GridPanel1;
+        var i = 0;
+        var store = App.Store1;
+        var status;
+        if (source.getSelectionModel().hasSelection()) {
+            //alert("TIENE SELECTT");
+            var records = source.getSelectionModel().getSelection();
+            store.each(function (record) {
+                if (rango[0] == i) {
+                    status = record.get(campo);
+                    // return;
+                }
+                i = i + 1;
+            }
+            );
+        }
+        return status;
+    };
+
+
+</script>
+}
+
+@section cuerpo
+{
+    @(
+ Html.X().Viewport()
+        .AutoScroll(true)
+        .Layout(LayoutType.Border)
+        .Items(
+           X.Panel()
+              .Title("Listado de usuarios")
+        //.Header(false)
+              .Border(false)
+              .Region(Region.North)
+              .Split(true)
+             .Collapsible(true)
+        //.Header(false)
+              .Height(120)
+              .TopBar(
+                         X.Toolbar()
+                        .Height(30)
+                            .Items(
+                                X.Button()
+                                    .Text("Nuevo")
+                                    .Icon(Icon.Add)                                                                                
+                                    .Handler("nuevo(); "),        
+                                X.Button()
+                                    .Text("Modificar")                                                                         
+                                    .Icon(Icon.ApplicationFormEdit)
+                                    .Handler("modificarSelected(App.GridPanel1.getSelectionSubmit().getSelectionModelField().getValue());")
+                                         ,                                                                        
+                                X.Button()
+                                    .Text("Eliminar")
+                                    .Icon(Icon.Delete)        
+                                .Handler("eliminarSelected(App.GridPanel1.getSelectionSubmit().getSelectionModelField().getValue());"),
+                                 X.ToolbarFill(),
+                                X.Button()
+                                    .Text("Asignar Perfil")
+                                    .Icon(Icon.BookAdd)
+                                    .Handler("asignarPerfil(App.GridPanel1.getSelectionSubmit().getSelectionModelField().getValue());")                                        
+                              )
+              )
+             .Items(X.Panel()
+                    .Layout(LayoutType.HBox)
+                    .BodyPadding(5)
+                    .Items(
+                            X.FieldSet()
+                                .Flex(1)
+                                .Title("Filtros")
+                                .MarginSpec("5 5 5 5")
+                                .Defaults(d =>
+                                {
+                                    d.Add(new Parameter("LabelWidth", "120"));
+                                })
+                                .Items(
+                                    X.TextField()
+                                    .ID("tfBuscar")
+                                    .Name("buscar")
+                                    .FieldLabel("Descripción")
+                                )
+                                ,
+                           X.Button()
+                            .Text("Buscar")
+                            .Icon(Icon.Find)
+        //.Handler("#{Window1}.load('http://forums.ext.net');"),
+                            .DirectEvents(directEvents =>
+                             {
+                                 directEvents.Click.Url = "getGrillaListadoUsuarios";
+                                 //directEvents.Click.Url = "../Controllers/Maestros/Usuario/UsuarioController/GrillaListadoPacientes";
+                                 directEvents.Click.CleanRequest = true;
+                                 directEvents.Click.Method = HttpMethod.POST;
+                                 // directEvents.Click.Confirmation.ConfirmRequest = true;
+                                 directEvents.Click.Success = "onSuccess(App.GridPanel1, result.data);";
+                                 directEvents.Click.EventMask.ShowMask = true;
+                                 directEvents.Click.EventMask.Msg = "Espere un momento...";
+                                 directEvents.Click.ExtraParams.Add(new
+                                 {
+                                     start = 0,
+                                     limit = 20,
+                                     /*
+                                     txtHC = JRawValue.From("App.txtHC.getValue()"),
+                                     txtFecha1 = JRawValue.From("App.txtFecha1.getValue()"),
+                                     txtFecha2 = JRawValue.From("App.txtFecha2.getValue()"),
+                                     txtHCA = JRawValue.From("App.txtHCA.getValue()"),
+                                     txtCodigoOA = JRawValue.From("App.txtCodigoOA.getValue()"),
+                                     */
+                                     txtUsuario = JRawValue.From("App.tfBuscar.getValue()")
+                                     
+                                 });
+                             }
+                            )
+                    )
+             ),
+            X.Panel()
+        //.BaseCls("x-plain").Flex(1)
+                .Region(Region.Center)
+        //.AutoScroll(true)
+        //.Scroll(ScrollMode.Both)
+                .ItemID("center")
+        //.Height(600)
+               .Header(false)
+               .Border(false)
+               .Items(
+                   X.GridPanel()
+                        .Border(false)
+                        .Scroll(ScrollMode.Both)
+                        .AutoScroll(true)
+                        .ID("GridPanel1")
+        // .DefaultAnchor("100%")
+        //.Anchor("100% 100%")
+                        .Margins("0 0 0 0")
+        ///CONFIGURAR EL STORE
+                        .Store(store => store.Add(
+                                 Html.X().Store()
+                                     .ID("Store1")
+                                     .AutoLoad(true)
+                                     .RemoteSort(false)
+                                     .IsPagingStore(true)
+                                     .RemotePaging(true)
+                                     .PageSize(20)////CAMBIAR DE ACUERDO A ALGÚN UN CRITERIO
+                                     .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()                                            
+                                            .Url("getGrillaListadoUsuarios")
+                                            //.Url("../LPacientes/GrillaListadoPacientes")
+                                         //.Url("../Controllers/Maestros/Usuario/UsuarioController/GrillaListadoPacientes")                                            
+                                            .Reader(reader => reader.Add(Html.X().JsonReader()
+                                            .Root("data")
+                                            .TotalProperty("total")
+                                                .IDProperty("USUARIO1"))))
+                                            )
+                            //.Reader(reader => reader.Add(Html.X().JsonReader().Root("data").IDProperty("P_ID")))
+                            // .Writer(writer => writer.Add(Html.X().JsonWriter().AllowSingle(true)))
+                                     .Model(model => model.Add(Html.X().Model()
+                                             .Fields(fields =>
+                                             {
+                                                 fields.Add(Html.X().ModelField().Name("USUARIO1"));
+                                                 fields.Add(Html.X().ModelField().Name("NOMBRE"));
+                                                 fields.Add(Html.X().ModelField().Name("Estado"));
+                                                 fields.Add(Html.X().ModelField().Name("USUARIOPERFIL"));
+                                             }))
+                                            )
+                                          )
+                               )
+
+                            ///CONFIGURAR LAS COLUMNAS
+                            .ColumnModel(columnModel =>
+                             {      
+                                 columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("USUARIO1").Width(150));
+                                 columnModel.Columns.Add(Html.X().Column().Text("Usuario").DataIndex("NOMBRE").Width(300));
+                                 columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(100)
+                                         .Renderer("change"));
+                                 columnModel.Columns.Add(Html.X().Column().Text("Perfil/Usuario").DataIndex("USUARIOPERFIL").Width(100));
+
+                             })
+                             .View(Html.X().GridView().TrackOver(false))
+        //.View(view => view.Add(Html.X().GridView().TrackOver(false)))
+                             .Border(false)
+                            .BottomBar(bar => bar.Add(
+                                Html.X().PagingToolbar()
+                                //.DisplayInfo(true)
+                                //.DisplayMsg("Displaying customers {0} - {1} of {2}"))
+                            ))
+
+                           /*.TopBar(X.Panel()
+                                .Height(50)
+                                .Title("Buscador")
+                                .Border(false)
+                            )   */
+                )
+        //     ,
+        //X.Panel()
+        //    .Region(Region.South)
+        //     //.Split(true)
+        //     //.Collapsible(true)
+        //     .Header(false)
+        //     .Height(30)
+        //     .Border(false)
+        //     //.BodyPadding(6)
+        //     //.Html("South")
+        //     .Items(
+        //         X.PagingToolbar()
+        //         .DisplayInfo(true)
+        //         .DisplayMsg("Displaying customers {0} - {1} of {2}")
+        //                         //.Height(40)
+
+           //     )
+
+        )
+    )   
+
+}

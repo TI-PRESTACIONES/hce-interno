@@ -1,0 +1,377 @@
+﻿@model SoluccionSalud.Entidades.Entidades.ChartModel
+
+@{
+
+    var X = Html.X();
+    var COLOR_BLUE01_temp = "#284A89";
+    var COLOR_RED01_temp = "#990000";
+    var COLOR_GREEN01_temp = "#177506";
+    var COLOR_YELLOW02_temp = "#D9A407";
+    var urlActivo = "";
+    urlActivo = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.PacienteDatos1;
+
+    var idOpcion = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.IDOPCION_ACTUAL;
+    var codigoFormatoActual = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.CONCEPTO;
+    var descOpcion = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.CONCEPTODESCRIPCION;
+
+    var idWindow = "windowCopiarForm";
+
+    /** FORMATOS CONFIGURADOS PARA LA COPIA*/
+    var FORM_ANAMNESIS_EA_F1 = AppSaludMVC.Controllers.UTILES_MENSAJES.FORM_ANAMNESIS_EA_F1;
+    var FORM_MEDICAMENTOS_F1 = AppSaludMVC.Controllers.UTILES_MENSAJES.FORM_MEDICAMENTOS_F1;
+    var FORM_DIETAS_MNUT_F1 = AppSaludMVC.Controllers.UTILES_MENSAJES.FORM_DIETAS_MNUT_F1;
+    var FORM_DIAGNOSTICO_F1 = AppSaludMVC.Controllers.UTILES_MENSAJES.FORM_DIAGNOSTICO_F1;
+    var FORM_EVOL_OBJETIVA_F1 = AppSaludMVC.Controllers.UTILES_MENSAJES.FORM_EVOL_OBJETIVA_F1;
+
+}
+
+<style type="text/css">
+    /*<![CDATA[*/
+    #img_uno {
+        width: auto;
+        height: 100%;
+        align-self: center;
+        -webkit-user-select: none;
+        cursor: zoom-in;
+    }
+
+    #img_dos {
+        -webkit-user-select: none;
+        cursor: zoom-out;
+    }
+
+    .logo {
+        border: solid 3px #000;
+    }
+
+
+
+</style>
+
+
+<script>
+
+    var actualPrev_X = null;
+    var actualPrev_Y = null;
+    var actualPrev_H = null;
+    var actualPrev_W = null;
+
+    var panelActual = null;
+    var pathImage = "resources/IndexImagen/";
+
+    var sistemas = function (record) {
+
+        var desc = record.data.text;
+        var vector = record.data.id.split('|');
+        var showURL = "";
+        var tipo = 0;
+        if (vector.length > 3) {
+            tipo = vector[0];
+            showURL = vector[3];
+        }
+        if (tipo > 1) {
+            var cont = App.centerPanels;
+            cont.setTitle('Selección actual: ' + desc);
+            imagendiv(showURL);
+        } else {
+        }
+    };
+
+    var formSelecc = null;
+
+    var loadContenidoCopy = function (record) {
+        if (record != null) {
+            var formSelecc = record.data.Accion;
+            if (formSelecc != null) {
+
+            }
+        }
+    };
+
+    function imagendiv(showURL) {
+        var imagen = document.createElement('img');
+        /* agregamos propiedades al elemento
+        */
+        imagen.src = showURL;
+        imagen.id = 'img_uno';
+        imagen.className = 'logo';
+        imagen.title = 'titulo de la imagen';
+        imagen.alt = 'texto alternativo';
+        imagen.onclick = function () {
+            if (this.id == 'img_uno') {
+                this.id = 'img_dos';
+            } else {
+                this.id = 'img_uno';
+            }
+        };
+        /* definimos el elemento donde insertamos la imagen
+        */
+        var div = document.getElementById("centerPanels-body");
+        div.innerHTML = "";
+        div.style.overflow = "scroll";
+        /* agregamos la imagen
+        */
+        div.appendChild(imagen);
+    }
+    var accionBuscar = function () {
+        var hh = App.ComboBoxCountry.getValue(); 
+        
+        App.Chart1.getStore().reload()
+    };
+
+    var eventoExpandir = function (window, contraer) {
+        if (contraer) {
+            if (actualPrev_X != null && actualPrev_Y != null && actualPrev_H != null && actualPrev_W != null) {
+                window.setHeight(actualPrev_H);
+                window.setWidth(actualPrev_W);
+                window.setX(actualPrev_X);
+                window.setY(actualPrev_Y);
+                App.btnContract.setVisible(false);
+                App.btnExpand.setVisible(true);
+            }
+        } else {
+            actualPrev_H = window.getHeight();
+            actualPrev_W = window.getWidth();
+            actualPrev_X = window.getX();
+            actualPrev_Y = window.getY();
+            var KK = 30;
+            var h = screen.height;
+            var w = screen.width;
+            window.setHeight(h - KK - 100);
+            window.setWidth(w);
+            window.setX(0);
+            window.setY(KK);
+            App.btnContract.setVisible(true);
+            App.btnExpand.setVisible(false);
+        }
+    };
+
+    var saveChart = function (btn) {
+        Ext.MessageBox.confirm('Confirm Download', 'Would you like to download the chart as an image?', function (choice) {
+            if (choice == 'yes') {
+                btn.up('panel').down('chart').save({
+                    type: 'image/png'
+                });
+            }
+        });
+    }
+
+
+</script>
+
+
+@(Html.X().Window()
+    .Width(960)
+    .Height(550)
+    .Maximizable(false)
+    .Closable(false)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Resizable(false) // 08/05/2019 agrego
+    .Constrain(true)   // 08/05/2019 agrego
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+     .ID("" + idWindow)
+            .Title("Grafico Funciones Vitales:" + descOpcion)
+    .Padding(4)
+        .TopBar(
+            X.Toolbar()
+            .Height(30)
+            .Items(
+                X.ToolbarSpacer(),
+                    X.Label().Html("<b><span style='color:" + COLOR_BLUE01_temp + ";'>" +
+                    "Paciente" + ": " + Model.NombreCompleto + "</span> </b>")
+                ,
+                X.ToolbarSpacer(40),
+                    X.Label().Html("<b><span style='color:" + COLOR_BLUE01_temp + ";'>" +
+                        "Unidad de Replicación" + ": " + Model.UnidadReplicacionEC + "</span> </b>").Hidden(true)
+                ,
+                X.ToolbarFill()
+                ,
+                X.Button().ID("btnExpand")
+                    .Text("Expandir")
+                    .Icon(Icon.ApplicationSideExpand)
+                    .Handler("eventoExpandir (App." + idWindow + ",false);")
+                            ,
+                X.Button().ID("btnContract")
+                    .Text("Restaurar").Hidden(true)
+                    .Icon(Icon.ApplicationSideContract)
+                    .Handler("eventoExpandir (App." + idWindow + ",true);")
+
+                )
+          )
+        //INICIO
+    .Items(
+        X.Panel()
+        .Border(false)
+        .Layout(LayoutType.VBox)
+        .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+        .TopBar(
+                X.Toolbar()
+                .Height(30)
+                .Items(
+                    X.ToolbarFill()
+                        , X.ToolbarSeparator()
+                        ,
+
+                    X.Button()
+                         .Text("Buscar")
+                              .Icon(Icon.ArrowRefresh)
+                                  .Handler("accionBuscar();"),
+                        //.Handler("App.parent.Chart1.getStore().reload()"),
+
+                    X.Button()
+                        .Text("Cancelar")
+                        .Icon(Icon.Cancel)
+                        .DirectEvents(de =>
+                         {  //Model.ACCION : Posee el MODO ACTUAL
+                             de.Click.Url = Url.Action("cerrarWindow");
+                    
+                             de.Click.ExtraParams.Add(new Parameter(
+                                   "id", "" + idWindow, ParameterMode.Value));
+                         })
+                    )
+        )
+        .Items(
+            X.FieldSet().Height(50).ColumnWidth(0.4).Collapsible(true)
+            .Title("Filtros de Búsqueda").MarginSpec("0 05 05 05")//BOTT LEFT TOP RIGHT
+            .Items(
+                Html.X().Container().Layout(LayoutType.HBox).MarginSpec("0 00 05 00")//BOTT LEFT TOP RIGHT
+                .Defaults(d =>
+                {
+                    d.Add(new Parameter("LabelWidth", "90"));
+                })
+                .Items(
+                X.TextField()
+               .ID("txtParametro").Hidden(true),
+            Html.X().ComboBox()
+            .ID("ComboBoxCountry")
+            .Editable(false)
+            .Width(400)
+                .Items(new ListItem("Peso", "Peso")
+                //,
+                //      new ListItem("Talla", "Talla"),
+                //    new ListItem("Presion Arterial", "PresionArterialMSD1"),
+                //    new ListItem("Frec. Cardiaca", "FrecuenciaCardiaca"),
+                //    new ListItem("Frec. Respiratoria", "FrecuenciaRespiratoria"),
+                //    new ListItem("Temperatura", "Temperatura"),
+                //new ListItem("Saturacion de Oxigeno", "CY"),
+                //new ListItem("Fi02", "FI"),
+                //new ListItem("Frec. Cardiaca Fetal", "FR"),
+               
+                //new ListItem("IMC", "IE")
+            )
+                )
+                ,
+                Html.X().Container().Layout(LayoutType.HBox).MarginSpec("0 00 05 00")//BOTT LEFT TOP RIGHT
+                .Defaults(d =>
+                {
+                    d.Add(new Parameter("LabelWidth", "90"));
+                })
+                .Items(
+                )
+                ,
+                Html.X().Container().Layout(LayoutType.HBox).MarginSpec("0 00 05 00")//BOTT LEFT TOP RIGHT
+                .Defaults(d =>
+                {
+                    d.Add(new Parameter("LabelWidth", "90"));
+                })
+                .Items(
+                )
+            )
+            ,
+            X.Panel().Header(false).Border(false).Flex(1)
+            .Layout(LayoutType.Border)
+            .Items(
+                   X.Panel().Icon(Icon.BookOpen).Collapsible(false).Resizable(false)
+                    .Layout(LayoutType.Fit)
+                    .Draggable(false)
+                    .Region(Region.Center)
+
+                    .Title("informacion Funciones Vitales")
+                    .Border(true)
+         .Items(
+                         X.Chart()
+                        .ID("Chart1")
+                        .StyleSpec("background:#fff;")
+                        .Shadow(true)
+                        .StandardTheme(StandardChartTheme.Category1)
+                        .Animate(true)                        
+                        .LegendConfig(X.ChartLegend().Position(LegendPosition.Right))
+                        .Store(X.Store()
+                            .Data(Model)
+                            .Model(X.Model()
+                                .Fields(
+                                    X.ModelField().Name("Name"),
+                                    X.ModelField().Name("Peso"),
+                                    X.ModelField().Name("Data2"),
+                                    X.ModelField().Name("Data3")
+                                )
+                            )
+                                .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                    .Url("HClinica/GetData")
+                                    .Reader(reader => reader.Add(Html.X().JsonReader()
+                                    .Root("data")
+                                )))
+                             )
+                        )
+                        .Axes(
+                            X.NumericAxis()
+                                    .Fields(new[] { "Peso", "Data2", "Data3" })
+                                .Title("Peso")
+                                .MinorTickSteps(1)
+                                .Minimum(0)
+                                .GridConfig(X.AxisGrid()
+                                    .Odd(new SpriteAttributes { Opacity = 1, Fill = "#ddd", Stroke = "#bbb", StrokeWidth = 0.5 })
+                                ),
+                            X.CategoryAxis()
+                                .Position(Position.Bottom)
+                                .Fields("Name")
+                                .Title("Atenciones")
+                        )
+                        .Series(
+                            X.LineSeries()
+                                .Axis(Position.Left)
+                                .XField("Name")
+                                .YField("Peso")
+                                .ShowInLegend(true) 
+                                .HighlightConfig(new SpriteAttributes { Size = 2, Radius = 2 })
+                                .MarkerConfig(new SpriteAttributes { Type = SpriteType.Cross, Size = 4, Radius = 4, StrokeWidth = 0 })
+                                    .Label(X.SeriesLabel().FontSize("16")
+                                        .Contrast(true)
+                                        .Display(SeriesLabelDisplay.Outside)
+                                                .Field(new[] { "Peso" })
+                                            .Color("#a2b5ca")
+                                        .Orientation(Orientation.Vertical)
+                                    )
+                            //    ,
+                            //X.LineSeries()
+                            //    .Axis(Position.Left)
+                            //    .Smooth(3)
+                            //    .XField("Name")
+                            //    .YField("Data2")
+                            //    .HighlightConfig(new SpriteAttributes { Size = 7, Radius = 7 })
+                            //    .MarkerConfig(new SpriteAttributes { Type = SpriteType.Circle, Size = 4, Radius = 4, StrokeWidth = 0 }),
+
+                            //X.LineSeries()
+                            //    .Axis(Position.Left)
+                            //    .Smooth(3)
+                            //    .XField("Name")
+                            //    .YField("Data3")
+                            //    .HighlightConfig(new SpriteAttributes { Size = 7, Radius = 7 })
+                            //    .MarkerConfig(new SpriteAttributes { Type = SpriteType.Circle, Size = 4, Radius = 4, StrokeWidth = 0 })
+                        )
+                        
+                     )
+                   )
+            )
+    )//FIN
+
+    .CloseAction(CloseAction.Destroy)
+
+
+)
+
+

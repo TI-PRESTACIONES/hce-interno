@@ -1,0 +1,249 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_HC_Formato
+@{
+    var X = Html.X();
+}
+
+<script>
+
+    var varTipoBuscar = "LOAD";
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_RED01 = "#990000";
+
+    var COLOR_BORDER_ERROR = "red";
+    var COLOR_BORDER_DEF = "#b5b8c8";
+    var COLOR_BACKGROUND_NOEDIT = "#9FBCB9";
+
+    var change = function (value, meta) {
+        return value;
+    };
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 2)
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+
+    var accionBuscarFiltroFormatoC = function (tipo) {
+        varTipoBuscar = tipo;
+        App.GridPanelSelFormatoC.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+
+    var seleccionActual = null;
+    var seleccionActualDesc = null;
+    var seleccionNom = null;
+
+    function setSeleccionesFormatoC(param1, param2, param3) {
+        seleccionActual = param1;
+        seleccionActualDesc = param2;
+        seleccionNom = param3;
+    }
+
+    var onSuccess = function (grid, data) {
+        grid.show();
+        grid.getStore().loadData(data);
+    };
+
+    var onFailure = function (modo) {
+        Ext.Msg.notify("EVENTO: FAILURE", "MODEL::" + modo);
+    };
+
+    function enviarSeleccion(grid) {
+        if (seleccionActual != null && seleccionActualDesc != null && seleccionNom != null) {
+            var status = seleccionActual;
+            var status2 = seleccionActualDesc;
+            var status3 = seleccionNom;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action(Model.Accion))',
+                params: {
+                    MODO: 'get',
+                    id: status,
+                    codigo: status2,
+                    descripcion: status3,
+                    idWindow: "WindowSelecFormatoCampo"
+                }
+            });
+        } else {
+            Ext.Msg.alert('Debe Seleccionar un elemento.');
+        }
+
+    }
+
+    function enviarSeleccionDirect(param1, param2,param3) {
+        var status  = param1;
+        var status2 = param2;
+        var status3 = param3;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action(Model.Accion))',
+            params: {
+                MODO: 'get',
+                id: status,
+                codigo: status2,
+                descripcion: status3,
+                idWindow: "WindowSelecFormatoCampo"
+            }
+        });
+    }
+
+    var eventoCheckFiltro = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+</script>
+
+@(Html.X().Window()
+    .Width(530)
+    .Height(450)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+        .ID("WindowSelecFormatoCampo")
+    .Title("Seleccionar")
+    .Padding(4)
+        .TopBar(
+                                         X.Toolbar()
+                                         .Height(30)
+                                             .Items(
+                                            X.Button()
+                                            .Border(true)
+                                            .Text("Buscar")
+                                            .Icon(Icon.Find)
+                                                .Handler("accionBuscarFiltroFormatoC('FILTRO');"),
+                                            X.ToolbarFill(),
+                                            X.Button()
+                                                .Text("Aceptar")
+                                                .Icon(Icon.Accept)
+                                                    .Handler("enviarSeleccion(App.GridPanelSelFormatoC.getSelectionSubmit().getSelectionModelField().getValue());"),
+                                            X.Button()
+                                                .Text("Cancelar")
+                                                .Icon(Icon.Cancel)
+                                                 .DirectEvents(de =>
+                                                  {
+                                                      de.Click.Url = Url.Action("cerrarWindow");
+                                                      de.Click.ExtraParams.Add(new Parameter(
+                                                            "id", "WindowSelecFormatoCampo", ParameterMode.Value));
+
+                                                  }),
+                                          X.ToolbarSpacer(20)     
+                                             )
+
+        )
+
+            .Items(
+
+                        X.GridPanel()
+
+                                    .TopBar(
+                                        X.Toolbar()
+                                            .Items(
+
+                                                 X.Checkbox()
+                                                  .FieldLabel("Modulo")
+                                                  .ID("Modulo")
+                                                      .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.Modulo,App.tfBuscarTabla);")
+                                                  .Checked(true),
+
+
+                                                              X.ComboBoxFor(m => m.Modulo).ID("tfBuscarTabla").Disabled(true)
+                                                       .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico
+                                                       .GetComboGenericoTxt("MODULO").Select(d => new ListItem(d.Name, d.Codigo)))
+                                                       .FieldLabel("").Editable(false)
+                                                       .SimpleSubmit(true),
+
+                                                X.Checkbox().FieldLabel("Descripción").ID("chkDesc").Checked(true)
+                                                     .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chkDesc,App.tfBuscarSeleccDesc);")
+                                                 .LabelWidth(70),
+                                             
+                                            X.TextField()
+                                            .ID("tfBuscarSeleccDesc").Disabled(true)
+                                            .FieldLabel(""),
+                                            X.ToolbarFill()
+
+                                            )
+                                    )
+
+                            .Border(false)
+                            .Scroll(ScrollMode.Both)
+                            .AutoScroll(true)
+                                .ID("GridPanelSelFormatoC")
+
+                            .Margins("0 0 0 0")
+
+                        .Store(store => store.Add(
+                                 Html.X().Store()
+                                     .ID("StoreSelFormatoC")
+                                     .AutoLoad(true)
+                                     .RemoteSort(false)
+                                     .IsPagingStore(true)
+                                     .RemotePaging(true)
+                                     .PageSize(10)
+                                     .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                    .Url("getGrillaForma")
+                                                    .Reader(reader => reader.Add(Html.X().JsonReader()
+                                            .Root("data")
+                                            .TotalProperty("total")
+                                                                 .IDProperty("IdFormato"))))
+                                                )
+                                                             .Parameters(ps =>
+                                                                    ps.Add(new
+                                                                    {
+                                                                        formato = JRawValue.From("App.tfBuscarTabla.getValue()"),
+                                                                        descripcion = JRawValue.From("App.tfBuscarSeleccDesc.getValue()"),
+                                                                        tipoBuscar = JRawValue.From("varTipoBuscar")
+                                                                    })
+                                                             )
+                                                  .Model(model => model.Add(Html.X().Model()
+                                                 .Fields(fields =>
+                                                 {
+                                                     fields.Add(Html.X().ModelField().Name("IdFormato"));
+                                                     fields.Add(Html.X().ModelField().Name("CodigoFormato"));
+                                                     fields.Add(Html.X().ModelField().Name("Descripcion"));
+                                                     fields.Add(Html.X().ModelField().Name("Estado"));
+                                                 }))
+                                                )
+                                            )
+                                 )
+
+
+                          .ColumnModel(columnModel =>
+                            {
+                                columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("IdFormato").Hidden(true).Width(50));
+                                columnModel.Columns.Add(Html.X().Column().Text("Codigo").DataIndex("CodigoFormato").Width(100));
+                                columnModel.Columns.Add(Html.X().Column().Text("Descripción").DataIndex("Descripcion").Width(200));
+                                columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(60)
+                                .Renderer("changeEstado"));
+
+                            })
+                               .View(Html.X().GridView().TrackOver(false))
+
+                                 .Border(false)
+                                .Listeners(l => l.CellDblClick
+                                        .Handler = "enviarSeleccionDirect(record.data.IdFormato,record.data.CodigoFormato,record.data.Descripcion);")
+                                .Listeners(l => l.CellClick
+                                            .Handler = "setSeleccionesFormatoC(record.data.IdFormato,record.data.CodigoFormato,record.data.Descripcion);")
+                                .BottomBar(bar => bar.Add(
+                                    Html.X().PagingToolbar()
+
+                                ))
+                                )
+                                 .CloseAction(CloseAction.Destroy)
+
+)
+@(
+ X.KeyNav()
+    .Target("WindowSelecFormatoCampo")
+    .Enter(a => a.Handler = "accionBuscarFiltroFormatoC('FILTRO');")
+)

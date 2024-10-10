@@ -1,0 +1,141 @@
+﻿@model SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL
+@{
+    ViewBag.Title = "Simple TreePanel";
+    Layout = "";
+    var X = Html.X();
+}
+<script>
+
+    var nodeLoad = function (view, record, item, index, event) {
+        var nodeId = record.data.id;
+        var path = record.getPath('text', '/');
+
+
+    };
+    var onItemCheck = function (item, checked) {
+
+        msg("Item Check", 'You {1} the \'{0}\' menu item.', item.text, checked ? "checked" : "unchecked");
+    };
+
+    var filterPersonales = function (checkItem, checked) {
+        var tree = App.TreeWest,
+            regex;
+
+        if (checked) {
+            tree.clearFilter(true);
+            regex = new RegExp("<span>&nbsp;</span>");
+            tree.filterBy(function (node) {
+                return regex.test(node.data.text);
+            });
+        } else {
+            tree.clearFilter(true);
+        }
+    };
+
+
+</script>
+@(
+ Html.X().TreePanel()
+        //.Title("Procesos Salud")
+        //.Icon(Icon.World)
+            .Height(500)
+            .Width(200)
+            .Border(false)
+            .ID("TreeWest")
+            .TopBar(
+                  new Toolbar
+                  {
+                      Items =
+                    {
+                        new TriggerField
+                        {
+                            ID = "SearchField",
+                            AutoFocus = true,
+                            EnableKeyEvents = true,
+                            Flex = 1,
+                            EmptyText = "Filter Examples...",
+                            Triggers =
+                            {
+                                new FieldTrigger
+                                {
+                                    HideTrigger = true,
+                                    Icon = TriggerIcon.Clear
+                                }
+                            }
+                        },
+                        new Button
+                        {
+                            Icon = Icon.Cog,
+                            ToolTip = "Options",
+                            Menu =
+                            {
+                                new Menu
+                                {
+                                    Items =
+                                    {
+
+                                        new CheckMenuItem
+                                        {
+                                            Text = "Opc. Personales",
+                                             //CheckHandler = "function (item, checked) { App.direct.ChangeScriptMode(checked); }",
+                                             Hidden = false
+                                        },
+                                        new CheckMenuItem
+                                        {
+                                            Text = "Opc. Perfil",
+                                           // CheckHandler = "onItemCheck",
+                                            Hidden = false
+                                        },
+                                        new CheckMenuItem
+                                        {
+                                            Text = "Opc. Corporativos",
+                                           // CheckHandler = "onItemCheck",
+                                            Hidden = false
+                                        },
+                                        new MenuSeparator(),
+                                        new MenuItem
+                                        {
+                                        Text = "Aplicar",
+                                        IconCls = "icon-collapse-all"
+                                        //Handler = "this.up('treepanel').collapseAll(false);"
+                                        }
+
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+
+                  }
+
+                )
+            .Store(
+                Html.X().TreeStore()
+                    .Proxy(
+                            Html.X().AjaxProxy().Url(Url.Action("ArbolProcesosGestion"))
+                    )
+            )
+            .Root(
+                   Html.X().Node().NodeID(Model.OPCION_PADRE).Text("SALUD")
+            )
+            .DirectEvents(ev =>
+                        {
+                            ev.Select.Url = "Gestion/LoadCentralGestion";
+                            ev.Select.Method = HttpMethod.GET;
+                            ev.Select.ExtraParams.Add(new
+                                                {
+                                                    containerId = "Center1",
+                                                    text = JRawValue.From("record.data.id")
+                                                    //desc = JRawValue.From("record.data.text"),
+                                                    
+                                                });
+                            //ev.Select.Before = "o.url = record.get('url');";
+                            // new Parameter("path", "record.get('path')", ParameterMode.Raw));
+                            //ev.Select.Success = "onSuccess(result.data)";
+                        })
+           .Listeners(l =>
+            {
+                l.ItemClick.Fn = "nodeLoad";
+            })
+)

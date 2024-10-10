@@ -1,0 +1,231 @@
+﻿@model SoluccionSalud.Entidades.Entidades.PERSONAMAST
+@{
+    var X = Html.X();
+    var modoDesc = (Model.ACCION == "NUEVO" ? "Nuevo" :
+                    (Model.ACCION == "UPDATE" ? "Modificar" :
+                        (Model.ACCION == "DELETE" ? "Eliminar" :
+                            (Model.ACCION == "VER" ? "Ver" : "--"))));
+
+    var indicaModoLectura = !(Model.ACCION == "NUEVO" ? true :
+                            (Model.ACCION == "UPDATE" ? true :
+                            (Model.ACCION == "DELETE" ? false :
+                            (Model.ACCION == "VER" ? false : false))));
+
+    var indicaModoLecturaKey = !(Model.ACCION == "NUEVO" ? true :
+                            (Model.ACCION == "UPDATE" ? false :
+                            (Model.ACCION == "DELETE" ? false :
+                            (Model.ACCION == "VER" ? false : false))));
+    
+    var STYLE_BACKGROUND_NODEIT = "background: #7CB8B0"; //BBD8D6  #9FBCB9
+    var COLOR_BORDER_DEFAULT = "#b5b8c8";
+}
+
+<script>
+    var template = 'color:{0};';
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_RED01 = "#990000";
+    var COLOR_BORDER_ERROR = "red";
+    var COLOR_BORDER_DEF = "#b5b8c8";
+    var COLOR_BACKGROUND_NOEDIT = "#9FBCB9";
+
+    var change = function (value, meta) {
+        return value;
+    };
+
+    var validarCampo = function (componente) {
+        if (componente.getValue() != null) {
+            if (componente.getValue().trim() == 0) {
+                componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+            } else {
+                componente.setFieldStyle("border-color: " + COLOR_BORDER_DEF);
+            }
+        } else {
+            componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+        }
+    };
+    
+    function cerrarWindow() {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Se registró correctamente el usuario.',
+                accion: null
+            }
+        });
+    }
+    
+    var onSuccess = function (data) {
+        accionMensajes(data);
+    };
+
+    var onFailure = function (modo) {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Un error en el evento ',
+                titulo: "Error",
+                tipo: 'ERROR'
+            }
+        });
+    };
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length>0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+        } else {
+            App.taAlerts.setVisible(false);
+        }
+
+    };
+
+    var getInvalidFields = function (form) {
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+        });
+        return invalidFields;
+    };
+
+    var beforeSave = function (form) {
+        var FieldsInvalidos = getInvalidFields(form);
+        if (!form.getForm().isValid()) {
+            if (FieldsInvalidos.length > 0) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("addRecursosValidacion"))',
+                    params: {
+                        data: FieldsInvalidos,
+                        indica: 'VALIDAR',
+                    },
+                    success: function (result) {
+                        accionMensajes(result.data);
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("addRecursosValidacion"))',
+                            params: {
+                                data: FieldsInvalidos,
+                                indica: 'RESTART',
+                            }
+                        });
+                    }
+                });
+
+            }
+        }
+    };
+</script>
+
+@(Html.X().Window()
+    .Width(680)
+    .Height(360)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowCuerpoHumano")
+    .Title("Inf. Adicional:")
+    .Padding(4)
+    .Items(
+        Html.X().FormPanel().ID("FormPanel1").Frame(false).Border(false).AutoScroll(true).Layout(LayoutType.VBox).LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+        .Items(
+            Html.X().FormPanel().Layout(LayoutType.Form).Width(500).FieldDefaults(d =>{d.LabelWidth = 120;}).BodyPadding(10).Frame(false).Border(false)
+            .Items(
+                Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top }).MarginSpec("0 0 -12 0")
+                .Items(
+                    X.FieldSet().Title("Información General").FieldDefaults(d =>{d.LabelWidth = 90;d.InputWidth = 120;})
+                    .Items(
+                    Html.X().Container().Layout(LayoutType.VBox).LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                    .Items(
+                    X.TextFieldFor(m => m.Brevete).FieldLabel("Brevete").LabelWidth(50),
+                    X.TextFieldFor(m => m.Fax).FieldLabel("Fax").LabelWidth(50)
+                        )
+                    ),
+                    
+                    X.FieldSet().Title("Información Adicional").FieldDefaults(d =>{d.LabelWidth = 90;d.InputWidth = 120;}).Width(430).MarginSpec("0 0 0 5")
+                    .Items(
+                    X.ComboBoxFor(m => m.Estado).Editable(false).Name("buscarEst").Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenericoTxt("ESTADOVAR")
+                    .Select(d => new ListItem(d.Name, d.Codigo))).ReadOnly(true).FieldLabel("Estado").Value("A").SimpleSubmit(true).LabelWidth(80),
+                    Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch }).MarginSpec("0 0 5 0")
+                    .Items(
+                        X.TextFieldFor(m => m.UltimoUsuario).FieldLabel("Modificación").ReadOnly(true).LabelWidth(80),
+                        X.DateFieldFor(m => m.UltimaFechaModif).ID("dfFechaModif").Format("dd/MM/yyyy").ReadOnly(true).HideLabel(true).Width(80).FieldLabel(""),
+                        X.TimeFieldFor(m => m.UltimaFechaModif).Width(80).Format("H:mm:ss").ReadOnly(true).FieldLabel(""))
+                    )
+                ),
+
+                Html.X().FormPanel().Frame(false).Border(false).Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                .Items(
+                    Html.X().FormPanel().Layout(LayoutType.Form).Width(650).FieldDefaults(d => { d.LabelWidth = 140; }).BodyPadding(10).Frame(false).Border(false).MarginSpec("0 0 0 -9")
+                    .Items(
+                        X.FieldSet().Title("Información en caso de Emergencia").FieldDefaults(d => { d.LabelWidth = 120;})
+                        .Items(
+                        Html.X().Container().Layout(LayoutType.VBox).LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                        .Items(
+                            X.TextFieldFor(m => m.DireccionEmergencia).FieldLabel("Dirección Emergencia"),
+                            X.TextFieldFor(m => m.Persona).FieldLabel("Persona").ReadOnly(indicaModoLectura).Hidden(true),
+                            X.TextFieldFor(m => m.NombreEmergencia).FieldLabel("Persona").Width(250),
+                            Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch })
+                            .Items(
+                                X.TextFieldFor(m => m.CelularEmergencia).FieldLabel("Celular"),
+                                X.TextFieldFor(m => m.TelefonoEmergencia).FieldLabel("Teléfono").Width(200).LabelWidth(50).MarginSpec("0 0 0 5")),
+                            X.TextFieldFor(m => m.ParentescoEmergencia).FieldLabel("Parentesco").MarginSpec("5 0 0 0"),
+                            X.CheckboxGroupFor(m => m.EnfermedadGraveFlag, new List<Checkbox.Config> {new Checkbox.Config{
+                                BoxLabel = "Enfer. Grave", InputValue="N",
+                                Checked= ( Model.ACCION=="UPDATE"?false:(Model.EnfermedadGraveFlag=="N"?true:false))},})
+                            )
+                        )
+                    )
+                )
+            ),
+            X.TextArea().ID("taAlerts").Border(false).StyleSpec("background:white;border:1px solid gray;").FieldStyle("color: red").Hidden(true).ReadOnly(indicaModoLectura)
+            ).TopBar(
+            X.Toolbar().Height(30)
+            .Items(
+                X.ToolbarFill(),
+                X.Button()
+                .Hidden((Model.ACCION == "VER" ? true : false))
+                .ID("btnSave")
+                .Text((Model.ACCION == "DELETE" ? "Eliminar" : "Guardar"))
+                .Icon((Model.ACCION == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave))
+                .DirectEvents(de =>{
+                    de.Click.Url = Url.Action("save_Medico");
+                    de.Click.EventMask.ShowMask = true;
+                    de.Click.Before = "App.btnSave.setDisabled(true); " + 
+                        "beforeSave(App.FormPanel1); return App.FormPanel1.getForm().isValid(); ";
+                    de.Click.After = "App.btnSave.setDisabled(false); ";
+                    de.Click.ExtraParams.Add(new Parameter("MODO", Model.ACCION, ParameterMode.Value));
+                    de.Click.ExtraParams.Add(new Parameter("idWindow", "WindowCuerpoHumano", ParameterMode.Value));
+                    de.Click.Success = "onSuccess(result.data);";
+                    de.Click.Failure = "onFailure('" + Model.ACCION + "');";
+                }),
+                X.Button().Text((Model.ACCION == "VER" ? "Aceptar" : "Cancelar")).Icon((Model.ACCION == "VER" ? Icon.Accept : Icon.Cancel))
+                .DirectEvents(de =>{
+                    de.Click.Url = Url.Action("cerrarWindow");
+                    de.Click.ExtraParams.Add(new Parameter("id", "WindowCuerpoHumano", ParameterMode.Value));
+                }),
+                X.ToolbarSpacer(20)
+                )
+            )
+        ).DirectEvents(de =>{
+            de.Render.Url = Url.Action("postWindowMedico");
+            de.Render.ExtraParams.Add(new Parameter("idPais", "" + Model.Pais, ParameterMode.Value));
+            de.Render.ExtraParams.Add(new Parameter("idDepa", "" + Model.Departamento, ParameterMode.Value));
+            de.Render.ExtraParams.Add(new Parameter("idProv", "" + Model.Provincia, ParameterMode.Value));
+            de.Render.ExtraParams.Add(new Parameter("idDist", "" + Model.CodigoPostal, ParameterMode.Value));
+            }).CloseAction(CloseAction.Destroy)
+            )
+

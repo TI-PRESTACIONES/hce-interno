@@ -1,0 +1,365 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SEGURIDADCONCEPTO
+
+@{
+    var X = Html.X();
+    var modoDesc = (Model.ACCION == "NUEVO" ? "Nuevo" :
+                    (Model.ACCION == "UPDATE" ? "Modificar" :
+                        (Model.ACCION == "DELETE" ? "Eliminar" :
+                            (Model.ACCION == "VER" ? "Ver" : "--"))));
+
+    var indicaModoLectura = !(Model.ACCION == "NUEVO" ? true :
+                            (Model.ACCION == "UPDATE" ? true :
+                            (Model.ACCION == "DELETE" ? false :
+                            (Model.ACCION == "VER" ? false : false))));
+
+    var indicaModoLecturaKey = !(Model.ACCION == "NUEVO" ? true :
+                            (Model.ACCION == "UPDATE" ? false :
+                            (Model.ACCION == "DELETE" ? false :
+                            (Model.ACCION == "VER" ? false : false))));  
+}
+
+<script>
+    var template = 'color:{0};';
+
+    var change = function (value, meta) {
+        return value;
+
+    };
+
+    function seleccionadorConceptoSeguridad() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorConceptoSeguridad"))',
+            params: {
+                accionSeleccion: 'getSeleccionPadreMaestroConceptoSeguridad',
+                accionListado: 'LISTARPAG'
+            }
+        });
+    };
+
+    var onSuccess = function (modo) {
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: '',
+                titulo: "mensaje",
+                tipo: 'INFO'
+            }
+        });
+    };
+
+    var onFailure = function (modo) {
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Un error en el evento ',
+                titulo: "Error",
+                tipo: 'ERROR'
+            }
+        });
+    };
+
+    function cerrarWindow() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Se registró correctamente el usuario.',
+                accion: null
+
+            }
+        });
+    }
+
+    var showResult = function (btn) {
+        Ext.Msg.notify("Aceptar", "You clicked the " + btn + " button");
+    };
+
+</script>
+@(Html.X().Window()
+    .Width(650)
+    .Height(450)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowCuerpoHumano")
+        .Title("Concepto de Seguridad:" + Model.ACCION)
+    .Padding(4)
+        //.X(0)
+        //.Y(0)
+    .Items(
+                Html.X().FormPanel()
+                             .Frame(false)
+                             .Border(false)
+                            .AutoScroll(true)
+                            .Layout(LayoutType.VBox)
+                            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                    .Items(
+                        Html.X().FormPanel()
+                             .Frame(false)
+                             .Border(false)
+                            .Layout(LayoutType.HBox)
+                            .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+
+                            .Items(
+                                    Html.X().FormPanel()
+                                    .Layout(LayoutType.Form)
+                                    .Width(300)
+                                    .FieldDefaults(d =>
+                                    {
+                                        d.LabelWidth = 100;
+                                    })
+                                    .BodyPadding(10)
+                                    .Frame(false)
+                                    .Border(false)
+                                    .Items(
+
+                                                X.TextFieldFor(m => m.APLICACIONCODIGO)
+                                                .ID("tfAplicacionCodigo").Width(200)
+                                                .FieldLabel("Aplicación Codigo"),
+
+                                                        X.TextFieldFor(m => m.GRUPO)
+                                                        .ID("tfGRUPO").Width(200)
+                                                        .FieldLabel("GRUPO")
+        //                Html.X().ComboBoxFor(m => m.GRUPO)
+        //.StoreID("StoreComboPerfil1")
+        //        .DisplayField("GRUPO")
+        //        .ValueField("GRUPO")
+        //.FieldLabel("Grupo")
+                                                 ,
+
+                                                X.TextFieldFor(m => m.CONCEPTO)
+                                                .ID("tfConcepto").Width(200)
+                                                            .FieldLabel("Concepto"),
+
+
+                                                    X.TextFieldFor(m => m.CONCEPTOPADRE)
+                                                            .ID("nfIdPadre").Width(200)
+                                                            .ReadOnly(true)
+                                                            .Hidden(false)
+                                                            .FieldLabel("Concepto Padre"),
+                                                                
+                                                X.TextField().ID("txtIdPadre")
+                                                    .FieldLabel("Concepto Padre").ReadOnly(true)
+                                                  .RightButtons(
+                                                    X.Button()
+                                                    .Text("...")
+
+                                                         .Handler("seleccionadorConceptoSeguridad();")
+                                                    ),
+
+                                                X.TextFieldFor(m => m.DESCRIPCION).ID("tfDesc")
+                                               .FieldLabel("Descripción"),
+
+                                                X.TextFieldFor(m => m.DESCRIPCIONINGLES).ID("tfDescIng")
+                                                .FieldLabel("Descripción inglés"),
+
+                                                X.RadioGroupFor(m => m.ESTADO, new List<Radio.Config> {
+                                                new Radio.Config{BoxLabel = "Activo", InputValue = "A",
+                                                Checked= ( Model.ACCION=="NUEVO"?true:(Model.ESTADO=="A"?true:false)) 
+                                                ,ReadOnly = indicaModoLectura
+                                                },
+                                                new Radio.Config{BoxLabel = "Inactivo", InputValue = "I",
+                                                Checked= ( Model.ACCION=="NUEVO"?false:(Model.ESTADO=="I"?true:false))
+                                                ,ReadOnly = indicaModoLectura
+                                                    }
+                                                })
+                                               .FieldLabel("Estado")
+                                                .AutomaticGrouping(false),
+
+                                               // X.TextFieldFor(m => m.WEBACTION).ID("tfActionw")
+        //.FieldLabel("Web Action"),
+
+                                               // X.TextFieldFor(m => m.WEBGRUPO).ID("tfGrupow")
+        // .FieldLabel("Web Grupo"),
+
+                                               // X.TextFieldFor(m => m.WEBGRUPOSECUENCIA).ID("tfGrupoSeweb")
+        //     .FieldLabel("Web Grupo Secuencia"),
+
+                                                X.TextFieldFor(m => m.ACCION).ID("tfAccion")
+                                                    .FieldLabel("Accion"),
+
+                                                X.TextFieldFor(m => m.WEBPAGE).ID("tfPagew")
+                                                    .FieldLabel("Web Page")
+
+                                                ),
+                                                Html.X().FormPanel()
+                                                .Layout(LayoutType.Form)
+                                                .Width(300)
+                                                .FieldDefaults(d =>
+                                                {
+                                                    d.LabelWidth = 100;
+                                                })
+                                                .BodyPadding(10)
+                                                .Frame(false)
+                                                .Border(false)
+                                    .Items(
+                                                X.ComboBoxFor(c => c.VISIBLEFLAG)
+                                                         .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenericoTxt("VISIBLEFLAG").Select(d => new ListItem(d.Name, d.Codigo)))
+                                                 .FieldLabel("Visible Flag")
+                                                 .SimpleSubmit(true),
+
+
+
+                                            X.ComboBoxFor(c => c.TIPODEDETALLE)
+                                             .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("FORMATOS").Select(d => new ListItem(d.Name, d.ID)))
+                                             .FieldLabel("Tipo Detalle")
+                                             .SimpleSubmit(true),
+        //X.ComboBoxFor(c => c.TIPODEDETALLE)
+        //.Items("0")
+        //    .Items("1")
+        //    .FieldLabel("Tipo de Detalle")
+        //        .SimpleSubmit(true),
+
+                               X.ComboBoxFor(c => c.TIPODEOBJETO)
+                                   .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("TIPODEOBJETO").Select(d => new ListItem(d.Name, d.ID)))
+                               .FieldLabel("Tipo Objeto")
+                               .SimpleSubmit(true),
+
+                                            //X.TextFieldFor(m => m.OBJETO).ID("tfObjeto")
+
+                                 X.ComboBoxFor(m => m.OBJETO)
+                                      .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("OBJETOIE").Select(d => new ListItem(d.Name, d.ID)))
+                                  .FieldLabel("Objeto")
+                                  .SimpleSubmit(true),
+
+                                            X.ComboBoxFor(c => c.TIPODEACCESO)
+                                               .Items("0")
+                                                .Items("1")
+                                                .FieldLabel("Tipo de Acceso")
+                                                        .SimpleSubmit(true),
+
+
+                                                             X.ComboBoxFor(m => m.OBJETOWINDOW)
+                                                        .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("RECURSOS").Select(d => new ListItem(d.Name, d.ID)))
+                                                        .FieldLabel("Recursos")
+                                                        .SimpleSubmit(true),
+
+                                                X.ComboBoxFor(c => c.WORKFLAG)
+                                                   .Items("0")
+                                                    .Items("1")
+                                                    .FieldLabel("Work Flag")
+                                                    .SimpleSubmit(true),
+
+                                                X.ComboBoxFor(c => c.WORKAGREGARFLAG)
+                                               .Items("0")
+                                                .Items("1")
+                                                    .FieldLabel("Work Agregar Flag")
+                                                        .SimpleSubmit(true),
+
+
+                                                X.ComboBoxFor(c => c.WORKMODIFICARFLAG)
+                                               .Items("0")
+                                                .Items("1")
+                                                    .FieldLabel("Work Modificar Flag")
+                                                        .SimpleSubmit(true),
+
+
+                                                X.ComboBoxFor(c => c.WORKBORRARFLAG)
+                                               .Items("0")
+                                                .Items("1")
+                                                    .FieldLabel("Work Borrar Flag")
+                                                        .SimpleSubmit(true),
+
+
+                                                X.ComboBoxFor(c => c.WORKAPROBARFLAG)
+                                               .Items("0")
+                                                .Items("1")
+                                                    .FieldLabel("Work Aprobar Flag")
+                                                        .SimpleSubmit(true),
+
+
+                                                X.ComboBoxFor(c => c.WEBFLAG)
+                                               .Items("0")
+                                                .Items("1")
+                                                    .FieldLabel("Web Flag")
+                                                            .SimpleSubmit(true)
+
+
+                                    )
+
+                                ),
+                                Html.X().FormPanel()
+                                .Layout(LayoutType.Form)
+                                .Width(500)
+                                .FieldDefaults(d =>
+                                 {
+                                     d.LabelWidth = 150;
+                                 })
+                                .BodyPadding(10)
+                                .Frame(false)
+                                .Border(false)
+                                    .Items(
+
+                                                X.FieldSet()
+        //.Width(250)
+                                                    .Title("Información Adicional")
+                                                    .FieldDefaults(d =>
+                                                     {
+                                                         d.LabelWidth = 90;
+                                                         d.InputWidth = 120;
+                                                     })
+                                                    .Items(
+                                                        Html.X().Container().Layout(LayoutType.HBox)
+                                                        .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+
+                                                        .Items(
+                                                            X.TextFieldFor(m => m.ULTIMOUSUARIO).ID("tfUserModif")
+                                                                .FieldLabel("Modificación").ReadOnly(true),
+                                                            X.DateFieldFor(m => m.ULTIMAFECHAMODIF).ID("dfFechaModif")
+                                                            .Format("dd/MM/yyyy").ReadOnly(true).HideLabel(true)
+     
+                                                        )
+                                                     )
+                                 )
+                         )
+                         .TopBar(
+                             X.Toolbar()
+                             .Height(30)
+                             .Items(
+                                X.ToolbarFill(),
+                                X.Button()
+                                    .Text((Model.ACCION == "DELETE" ? "Eliminar" : "Guardar"))
+                                    .Icon((Model.ACCION == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave))
+        //.DirectClickAction("save_Usuario"),
+                                     .DirectEvents(de =>
+                                      {  //Model.ACCION : Posee el MODO ACTUAL
+                                          de.Click.Url = Url.Action("save_ConceptoSeguridad");
+                                          de.Click.EventMask.ShowMask = true;
+                                          de.Click.ExtraParams.Add(new Parameter("MODO", Model.ACCION, ParameterMode.Value));
+                                          de.Click.ExtraParams.Add(new Parameter("idWindow", "WindowCuerpoHumano", ParameterMode.Value));
+                                          de.Click.Success = "onSuccess('" + Model.ACCION + "');";
+                                          de.Click.Failure = "onFailure('" + Model.ACCION + "');";
+
+                                      }),
+                                X.Button()
+                                    .Text("Cancelar")
+                                    .Icon(Icon.Cancel)
+                                     .DirectEvents(de =>
+                                      {  //Model.ACCION : Posee el MODO ACTUAL
+                                          de.Click.Url = Url.Action("cerrarWindow");
+                                          //de.Click.EventMask.ShowMask = true;
+                                          de.Click.ExtraParams.Add(new Parameter(
+                                                "id", "WindowCuerpoHumano", ParameterMode.Value));
+                                          //de.Click.Success = "onSuccess(result.data,'" + Model.ACCION + "');";
+                                          //de.Click.Failure = "onSuccess(result.data,'"+ Model.ACCION + "');";
+                                      })
+                                 )
+                            )
+
+                //)
+        )
+        .DirectEvents(de =>
+        {
+            de.Render.Url = Url.Action("postWindowConceptoSeguridad");
+            de.Render.ExtraParams.Add(new Parameter(
+                  "id", "" + Model.CONCEPTO, ParameterMode.Value));
+            de.Render.ExtraParams.Add(new Parameter(
+                  "idpadre", "" + Model.CONCEPTOPADRE, ParameterMode.Value));
+        })
+    .CloseAction(CloseAction.Destroy)
+)

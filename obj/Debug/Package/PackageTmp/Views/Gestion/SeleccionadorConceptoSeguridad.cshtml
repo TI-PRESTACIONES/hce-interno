@@ -1,0 +1,236 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SEGURIDADCONCEPTO 
+
+@{
+    var X = Html.X();
+}
+
+<script>
+
+    var template = '<span style="color:{0};">{1}</span>';
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 0)
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+
+    var seleccionActualAplicacion = null;
+    var seleccionActualGrupo = null;
+    var seleccionActual = null;
+    var seleccionActualDesc = null;
+    function setSeleccion(param1, param2, param3, param4) {
+        seleccionActualAplicacion = param1;
+        seleccionActualGrupo = param2;
+        seleccionActual = param3;
+        seleccionActualDesc = param4;
+    }
+
+    var onSuccess = function (grid, data) {
+        grid.show();
+        grid.getStore().loadData(data);
+    };
+
+    var onFailure = function (modo) {
+        Ext.Msg.notify("EVENTO: FAILURE", "MODEL::" + modo);
+    };
+
+    function enviarSeleccion(grid) {
+        if (seleccionActual != null) {
+            var status1 = seleccionActualAplicacion;
+            var status2 = seleccionActualGrupo;
+            var status3 = seleccionActual;
+            var status4 = seleccionActualDesc;
+
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action(Model.ACCION))',
+                params: {
+                    MODO: 'get',
+                    aplicacion: status1,
+                    grupo: status2,
+                    id: status3,
+                    descripcion: status4,
+                    idWindow: "WindowSelecConceptoSeguridad"
+                }
+            });
+        } else {
+            Ext.Msg.alert('Debe Seleccionar un elemento.');
+        }
+
+    }
+
+    function enviarSeleccionDirect(param1, param2, param3, param4) {
+        var status = param1;
+        var status2 = param2;
+        var status3 = param3;
+        var status4 = param4;
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action(Model.ACCION))',
+            params: {
+                MODO: 'get',
+                aplicacion: status3,
+                grupo: status4,
+                id: status,
+                descripcion: status2,
+                idWindow: "WindowSelecConceptoSeguridad"
+            }
+        });
+    }
+
+    var eventoCheckFiltro = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+
+    var accionBuscarFiltroConSeg = function (tipo) {
+        varTipoBuscar = tipo;
+        App.GridPanelSelConceptoSeguridad.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+</script>
+
+@(Html.X().Window()
+    .Width(450)
+    .Height(450)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+            .ID("WindowSelecConceptoSeguridad")
+    .Title("Seleccionar Concepto Seguridad Padre")
+    .Padding(4)
+        .TopBar(
+                                         X.Toolbar()
+                                         .Height(30)
+                                             .Items(
+                                               X.Button()
+                                                .Text("Buscar")
+                                                    .Icon(Icon.Find)
+                                                     .Handler("accionBuscarFiltroConSeg('FILTRO');"),
+                                                            X.ToolbarFill(),
+                                            X.Button()
+                                                .Text("Aceptar")
+                                                .Icon(Icon.Accept)
+                                                .Handler("enviarSeleccion(App.GridPanelSelConceptoSeguridad.getSelectionSubmit().getSelectionModelField().getValue());")
+
+                                                     ,
+                                            X.Button()
+                                                .Text("Cancelar")
+                                                .Icon(Icon.Cancel)
+                                                 .DirectEvents(de =>
+                                                  {
+                                                      de.Click.Url = Url.Action("cerrarWindow");
+
+                                                      de.Click.ExtraParams.Add(new Parameter(
+                                                            "id", "WindowSelecConceptoSeguridad", ParameterMode.Value));
+
+                                                  }),
+                                          X.ToolbarSpacer(20)     
+                                             )
+
+        )
+        
+              .Items(
+                        X.GridPanel()
+
+                                     .TopBar(
+                                        X.Toolbar()
+                                            .Items(
+                                                   X.Checkbox().FieldLabel("Descripción").ID("chkId").Checked(true)
+                                                       .Handler("eventoCheckFiltro(App.chkId,App.tfBuscarDescc);").LabelWidth(70),
+                                                X.TextField()
+                                                    .ID("tfBuscarDescc").Disabled(true)
+                                                .FieldLabel(""),
+                                                X.ToolbarFill()
+                                        )
+                                    ) 
+                            .Border(false)
+                            .Scroll(ScrollMode.Both)
+                            .AutoScroll(true)
+                                .ID("GridPanelSelConceptoSeguridad")
+
+                            .Margins("0 0 0 0")
+                        .Store(store => store.Add(
+                                 Html.X().Store()
+                                     .ID("StoreSelConceptoSeguridad")
+                                     .AutoLoad(true)
+                                     .RemoteSort(false)
+                                     .IsPagingStore(true)
+                                     .RemotePaging(true)
+                                     .PageSize(15)
+                                         .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                        .Url("getGrillaConceptoSeguridad")
+
+                                                .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                .Root("data")
+                                                .TotalProperty("total")
+
+                                                         .IDProperty("CONCEPTO")
+                                                     )))
+                                                )
+                                                                .Parameters(ps =>
+                                                                        ps.Add(new
+                                                                                {
+                                                                                    descripcion = JRawValue.From("App.tfBuscarDescc.getValue()"),
+                                                                                    tipoBuscar = JRawValue.From("varTipoBuscar")
+                                                                                })
+                                                                 )
+                                         .Model(model => model.Add(Html.X().Model()
+                                                 .Fields(fields =>
+                                                 {
+                                                     fields.Add(Html.X().ModelField().Name("APLICACIONCODIGO"));
+                                                     fields.Add(Html.X().ModelField().Name("GRUPO"));
+                                                     fields.Add(Html.X().ModelField().Name("CONCEPTO"));
+                                                     fields.Add(Html.X().ModelField().Name("ESTADO"));
+                                                     fields.Add(Html.X().ModelField().Name("DESCRIPCION"));
+                                                 }))
+                                                )
+                                              )
+                                   )
+                        .ColumnModel(columnModel =>
+                                {
+                                columnModel.Columns.Add(Html.X().Column().Text("CODIGO").DataIndex("APLICACIONCODIGO").Width(80));
+                                columnModel.Columns.Add(Html.X().Column().Text("GRUPO").DataIndex("GRUPO").Width(80));
+                                columnModel.Columns.Add(Html.X().Column().Text("CONCEPTO").DataIndex("CONCEPTO").Width(100));
+                                columnModel.Columns.Add(Html.X().Column().Text("DESCRIPCION").DataIndex("DESCRIPCION").Width(200));
+                                columnModel.Columns.Add(Html.X().Column().Text("ESTADO").DataIndex("ESTADO").Width(100)
+                                    .Renderer("changeEstado"));
+                               
+
+                            })
+                             .View(Html.X().GridView().TrackOver(false))
+
+                                     .Border(false)
+                                    .Listeners(l => l.CellDblClick
+                                                                    .Handler = "enviarSeleccionDirect(record.data.CONCEPTO,record.data.DESCRIPCION,record.data.APLICACIONCODIGO,record.data.GRUPO);")
+                                    .Listeners(l => l.CellClick
+                                                            .Handler = "setSeleccion(record.data.CONCEPTO,record.data.DESCRIPCION,record.data.APLICACIONCODIGO,record.data.GRUPO);")
+                                    .BottomBar(bar => bar.Add(
+                                        Html.X().PagingToolbar()
+
+                                    ))
+                                    )
+                                     .CloseAction(CloseAction.Destroy)
+                                     )
+        @(
+ X.KeyNav()
+.Target("WindowSelecConceptoSeguridad")
+.Enter(a => a.Handler = "accionBuscarFiltroConSeg('FILTRO');")
+)
+        
+        
+        
+        
+        

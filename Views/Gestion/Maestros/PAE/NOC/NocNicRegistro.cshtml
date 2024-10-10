@@ -1,0 +1,427 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_HC_NocNic
+
+@{
+    var X = Html.X();
+
+    var modoDesc = (Model.Accion == "NUEVO" ? "Nuevo" :
+                   (Model.Accion == "UPDATE" ? "Modificar" :
+                   (Model.Accion == "DELETE" ? "Eliminar" :
+                   (Model.Accion == "VER2" ? "Ver" : "--"))));
+
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VER2" ? false : false))));
+
+    var indicaModoLecturaKey = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? false :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VER2" ? false : false))));
+
+
+    var STYLE_BACKGROUND_NODEIT = "background: #BBD8D6";
+    var COLOR_BORDER_DEFAULT = "#b5b8c8";
+
+    var STYLE_BORDER_DEF_VALID01 = (Model.IdNC != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+    var STYLE_BORDER_DEF_VALID02 = (Model.Descripcion != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+}
+
+
+<script>
+    var change = function (value, meta) {
+        return value;
+    };
+
+    var onSuccess = function (data) {
+        accionMensajes(data);
+    };
+
+    var varTipoBuscar = "LOAD";
+
+    var accionBuscarFiltroNocNic = function (tipo) {
+        varTipoBuscar = tipo;
+        App.GridPanelSelNC.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+
+    var onFailure = function (modo) {
+        App.btnSave.setDisabled(false);
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Un error en el evento ',
+                titulo: "Error",
+                tipo: 'ERROR'
+            }
+        });
+    };
+
+    function cerrarWindow() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Se registró correctamente',
+                Accion: null
+            }
+        });
+    }
+
+
+
+    function seleccionadorNicBusqueda() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorNicBusqueda"))',
+            params: {
+                AccionSeleccion: 'getSeleccionNicBusqueda',
+                AccionListado: 'LISTARPAG'
+            }
+        });
+    };
+
+
+
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+        } else {
+            App.taAlerts.setVisible(false);
+        }
+
+    };
+
+    var getInvalidFields = function (form) {
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+        });
+        return invalidFields;
+    };
+
+    var template = '<span style="color:{0};">{1}</span>';
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 2)
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+
+    var beforeSave = function (form) {
+        var FieldsInvalidos = getInvalidFields(form);
+        if (!form.getForm().isValid()) {
+            if (FieldsInvalidos.length > 0) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("addRecursosValidacion"))',
+                    params: {
+                        data: FieldsInvalidos,
+                        indica: 'VALIDAR',
+                    },
+                    success: function (result) {
+                        accionMensajes(result.data);
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("addRecursosValidacion"))',
+                            params: {
+                                data: FieldsInvalidos,
+                                indica: 'RESTART',
+                            }
+                        });
+                    }
+                });
+
+            }
+        }
+    };
+
+    var seleccionActual = null;
+    var seleccionActualIdNanda = null;
+    var seleccionActualIdFactorRelacionado = null;
+
+    function setSeleccion(param1, param2,param3) {
+        seleccionActual = param1;
+        seleccionActualIdNoc = param2;
+        seleccionActualIdNic = param3
+    }
+
+    function enviarSeleccion(grid) {
+        if (seleccionActual != null) {
+            var status  = seleccionActual;
+            var status2 = seleccionActualIdNoc;
+            var status3 = seleccionActualIdNic;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action(Model.Accion))',
+                params: {
+                    MODO: 'get',
+                    id: status,
+                    IdNoc: status2,
+                    IdNic : status3,
+                    idWindow: "WindowNocNic"
+                }
+            });
+        } else {
+            Ext.Msg.alert('Debe Seleccionar un elemento.');
+        }
+
+    }
+
+    function eliminarDetalle() {
+        if (seleccionesActual != null) {
+            var status = seleccionesActual;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("NocNicRegistro"))',
+                params: {
+                    MODO: 'DELETE',
+                    time: status
+                }
+            });
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Seleccionar un Detalle  de la grilla existente.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+    }
+
+
+    function enviarSeleccionDirect(param1, param2, param3) {
+        var status = param1;
+        var status2 = param2;
+        var status3 = param3;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action(Model.Accion))',
+            params: {
+                MODO: 'get',
+                id: status,
+                IdNoc: status2,
+                IdNic: status3,
+                idWindow: "WindowNocNic"
+            }
+        });
+    }
+
+    var eventoCheckFiltro = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+
+
+</script>
+
+@(Html.X().Window()
+    .Width(600)
+    .Height(500)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowNocNic")
+    .Title("Maestro NocNic:" + modoDesc)
+    .Padding(4)
+    .Items(
+                    Html.X().FormPanel().ID("FormPanel1")
+                             .Frame(false)
+                             .Border(false)
+                             .AutoScroll(true)
+                            .Layout(LayoutType.VBox)
+                            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                    .Items(
+                        Html.X().FormPanel()
+                             .Frame(false)
+                             .Border(false)
+                            .Layout(LayoutType.HBox)
+                            .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+
+                            .Items(
+                                     Html.X().FormPanel().Layout(LayoutType.Form).Width(350).Height(120).FieldDefaults(d => { d.LabelWidth = 100; }).BodyPadding(10).Frame(false).Border(false)
+                                    .Items(
+                                            X.TextFieldFor(m => m.IdNic).Width(200).ReadOnly(true).RightButtons(X.Button().Text("...").Disabled(indicaModoLectura).Handler("seleccionadorNicBusqueda();")).FieldLabel("Nic").LabelWidth(120),
+                                            X.TextFieldFor(m => m.IdNoc).FieldLabel("Noc").Width(200).ReadOnly(true).LabelWidth(120),
+
+                                            X.TextFieldFor(m => m.Descripcion).FieldLabel("Descripcion").Width(300).LabelWidth(120),
+                                            X.ComboBoxFor(m => m.Estado).Editable(false).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("ESTADOINT").Select(d => new ListItem(d.Name, d.ID))).FieldLabel("Estado").Value(Model.Accion == "NUEVO" ? 2 : (Model.Estado)).SimpleSubmit(true).ReadOnly(indicaModoLectura).Width(300).LabelWidth(120)//.Hidden(true)
+
+                                          )
+
+
+                                 ),
+
+                                     Html.X().FormPanel().Layout(LayoutType.Form).Width(500).FieldDefaults(d => { d.LabelWidth = 150; }).BodyPadding(10).Frame(false).Border(false)
+
+                                    ,
+
+                                    X.TextArea().ID("taAlerts").Border(false).StyleSpec("background:white;border:1px solid gray;").FieldStyle("color: red").Hidden(true).ReadOnly(true)
+
+
+                         )
+
+                     .Items(
+
+                             X.GridPanel()
+                             .TopBar(X.Toolbar()
+
+                             .Items(
+
+                              X.Toolbar()
+                                  .Height(30)
+                                       .Items(
+
+                                            X.Button()
+                                            .Text("Modificar Fila")
+                                            .Icon(Icon.ApplicationFormEdit)
+                                            .Handler("modificarDetalle();"),
+                                                X.ToolbarSeparator(),
+                                                X.ToolbarSpacer(),
+                                                X.Button()
+                                                .Text("Eliminar")
+                                                .Icon(Icon.ApplicationFormDelete)
+                                                .Handler("eliminarDetalle();"),
+                                                X.ToolbarSeparator(),
+                                                X.ToolbarSpacer()
+                                             ),
+                                             X.Checkbox().FieldLabel("Descripcion").ID("chkDescNC").Checked(true).Handler("eventoCheckFiltro(App.chkDescNC,App.tfBuscarSeleccDescNC);").LabelWidth(70),
+                                             X.TextField().ID("tfBuscarSeleccDescNC").Disabled(true).FieldLabel(""),
+                                             X.ToolbarFill()
+
+                                                )
+                                                  )
+                                                        .Border(false)
+                                                        .Layout(LayoutType.Fit)
+                                                        .Scroll(ScrollMode.Both)
+                                                        .AutoScroll(true)
+                                                            .ID("GridPanelSelNC")
+                                                        .Margins("0 0 0 0")
+                                                        .Store(store => store.Add(
+                                                                 Html.X().Store()
+                                                                      .ID("StoreSelNC")
+                                                                     .AutoLoad(true)
+                                                                     .RemoteSort(false)
+                                                                     .IsPagingStore(true)
+                                                                     .RemotePaging(true)
+                                                                     .PageSize(10)
+                                                                         .Proxy(proxy => proxy.Add(Html.X().AjaxProxy().Url("getGrillaNocNic")
+                                                                            .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                                            .Root("data")
+                                                                            .TotalProperty("total")
+                                                                            .IDProperty("IdNC"))))
+                                                                            )
+                                                                         .Parameters(ps =>
+                                                                                        ps.Add(new
+                                                                                        {
+
+                                                                                            descripcion = JRawValue.From("App.tfBuscarSeleccDescNC.getValue()"),
+
+                                                                                        })
+                                                                                 )
+                                                                     .Model(model => model.Add(Html.X().Model()
+                                                                             .Fields(fields =>
+                                                                             {
+                                                                                 fields.Add(Html.X().ModelField().Name("IdNC"));
+                                                                                 fields.Add(Html.X().ModelField().Name("IdNoc"));
+                                                                                 fields.Add(Html.X().ModelField().Name("IdNic"));
+                                                                                 fields.Add(Html.X().ModelField().Name("Descripcion"));
+                                                                                 fields.Add(Html.X().ModelField().Name("Estado"));
+                                                                                 fields.Add(Html.X().ModelField().Name("UsuarioCreacion"));
+                                                                                 fields.Add(Html.X().ModelField().Name("FechaCreacion"));
+
+                                                                             }))
+                                                                            )
+                                                                          )
+                                                               )
+                                                            .ColumnModel(columnModel =>
+                                                            {
+                                                                columnModel.Columns.Add(Html.X().Column().Text("IDNC").DataIndex("IdNC").Width(80));
+                                                                columnModel.Columns.Add(Html.X().Column().Text("Noc").DataIndex("IdNoc").Width(80));
+                                                                columnModel.Columns.Add(Html.X().Column().Text("Nic").DataIndex("IdNic").Width(80));
+                                                                columnModel.Columns.Add(Html.X().Column().Text("Descripción").DataIndex("Descripcion").Width(80));
+                                                                columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(100).Renderer("changeEstado"));
+                                                                columnModel.Columns.Add(Html.X().Column().Text("UsuarioCreacion").DataIndex("UsuarioCreacion").Width(300));
+                                                                columnModel.Columns.Add(Html.X().Column().Text("FechaCreacion").DataIndex("FechaCreacion").Width(300));
+
+                                                            })
+                                                             .View(Html.X().GridView().TrackOver(false)).Border(false)
+                                                                       .Listeners(l => l.CellDblClick.Handler = "enviarSeleccionDirect(record.data.IdNC,record.data.IdNoc,record.data.IdNic);")
+                                                                       .Listeners(l => l.CellClick.Handler = "setSeleccion(record.data.IdNC,record.data.IdNoc,record.data.IdNic);")
+                                                            .BottomBar(bar => bar.Add(Html.X().PagingToolbar()
+                                                            ))
+
+
+                                )
+
+
+
+                 .TopBar(
+                      X.Toolbar()
+                             .Height(30)
+                             .Items(
+                                X.ToolbarFill(),
+                                X.Button()
+                                        .Hidden((Model.Accion == "VER2" ? true : false))
+                                        .ID("btnSave")
+                                        .Text((Model.Accion == "DELETE" ? "Eliminar" : "Guardar"))
+                                        .Icon((Model.Accion == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave))
+                                     .DirectEvents(de =>
+                                      {
+                                          de.Click.Url = Url.Action("save_NocNic");
+                                          de.Click.Before = "App.btnSave.setDisabled(true); " +
+                                                            "beforeSave(App.FormPanel1); return App.FormPanel1.getForm().isValid(); ";
+                                          de.Click.After = "App.btnSave.setDisabled(false); ";
+                                          de.Click.EventMask.ShowMask = true;
+                                          de.Click.ExtraParams.Add(new Parameter("MODO", Model.Accion, ParameterMode.Value));
+                                          de.Click.ExtraParams.Add(new Parameter("idWindow", "WindowNocNic", ParameterMode.Value));
+                                          de.Click.Success = "onSuccess(result.data);";
+                                          de.Click.Failure = "onFailure('" + Model.Accion + "');";
+
+                                      }),
+                                     X.Button()
+                                      .Text((Model.Accion == "VER2" ? "Aceptar" : "Cancelar"))
+                                      .Icon((Model.Accion == "VER2" ? Icon.Accept : Icon.Cancel))
+
+                                     .DirectEvents(de =>
+                                      {
+                                          de.Click.Url = Url.Action("cerrarWindow");
+                                          de.Click.ExtraParams.Add(new Parameter("id", "WindowNocNic", ParameterMode.Value));
+                                      }),
+                                          X.ToolbarSpacer(20)
+                                 )
+                            )
+
+
+
+
+        )
+
+
+    .CloseAction(CloseAction.Destroy)
+)
+@(
+ X.KeyNav()
+        .Target("WindowNocNic")
+    .Enter(a => a.Handler = "accionBuscarFiltroNocNic('FILTRO');")
+)

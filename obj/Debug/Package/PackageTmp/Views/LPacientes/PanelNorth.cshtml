@@ -1,0 +1,119 @@
+﻿@model SoluccionSalud.Entidades.Entidades.VW_PERSONAPACIENTE
+@{
+    var X = Html.X();
+}
+
+@(X.Panel()
+        .Region(Region.North)
+        .ID("North001")
+        //.Title("Datos del Médico")
+        .Layout(LayoutType.Fit)
+        //.Layout(LayoutType.Border)
+        //.Layout(LayoutType.HBox)
+        //.Height(90)
+        //.Width(800)
+        .Border(false)
+        .AutoScroll(true)
+        //.DefaultAnchor("100% 100%")
+        //.LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+        .Listeners(l =>
+            {
+                l.AfterLayout.BroadcastOnBus = "App.resize";
+                l.AfterLayout.Single = true;
+            })
+        .TopBar(
+                Html.X().Toolbar()
+                .Height(30)
+                .Border(false)
+                .Items(
+                    items =>
+                    {
+                        items.Add(new ToolbarSpacer { Width = 10 });
+                        items.Add(new Image
+                        {
+                            ImageUrl = "~/resources/images/logohce.png",
+                            Width = 67,
+                            Align = System.Web.UI.WebControls.ImageAlign.Middle,
+                            Height = 28
+                        });
+                        items.Add(new ToolbarSpacer { Width = 50 });
+                        items.Add(new Label
+                        {
+                            Width = 350,
+                            Html = "<span style='color:#284A89;'><b> Establecimiento: " + (Model != null ? Model.DireccionReferencia : "nulo") + "</b></span>"
+                        });
+                        items.Add(new ToolbarSpacer { Width = 20 });
+                        items.Add(new Label
+                        {
+                            Width = 200,
+                            //OBS: HARCCODE??
+                            Html = "<span style='color:#284A89;'><b> Periodo: " + (Model != null ? Model.CentroCostos : "nulo") + " </b></span>"
+
+                        });
+
+                        items.Add(new ToolbarFill());
+                        items.Add(new Label
+                        {
+                            //Width = 300,
+                            Html = "<span style='color:#284A89;'><b> " + Model.TipoTrabajador + ": " +
+                                    (Model != null ? Model.NombreCompleto : "") + " - " +
+                                    (Model != null ? "("+Model.Persona+")" : "")
+                                    + " </b></span>"
+                        });
+                        items.Add(new ToolbarSeparator());
+                        items.Add(new Button
+                        {
+                            Icon = Icon.UserHome,
+                            Html = "<span style='color:#284A89;'><b> Mi Sesión </b></span>",
+                            Margins = "0 0 0 0",
+                            Width=120,
+                            /*Listeners =
+                                {
+                                    Click =
+                                    {
+                                        Handler = "Ext.Msg.alert('TEST tool');"
+                                    }
+                                },*/
+                            Menu =
+                            {
+                                new Menu{                                    
+                                    Items = {
+                                        new MenuItem { Text =  "Configuración", Icon = Icon.Cog },
+                                        new MenuItem { Text =  "Acerca de...", Icon = Icon.Information },
+                                        new MenuItem { Text =  "Salir", Icon = Icon.DoorOut }
+                                    }
+                                }
+                            }
+                        });
+                    }
+
+
+                )
+        )            
+        .Items(
+                Html.X().Toolbar()
+                .Height(30)
+                .Border(false)
+                .Items(
+                    items =>
+                    {                    
+                        items.Add(new ToolbarFill());
+                        items.Add(new Label
+                        {
+                            //Width = 300,
+                            Html = "<span style='color:#284A89;'><b> Usuario: " +
+                                    (Model != null ? ""+Model.USUARIO : "")+ " </b></span>"
+                        });
+                        items.Add(new ToolbarSeparator());
+                        items.Add(new ToolbarSpacer { Width = 120 });
+                    }
+
+
+                )        
+        
+        )
+        
+)
+
+              
+

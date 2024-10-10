@@ -1,0 +1,312 @@
+﻿@model SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL
+@using Region = Ext.Net.Region
+@{
+    var X = Html.X();
+    var idWindow = "WindowBEFOREUPLOAD";
+
+    var VAR_AGNO_SYS = "2015";
+    var VAR_VERSION_SYS = "1.0";
+
+    var STYLE_TEXT = "font: normal 11px tahoma; height: 18px;";
+
+    var STYLE_LABEL = "'width:140px;height: 18px; font: bold 11px tahoma ; color: #284A89 ' >";
+    var STYLE_LABEL_SMALL = "'width:10px;height: 18px; margin-right:5px; font: bold 11px tahoma ; color: #284A89 ' >";
+
+    var STYLE_ETQ_ABR = "<label style= ";
+    var STYLE_ETQ_CER = "</label>";
+    var COLORBLU01 = "#284A89";
+}
+
+<script>
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 0)
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+
+    var seleccionRecordActual = null;
+    var seleccionActual =null;
+    var seleccionActualDesc = null;
+    var seleccionActualCod = null;
+    function setSeleccion(record) {
+        seleccionRecordActual = record;
+    }
+
+    var eventoCheckFiltro = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+
+    var accionBuscarFiltroSelecc = function (tipo) {
+        varTipoBuscar = tipo;
+        App.GridPanelSelGenerico.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+
+    //function Password() {
+    //    var valor = App.IdPasswordAntiguo.getValue();
+
+    //    if (valor.length > 1) {
+    //        //    document.getElementById("lblpassNueva").style.color = "#FA5858";
+    //    }
+    //    if (valor.length > 4) {
+    //        alert('4');
+    //    }
+    //};
+
+
+    function eventoRenderForm() {
+        try {
+            if (window.frames.length > 0 || parent.frames.length > 0) {
+                /* $(window.top.document).find('.ui-dialog').hide();*/
+                window.parent.location.reload();
+            }
+        } catch (e) {
+            console.log(e);
+        }
+    }
+
+    function Validar() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("ValidarPasswordHClinica"))',
+            params: {
+                
+                IdUsuario: App.IdUsuario.getValue(),
+                IdPasswordAntiguo: App.IdPasswordAntiguo.getValue(),
+                pwd1: App.pwd1.getValue(),
+                pwd2 : App.pwd2.getValue()
+            },
+            eventMask: {
+                showMask: true,
+                msg: "Verificando Usuario.."
+            }
+
+        });
+    }
+
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+            App.conthbIndicaError.setVisible(true);
+            App.taAlerts.focus();
+        } else {
+            App.taAlerts.setVisible(false);
+            App.conthbIndicaError.setVisible(false);
+        }
+
+    };
+
+    var beforeSave = function (form) {
+        App.taAlerts.setVisible(false);
+        App.taAlerts.setValue(null);
+        App.conthbIndicaError.setVisible(false);
+        var FieldsInvalidos = getInvalidFields(form);
+        if (FieldsInvalidos.length > 0) {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("addRecursosValidacion"))',
+                params: {
+                    data: FieldsInvalidos,
+                    indica: 'VALIDAR',
+                },
+                success: function (result) { accionMensajes(result.data); }
+            });
+        }
+    };
+
+    //function Password() {
+    //    alert('fdsfs');
+    //}
+
+    var Cerrar = function () {
+        App.winSelectFile.close();
+       // this.location.reload();
+    };
+
+   
+
+</script>
+<style type="text/css">
+    input:required:invalid, input:focus:invalid {
+        background-image: url(../resources/images/invalid.png);
+        background-position: right top;
+        background-repeat: no-repeat;
+    }
+
+    input:required:valid {
+        background-image: url(../resources/images/valid.png);
+        background-position: right top;
+        background-repeat: no-repeat;
+    }
+</style>
+
+@(X.Window()
+        .ID("winSelectFile")
+        .Title("Cambia tu contraseña")
+        .Icon(Icon.Key)
+        .Y(10)
+        .Height(300)
+        .Width(600)
+        .Layout(LayoutType.Fit)
+        .Modal(true)
+        //.Listeners(l =>
+        //     {
+        //         l.Render.Handler = "eventoRenderForm();";
+        //     })
+        .Items(
+            X.FormPanel().ID("BasicForm").Frame(false).Border(false)
+            .FieldDefaults(fd => fd.LabelWidth = 50)
+            .Items(
+             X.Component().Height(5),
+             X.Label().Html("<ul> <li>Las contraseñas son sensibles a las Mayúsculas y deben contener como mínimo 6 caracteres.</li> <li>Una buena contraseña deberia contener una mezcla de mayúscula y minusculas, números y símbolos.</li> </ul> ")
+             ,X.Component().Width(50),
+             X.FieldSet()
+             .Title("<b>Información:</b>")
+             .ID("fsAlergias")
+             .MarginSpec("0 20 0 20")
+             .Items(
+             
+             X.Container().Layout(LayoutType.VBox)
+                        .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                        .Border(false)
+                        .Items(
+                                          
+                        X.Container().Layout(LayoutType.HBox)
+                        .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Border(false)
+                        .Items(
+                        // PASSWORD ACTUAL
+                       X.TextField().ID("IdUsuario").Width(400)
+                      .MaxLength(20).LabelWidth(130).ReadOnly(true).FieldStyle(STYLE_TEXT)
+                      .FieldLabel(STYLE_ETQ_ABR + STYLE_LABEL + "Usuario" + STYLE_ETQ_CER)
+                      .AllowBlank(false).BlankText("Debe ingresar Usuario Actual.").Value(Model != null ? "" + Model.USUARIO : ""),
+
+                      X.Component().Width(5),
+                              X.Label().ID("lblusuario").Html("<font><b>nnnnn</b></font").Hidden(true)
+                        ),
+                        X.Component().Height(5),
+                        X.Container().Layout(LayoutType.HBox)
+                        .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Border(false)
+                        .Items(
+                        // PASSWORD ACTUAL
+                        X.TextField().ID("IdPasswordAntiguo").InputType(Ext.Net.InputType.Password).Width(400)
+                        .MaxLength(20).LabelWidth(130).ReadOnly(false).FieldStyle(STYLE_TEXT)
+                        .FieldLabel(STYLE_ETQ_ABR + STYLE_LABEL + "Contraseña Actual" + STYLE_ETQ_CER)
+                        .AllowBlank(false).BlankText("Debe ingresar password actual.")
+                            .Listeners(l =>
+                                         {
+                                             l.Change.Handler = "Password();";
+                                         })
+                        ,
+                        
+                        
+                        X.Component().Width(5),
+                                    X.Label().ID("lblpassActual").Html("<font><b>fdgffffff</b></font").Hidden(true)   
+                        ),
+
+                        X.Component().Height(5),
+                        X.Container().Layout(LayoutType.HBox)
+                        .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Border(false)
+                        .Items(
+                        //PASSWORD NUEVA
+                    X.TextField().ID("pwd1").InputType(Ext.Net.InputType.Password)
+                    .Vtype("password").Width(400).MaxLength(20).LabelWidth(130)
+                    .ReadOnly(false).FieldStyle(STYLE_TEXT).FieldLabel(STYLE_ETQ_ABR + STYLE_LABEL + "Contraseña Nueva" + STYLE_ETQ_CER)
+                        .AllowBlank(false).BlankText("Debe ingresar password nuevo")
+                                    //.Listeners(l =>
+                                    // {
+                                    //     l.Change.Handler = "prueba2();";
+                                    // })
+                                 ,
+                      X.Component().Width(5),
+                              X.Label().ID("lblpassNueva").Html("<font><b>vguigi</b></font").Hidden(true)      
+                        ),
+                        
+                         X.Container().Layout(LayoutType.HBox)
+                        .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Border(false)
+                        .Items(
+                        //PASSWORD CONFIRMAR
+                 //  X.Component().Width(50),
+                    X.TextField().ID("pwd2").InputType(Ext.Net.InputType.Password).Vtype("password")
+                    .Width(400).MaxLength(20).LabelWidth(130).ReadOnly(false).FieldStyle(STYLE_TEXT).FieldLabel(STYLE_ETQ_ABR + STYLE_LABEL + "Confirmar contraseña nueva" + STYLE_ETQ_CER)
+                    .CustomConfig(c => c.Add(new ConfigItem("initialPassField", "pwd1", ParameterMode.Value)))
+                                .AllowBlank(false).BlankText("Debe confirmar password")
+                                    //.Listeners(l =>
+                                    //     {
+                                    //         l.Change.Handler = "prueba();";
+                                    //     })
+                                ,//.MinLength(6),
+                             
+                                
+                                X.Component().Width(5)   ,
+                                        X.Label().ID("lblpassConfirmar").Html("<font><b>mmjjjjjjj</b></font").Hidden(true)
+                                        
+                        )
+                           
+                        
+                                   
+                                          
+                        )
+             
+              
+                    
+             
+             
+                        //.MinLength(6)
+                  
+              )
+                  ,X.Component().Width(50),
+                                X.TextArea().ID("taAlerts")
+                                .Border(false).Width(400)
+                                .StyleSpec("background:white;border:1px solid gray;")
+                                .FieldStyle("color: red")
+                                .Hidden(true)
+                                .ReadOnly(true)
+              
+            )
+             .Buttons(
+             X.Button()
+                            .ID("cmdGuardar")
+                            .Text("Cambiar contraseña")
+                            .Icon(Icon.Accept)//.Handler("return checkForm(this);")
+                            .DirectEvents(de =>
+                            {
+                                de.Click.Action = "ValidarPasswordHClinica";
+                                de.Click.EventMask.ShowMask = true;
+                                de.Click.EventMask.Msg = "Verificando...";
+                                //de.Click.Before = "ValidarPassworddd";
+                                //de.Click.EventMask.MinDelay = 1000;
+                               de.Click.FormID = "#(return this.up('window').down('form');)";
+                       })
+                            ,
+
+                        X.Button()
+                                        .Text("Cancelar").Handler("App.winSelectFile.close();").Icon(Icon.Cancel)
+        //.OnClientClick("#{BasicForm}.getForm().reset();")
+                )
+        )
+        //.Content(c => "This is my first <a target='_blank' href='http://www.ext.net/'> Ext.NET</a> Window.")
+)
+@(Html.X().KeyNav()
+                .Target("BasicForm")
+                .Enter(a => a.Handler = "Validar();")
+)

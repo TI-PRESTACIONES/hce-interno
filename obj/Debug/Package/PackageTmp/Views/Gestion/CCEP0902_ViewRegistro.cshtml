@@ -1,0 +1,90 @@
+﻿@model  SoluccionSalud.Entidades.Entidades.SS_CE_DICCIONARIO
+@{
+    ViewBag.Title = "Submit";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+}
+
+@section cabecera
+{
+    <script>
+        function success (btn) {
+            submit(btn.up('window').down('form'), '@Url.Action("SuccessSubmit")');
+        }
+
+        function failure (btn) {
+            submit(btn.up('window').down('form'), '@Url.Action("FailureSubmit")');
+        }
+
+        function submit(form, url)
+        {
+            form.submit({
+                url: url,
+                waitMsg : "Submitting...",
+                success: function(form, action){
+                    // server responded with success = true
+                    var result = action.result;
+                },
+                failure: function(form, action){
+                    if (action.failureType === Ext.form.action.Action.CONNECT_FAILURE) {
+                        Ext.Msg.alert('Error',
+                            'Status:'+action.response.status+': '+
+                            action.response.statusText);
+                    }
+                    if (action.failureType === Ext.form.action.Action.SERVER_INVALID){
+                        // server responded with success = false
+                        Ext.Msg.alert('Invalid', action.result.errorMessage);
+                    }
+                }
+            })
+        }
+    </script>
+}
+
+@section cuerpo
+{
+ @( Html.X().FormPanel()
+                    .ID("FormPanel1")
+                    .Frame(true)
+                  
+                    .DefaultAnchor("100%")
+                    .BodyPadding(4)
+                   
+                    .FieldDefaults(def =>
+                    {
+                        def.MsgTarget = MessageTarget.Side;
+                    })
+                    .Items(
+                             Html.X().HiddenFor(m =>  m.IDDICCIONARIO),
+                            Html.X().TextFieldFor(m => m.CODIGODICCIONARIO)
+                                    .FieldLabel("Codigo")
+                                    .Width(20),
+                            Html.X().TextFieldFor(m => m.NOMBREDICCIONARIO)
+                                    .FieldLabel("Diccionario")
+                                    .Width(150),
+                             Html.X().TextFieldFor(m => m.NOMBRECONTROL)
+                                    .FieldLabel("Nombre")
+                                    .Width(150),
+                             Html.X().ComboBoxFor(n => n.ESTADO)
+                                               .Items(AppSaludMVC.Models.CombosGenericos.GetEstadoRegistro("EstadoRegistro").Select(d => new ListItem(d.Name, d.ID)))
+                                .FieldLabel("Estadoddd")
+                                .DefaultAnchor("Activo")
+                                .SimpleSubmit(true)
+                                .Listeners(l => {
+                                    l.Select.Handler = "this.next().setValue(this.getRawValue());";
+                                })
+                              
+                             )
+
+                    .Buttons(
+                      Html.X().Button()
+                     .Text("Save To Grid")
+                     .OnClientClick("var form = this.up('form'); form.getForm().updateRecord(form.down('grid').getSelectionModel().getLastSelected());"),
+                      Html.X().Button()
+                     .Text("Reset Fields")
+                     .OnClientClick("this.up('form').getForm().reset();")
+                  
+             )
+                     
+            )
+            
+}

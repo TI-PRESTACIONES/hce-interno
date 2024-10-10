@@ -1,0 +1,902 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_HC_SeguimientoRiesgo
+
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VISTA" ? false : false))));
+    
+    
+}
+@section cabecera
+{
+<style>
+    html body {
+        padding: 0px;
+        background: none;
+        background: none;
+        background: none;
+        background-attachment: fixed;
+        background-position: center;
+        font-family: tahoma,verdana,sans-serif;
+        background-color: #ffffff;
+    }
+</style>
+
+    <script>
+                
+        var handler = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+            //alert('TEST::GRID:' + grid + ";CI:;" + colIndex + ";AI:;" + actionItem + ";EVE:;" + event.getValue() + ";RECo:;" + record.originalValue + ";ROWw:;" + row);
+            
+        };
+
+        var changeDescripcion = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+            var template = '<span style="color:{0};">{1}</span>';
+            var texto = colIndex.data.text;
+            var vector = texto.split('|');
+            var show = "";
+            if (colIndex.data.id == 'WA') {
+                return Ext.String.format(template, 'black', texto);
+            } else {
+                if (vector.length > 2) {
+                    show = vector[2];
+                }
+                return Ext.String.format(template, 'black', show);
+            }
+
+        };
+
+
+        var changeTipoPer = function (value, item, record) {            
+            return Ext.String.format(template, 'black', value);
+        };    
+       
+        var IDItemActivo;
+        var IDItemNivel;
+        var valInteger;
+        var habilitaID = function (str) {
+            if (str == "WA") {
+                IDItemNivel = 0;
+            } else {                
+                IDItemActivo = str;                
+            }
+        }
+
+
+        var changeComentario = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+            var deshabilitado = false;
+            var deshabilitadoCode = (deshabilitado ? "disabled= true" : "");
+            var template = '<span><input type="text" name="txtComent" size="250" '   +
+                            'onblur="eventoCambioText({0},2,this); "' + deshabilitadoCode + ' value= {1} ></span>';
+            
+            var texto = colIndex.data.text;
+            
+            var vector = texto.split('|');
+            var indicaEdicion = '';
+            var indicaExiste = '';
+            var show = '';
+            if (vector.length > 0) {
+                indicaEdicion = vector[0];
+            }            
+            if (indicaEdicion == '1') {
+                
+                if (vector.length > 3) {
+                    indicaExiste = vector[3];
+                    if (indicaExiste == '1') {                        
+                        if (vector.length > 5) {
+                            show = vector[5];                
+                        }
+                    }
+                }
+                return Ext.String.format(template, "'" + texto + "'", "'" + show + "'");
+            } else {
+                return Ext.String.format("", "", "");
+            }            
+        };
+
+        var changeIndicaAsignacion = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+            var deshabilitado = false;
+            var deshabilitadoCode = (deshabilitado ? "disabled= true" : "");
+            var template = '<span><input type="checkbox" name="cheAcceso" value="2" {1} ' +
+                            'onclick="eventoCheckTree({0},1,this);" ' + deshabilitadoCode + '  ></span>';
+
+            var texto = colIndex.data.text;
+            
+            var vector = texto.split('|');
+            var indicaEdicion = '';
+            var indicaExiste = '';
+            var show = '';
+            if (vector.length > 0) {
+                indicaEdicion = vector[0];
+            }
+            if (indicaEdicion == '1') {
+                if (vector.length > 3) {
+                    indicaExiste = vector[3];
+                    if (indicaExiste == '1') {                        
+                        show = 'checked = "true" ';                        
+                    }
+                }
+                return Ext.String.format(template, "'" + texto + "'", show);
+            } else {
+                return Ext.String.format("", "", "");
+            }
+        };
+
+        var varCuidadoPreventivoSelecc = null;
+        var eventoRecargarHistorico = function (record) {
+            var id = record.data.id;
+            var texto = record.data.text;
+            var vector = texto.split('|');
+            var indicaEdicion = '';
+            var desc = '';
+            var show = '';
+            if (vector.length > 0) {
+                indicaEdicion = vector[0];
+            }
+            if (indicaEdicion == '1') {
+                if (id != null) {                                                          
+                    if (vector.length > 2) {
+                        desc = vector[2];
+                        indicaID = id;
+                    }
+                    App.txtSeleccionCuidadoHist.setDisabled(false);
+                    App.txtSeleccionCuidadoHist.setValue(desc);
+                    App.chkSeleccionCuidadoHist.setValue(false);
+                    varCuidadoPreventivoSelecc = indicaID;
+                    recargarHistorico();                    
+                }
+            }
+        }
+        var recargarHistorico = function () {
+            if (App.txtSeleccionCuidadoHist.getValue() == null || App.txtSeleccionCuidadoHist.getValue()=='') {
+                varCuidadoPreventivoSelecc = null;
+            }
+            App.grillaRiesgoDetalle.getStore().reload();
+        }
+        var accionReloadNodoRoot = function () {
+            if (true) {
+                var tree = App.TreePanelSegRiesgos;
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("setNodoRootGeneral"))',
+                    params: {
+                        tipo: 0,
+                        text:'Cuidado Preventivo',
+                        id:'WA',
+                        leaf:false
+                    },
+                    success: function (node) {
+
+                        if (!Ext.isEmpty(node)) {
+                            tree.setRootNode(node);
+                        }
+                        else {
+                            tree.getRootNode().removeAll();
+                        }
+                    }
+                });     
+            } else {                
+            }            
+        };
+
+        var eventoCheckTree = function (value, indica, compo) {
+            var texto = value;
+            var vector = texto.split('|');
+            var show = "";
+            var i = 0;
+            var textAux = '';
+            var id = '';
+            var secuencia = 0;
+            if (vector.length > 4) {
+                id = vector[1];
+                secuencia = vector[4];
+                if (indica == 1) {
+                    vector[3] = (compo.checked ? 1 : 0);
+                }
+                for (i = 0; i < vector.length - 1; i++) {
+                    textAux = textAux + vector[i] + '|';
+                }
+                textAux = textAux + vector[vector.length - 1];
+                var textChanged = textAux;
+
+                var tree = App.TreePanelSegRiesgos;
+                NodoFound = null;
+                getNodoTree(tree.getRootNode(), id, NodoFound);
+                if (NodoFound != null) {
+                    NodoFound.data.text = textChanged;
+                    NodoFound.data.submit;
+                    App.StoreDatosPrevencion.save();
+
+                    var grid = App.TreePanelSegRiesgos;
+                    grid.columns.forEach(function (col) {
+                        if ((col.text == 'Edit')) {
+                            col.setVisible(true);
+                            col.setVisible(false);
+                        }
+                    });
+                    guardaTempTrue(compo, 'Logico',id, secuencia);
+                }
+
+                
+            }
+            
+        }
+
+        var eventoCambioText = function (value, indica, compo) {
+            var texto = value;
+            var vector = texto.split('|');
+            var show = "";
+            var i = 0;
+            var textAux = '';
+            var id = '';
+            var indicaSi = '0';
+            var secuencia = 0;
+            if (vector.length>5) {
+                id = vector[1];
+                secuencia = vector[4];
+                if (compo.value != null && compo.value != '') {
+                    vector[3] = '1';
+                }
+                indicaSi = vector[3];
+                if (indica == 2) {
+                    vector[5] = compo.value;
+                }
+                for (i = 0; i < vector.length - 1; i++) {
+                    textAux = textAux + vector[i] + '|';
+                }
+                textAux = textAux + vector[vector.length - 1];
+                var textChanged = textAux;
+                
+                var tree = App.TreePanelSegRiesgos;
+                NodoFound = null;
+                getNodoTree(tree.getRootNode(), id, NodoFound);
+                if (NodoFound != null) {
+                    
+                    NodoFound.data.text = textChanged;
+                    NodoFound.data.submit;
+                    App.StoreDatosPrevencion.save();
+                    
+                    var grid = App.TreePanelSegRiesgos;
+                    grid.columns.forEach(function (col) {
+                        if ((col.text == 'Edit')) {
+                            col.setVisible(true);
+                            col.setVisible(false);
+                        }
+                    });
+                    
+                    guardaTempTxt(compo, 'Descripcion', id, indicaSi, secuencia);
+                }
+                
+                
+            }
+
+        }
+
+        var NodoFound = null;
+        var getNodoTree = function (nodo, idmatch, NodoFoundMet) {
+            if (nodo != null && NodoFoundMet == null) {
+                if (nodo.data.id == idmatch) {
+                    NodoFound = nodo;
+                } else {
+                    if (nodo.childNodes.length > 0) {
+                        nodo.eachChild(function (child) {
+                            getNodoTree(child, idmatch, NodoFound);
+                        });
+                    } else {
+                        getNodoTree(null, idmatch, NodoFound);
+                    }
+                }
+            }
+        };
+
+        var enviarObjeto = function (control) {
+            accionReloadNodoRoot();
+
+            var ArrayList0 = new Array();
+            var MA_MiscelaneosDetalle = {
+                ValorEntero1: control.getValue()
+            };
+            ArrayList0.push(MA_MiscelaneosDetalle);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("VariableSession"))',
+                params: {
+                    Variables: ArrayList0,
+                    text: 'O'
+                }
+            });            
+           // alert(control.getValue());
+        };
+ 
+        
+        var GuardaTemporalDB = function (IDControl, campo) {
+            // var valInteger = 0;
+
+            beforeSave(App.formactual);
+            if (App.formactual.getForm().isValid()) {
+
+                var ArrayList0 = new Array();
+                if (true) {
+                    var MA_MiscelaneosDetalle = {
+                        ValorEntero1: App.cmbTipoCuidadoPrev.getValue(),
+                        ValorFecha: App.dfFecSeguimiento.getValue(),
+                        CodigoTabla: campo
+                    };
+                    ArrayList0.push(MA_MiscelaneosDetalle);
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("GuardaTemporalDB"))',
+                        params: {
+                            Variables: ArrayList0,
+                            text: 'O'
+                        }
+                        , success: function (result) {
+                            var successX = true;
+                            if (result.data!=null) {
+                                if (result.data.length > 0) {
+                                    successX = false;
+                                }
+                            }
+                            if (successX) {
+                                accionReloadNodoRoot();
+                            }
+                        }
+                    });
+
+
+                } else {
+                    IDControl.setValue(false);
+                    return;
+                }
+            } else {
+                App.cmdGuardar.setDisabled(false);
+                return;
+            }
+        }
+
+     
+
+        var guardaTempTrue = function (IDControl, campo, idCuidadoPrev,sec) {
+            setIndicaCambios(true);
+            valInteger = 0;
+            if (IDControl.checked) valInteger = 1;            
+            var ArrayList0 = new Array();            
+            if (true) {
+                IDItemActivo = idCuidadoPrev;
+                var SS_HC_SeguimientoRiesgoDetalle = {
+                    IdCuidadoPreventivo: IDItemActivo,
+                    Secuencia: sec,
+                    Version: campo,
+                    Accion: (valInteger == 1 ? 'NUEVO' : 'DELETE')
+                };
+                ArrayList0.push(SS_HC_SeguimientoRiesgoDetalle);
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("GuardaTemporalPrevencion"))',
+                    params: {
+                        Variables: ArrayList0,
+                        text: '0'
+                    }
+                });
+            } else {
+                IDControl.setValue(false);
+                return;
+            }
+        }
+        var guardaTempTxt = function (IDControl, campo, idCuidadoPrev, indicaSi,sec) {
+            setIndicaCambios(true);
+            
+            var ArrayList0 = new Array();
+            var strValue = IDControl.value;            
+            if ((indicaSi == 1) && (strValue.length > 0)) {
+                IDItemActivo = idCuidadoPrev;
+                var SS_HC_SeguimientoRiesgoDetalle = {
+                    IdCuidadoPreventivo: IDItemActivo,
+                    Comentario: IDControl.value,
+                    Secuencia: sec,
+                    Version: campo,
+                    Accion: 'NUEVO'
+                };
+                ArrayList0.push(SS_HC_SeguimientoRiesgoDetalle);
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("GuardaTemporalPrevencion"))',
+                    params: {
+                        Variables: ArrayList0,
+                        text: '1'
+                    }
+                });
+            } else {
+                IDControl.setValue("");
+                return;
+            }
+        }
+        var storeVerificar = function (control) {
+          
+        };
+
+        function eventoRenderForm() {
+            var kk = 195;
+            var scrH = screen.height;
+            var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+            var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+            if (southH == 0) {
+                southH = 30;
+            }
+            var dimCentral = (scrH - (northH + southH) - kk);
+            App.formactual.setHeight(dimCentral);
+        }
+
+
+        var indicaCambios = false;
+        function setIndicaCambios(value) {
+            indicaCambios = value;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("setIndicaCambiosFormulario"))',
+                params: {
+                    indica: (value ? 1 : 0)
+                }
+            });
+        }
+
+        var eventoOnEditar = function (btn) {
+            App.cmdGuardar.setDisabled(false);
+            App.btnOnEdit.setVisible(false);
+            App.btnCancel.setVisible(true);
+
+        };
+
+        var accionMensajes = function (data) {
+            var mensajes = "";
+            if (data.length > 0) {
+                for (var i = 0; i < data.length; i++) {
+                    mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+                }
+                App.taAlerts.setVisible(true);
+                App.taAlerts.setValue(mensajes);
+                App.conthbIndicaError.setVisible(true);
+                App.taAlerts.focus();
+
+            } else {
+                App.taAlerts.setVisible(false);
+                App.conthbIndicaError.setVisible(false);
+            }
+
+        };
+
+        var getInvalidFields = function (form) {
+            var invalidFields = new Array();
+            var fields = form.getForm().getFields();
+            fields.filterBy(function (field) {
+                if (!field.isValid()) {
+                    var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                        NombreCampo: field.name,
+                        IdEvento: (field.isValid() ? 1 : 0),
+                        ValorTexto: field.name + ': ' + field.getErrors()
+                    };
+                    invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+                }
+            });
+            return invalidFields;
+        };
+
+        var beforeSave = function (form) {
+            App.taAlerts.setVisible(false);
+            App.taAlerts.setValue(null);
+            App.conthbIndicaError.setVisible(false);
+            var FieldsInvalidos = getInvalidFields(form);
+            if (FieldsInvalidos.length > 0) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("addRecursosValidacion"))',
+                    params: {
+                        data: FieldsInvalidos,
+                        indica: 'VALIDAR',
+                    },
+                    success: function (result) { accionMensajes(result.data); }
+                });
+            }
+        };
+        function eventoCancelar(form) {
+            form.getForm().reset();
+            accionReloadNodoRoot();
+            App.taAlerts.setVisible(false);
+            App.conthbIndicaError.setVisible(false);
+            varCuidadoPreventivoSelecc = '';
+            App.storeRiegoDetalle.reload();
+            setIndicaCambios(false);
+        }
+
+        var eventoCheckFiltro = function (check, componente) {
+            var checkAll = check.getValue();
+            if (checkAll) {
+                componente.setDisabled(true);
+                componente.setValue(null);
+            } else {
+                componente.setDisabled(false);
+            }
+        };
+    </script>
+}
+
+
+@section cuerpo
+{
+
+
+    @(Html.X().Viewport()
+        .Layout(LayoutType.VBox)
+
+        .LayoutConfig(
+            new VBoxLayoutConfig { Align = VBoxAlign.Stretch }
+        )
+        .Listeners(l =>
+        {
+            l.AfterLayout.BroadcastOnBus = "App.resize";
+            l.AfterLayout.Single = true;
+        })
+        .Items(regions =>
+        {
+
+            regions.Add(Html.X().FormPanel()
+                .ItemID("center")
+                .DefaultAnchor("100%")
+                .AutoScroll(true)
+               .Height(340)
+               .Header(false)
+               .Border(true)
+                .ID("formactual")
+                .Layout(LayoutType.VBox)
+                .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })                
+                .Listeners(l =>
+                {
+                    l.Render.Handler = "eventoRenderForm();";
+                })                 
+               .Items(
+                     X.FieldSet()
+                            .ColumnWidth(0.4)
+                            .Title("<b>CUIDADOS PREVENTIVOS</b>").Collapsible(true)
+                            //.Border(false)
+                            .MarginSpec("0 05 0 05")
+                            .Defaults(d =>
+                            {
+                                d.Add(new Parameter("LabelWidth", "150"));
+                                d.Add(new Parameter("DefaultAnchor", "100%"));
+                                d.Add(new Parameter("LabelAlign", "Left"));
+                            })
+
+                            .DefaultAnchor("100%")
+                        .FieldDefaults(d =>
+                        {
+                            d.LabelAlign = LabelAlign.Left;
+                         })
+
+                            .Items(
+                               X.TreePanel()
+                               //.Flex(1)
+                               .Height(250)
+                               .Header(false)
+                               .TopBar(
+                                    X.Toolbar().Hidden(indicaModoLectura).Items(
+                                        X.ToolbarSpacer(10),
+                                       Html.X().ComboBox().ID("cmbTipoCuidadoPrev")
+                                       .FieldLabel("")
+                                        .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("TIPOPREVENTIVO").Select(d => new ListItem(d.Name, d.ID)))
+                                        .Listeners(ls =>
+                                                    ls.Select.Handler = "enviarObjeto(this)"
+                                                )
+                                        .Listeners(ls =>
+                                                    ls.AfterRender.Handler = "enviarObjeto(this);"
+                                                )
+                                         .Width(300)
+                                         .SimpleSubmit(true)
+                                         .Value(1)
+                                //                         .Listeners(ls =>
+                                //                                ls.BeforeActivate.Handler = @"var combo = App.cmbTipoCuidadoPrev;
+                                //                                                    combo.setValue(records[0].get(combo.valueField));"
+                                //                            )
+                                       .LabelWidth(140)
+                                       .FieldLabel("Tipo de Cuidado Preventivo"),
+                                        X.DateField().ID("dfFecSeguimiento")
+                                        .LabelWidth(120)
+                                        .Value(Model.FechaSeguimiento)
+                                        .FieldLabel("Fecha de Seguimiento")
+                                    )
+                               )                               
+                                   .ID("TreePanelSegRiesgos")
+                                    //.Title("LISTADO")
+                                    //.DefaultAnchor("100")
+                                        .AutoScroll(true)
+                                       .Collapsible(true)
+                                        .UseArrows(true)
+                                        .RootVisible(true)
+                                        .MultiSelect(true)
+                                        .SingleExpand(true)
+                                        .FolderSort(true)
+                                        //.Height(150)
+                       
+                                          .ColumnModel(
+                                            X.TreeColumn()
+                                                .Text("Descripción")
+                                                .Flex(1)
+                                                .Renderer("changeDescripcion")
+                                                .DataIndex("Descripcion"),
+                                            X.CheckColumn()
+                                            .Text("Sí/No")
+                                            .DataIndex("Orden")
+                                            .Renderer("changeIndicaAsignacion")
+                                            .Width(50),
+
+                                            X.Column().Text("Comentario").Flex(1)
+                                            .Renderer("changeComentario")
+                                            .DataIndex("Version").ID("Comentario")
+                                            ,                                                                                                                  
+                                            X.ActionColumn()
+                                                .Text("Edit")
+                                                .Width(40)
+                                                .MenuDisabled(true)
+                                                .Hidden(true)
+                                                //.Align(Alignment.Center)
+                                                .Items(
+                                                    X.ActionItem()
+                                                        .Tooltip("Edit task")
+                                                        .Icon(Icon.PageWhiteEdit)
+                                                        .Handler("handler")
+                                                        .IsDisabled(func =>
+                                                        {
+                                                            func.Handler = "return !record.data.Version;";
+                                                        })
+                                                )
+                                    /*,
+                                    Html.X().Column()
+                                    .Text("Comentario")
+                                    .DataIndex("user")
+                                    .Flex(1)
+                                    .Editor(Html.X().TextField())*/
+                                         )
+
+                                 .Store(
+                                     X.TreeStore()
+                                          .ID("StoreDatosPrevencion")
+                                    //.Model( Html.X().Model()
+                                    //           .IDProperty("NodeID")
+                                    //            .Fields(
+                                    //              Html.X().ModelField().Name("NodeID"),
+                                    //              Html.X().ModelField().Name("IdCuidadoPreventivo"),
+                                    //              Html.X().ModelField().Name("IdTipoPeriodicidad"),
+                                    //              Html.X().ModelField().Name("Version"),
+                                    //               Html.X().ModelField().Name("Orden")  
+                                    //          )
+                                    //) 
+                                        .Proxy(
+                                            X.AjaxProxy().Url(Url.Action("GetTreeViewCuidadosPrevSegRiesgos"))
+
+                                    )                        
+                                    .Parameters(ps =>
+                                        ps.Add(
+                                            new
+                                            {                                                
+                                                tipo = new JRawValue("App.cmbTipoCuidadoPrev.getValue()")
+                                            }                                                                                
+                                        )                                        
+                                    )
+                                 )
+
+                                .Root(
+                                    Html.X().Node().NodeID("WA").Text("Cuidados Preventivos")
+                                        )
+
+                                .Listeners(l => {
+                                    l.ItemClick.Handler = "habilitaID(record.data.id);";
+                                    l.ItemDblClick.Handler = "eventoRecargarHistorico(record);";
+                                 })
+                            
+                            
+                            ),                // .Listeners(l => {
+                //  l.ItemClick.Handler = "alert(record.data.id);";
+                X.Label(""),                     
+                X.FieldSet()
+                                 .ColumnWidth(0.4)
+                                 .Title("<b>CUIDADOS PREVENTIVOS - HISTÓRICO</b>").Collapsible(true)
+                                 .MarginSpec("0 05 0 05")
+                                 .Defaults(d =>
+                                 {
+                                     d.Add(new Parameter("LabelWidth", "170"));
+                                 })
+
+                                 .DefaultAnchor("100%")
+                                 .FieldDefaults(d =>
+                                 {
+                                     d.LabelAlign = LabelAlign.Left;
+                                 })
+                                     .Items(
+                                            X.GridPanel()
+                                                 .ID("grillaRiesgoDetalle")
+                                                  //.Height(150)
+                                                  .Flex(1)
+                                                 .Border(true)
+                                                 .TopBar(
+                                                    X.Toolbar().Items(
+                                                        X.ToolbarSpacer(10),
+                                                        X.Checkbox().ID("chkSeleccionCuidadoHist").FieldLabel("Selección")
+                                                        .LabelWidth(90).Width(110).Checked(true)
+                                                        .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chkSeleccionCuidadoHist,App.txtSeleccionCuidadoHist);")
+                                                        ,
+                                                        X.TextField().FieldLabel("").ID("txtSeleccionCuidadoHist").ReadOnly(true)
+                                                        .Width(280).Disabled(true)
+                                                        //.FieldLabel(STYLE_ETQ_ABR + STYLE_LABEL + "Selección Actual" + STYLE_ETQ_CER)
+                                                        ,
+                                                        X.ToolbarSpacer(10),
+                                                        X.Checkbox().ID("chkFecSeguimientoHist").FieldLabel("Fecha de Seguimiento")
+                                                        .LabelWidth(140).Width(160).Checked(true)
+                                                        .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chkFecSeguimientoHist,App.dfFecSeguimientoHist);")
+                                                        ,
+                                                        X.DateField().ID("dfFecSeguimientoHist")
+                                                        .Disabled(true)
+                                                        .FieldLabel(""),
+                                                        X.ToolbarFill(),
+                                                        X.Button().Text("Buscar").Icon(Icon.Find)
+                                                        .Handler("recargarHistorico();")
+                                                    )
+                                                 )
+                                                 .Store(
+                                                     Html.X().Store()
+                                                            .ID("storeRiegoDetalle")
+                                                           .Model(
+                                                             Html.X().Model()
+                                                                 .IDProperty("IdPaciente")
+                                                                  .Fields(
+                                                                      fields =>
+                                                                    {
+                                                                        fields.Add(Html.X().ModelField().Name("IdPaciente"));
+                                                                        fields.Add(Html.X().ModelField().Name("Version"));
+                                                                        fields.Add(Html.X().ModelField().Name("FechaSeguimiento").Type(ModelFieldType.Date));
+                                                                        fields.Add(Html.X().ModelField().Name("FechaCreacion").Type(ModelFieldType.Date));
+                                                                        fields.Add(Html.X().ModelField().Name("Accion"));
+                                                                        fields.Add(Html.X().ModelField().Name("UsuarioCreacion"));
+                                                                        fields.Add(Html.X().ModelField().Name("UsuarioModificacion"));
+                                                                        /*new ModelField("IdPaciente", ModelFieldType.Int), 
+                                                                            new ModelField("Version", ModelFieldType.String),
+                                                                            new ModelField("FechaSeguimiento", ModelFieldType.Date),
+                                                                             new ModelField("FechaCreacion", ModelFieldType.Date), 
+                                                                            new ModelField("Accion", ModelFieldType.String) */
+                                                                    }
+                                                                    )
+                                                           )
+
+                                                         .AutoLoad(true)
+                                                        //.RemoteSort(false)
+                                                        //.IsPagingStore(true)
+                                                        //.RemotePaging(true)
+                                                        //.PageSize(5)
+                                                         .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                                        .Url("CCEP0302_storeRiegoDetalle")
+                                                                        .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                                                           .Root("data")
+                                                                                           .TotalProperty("total")
+                                                                                           .IDProperty("IdPaciente")))))
+                                                        .Parameters(ps =>
+                                                        ps.Add(
+                                                                new
+                                                                {
+                                                                    fechaSeg = JRawValue.From("App.dfFecSeguimientoHist.getValue()"),                                                                    
+                                                                    idTipoCuidadoPreventivo = JRawValue.From("App.cmbTipoCuidadoPrev.getValue()"),
+                                                                    cuidadoPreventivo = JRawValue.From("varCuidadoPreventivoSelecc"),
+                                                                    tipoListado = "TECNOMED_AMBULATORIO"
+                                                                }
+                                                            )
+                                                        )                                                                                            
+                                                 )                                                                                                
+                                                 .ColumnModel(
+                                                    //Html.X().ComponentColumn()
+                                                    Html.X().Column()
+                                                         //.Editor(true)
+                                                         .DataIndex("IdPaciente")
+                                                         .Text("Nro")
+                                                         .Width(100),
+                                                     Html.X().Column()
+                                                         //.Editor(true)
+                                                         .DataIndex("Version")
+                                                         .Text("Tipo Prevención")
+                                                         .Flex(1),
+                                                      Html.X().DateColumn().Format("dd/MM/yyyy")
+                                                         //.Editor(true)
+                                                         .DataIndex("FechaCreacion")
+                                                         .Text("Fecha Atención")
+                                                         .Width(120),
+                                                      Html.X().DateColumn().Format("dd/MM/yyyy")
+                                                         //.Editor(true)
+                                                         .DataIndex("FechaSeguimiento")
+                                                         .Text("Fecha Seguimiento")
+                                                         .Width(120),
+                                                      Html.X().Column()
+                                                         //.Editor(true)
+                                                         .DataIndex("Accion")
+                                                         .Text("Comentario")
+                                                         .Flex(1)
+
+                                                 )
+                                                 .SelectionModel(
+                                                     Html.X().RowSelectionModel().Mode(SelectionMode.Multi)
+                                                 )
+                                                 .Plugins(
+                                                     Html.X().CellEditing()
+                                                 )
+                                                 .View(view => view.Add(Html.X().GridView().TrackOver(false)))
+                                                 //.Listeners(l => l.CellClick.Handler = "aRecordSelector.add(record.data.CodigoElemento);")
+                                           )
+
+                                    ////////ADD PARA MSGS/////		
+                                    ,
+                                    X.TextArea().ID("taAlerts")
+                                    .Border(false)
+                                    .StyleSpec("background:white;border:1px solid gray;")
+                                    .FieldStyle("color: red")
+                                    .Hidden(true)
+                                    .ReadOnly(true)
+                                    //////////////////////                                           
+               )
+
+                    .TopBar(X.Toolbar().Hidden(indicaModoLectura).Items(
+                                X.ToolbarSpacer(20)
+                                ,
+                                Html.X().Container().Layout(LayoutType.HBox)
+                                .ID("conthbIndicaError").Hidden(true).Items(
+                                    X.Label().Html("<font  size='1.9em'; color='red'>(</font>"),
+                                    X.Label().Html("<font  size='3.9em'; color='red'><b>&#161;</b></font>"),
+                                    X.Label().Html("<font  size='1.9em'; color='red'>) Verificar los errores presentados</font>")
+                                ),
+                    
+                            X.ToolbarFill(),
+                            X.Button()
+                                .Text("Guardar")
+                                .ID("cmdGuardar")
+                                .Icon(Icon.Disk)
+                                .Handler("App.cmdGuardar.setDisabled(true); GuardaTemporalDB('','Server');"),
+                //.DirectClickAction("Save_SS_HC_Anamnesis_EA"),
+
+                            X.Button()
+                                .Text("Cancelar")
+                                .ID("btnCancel")
+                                .Icon(Icon.Cancel)
+                                .Handler("eventoCancelar(this.up('form'));") 
+                                ,
+                            X.Button()
+                                .Text("Editar")
+                                .ID("btnOnEdit")
+                                .Icon(Icon.ApplicationFormEdit)
+                                .Hidden(true)
+                                .Handler("eventoOnEditar(App.btnOnEdit);")     ,
+                                                                
+                             X.Button()
+                                .Text("Variados")
+                                .ID("cmdBuscar")
+                                .Icon(Icon.Cancel)
+                                .Hidden(true)
+                                .OnClientClick("this.up('form').getForm().reset();")
+
+                        ))
+                        //.Listeners(l => l.FieldChange
+                          //  .Handler = "setIndicaCambios(true);"
+                        //)                          
+                );
+        }
+        )
+
+
+    )
+
+    @(X.Window()
+                .ID("Window1")
+                .Title("Ext.NET")
+                .Width(200)
+                .Height(300)
+                .Modal(true)
+                .AutoRender(false)
+                .Collapsible(true)
+                .Maximizable(true)
+                .Hidden(true)
+                .AutoScroll(true)
+    )
+
+}
+

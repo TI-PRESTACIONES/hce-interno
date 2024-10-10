@@ -1,0 +1,673 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_HC_ExamenSolicitado
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                         (Model.Accion == "UPDATE" ? true :
+                         (Model.Accion == "DELETE" ? false :
+                         (Model.Accion == "VISTA" ? false : false))));
+
+    var COLOR_BLUE01 = "#284A89";                         
+}
+@section cabecera
+{   <style>
+    html body {
+        padding: 0px;
+        background: none;
+        background: none;
+        background: none;
+        background-attachment: fixed;
+        background-position: center;
+        font-family: tahoma,verdana,sans-serif;
+        background-color: #ffffff;
+    }
+</style>
+
+
+    <script>
+    function eventoRenderForm() {
+        var kk = 195;
+        var scrH = screen.height;
+        var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+        var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+        if (southH == 0) {
+            southH = 30;
+        }
+        var dimCentral = (scrH - (northH + southH) - kk);
+        App.formactual.setHeight(dimCentral);
+    }
+    var indicaCambios = false;
+    function setIndicaCambios(value) {
+        indicaCambios = value;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("setIndicaCambiosFormulario"))',
+                params: {
+                    indica: (value ? 1 : 0)
+                }
+            });
+        }
+
+
+        var varComponente = "";
+        var varDiagnostico = "";
+
+        var seleccRecordActual = null;
+        var seleccRecordResultActual = null;
+        function setSeleccionActual(record) {
+            seleccRecordActual = record;
+        }
+
+
+        function eventoSeleccExamen(record) {
+            var codigo = record.data.CodigoElemento;
+            accionCargarResultados(record);
+
+            App.fsResultados.setVisible(true);
+            varComponente = '';
+            App.storeGraficaResultados.reload();
+            App.tfCompo.setValue('Componente Actual: ' + varComponente);
+            varComponente = '';
+        }
+
+        function eventoSeleccResultado(record) {
+            var Componente = record.data.ValorCodigo1;
+            seleccRecordResultActual = record;
+            accionCargarGrafica();
+        }
+
+    var accionCargarGrafica = function () {
+        if (seleccRecordResultActual!=null) {
+            var Componente = seleccRecordResultActual.data.ValorCodigo1;
+            varComponente = Componente;            
+            App.storeGraficaResultados.reload();
+            App.tfCompo.setValue('Componente Actual: '+Componente);
+            varComponente = '';            
+        }
+    };
+    var accionCargarResultados = function (record) {
+        if (record != null) {
+            var diagnostico = record.data.ValorCodigo5;
+            varDiagnostico = diagnostico;
+            App.storeExamenesResultados.reload();            
+        }
+    };
+
+        var count = 0; // a counter for new records
+
+        function visibleGrid(grid) {
+            grid.visibleGrid(true);
+        }
+
+        function addRecord(grid) {
+            setIndicaCambios(true);
+            grid.store.insert(0, { CodigoElemento: count++, ACCION: 'NUEVO' });
+
+            Ext.Function.defer(function () {
+                grid.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+            }, 100);
+        }
+        function deleteActual(record) {
+            if (seleccRecordActual != null) {
+                setIndicaCambios(true);
+                var store = App.grillaExamenesResultados.store;
+                var par1 = seleccRecordActual.data.ValorCodigo1;
+                var par2 = seleccRecordActual.data.CodigoElemento;
+                store.remove(seleccRecordActual);
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("addEliminar_Examen"))',
+                params: {
+                    MODO: 'DELETE',
+                    codigo: par1,
+                    secuencia: par2
+                }
+            });
+            seleccRecordActual = null; setFocus(false);
+        }
+
+    };
+
+    function selectRecord(grid, id) {
+        var record = grid.store.getById(id);
+
+        grid.store.loadPage(grid.store.findPage(record), {
+            callback: function () {
+                grid.getSelectionModel().select(record);
+            }
+        });
+    };
+
+
+    var hhValidation = function (h) {
+        str = h.value;
+        tempo = "'";
+        str = str.replace('javascript:myFunction(' + tempo, '');
+        str = str.replace('%20', ' ');
+        str = str.replace('%C3%B3', 'ó');
+        str = str.replace('%C3%A1', 'á');
+        str = str.replace('%C3%A9', 'é');
+        str = str.replace('%C3%AD', 'í');
+        str = str.replace('%C3%BA', 'ú');
+        str = str.replace('%C3%B1', 'ñ');
+
+        str = str.replace('%C3%8D', 'Í');
+        str = str.replace('%C3%93', 'Ó');
+        str = str.replace('%C3%81', 'Á');
+        str = str.replace('%C3%91', 'Ñ');
+        str = str.replace('%C3%9A', 'Ú');
+        str = str.replace(tempo + ')', '');
+        h.setValue(str);
+    }
+
+    var saveChart = function (btn) {
+        Ext.MessageBox.confirm('Confirmación ', '¿Desea descargar el gráfico como una imagen?', function (choice) {
+            if (choice == 'yes') {
+                btn.up('panel').down('chart').save({
+                    type: 'image/png'
+                });
+            }
+        });
+    }
+
+    </script>
+
+
+}
+
+
+@section cuerpo
+{
+
+
+    @(Html.X().Viewport()
+        .Layout(LayoutType.VBox)
+
+        .LayoutConfig(
+            new VBoxLayoutConfig { Align = VBoxAlign.Stretch }
+        )
+        .Listeners(l =>
+        {
+            l.AfterLayout.BroadcastOnBus = "App.resize";
+            l.AfterLayout.Single = true;
+        })
+        .Items(regions =>
+        {
+
+            regions.Add(Html.X().FormPanel()
+                .ItemID("center")
+                .DefaultAnchor("100%")
+                .AutoScroll(true)
+                .Height(340)
+               .Header(false)
+               .Border(true)
+                .ID("formactual")
+                .Listeners(l =>
+                {
+                    l.Render.Handler = "eventoRenderForm();";
+                })  
+               .Items(
+                    X.FieldSet().Collapsible(true)
+                                 .ColumnWidth(0.4)
+                                 .Title("<b>Resultado de Exámenes</b>")
+                                 .MarginSpec("0 05 0 05")
+                                 .Defaults(d =>
+                                 {
+                                     d.Add(new Parameter("LabelWidth", "170"));
+                                 })
+
+                                 .DefaultAnchor("100%")
+                                 .FieldDefaults(d =>
+                                 {
+                                     d.LabelAlign = LabelAlign.Left;
+                                 })
+                                     .Items(
+                //X.ComboBoxFor(c => c.IdTipoExamen)
+                //   .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("HCC_FORMAINICIO").Select(d => new ListItem(d.Name, d.ID)))
+                //   .FieldLabel("Tipo de Examen")
+                //   .SimpleSubmit(true),      
+                                             X.ComboBox().ID("IdEspecialidad").Hidden(true).Value(0),
+                                             X.DateField().ID("FechaSolitada").Hidden(true).Value(DateTime.Now),
+                                             X.TextField().ID("Observacion").Hidden(true).Value("DATA"),
+
+                                            X.GridPanel()
+                                                 .ID("grillaExamenes")
+                                                 .Border(false)
+                                                 .Store(
+                                                     Html.X().Store()
+                                                             .ID("storeExamenes")
+                                                           .Model(
+                                                             Html.X().Model()
+                                                                 .IDProperty("CodigoElemento")
+                //.Fields(
+                //    Html.X().ModelField().Name("CodigoElemento"),
+                //    Html.X().ModelField().Name("ValorCodigo1"),
+                //    Html.X().ModelField().Name("ValorFecha"),
+                //    Html.X().ModelField().Name("ValorCodigo2"),
+                //    Html.X().ModelField().Name("ValorCodigo3")
+                //))
+                                                                    .Fields(
+                                                                               new ModelField("ACCION", ModelFieldType.String),
+                                                                               new ModelField("ValorFecha", ModelFieldType.Date),
+                                                                               new ModelField("ValorCodigo1", ModelFieldType.String),  // PROCED
+                                                                               new ModelField("ValorCodigo2", ModelFieldType.String), // TIPOEXAMEN
+                                                                               new ModelField("ValorCodigo3", ModelFieldType.Int), // especial
+                                                                               new ModelField("ValorCodigo4", ModelFieldType.String), // Observaciones
+                                                                               new ModelField("ValorCodigo5", ModelFieldType.Int), // Proc
+                                                                               new ModelField("ValorEntero5", ModelFieldType.Int),
+                                                                                new ModelField("CodigoElemento", ModelFieldType.String)
+
+                                                                             ))
+
+                                                          .AutoLoad(true)
+                                                          .RemoteSort(false)
+                                                          .IsPagingStore(true)
+                                                          .RemotePaging(true)
+                                                          .PageSize(5)
+                                                          .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                                            .Url("CCEP0306_EXAMENES")
+                                                                            .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                                                           .Root("data")
+                                                                                           .TotalProperty("total")
+                                                                                           .IDProperty("CodigoElemento")))))
+
+                                                 )
+                                                 .ColumnModel(
+                                                    Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("ValorFecha")
+                                                         .Text("Fecha")
+                                                          .Width(110)
+                                                         .Component(
+                                                             Html.X().DateField().ReadOnly(true)
+                                                             ),
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("ValorCodigo1")
+                                                         .Text("Examen")
+                                                         .Flex(1)
+                                                         .Component(
+                                                             Html.X().TextField()
+                                                                    .ReadOnly(true)
+                                                                    .Listeners(l => { l.Change.Handler = "hhValidation(this);"; })
+                                                             ),
+                                                        //Html.X().ComponentColumn()
+                                                        //     .Editor(true)
+                                                        //     .DataIndex("ValorCodigo2")
+                                                        //     .Text("Tipo Examen")
+                                                        //      .Width(110)
+                                                        //     .Component(
+                                                        //         Html.X().TextField()
+                                                        //                  .ID("Temp")
+                                                        //         ),                                                             
+                                                      /*Html.X().ComponentColumn()
+                                                         .Editor(true)//.Hidden(true)
+                                                         .DataIndex("ValorCodigo3")
+                                                         .Text("Especialidad")
+                                                         .Width(100)
+                                                         .Component(
+                                                                Html.X().ComboBox().ReadOnly(true)
+                                                                        .Editable(false)
+                                                                        .QueryMode(DataLoadMode.Local)
+                                                                        .TriggerAction(TriggerAction.All)
+                                                                        .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("ESPECIALI").Select(d => new ListItem(d.Name, d.ID)))
+                                                             ),*/
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("ValorCodigo4")
+                                                         .Text("Observaciones")
+                                                         .Flex(1)
+                                                         .Component(
+                                                             Html.X().TextField().ReadOnly(true)
+                                                             ),
+                                                     Html.X().ComponentColumn().Hidden(true)
+                                                         .Editor(true)
+                                                         .DataIndex("ValorCodigo5")
+                                                         .Text("Procedimiento")
+                                                         .Flex(1)
+                                                         .Component(
+                                                             Html.X().TextField().ReadOnly(true)
+                                                             )
+
+                                                 )
+                                                 .SelectionModel(
+                                                     Html.X().RowSelectionModel().Mode(SelectionMode.Multi)
+                                                 )
+                                                 .Plugins(
+                                                     Html.X().CellEditing()
+                                                 )
+                                                .Listeners(l => l.CellDblClick
+                                                    .Handler = "eventoSeleccExamen(record);")    
+                                           )
+                        
+                                    ,
+                    X.FieldSet().ID("fsResultados").Hidden(true).Collapsible(true)
+                                 .ColumnWidth(0.4)
+                                 .Title("<b>Resultado de Examen</b>")
+                                 .MarginSpec("0 05 0 05")
+                                 .Defaults(d =>
+                                 {
+                                     d.Add(new Parameter("LabelWidth", "170"));
+                                 })
+
+                                 .DefaultAnchor("100%")
+                                 .FieldDefaults(d =>
+                                 {
+                                     d.LabelAlign = LabelAlign.Left;
+                                 })
+                                     .Items(
+                                             //X.ComboBoxFor(c => c.IdTipoExamen)
+                                             //.Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("HCC_FORMAINICIO").Select(d => new ListItem(d.Name, d.ID)))
+                                             //.FieldLabel("Tipo de Examen")
+                                             //.SimpleSubmit(true),
+
+                                             X.TextField()
+                                                 .ID("RecepcionaRecurso")
+                                                 .Listeners(l =>
+                                                 {
+                                                     l.Change.Handler = "InsertRow(this,'Logico');";
+                                                 })
+                                                 .Hidden(true),
+                                            X.GridPanel()
+                                                 .ID("grillaExamenesResultados")
+                                                 .Border(false)
+                                                 .Store(
+                                                     Html.X().Store()
+                                                             .ID("storeExamenesResultados")
+                                                           .Model(
+                                                             Html.X().Model()
+                                                                 .IDProperty("CodigoElemento")
+                                                                 //.Fields(
+                                                                 //    Html.X().ModelField().Name("CodigoElemento"),
+                                                                 //    Html.X().ModelField().Name("ValorCodigo1"),
+                                                                 //    Html.X().ModelField().Name("ValorFecha"),
+                                                                 //    Html.X().ModelField().Name("ValorCodigo2"),
+                                                                 //    Html.X().ModelField().Name("ValorCodigo3")
+                                                                 //))
+                                                                    .Fields(  
+                                                                               new ModelField("ACCION", ModelFieldType.String),         
+                                                                               new ModelField("ValorFecha", ModelFieldType.Date),
+                                                                               new ModelField("ValorCodigo1", ModelFieldType.String),  // PROCED
+                                                                               new ModelField("ValorCodigo2", ModelFieldType.String), // TIPOEXAMEN
+                                                                               new ModelField("ValorCodigo3", ModelFieldType.Int), // especial
+                                                                               new ModelField("ValorCodigo4", ModelFieldType.String), // 
+                                                                               new ModelField("ValorCodigo5", ModelFieldType.String), // 
+                                                                               
+                                                                               new ModelField("ValorNumerico", ModelFieldType.Float), // Observaciones
+                                                                               new ModelField("ValorEntero5", ModelFieldType.Int),
+                                                                                new ModelField("CodigoElemento", ModelFieldType.String)
+                                                                                                                                              
+                                                                             ))
+                                                                 
+                                                          .AutoLoad(true)
+                                                          .RemoteSort(false)
+                                                          .IsPagingStore(true)
+                                                          .RemotePaging(true)
+                                                          .PageSize(5)
+                                                          .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                                            .Url("EXAMENRESULT")
+                                                                            .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                                                           .Root("data")
+                                                                                           .TotalProperty("total")
+                                                                                           .IDProperty("CodigoElemento")))))
+                                                        .Parameters(ps =>
+                                                        ps.Add(
+                                                                new
+                                                                {
+                                                                    //start = 0,
+                                                                    //limit = 5,                                                                    
+                                                                    tipoListado = "RESULTADOS",
+                                                                    diagnostico = JRawValue.From("varDiagnostico")
+                                                                }
+                                                            )
+                                                        )                                                                                           
+
+                                                 )
+                                                 .ColumnModel(
+                                                    Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("ValorFecha")
+                                                         .Text("Fecha")
+                                                          .Width(110)
+                                                         .Component(
+                                                             Html.X().DateField().ReadOnly(true)
+                                                             ),
+                                                            
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("ValorCodigo1")
+                                                         .Text("Componentes")
+                                                         .Flex(1)
+                                                         .Component(
+                                                             Html.X().TextField()
+                                                                    .ReadOnly(true)
+                                                                    
+                                                             ),
+                                                             
+                                                    Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("ValorCodigo5")
+                                                         .Text("Unid. Medida")
+                                                          .Width(110)
+                                                         .Component(
+                                                             Html.X().TextField().ReadOnly(true)
+                                                                     
+                                                             ),                                                             
+                                                    Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("ValorCodigo2")
+                                                         .Text("Rango")
+                                                          .Width(110)
+                                                         .Component(
+                                                             Html.X().TextField().ReadOnly(true)
+                                                                     
+                                                             ),
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("ValorNumerico")
+                                                         .Text("Resultados")
+                                                         .Flex(1)
+                                                         .Component(
+                                                             Html.X().TextField().ReadOnly(true)
+                                                             )
+                                                                                               
+
+                                                 )
+                                                 .SelectionModel(
+                                                     Html.X().RowSelectionModel().Mode(SelectionMode.Multi)
+                                                 )
+                                                 .Plugins(
+                                                     Html.X().CellEditing()
+                                                 )
+                                                .Listeners(l => l.CellClick
+                                                    .Handler = "setSeleccionActual(record);")
+                                                .Listeners(l => l.CellDblClick
+                                                    .Handler = "eventoSeleccResultado(record);")
+                                                    
+                                                 .TopBar(
+                                                         Html.X().Toolbar().Hidden(true)
+                                                             .Items(
+                                                                 Html.X().Button()
+                                                                     .Text("Agregar")
+                                                                     .Icon(Icon.Add)
+                                                                     .Handler("addRecord(this.up('grid'));"),
+
+                                                                 Html.X().Button()
+                                                                     .Text("Eliminar")
+                                                                     .Icon(Icon.Delete)
+                                                                     .Handler("deleteActual();") 
+
+                                                             )
+                                                   ),
+                                           X.Panel().ID("PanelGrafica")
+                                                .Title("GRAFICA EN EL TIEMPO")
+                                                .Layout(LayoutType.Fit)
+                                                .Width(600)
+                                                .Height(400)
+                                                .TopBar(X.Toolbar()
+                                                    
+                                                    .Items(  
+                                                        X.ToolbarSpacer(),
+                                                        X.TextField().ID("tfCompo").Width(250)
+                                                        .Border(false)
+                                                        //.StyleSpec("background:white;border:1px solid gray;")
+                                                        .FieldStyle("font-weight:bold; color: #284A89;")
+                                                        //.FieldLabel("Componente Actual")
+                                                        //.FieldStyle("color: black")                                                                                                                
+                                                        .ReadOnly(true) ,                                                                                                               
+                                                        X.Button()
+                                                            .Text("Ver gráfica en el  Tiempo").Hidden(true)
+                                                            .Icon(Icon.ArrowRefresh)
+                                                             .Handler("#{Chart1}.getStore().reload()"),
+                                                             //.Handler("accionCargarGrafica();"),
+                                                        X.ToolbarFill(),     
+                                                        X.Button()
+                                                            .Text("Guardar Gráfica")
+                                                            .Icon(Icon.Disk)
+                                                            .Hidden(true)
+                                                            .Handler("saveChart")
+                                                    )
+                                                )
+                                                .Items(
+                                                    X.TextField()
+                                                    .ID("tfComponenteActual")                                                    
+                                                    .Hidden(true),                                                
+                                                    X.Chart()
+                                                        .ID("Chart1")
+                                                        .StyleSpec("background:#fff;")
+                                                        .Shadow(true)
+                                                        .StandardTheme(StandardChartTheme.Category1)
+                                                        .Animate(true)
+                                                        .LegendConfig(X.ChartLegend().Position(LegendPosition.Right))
+                                                        .Store(X.Store()
+                                                            .ID("storeGraficaResultados")
+                                                                //.AutoLoad(false)
+                                                            .Data(Model)
+                                                            .Model(X.Model()
+                                                                .Fields(
+                                                                    X.ModelField().Name("campoDate01"),
+                                                                    X.ModelField().Name("campoStr01"),
+                                                                    X.ModelField().Name("campoDouble01") ,
+                                                                    X.ModelField().Name("campoDouble02") ,
+                                                                    X.ModelField().Name("campoDouble03") 
+                                                                )
+                                                            )
+                                                            .Proxy(X.AjaxProxy()
+                                                                .Url(Url.Action("EXAMENRESULT"))
+                                                                .Reader(X.JsonReader().Root("data"))
+                                                            )
+                                                            .Parameters(ps =>
+                                                            ps.Add(
+                                                                    new
+                                                                    {
+                                                                        //start = 0,
+                                                                        //limit = 5,
+                                                                        tipoListado = "RESULTADOSGRAFICA",
+                                                                        componente = JRawValue.From("varComponente"),
+                                                                        diagnostico = JRawValue.From("varDiagnostico")
+                                                                    }
+                                                                )
+                                                            )                                                                    
+                                                        )
+                                                        .Axes(
+                                                            X.NumericAxis()
+                                                                .Fields(new[] { "campoDouble01", "campoDouble02", "campoDouble03" })
+                                                                .Title("Componente")
+                                                                .MinorTickSteps(1)
+                                                                //.Minimum(0)
+                                                                 //.LabelTitle(new SpriteAttributes {  Opacity = 1, Fill = "#ddd", Stroke = "#bbb", StrokeWidth = 0.1 })                      
+                                                                .GridConfig(X.AxisGrid()
+                                                                    .Odd(new SpriteAttributes { Opacity = 1, Fill = "#ddd", Stroke = "#bbb", StrokeWidth = 0.5 })
+                                                                ) ,                                                            
+                                                            X.CategoryAxis()
+                                                                .Position(Position.Bottom)
+                                                                .Fields("campoStr01")
+                                                                .Title("Fecha")                                                                                                                        
+                                                        )                                                        
+                                                        .Legend(true)
+                                                        .LegendConfig(
+                                                            
+                                                            X.ChartLegend().Position(LegendPosition.Right)
+                                                            .LabelColor("black")
+                                                            
+                                                        )
+                                                        .Series(                                                                                                                       
+                                                            X.LineSeries()
+                                                                .Axis(Position.Left)
+                                                                .Smooth(3)
+                                                                .XField("campoStr01")
+                                                                .Title( "Resultados" )
+                                                                .YField("campoDouble01")
+                                                                
+                                                                .ShowInLegend(true)                                                                
+                                                                //.SetTitles(new[] { "ValorNumerico" })
+                                                                .HighlightConfig(new SpriteAttributes { Size = 7, Radius = 7 })
+                                                                .MarkerConfig(new SpriteAttributes { Type = SpriteType.Cross, Size = 4, Radius = 4, StrokeWidth = 0 })
+                                                                .Label(X.SeriesLabel()
+                                                                     .Display(SeriesLabelDisplay.Over)
+                                                                     .Title("Resultados")
+                                                                    .Field(new[] { "campoDouble01" })
+                                                                    .Contrast(true)
+                                                                    .Font("12px Arial")
+                                                                    .Orientation(Orientation.Horizontal)                                                                    
+                                                                )
+                                                                
+                                                                ,
+                                                            X.LineSeries()
+                                                                .Axis(Position.Left)
+                                                                .XField("campoStr01")
+                                                                .Title("Resultado Mínimo")
+                                                                .YField("campoDouble02")                
+                                                                .HighlightConfig(new SpriteAttributes { Size = 7, Radius = 7 })
+                                                                .MarkerConfig(new SpriteAttributes { Type = SpriteType.Circle, Size = 4, Radius = 4, StrokeWidth = 0 })
+                                                                ,
+                                                            X.LineSeries()
+                                                                .Axis(Position.Left)                                                                
+                                                                .XField("campoStr01")
+                                                                .Title("Resultado Máximo")
+                                                                .YField("campoDouble03")
+                                                                .HighlightConfig(new SpriteAttributes { Size = 7, Radius = 7 })
+                                                                .MarkerConfig(new SpriteAttributes { Type = SpriteType.Circle, Size = 4, Radius = 4, StrokeWidth = 0 })                                                            
+                                                        )
+                                                )
+                                            )
+                                             
+                                    ////////ADD PARA MSGS/////		
+                                    ,
+                                    X.TextArea().ID("taAlerts")
+                                    .Border(false)
+                                    .StyleSpec("background:white;border:1px solid gray;")
+                                    .FieldStyle("color: red")
+                                    .Hidden(true)
+                                    .ReadOnly(true)
+                                    //////////////////////                                   
+                     )
+
+                    .TopBar(X.Toolbar().Hidden(true).Items(X.ToolbarFill(),
+                            X.Button()
+                                .Text("Guardar")
+                                .Icon(Icon.Disk).ID("cmdGuardar")
+                                .Handler("EnviarData(this.up('grid'));"),
+                //.OnClientClick("var form = this.up('form'); form.getForm().updateRecord(form.down('grid').getSelectionModel().getLastSelected());"),
+                            X.Button()
+                                .Text("Cancelar")
+                                .ID("btnCancel")
+                                .Icon(Icon.Cancel)
+                                .OnClientClick("this.up('form').getForm().reset();")
+                                ,
+                            X.Button()
+                                .Text("Editar")
+                                .ID("btnOnEdit")
+                                .Icon(Icon.ApplicationFormEdit)
+                                .Hidden(true)
+                                .Handler("eventoOnEditar(App.btnOnEdit);")                                   
+                        ))                        
+                );
+        }
+        )
+
+
+    )
+
+}
+

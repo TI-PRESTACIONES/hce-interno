@@ -1,0 +1,44 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SEGURIDADCONCEPTO
+@{
+    ViewBag.Title = "Partial Content";
+    Layout = "";
+    var X = Html.X();
+}
+
+
+@(   X.Panel()
+            //  .LayoutConfig(new VBoxLayoutConfig() { Align = VBoxAlign.Center, Pack = BoxPack.Center })
+             
+             .Height(450)
+            //.Title(Model.DESCRIPCION)
+            .Layout(LayoutType.Fit)
+            //.Layout(Ext.Net.LayoutType.Card)
+            .Region(Region.Center)
+             .Margins("0 0 0 0")
+            //.Border(false)
+             .Loader(Html.X().ComponentLoader()
+                                .Url(Url.Action("PanelPacientes"))
+                                .Mode(LoadMode.Frame)
+                                .DisableCaching(true)
+                                .AutoLoad(true)
+                                .Params(new { containerId = "Center1" })
+                 )
+
+    )
+
+@(   X.Panel()
+        //  .LayoutConfig(new VBoxLayoutConfig() { Align = VBoxAlign.Center, Pack = BoxPack.Center })
+         .Height(600)
+        //.Title(Model.DESCRIPCION)
+        .Layout(LayoutType.Fit)
+        .Layout(Ext.Net.LayoutType.Fit)
+        .Region(Region.East)
+        //.Margins("2 2 2 2")
+        //.Border(false)
+         .Loader(Html.X().ComponentLoader()
+                            .Url(Url.Action("PanelEast"))
+                            .Mode(LoadMode.Script)
+                            .Params(new { containerId = "East1" })
+             )
+
+)

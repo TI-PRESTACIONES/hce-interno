@@ -1,0 +1,422 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_HC_FavoritoCodigoId
+
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+}
+@section cabecera
+{
+    <script>
+
+    var varAux = "1";
+    var varTipoBuscar = "LOAD";
+
+
+    var seleccionActual1 = null;
+    var seleccionActual2 = null;
+
+    function setSelecciones(param1, param2) {
+        seleccionActual1 = param1;
+        seleccionActual2 = param2;
+    }
+
+
+    var Valores;
+    var template = '<span style="color:{0};">{1}</span>';
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_YELLOW02 = "#D9A407";
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 2)
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+
+    var changeObjeto = function (value) {
+        if (value == 2)
+            return Ext.String.format("Especifico");
+        if (value == 1)
+            return Ext.String.format("Todos");
+    };
+
+    var pctChange = function (value) {
+        return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+    };
+
+    var onSuccess = function (grid, data) {
+        grid.show();
+        grid.getStore().loadData(data);
+    };
+
+    function deleteSelected(grid) {
+        var store = grid.store,
+           records = grid.selModel.getSelection();
+        store.remove(records);
+        App.Window1.AutoDestroy(true);
+
+    };
+    function nuevo() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("FavoritoCodigoRegistro"))',
+            params: {
+                MODO: 'NUEVO',
+                idFavoritoCodigo: 0,
+                CampoCodigo: 0
+            }
+        });
+    };
+    function modificarSelected(grid) {
+        if (seleccionActual1 != null && seleccionActual2 != null) {
+            var status1 = seleccionActual1;
+            var status2 = seleccionActual2;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("FavoritoCodigoRegistro"))',
+                params: {
+                    MODO: 'UPDATE',
+                    idFavoritoCodigo: status1,
+                    CampoCodigo: status2
+                }
+            });
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Seleccionar un Elemento.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+     }
+        function eliminarSelected(grid) {
+            if (seleccionActual1 != null && seleccionActual2 != null) {
+                var status1 = seleccionActual1;
+                var status2 = seleccionActual2;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("FavoritoCodigoRegistro"))',
+                params: {
+                    MODO: 'DELETE',
+                    idFavoritoCodigo: status1,
+                    CampoCodigo: status2
+                }
+            });
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Seleccionar un Elemento.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+        }
+
+    function verSelected() {
+        eventoVerSelected(seleccionActual1, seleccionActual2);
+    }
+    function eventoVerSelected(param1, param2) {
+        if (App.compoVER.isVisible(true)) {
+            if (param1 != null && param2 != null) {
+                var status1 = param1;
+                var status2 = param2;
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("FavoritoCodigoRegistro"))',
+                    params: {
+                        MODO: 'VER',
+                        idFavoritoCodigo: status1,
+                        CampoCodigo: status2
+                    }
+                });
+            } else {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Debe Seleccionar un Elemento.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+        }
+    }
+
+        var accionBuscarFiltro = function (tipo) {
+            varTipoBuscar = tipo;
+            App.GridPanel1.getStore().reload();
+            varTipoBuscar = 'LOAD';
+        };
+
+        var accionFinal = function (btn) {
+            App.GridPanel1.getSelectionModel().deselectAll();
+            seleccionActual1 = null;
+            seleccionActual2 = null;
+            App.GridPanel1.getStore().reload();
+        };
+
+        var eventoCheckFiltro = function (check, componente) {
+            var checkAll = check.getValue();
+            if (checkAll) {
+                componente.setDisabled(true);
+                componente.setValue(null);
+            } else {
+                componente.setDisabled(false);
+            }
+        };
+
+        function eventoRenderForm() {
+            var kk = 140;
+            var scrH = screen.height;
+            var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+            alert('TEST::' + northH);
+            var southH = 5;
+            if (southH == 0) {
+                southH = 30;
+            }
+            var dimCentral = (scrH - (northH + southH) - kk);
+            App.GridPanel1.setHeight(dimCentral);
+        }
+        var eventoCargarMain = function () {
+
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("addPermisosFormatos"))',
+                params: {
+                    data: 'FORMATO',
+                    indica: 'PERMISO',
+                },
+                success: function (result) { accionSetPermisos(result.data); }
+            });
+        };
+        var accionSetPermisos = function (data) {
+            var mensajes = "";
+            if (data.length > 0) {
+                for (var i = 0; i < data.length; i++) {
+                    if (data[i].ACCION == 'BUSCAR' && App.compoBUSCAR != null) {
+                        App.compoBUSCAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'NUEVO' && App.compoNUEVO != null) {
+                        App.compoNUEVO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'MODIFICAR' && App.compoMODIFICAR != null) {
+                        App.compoMODIFICAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'ELIMINAR' && App.compoELIMINAR != null) {
+                        App.compoELIMINAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'VER' && App.compoVER != null) {
+                        App.compoVER.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'ACCESO' && App.compoACCESO != null) {
+                        App.compoACCESO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'HABILITADO' && App.compoHABILITADO != null) {
+                        App.compoHABILITADO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'OBLIGA' && App.compoOBLIGA != null) {
+                        App.compoOBLIGA.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'PRIORIDADAGOPCION' && App.compoPRIORIDADAGOPCION != null) {
+                        App.compoPRIORIDADAGOPCION.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    }
+                }
+            }
+        };
+
+    </script>
+}
+
+@section cuerpo
+{
+    @(
+ Html.X().Viewport()
+        .AutoScroll(true)
+        .Layout(LayoutType.Border)
+        .Items(
+           X.Panel()
+              .Title("Listado de Detalle Favorito")
+        //.Header(false)
+              .Border(false)
+              .Region(Region.North)
+              .Split(true)
+             .Collapsible(true)
+        //.Header(false)
+              .Height(150)
+                  .TopBar(
+                             X.Toolbar()
+                            .Height(30)
+                                .Items(
+                           X.Button()
+                                .Text("Buscar").ID("compoBUSCAR")
+                                .Icon(Icon.Find)
+                                     .Handler("accionBuscarFiltro('FILTRO');"),
+                                        X.ToolbarSeparator(),
+                                        X.ToolbarSpacer(),    
+                                    X.Button()
+                                            .Text("Nuevo").ID("compoNUEVO")
+                                        .Icon(Icon.ApplicationFormAdd)
+                                        .Handler("nuevo(); "),
+                                    X.Button()
+                                            .Text("Modificar").ID("compoMODIFICAR")
+                                        .Icon(Icon.ApplicationFormEdit)
+                                        .Handler("modificarSelected();")
+                                             ,
+                                    X.Button()
+                                            .Text("Eliminar").ID("compoELIMINAR")
+                                        .Icon(Icon.ApplicationFormDelete)
+                                    .Handler("eliminarSelected();"),
+                                       X.ToolbarSeparator(),
+                                        X.Button()
+                                                .Text("Ver").ID("compoVER")
+                                            .Icon(Icon.ApplicationViewDetail)
+                                            .Handler("verSelected();"),
+                                     X.ToolbarFill()
+                                  )
+                  )
+            .Items(X.Panel()
+               .Layout(LayoutType.HBox)
+               .BodyPadding(5)
+               .Border(false)
+               .MarginSpec("1 20 1 1")
+                    .Items(
+                            X.FieldSet()
+                                .Flex(1)
+                                .Title("Filtros")
+                                .MarginSpec("5 5 5 5")
+                                .Defaults(d =>
+                                {
+                                    d.Add(new Parameter("LabelWidth", "120"));
+                                })
+                                .Items(
+
+                                   Html.X().Container().Layout(LayoutType.HBox)
+                                   .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                   .Items(
+//                                   X.Checkbox()
+//                                           .FieldLabel("Código")
+//                                                 .ID("cod")
+//                                                      .Listeners(l => l.Change.Handler = @"var checkAll = #{cod}.getValue();
+//                                                if(checkAll){
+//                                                    #{tfBuscarCod}.setDisabled(true);
+//                                                    #{tfBuscarCod}.setValue(null);
+//                                                }else{
+//                                                    #{tfBuscarCod}.setDisabled(false);
+//                                                }")
+//                                  .Checked(true),
+//                                   X.TextField()
+//                                   .ID("tfBuscarCod")
+//                                   .Name("buscarCod")
+        //                                       .FieldLabel("").Disabled(true),
+                                                   X.Checkbox()
+                                                   .FieldLabel("Descripción")
+                                                   .ID("desCF")
+                                                   .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.desCF,App.tfBuscarDesc);")
+
+                                                  .Checked(true), 
+
+                                   X.TextField()
+                                   .ID("tfBuscarDesc")
+                                   .Name("buscarDesc")
+                                   .FieldLabel("").Disabled(true)),
+
+                                   Html.X().Container().Layout(LayoutType.HBox)
+                                   .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                           .Items(
+                                                   X.Checkbox()
+                                                   .FieldLabel("Estado")
+                                                   .ID("es")
+                                                   .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.es,App.tfBuscarEst);")
+                                                   .Checked(true),  
+                                   X.ComboBox()
+                                  .ID("tfBuscarEst").Editable(false)
+                                  .Name("buscarEst")
+                                  .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("ESTADOINT").Select(d => new ListItem(d.Name, d.ID)))
+                                  .FieldLabel("")
+                                  .SimpleSubmit(true).Disabled(true)
+
+                                        )
+                                )
+
+                    )
+             ),
+            X.Panel()
+                .Region(Region.Center)
+                .ItemID("center")
+               .Header(false)
+               .Border(false)
+               .Items(
+                   X.GridPanel()
+                        .Border(false)
+                        .AllowDeselect(true)
+                        .Scroll(ScrollMode.Both)
+                        .AutoScroll(true)
+                        .ID("GridPanel1")
+                        .Margins("0 0 0 0")
+                        .Store(store => store.Add(
+                                 Html.X().Store()
+                                     .ID("Store1")
+                                     .AutoLoad(true)
+                                     .RemoteSort(false)
+                                     .IsPagingStore(true)
+                                     .RemotePaging(true)
+                                     .PageSize(10)////CAMBIAR DE ACUERDO A ALGÚN UN CRITERIO
+                                     .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                        .Url("getGrillaFavoritoCodigo")
+                                            .Reader(reader => reader.Add(Html.X().JsonReader()
+                                            .Root("data")
+                                            .TotalProperty("total")
+                                                                 .IDProperty("IdFavorito")
+                                                                 .IDProperty("CampoCodigoId"))))
+                                            )
+                                         .Parameters(ps =>
+                                                ps.Add(new
+                                                {
+                                                    descripcion = JRawValue.From("App.tfBuscarDesc.getValue()"),
+                                                    estado = JRawValue.From("App.tfBuscarEst.getValue()"),
+                                                    tipoBuscar = JRawValue.From("varTipoBuscar")
+                                                })
+                                             )
+                                         .Model(model => model.Add(Html.X().Model()
+                                                 .Fields(fields =>
+                                                 {
+                                                     fields.Add(Html.X().ModelField().Name("IdFavorito"));
+                                                     fields.Add(Html.X().ModelField().Name("CampoCodigoId"));
+                                                     fields.Add(Html.X().ModelField().Name("ValorTexto"));
+                                                     fields.Add(Html.X().ModelField().Name("ValorFecha"));
+                                                     fields.Add(Html.X().ModelField().Name("IndicadorCodigoId"));
+                                                     fields.Add(Html.X().ModelField().Name("Estado"));
+                                                 }))
+                                                )
+                                          )
+                               )
+
+                            ///CONFIGURAR LAS COLUMNAS
+                            .ColumnModel(columnModel =>
+                                {
+                                    columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("IdFavorito").Hidden(true).Width(80));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Campo Codigo").DataIndex("CampoCodigoId").Hidden(true).Width(200));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Descripción").DataIndex("ValorTexto").Width(200));
+                                    columnModel.Columns.Add(Html.X().DateColumn().Text("Fecha Inicio").DataIndex("ValorFecha").Hidden(true).Width(180));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Tipo Objeto").DataIndex("IndicadorCodigoId").Width(200)
+                                             .Renderer("changeObjeto"));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(80)
+                                    .Renderer("changeEstado")
+                                    );
+
+                            })
+                             .View(Html.X().GridView().TrackOver(false))
+                             .Border(false)
+                            .Listeners(l => l.CellClick
+                                .Handler = "setSelecciones(record.data.IdFavorito,record.data.CampoCodigoId);")
+                            .Listeners(l => l.CellDblClick
+                             .Handler = "eventoVerSelected(record.data.IdFavorito,record.data.CampoCodigoId);")
+
+                            .BottomBar(bar => bar.Add(
+                                Html.X().PagingToolbar()
+                            ))
+
+                )
+        )
+            .Listeners(l => l.Render.Handler = "eventoCargarMain();") 	
+    )
+
+    @(X.KeyNav()
+                    .Target("={document.body}")
+                    .Enter(a => a.Handler = "accionBuscarFiltro('FILTRO');")
+    )
+}

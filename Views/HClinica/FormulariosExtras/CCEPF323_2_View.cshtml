@@ -1,0 +1,1139 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_HC_FichaAnestesia_2_FE
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+
+    var indicaVisiblePrint = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_VISIBLE_IMPRESION;
+    var visibleImpresion = (indicaVisiblePrint == 2/* && Model.Accion == "UPDATE"*/ ? true : false);
+    var isVista = (Model.Accion == "VISTA" ? true : false);
+    var isNuevo = (Model.Accion == "NUEVO" ? true : false);
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VISTA" ? false : false))));
+
+    var COLOER_IND_OBLIGA = AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("COL_BCOBLI");
+    var MENS_NUMERO = "No se permite un valor negativo.";
+    var PAR_FORMATO02 = "999";
+
+
+}
+@section cabecera
+{   <link rel="stylesheet" href="@Url.Content("~/resources/css/main.css")" />
+    <style>
+        html body {
+            padding: 0px;
+            background: none;
+            background: none;
+            background: none;
+            background-attachment: fixed;
+            background-position: center;
+            font-family: tahoma,verdana,sans-serif;
+            background-color: #ffffff;
+        }
+    </style>
+
+    <script>
+        @*function eventoRenderForm() {
+
+            var kk = 195;
+            var scrH = screen.height;
+            var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+            var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+
+            if (southH == 0) {
+                southH = 30;
+            } else if (parent.App.PanelMainSouth.collapsed) {
+                southH = 30;
+            }
+            var dimCentral = (scrH - (northH + southH) - kk);
+            App.formactual.setHeight(545);
+
+            var v = '@isNuevo';
+            if (v == 'True') {
+                App.btnImpresion.setVisible(false);
+                App.btnImpresionHC.setVisible(false);
+            }
+        }*@
+
+     var indicaCambios = false;
+    function setIndicaCambios(value) {
+        indicaCambios = value;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("setIndicaCambiosFormulario"))',
+            params: {
+                indica: (value ? 1 : 0)
+            }
+        });
+
+
+        var val = '@visibleImpresion';
+        var vis = '@isVista';
+        if (vis == 'False') {
+            if (val == 'True') {
+
+                if (value == true) {
+                    App.btnImpresion.setDisabled(true);
+                    App.btnImpresionHC.setDisabled(true);
+                    parent.App.btnGuardarFirma.setDisabled(true);
+                    // parent.App.btnContEpisodio_HCE.setDisabled(true);//A TODOS
+
+                } else {
+                    App.btnImpresion.setDisabled(false);
+                    App.btnImpresionHC.setDisabled(false);
+                    parent.App.btnGuardarFirma.setDisabled(false);
+                    //parent.App.btnContEpisodio_HCE.setDisabled(false);//A TODOS
+                }
+            }
+        }
+    }
+    var count = 0; // a counter for new records
+
+
+
+    var eventoKey = function (tf, e) {
+        if (e.getKey() == '110' || e.getKey() == '190' || e.getKey() == '100') {
+            var str = tf.getRawValue().replace('.', '');
+            tf.setValue(str);
+        } else if (e.getKey() == '109' || e.getKey() == '189') {
+            var str = tf.getRawValue().replace('-', '');
+            tf.setValue(str);
+        }
+    };
+    var eventoOnEditar = function (btn) {
+        App.cmdGuardar.setDisabled(false);
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+
+    };
+
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+            App.conthbIndicaError.setVisible(true);
+            App.taAlerts.focus();
+        } else {
+            App.taAlerts.setVisible(false);
+            App.conthbIndicaError.setVisible(false);
+        }
+
+    };
+
+    var getInvalidFields = function (form) {
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+        });
+        return invalidFields;
+    };
+
+    var beforeSave = function (form) {
+        App.taAlerts.setVisible(false);
+        App.taAlerts.setValue(null);
+        App.conthbIndicaError.setVisible(false);
+        var FieldsInvalidos = getInvalidFields(form);
+        if (FieldsInvalidos.length > 0) {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("addRecursosValidacion"))',
+                params: {
+                    data: FieldsInvalidos,
+                    indica: 'VALIDAR',
+                },
+                success: function (result) { accionMensajes(result.data); }
+            });
+        }
+        else {
+            App.formactual.setDisabled(true);
+
+        }
+    };
+
+    var onSuccess = function (data) {
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+
+        var reload = true;
+        if (data != null) {
+            if (data.length > 0) {
+                reload = false
+                App.cmdGuardar.setDisabled(false);
+                if (data[0].TIPOMSG == 'EXCEPTION') {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: data[0].TITULO,
+                            message: data[0].DESCRIPCION,
+                            tipo: 'ERROR'
+                        }
+                    });
+                } else {
+                    accionMensajes(data);
+                }
+            }
+        }
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+        }
+    };
+    var onFailure = function (data) {
+        App.cmdGuardar.setDisabled(false);
+    };
+
+    function eventoCancelar(form) {
+        App.bar.setDisabled(true);
+        var reload = true;
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+            // beforeSave(form);
+        }
+    }
+
+    </script>
+    <script>
+
+        var hhValidation = function (h) {
+            str = h.value;
+
+            tempo = "'";
+            str = str.replace('javascript:myFunction(' + tempo, '');
+            str = str.replace('%20', ' ');
+            str = str.replace('%C3%B3', 'ó');
+            str = str.replace('%C3%A1', 'á');
+            str = str.replace('%C3%A9', 'é');
+            str = str.replace('%C3%AD', 'í');
+            str = str.replace('%C3%BA', 'ú');
+            str = str.replace('%C3%B1', 'ñ');
+
+            str = str.replace('%C3%8D', 'Í');
+            str = str.replace('%C3%93', 'Ó');
+            str = str.replace('%C3%81', 'Á');
+            str = str.replace('%C3%91', 'Ñ');
+            str = str.replace('%C3%9A', 'Ú');
+            str = str.replace(tempo + ')', '');
+            h.setValue(str);
+
+        }
+        var mmValidation = function (m) {
+            if (m.getValue() > 59) {
+                m.setValue(59);
+            }
+
+        };
+        function eventoRenderForm() {
+
+            var kk = 195;
+            var scrH = screen.height;
+            var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+            var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+
+            if (southH == 0) {
+                southH = 30;
+            } else if (parent.App.PanelMainSouth.collapsed) {
+                southH = 30;
+            }
+            var dimCentral = (scrH - (northH + southH) - kk);
+            App.formactual.setHeight(545);
+
+            var v = '@isNuevo';
+            if (v == 'True') {
+                App.btnImpresion.setVisible(false);
+                App.btnImpresionHC.setVisible(false);
+            }
+        }
+
+        function eventoVisorReporte(param1) {
+            if(param1=='HC'){
+                window.location.href = '@Url.Action("HCEReportesView_total", "HClinica")';
+            } else {
+                window.location.href = '@Url.Action("HCEReportesView", "HClinica")';
+            }
+        }
+
+        @*function ChangeCheck(objHC) {
+            alert(objHC.value);
+            if (objHC.value) {@(Model.Respuesta1=1)
+                alert('@(Model.Respuesta1)');
+            }
+            else { @(Model.Respuesta1=0)}
+
+            alert(objHC.value);
+        }*@
+
+    </script>
+
+    <script>
+        var eventoRadio = function (rd1, pregunta, valor) {
+            var radioAll = rd1.getValue();
+
+            if (radioAll) {
+                if (pregunta == 'R3') {
+                    if (valor == 'S') {
+                        App.TxtEspecificar1.setDisabled(false);
+
+                    } else {
+                        App.TxtEspecificar1.setDisabled(true);
+                    };
+                }
+
+                if (pregunta == 'R4') {
+                    if (valor == 'S') {
+                        App.TxtEspecificar2.setDisabled(false);
+
+                    } else {
+                        App.TxtEspecificar2.setDisabled(true);
+                    };
+                }
+
+            }
+
+        };
+    </script>
+}
+
+
+@section cuerpo
+{
+
+    @(Html.X().Viewport().ID("ViewportXD")
+        .Layout(LayoutType.VBox)
+
+        .LayoutConfig(
+            new VBoxLayoutConfig { Align = VBoxAlign.Stretch }
+        )
+        .Listeners(l =>
+        {
+            l.AfterLayout.BroadcastOnBus = "App.resize";
+            l.AfterLayout.Single = true;
+        })
+        .Items(regions =>
+        {
+
+            regions.Add(Html.X().FormPanel()
+                .ItemID("center")
+                .DefaultAnchor("100%")
+                .AutoScroll(true)
+                .Height(800)
+               .Header(false)
+               .Border(true)
+                .ID("formactual")
+                .Listeners(l =>
+                {
+                    l.Render.Handler = "eventoRenderForm(); ";
+
+                })
+               .Items(
+                       X.FieldSet()
+                        .ID("fsVigilancia")
+                        .ColumnWidth(0.4).Title("")
+                //.Layout(LayoutType.Fit)
+                        .MarginSpec("05 05 0 05")
+                        .Height(800)
+                        .Defaults(d =>
+                        {
+                            d.Add(new Parameter("LabelWidth", "180"));
+                            d.Add(new Parameter("DefaultAnchor", "100%"));
+                            d.Add(new Parameter("LabelAlign", "Left"));
+                        })
+                        .FieldDefaults(d => { d.LabelAlign = LabelAlign.Left; })
+                        .Items(
+                //X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00"),
+
+                         //X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                //       .Defaults(d => { d.Add(new Parameter("LabelWidth", "150")); })
+                //       .Items(
+                //           X.Component().Width(110),
+                //           X.Label().Hidden(false).Border(false).Html("<b><font  size='2.5em'; color='black'>Antes de la Incisión</font></b>")
+
+                         //         ),
+
+                         //X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                //           .Defaults(d => { d.Add(new Parameter("LabelWidth", "0")); })
+                //          .Items(
+                //               X.Component().Width(0),
+                //               X.TextFieldFor(m => m.IdSeguridad).FieldLabel("").LabelWidth(800)
+                //                .Hidden(true).ID("txtSeguridad"),
+                //                 X.TextFieldFor(m => m.TipoCirugia).FieldLabel("").LabelWidth(800)
+                //                .Hidden(true).ID("txtTipo").Value(2)
+
+                         //     ),
+                //PLan ANestesico
+                               X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                                            X.Label().Hidden(false).Border(false).Html("<b><font  size='2.5em'; color='black'>Plan Anestesico</font></b><BR>")
+                                           ).Height(25)
+                                 , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                                            X.Label().Text("Anestesia Inhalatoria").Width(120),
+                                            X.CheckboxGroupFor(m => m.Respuesta1, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                             )
+
+                                  , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                //X.CheckboxFor(c => c.Respuesta2).ReadOnly(indicaModoLectura).LabelWidth(120)
+                //     .FieldLabel("Sedo Anestesia")
+                                           X.Label().Text("Sedo Anestesia").Width(120),
+                                            X.CheckboxGroupFor(m => m.Respuesta2, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                            )
+                                   , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                //X.CheckboxFor(c => c.Respuesta3).ReadOnly(indicaModoLectura).LabelWidth(120)
+                //     .FieldLabel("Bloqueo Nervioso")
+                                            X.Label().Text("Bloqueo Nervioso").Width(120),
+                                            X.CheckboxGroupFor(m => m.Respuesta3, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                            )
+                                   , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                //X.CheckboxFor(c => c.Respuesta4).ReadOnly(indicaModoLectura).LabelWidth(120)
+                //     .FieldLabel("Anestesia EV")
+                                           X.Label().Text("Anestesia EV").Width(120),
+                                            X.CheckboxGroupFor(m => m.Respuesta4, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+
+                                             , X.Component().Width(20)
+                                                , X.RadioGroupFor(m => m.Respuesta5, new List<Radio.Config> {
+                                            new Radio.Config{BoxLabel = "Con Mascara Facial", InputValue = "1", ReadOnly =indicaModoLectura, Width=150  },
+                                            new Radio.Config{BoxLabel = "Con Mascara Laringea", InputValue = "2", ReadOnly =indicaModoLectura, Width=150  }
+                                        })
+                                            )
+                                    , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                //X.CheckboxFor(c => c.Respuesta6).ReadOnly(indicaModoLectura).LabelWidth(120)
+                //     .FieldLabel("Anestesia regional epidural")
+                                            X.Label().Text("Anestesia regional epidural").Width(120),
+                                            X.CheckboxGroupFor(m => m.Respuesta6, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                            )
+                                     , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                //X.CheckboxFor(c => c.Respuesta7).ReadOnly(indicaModoLectura).LabelWidth(120)
+                //     .FieldLabel("Anestesia Espinal")
+                                            X.Label().Text("Anestesia Espinal").Width(120),
+                                            X.CheckboxGroupFor(m => m.Respuesta7, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                            )
+                                            , X.Container().Height(20)
+
+                                //Via Aerea
+                               , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                                            X.Label().Hidden(false).Border(false).Html("<b><font  size='2.5em'; color='black'>Via Aerea</font></b><BR>")
+                                           ).Height(25)
+                               , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                //X.CheckboxFor(c => c.Respuesta8).ReadOnly(indicaModoLectura).LabelWidth(80)
+                //     .FieldLabel("Canula DF")
+                                           X.Label().Text("Canula DF").Width(120),
+                                            X.CheckboxGroupFor(m => m.Respuesta8, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                                ,
+                                           X.Component().Width(30),
+                //X.CheckboxFor(c => c.Respuesta9).ReadOnly(indicaModoLectura).LabelWidth(80)
+                //     .FieldLabel("Tubo Anillado")
+                                           X.Label().Text("Tubo Anillado").Width(120),
+                                            X.CheckboxGroupFor(m => m.Respuesta9, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                            ,
+                                           X.Component().Width(50),
+                //X.CheckboxFor(c => c.Respuesta10).ReadOnly(indicaModoLectura).LabelWidth(80)
+                //     .FieldLabel("Fibroscopia")
+                                            X.Label().Text("Fibroscopia").Width(120),
+                                            X.CheckboxGroupFor(m => m.Respuesta10, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                                ,
+                                           X.Component().Width(30),
+                //X.CheckboxFor(c => c.Respuesta11).ReadOnly(indicaModoLectura).LabelWidth(80)
+                //     .FieldLabel("Naso Traqueal")
+                                                 X.Label().Text("Naso Traqueal").Width(100),
+                                            X.CheckboxGroupFor(m => m.Respuesta11, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                                ,
+                                           X.Component().Width(30),
+                //X.CheckboxFor(c => c.Respuesta12).ReadOnly(indicaModoLectura).LabelWidth(80)
+                //     .FieldLabel("Selectiva I")
+                                                 X.Label().Text("Selectiva I").Width(80),
+                                            X.CheckboxGroupFor(m => m.Respuesta12, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                            )
+                                , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                //X.CheckboxFor(c => c.Respuesta13).ReadOnly(indicaModoLectura).LabelWidth(80)
+                //     .FieldLabel("Arnes P-A")
+                                            X.Label().Text("Arnes P-A").Width(120),
+                                            X.CheckboxGroupFor(m => m.Respuesta13, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                           ,
+                                           X.Component().Width(30),
+                //X.CheckboxFor(c => c.Respuesta14).ReadOnly(indicaModoLectura).LabelWidth(80)
+                //     .FieldLabel("Traqueotmia")
+                                           X.Label().Text("Traqueotmia").Width(120),
+                                            X.CheckboxGroupFor(m => m.Respuesta14, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                            ,
+                                           X.Component().Width(50),
+                //X.CheckboxFor(c => c.Respuesta15).ReadOnly(indicaModoLectura).LabelWidth(130)
+                //     .FieldLabel("Tubo Doble Lumen D")
+                                            X.Label().Text("Tubo Doble Lumen D").Width(120),
+                                            X.CheckboxGroupFor(m => m.Respuesta15, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                                ,
+                                           X.Component().Width(30),
+                //X.CheckboxFor(c => c.Respuesta16).ReadOnly(indicaModoLectura).LabelWidth(80)
+                //     .FieldLabel("Oro Traqueal")
+                                            X.Label().Text("Oro Traqueal").Width(100),
+                                            X.CheckboxGroupFor(m => m.Respuesta16, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+
+                                            )
+                                  , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                //X.CheckboxFor(c => c.Respuesta17).ReadOnly(indicaModoLectura).LabelWidth(130)
+                //     .FieldLabel("Mascara laringea")
+                                           X.Label().Text("Mascara laringea").Width(120),
+                                            X.CheckboxGroupFor(m => m.Respuesta17, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                           ,
+                                           X.Component().Width(30),
+                //X.CheckboxFor(c => c.Respuesta18).ReadOnly(indicaModoLectura).LabelWidth(130)
+                //     .FieldLabel("Video Laringoscopio")
+                                           X.Label().Text("Video Laringoscopio").Width(120),
+                                            X.CheckboxGroupFor(m => m.Respuesta18, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                            ,
+                                           X.Component().Width(50),
+                //X.CheckboxFor(c => c.Respuesta19).ReadOnly(indicaModoLectura).LabelWidth(130)
+                //     .FieldLabel("Tubo Doble Lumen I")
+                                                 X.Label().Text("Tubo Doble Lumen I").Width(120),
+                                            X.CheckboxGroupFor(m => m.Respuesta19, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                                ,
+                                           X.Component().Width(30),
+                //X.CheckboxFor(c => c.Respuesta20).ReadOnly(indicaModoLectura).LabelWidth(80)
+                //     .FieldLabel("Selectiva D")
+                                                X.Label().Text("Selectiva D").Width(100),
+                                            X.CheckboxGroupFor(m => m.Respuesta20, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+
+                                            )
+
+                                   , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+
+                                          X.Component().Width(10),
+                                            X.NumberFieldFor(c => c.TET).ReadOnly(indicaModoLectura).LabelWidth(80)
+                                                 .FieldLabel("TET N°"),
+                                          X.Component().Width(40),
+                                            X.NumberFieldFor(c => c.M_Facial).ReadOnly(indicaModoLectura).LabelWidth(80)
+                                                 .FieldLabel("M.Facial N°")
+                                            ,
+                                           X.Component().Width(40),
+                                            X.NumberFieldFor(c => c.M_Laringea).ReadOnly(indicaModoLectura).LabelWidth(80)
+                                                 .FieldLabel("M.Laringea N°")
+
+
+                                            )
+                                             , X.Container().Height(20)
+                //Induccion
+                              , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                                            X.Label().Hidden(false).Border(false).Html("<b><font  size='2.5em'; color='black'>Induccion</font></b><BR>")
+                                           ).Height(25),
+                               X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                //X.CheckboxFor(c => c.Respuesta21).ReadOnly(indicaModoLectura).LabelWidth(120)
+                //     .FieldLabel("Induccion EV")
+                                              X.Label().Text("Induccion EV").Width(120),
+                                            X.CheckboxGroupFor(m => m.Respuesta21, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                          )
+                               , X.Container().Layout(LayoutType.HBox)  
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                //X.CheckboxFor(c => c.Respuesta22).ReadOnly(indicaModoLectura).LabelWidth(120)
+                //     .FieldLabel("Induccion Inhalatoria")
+                                            X.Label().Text("Induccion Inhalatoria").Width(120),
+                                            X.CheckboxGroupFor(m => m.Respuesta22, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                          )
+                                           , X.Container().Height(20)
+                //Procedimientos
+                               , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                                            X.Label().Hidden(false).Border(false).Html("<b><font  size='2.5em'; color='black'>Procedimientos</font></b><BR>")
+                                           ).Height(25)
+                                , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                //X.CheckboxFor(c => c.Respuesta23).ReadOnly(indicaModoLectura).LabelWidth(30)
+                //     .FieldLabel("CVC")
+                                            X.Label().Text("CVC").Width(120),
+                                            X.CheckboxGroupFor(m => m.Respuesta23, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                           ,
+                                           X.Component().Width(20),
+                //X.CheckboxFor(c => c.Respuesta24).ReadOnly(indicaModoLectura).LabelWidth(30)
+                //     .FieldLabel("VYII")
+                                            X.Label().Text("VYII").Width(130),
+                                            X.CheckboxGroupFor(m => m.Respuesta24, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                            ,
+                                           X.Component().Width(20),
+                //X.CheckboxFor(c => c.Respuesta25).ReadOnly(indicaModoLectura).LabelWidth(30)
+                //     .FieldLabel("VYID")
+                                            X.Label().Text("VYID").Width(130),
+                                            X.CheckboxGroupFor(m => m.Respuesta25, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                                ,
+                                           X.Component().Width(20),
+                //X.CheckboxFor(c => c.Respuesta26).ReadOnly(indicaModoLectura).LabelWidth(30)
+                //     .FieldLabel("VSCD")
+                                             X.Label().Text("VSCD").Width(130),
+                                            X.CheckboxGroupFor(m => m.Respuesta26, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                                ,
+                                           X.Component().Width(30),
+                //X.CheckboxFor(c => c.Respuesta27).ReadOnly(indicaModoLectura).LabelWidth(30)
+                //     .FieldLabel("VSCI")
+                                              X.Label().Text("VSCI").Width(120),
+                                            X.CheckboxGroupFor(m => m.Respuesta27, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                            )
+
+
+                                , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                //X.CheckboxFor(c => c.Respuesta28).ReadOnly(indicaModoLectura).LabelWidth(120)
+                //     .FieldLabel("Linea Art radial")
+                                            X.Label().Text("Linea Art radial").Width(120),
+                                            X.CheckboxGroupFor(m => m.Respuesta28, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                           ,
+                                           X.Component().Width(20),
+                //X.CheckboxFor(c => c.Respuesta29).ReadOnly(indicaModoLectura).LabelWidth(30)
+                //     .FieldLabel("VYII")
+                                           X.Label().Text("VYII").Width(130),
+                                            X.CheckboxGroupFor(m => m.Respuesta29, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                            ,
+                                           X.Component().Width(20),
+                //X.CheckboxFor(c => c.Respuesta30).ReadOnly(indicaModoLectura).LabelWidth(30)
+                //     .FieldLabel("VYID")
+                                             X.Label().Text("VYID").Width(130),
+                                            X.CheckboxGroupFor(m => m.Respuesta30, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                                ,
+                                           X.Component().Width(20),
+                //X.CheckboxFor(c => c.Respuesta31).ReadOnly(indicaModoLectura).LabelWidth(30)
+                //     .FieldLabel("VSCD")
+                                             X.Label().Text("VSCD").Width(130),
+                                            X.CheckboxGroupFor(m => m.Respuesta31, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+
+
+                                            )
+                                 , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+
+                                          X.Component().Width(10),
+                                            X.NumberFieldFor(c => c.CATVenoso).ReadOnly(indicaModoLectura).LabelWidth(150)
+                                                 .FieldLabel("CAT. Venoso N°"),
+                                          X.Component().Width(40),
+                                            X.NumberFieldFor(c => c.PVCCAT).ReadOnly(indicaModoLectura).LabelWidth(150)
+                                                 .FieldLabel("PVC CAT. N°")
+
+
+                                            )
+
+                                            , X.Container().Height(20)
+                //Posicion
+                               , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                                            X.Label().Hidden(false).Border(false).Html("<b><font  size='2.5em'; color='black'>Posicion</font></b><BR>")
+                                           ).Height(25)
+                              , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                //X.CheckboxFor(c => c.Respuesta32).ReadOnly(indicaModoLectura).LabelWidth(110)
+                //     .FieldLabel("Decubito Dorsal")
+                                            X.Label().Text("Decubito Dorsal").Width(150),
+                                            X.CheckboxGroupFor(m => m.Respuesta32, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                            ,
+                                           X.Component().Width(30),
+                //X.CheckboxFor(c => c.Respuesta33).ReadOnly(indicaModoLectura).LabelWidth(150)
+                //     .FieldLabel("Supino Lateral Izquierdo")
+                                             X.Label().Text("Supino Lateral Izquierdo").Width(150),
+                                            X.CheckboxGroupFor(m => m.Respuesta33, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                             ,
+                                           X.Component().Width(30),
+                //X.CheckboxFor(c => c.Respuesta34).ReadOnly(indicaModoLectura).LabelWidth(150)
+                //     .FieldLabel("Litotomia")
+                                            X.Label().Text("Litotomia").Width(150),
+                                            X.CheckboxGroupFor(m => m.Respuesta34, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                                ,
+                                           X.Component().Width(30),
+                //X.CheckboxFor(c => c.Respuesta35).ReadOnly(indicaModoLectura).LabelWidth(150)
+                //     .FieldLabel("De Sims")
+                                            X.Label().Text("De Sims").Width(70),
+                                            X.CheckboxGroupFor(m => m.Respuesta35, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                            )
+                              , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                //X.CheckboxFor(c => c.Respuesta36).ReadOnly(indicaModoLectura).LabelWidth(110)
+                //     .FieldLabel("Decubito Ventral")
+                                            X.Label().Text("Decubito Ventral").Width(150),
+                                            X.CheckboxGroupFor(m => m.Respuesta36, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                           ,
+                                           X.Component().Width(30),
+                //X.CheckboxFor(c => c.Respuesta37).ReadOnly(indicaModoLectura).LabelWidth(150)
+                //     .FieldLabel("Trendelenburg")
+                                            X.Label().Text("Trendelenburg").Width(150),
+                                            X.CheckboxGroupFor(m => m.Respuesta37, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                            ,
+                                           X.Component().Width(30),
+                //X.CheckboxFor(c => c.Respuesta38).ReadOnly(indicaModoLectura).LabelWidth(150)
+                //     .FieldLabel("Silla de playa")
+                                            X.Label().Text("Silla de playa").Width(150),
+                                            X.CheckboxGroupFor(m => m.Respuesta38, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                                 ,
+                                            X.Component().Width(30),
+                                            X.TextFieldFor(c => c.Posicion_Otros).ReadOnly(indicaModoLectura).LabelWidth(60)
+                                                 .FieldLabel("Otros")
+                                            )
+                             , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                //X.CheckboxFor(c => c.Respuesta39).ReadOnly(indicaModoLectura).LabelWidth(110)
+                //     .FieldLabel("Supino Lateral Derecho"),
+                                            X.Label().Text("Supino Lateral Derecho").Width(150),
+                                            X.CheckboxGroupFor(m => m.Respuesta39, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                           ,
+                                           X.Component().Width(30),
+                //X.CheckboxFor(c => c.Respuesta40).ReadOnly(indicaModoLectura).LabelWidth(150)
+                //     .FieldLabel("Fowler")
+                                            X.Label().Text("Fowler").Width(150),
+                                            X.CheckboxGroupFor(m => m.Respuesta40, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+                                            ,
+                                           X.Component().Width(30),
+                //X.CheckboxFor(c => c.Respuesta41).ReadOnly(indicaModoLectura).LabelWidth(150)
+                //     .FieldLabel("navaja sevillana(Kraske)")
+                                            X.Label().Text("Navaja Sevillana(Kraske)").Width(150),
+                                            X.CheckboxGroupFor(m => m.Respuesta41, new List<Checkbox.Config> {
+                                            new Checkbox.Config{BoxLabel = "",
+                                                            InputValue="1",
+                                                            Checked=false,
+                                                            ReadOnly=indicaModoLectura,
+                                                                                     }
+                                                     })
+
+
+                                            )
+                                            , X.Container().Height(20)
+
+
+
+                               //Cirugia
+                              , X.Container().Layout(LayoutType.HBox)
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                                            X.Label().Hidden(false).Border(false).Html("<b><font  size='2.5em'; color='black'>Cirugia</font></b><BR>")
+                                            ).Height(25)
+                              , X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                    .Defaults(d => { d.Add(new Parameter("LabelWidth", "220")); })
+                                   .Items(
+                                        X.Component().Width(10),
+                                        X.DateFieldFor(m => m.Fec_Ini_Anestesia).FieldLabel("Fecha y hora del Inicio de Anestesia").LabelWidth(100)
+                                         .Hidden(false).ID("txtFechaIniAnestesia")
+                                         , X.TimeFieldFor(m => m.Hor_Ini_Anestesia).FieldLabel("").ReadOnly(indicaModoLectura).Format("HH:mm").Width(80),
+                                          X.Component().Width(40),
+                                        X.DateFieldFor(m => m.Fec_Fin_Anestesia).FieldLabel("Fecha y hora del fin de Anestesia").LabelWidth(100)
+                                         .Hidden(false).ID("txtFechaFinAnestesia")
+                                        , X.TimeFieldFor(m => m.Hor_Fin_Anestesia).FieldLabel("").ReadOnly(indicaModoLectura).Format("HH:mm").Width(80)
+                                         )
+
+                              , X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                    .Defaults(d => { d.Add(new Parameter("LabelWidth", "220")); })
+                                   .Items(
+                                        X.Component().Width(10),
+                                        X.DateFieldFor(m => m.Fec_Ini_Cirugia).FieldLabel("Fecha y hora del Inicio de Cirugia").LabelWidth(100)
+                                         .Hidden(false).ID("txtFechaIniCirugia")
+                                         , X.TimeFieldFor(m => m.Hor_Ini_Cirugia).FieldLabel("").ReadOnly(indicaModoLectura).Format("HH:mm").Width(80)
+                                         , X.Component().Width(40),
+                                        X.DateFieldFor(m => m.Fec_Fin_Cirugia).FieldLabel("Fecha y hora del fin de Cirugia").LabelWidth(100)
+                                         .Hidden(false).ID("txtFechaFinCirugia")
+                                         , X.TimeFieldFor(m => m.Hor_Fin_Cirugia).FieldLabel("").ReadOnly(indicaModoLectura).Format("HH:mm").Width(80)
+
+                              )
+
+                              //Intubacion
+                              , X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                   .Defaults(d => { d.Add(new Parameter("LabelWidth", "10")); })
+                                        .Items(
+                                            X.Component().Width(10),
+                                            X.Label().Hidden(false).Border(false).Html("<b><font  size='2.5em'; color='black'>Intubacion</font></b><BR>")
+                                            , X.Component().Width(60)
+                                            , X.RadioGroupFor(m => m.Respuesta42, new List<Radio.Config> {
+                                            new Radio.Config{BoxLabel = "Orotraqueal normal", InputValue = "1", ReadOnly =indicaModoLectura, Width=150  },
+                                            new Radio.Config{BoxLabel = "Orotraqueal dificil", InputValue = "2", ReadOnly =indicaModoLectura, Width=150  },
+                                            new Radio.Config{BoxLabel = "Nasotraqueal normal", InputValue = "3", ReadOnly =indicaModoLectura, Width=150},
+                                            new Radio.Config{BoxLabel = "Nasotraqueal dificil", InputValue = "4", ReadOnly =indicaModoLectura, Width=150}
+                                        })
+
+
+                                           ).Height(50)
+                                            , X.Container().Height(20)
+
+
+
+
+   ),
+                        X.HiddenFor(m => m.Accion),
+                        X.DateFieldFor(m => m.FechaCreacion).Hidden(true),
+                        X.DateFieldFor(m => m.FechaModificacion).Hidden(true),
+                        X.TextFieldFor(m => m.UsuarioCreacion).Hidden(true),
+                        X.TextFieldFor(m => m.UsuarioModificacion).Hidden(true),
+                        X.TextFieldFor(m => m.Estado).Hidden(true),
+                        X.TextArea().ID("taAlerts")
+                        .Border(false)
+                        .StyleSpec("background:white;border:1px solid gray;")
+                        .FieldStyle("color: red")
+                        .Hidden(true)
+                        .ReadOnly(true)
+
+                     )
+
+                    .TopBar(X.Toolbar().ID("bar").Items(
+                                X.ToolbarSpacer(20),
+                                X.TextField().Width(15).FieldStyle("border-color: " + COLOER_IND_OBLIGA).ReadOnly(true).Hidden(indicaModoLectura),
+                                X.Label().Html("<b><font color='" + COLOER_IND_OBLIGA + "'>Campos Obligatorios</font></b>").Hidden(indicaModoLectura),
+
+                                X.ToolbarSpacer(20)
+                                ,
+                                Html.X().Container().Layout(LayoutType.HBox)
+                                .ID("conthbIndicaError").Hidden(true).Items(
+                                    X.Label().Html("<font  size='1.9em'; color='red'>(</font>"),
+                                    X.Label().Html("<font  size='3.9em'; color='red'><b>&#161;</b></font>"),
+                                    X.Label().Html("<font  size='1.9em'; color='red'>) Verificar los errores presentados</font>")
+                                ),
+                                X.ToolbarFill(),
+                                 X.Button()
+                            .Text("Imprimir")
+                            .Icon(Icon.Report)
+                            .Hidden(!visibleImpresion)
+                            .ID("btnImpresion")
+                            .Handler("eventoVisorReporte('');"),
+
+                            X.Button()
+                            .Text("Imprimir Todos")
+                            .Icon(Icon.ReportGo)
+                            .Hidden(!visibleImpresion)
+                            .ID("btnImpresionHC")
+                            .Handler("eventoVisorReporte('HC');"),
+                                
+                                X.ToolbarSpacer().Width(40)
+                                ,
+                            X.Button()
+                                .Text("Guardar")
+                                .Icon(Icon.Disk)
+                                .ID("cmdGuardar").Hidden(indicaModoLectura)
+
+                                .DirectEvents(de =>
+                                {  //Model.ACCION : Posee el MODO ACTUAL
+                                    de.Click.Url = Url.Action("CCEPF323_2_Save_FichaAnestesia");
+                                    de.Click.EventMask.ShowMask = true;
+                                    //de.Click.Before = "return EnviarData('grid');";
+                                    de.Click.Before = "" +
+                                            "beforeSave(App.formactual); return App.formactual.getForm().isValid();";
+
+                                    de.Click.Success = "onSuccess(result.data);";
+                                    de.Click.Failure = "onFailure();";
+                                }),
+
+                            X.Button()
+                                .Text("Cancelar")
+                                .ID("btnCancel").Hidden(indicaModoLectura)
+                                .Icon(Icon.Cancel)
+                                .Handler("eventoCancelar(this.up('form'));")
+                                ,
+                            X.Button()
+                                .Text("Editar")
+                                .ID("btnOnEdit")
+                                .Icon(Icon.ApplicationFormEdit)
+                                .Hidden(true)
+                                .Handler("eventoOnEditar(App.btnOnEdit);")
+
+                        ))
+                        .Listeners(l => l.FieldChange
+                            .Handler = "setIndicaCambios(true);"
+                        )
+                );
+        }
+        )
+
+
+    )
+
+}
+

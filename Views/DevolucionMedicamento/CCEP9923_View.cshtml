@@ -1,0 +1,1103 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_FA_DevolucionProducto
+
+@{
+    ViewBag.Title = "";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+
+
+    var indicaVisiblePrint = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_VISIBLE_IMPRESION;
+    var indicaVisibleTB = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_VISIBLE_TB_IMPRESION;
+
+    var Paciente = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.PacienteID;
+    long EpiAtencion = (long)SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.EpisodioAtencion;
+    int EpiClinico = (int)SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.EpisodioClinico;
+    int total = Convert.ToInt32(Session["CANTIDAD"]);
+
+    var visibleImpresion = (indicaVisiblePrint == 2 ? true : false);
+
+    var estado =SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.ESTADOFORMULARIO_ACCION;
+
+    var indicaModoLectura = (estado == "NUEVO" ? false : true);
+
+    var indicaModoLectura2 = !(indicaVisibleTB == 2 ? false : true);
+
+
+    var COLOR_RED02 = "#F05F5F";
+    var COLOR_GRAY = "gray";
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_YELLOW02 = "#D9A407";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_ROSADO2 = "#F5A9D0";
+    var COLOR_NARANJA = "#FE642E";
+    var COLOR_BLANCO = "#00000";
+
+    var PARTICULAR = 3;
+    var CPM = 6;
+    var PDS = 19;
+    var PPS = 5;
+
+}
+
+
+@section cabecera
+{
+    <style>
+        .recetado-med .x-grid-cell {
+            background-color: #FAFAA3;
+        }
+    </style>
+
+    <script>
+        var myRenderer1 = function (value, metadata) {
+            metadata.style = "background-color: green;";
+
+            return value;
+        };
+
+        var myRenderer2 = function (value, metadata) {
+            metadata.style = "background-color: yellow;";
+
+            return value;
+        };
+    </script>
+
+
+    <script>
+    var GlobalSelect = false;
+    var Valores;
+    var template = '<span style="color:{0};">{1}</span>';
+
+    var SecuenciaMax = '@total';
+
+   var RecordsSelect = [];
+
+    var seleccRecordActual = null;
+
+    var seleccionDataActual = null;
+    function setSeleccionRecord(record) {
+        seleccionDataActual = record;
+
+    }
+
+ /*   function eventoRenderForm() {
+
+        var kk = 120;
+        var scrH = screen.height;
+        var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+        var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+
+        if (southH == 0) {
+            southH = 30;
+        } else if (parent.App.PanelMainSouth.collapsed) {
+            southH = 30;
+        }
+        var dimCentral = (scrH - (northH + southH) - kk);
+        App.formactual.setHeight(dimCentral);
+    }*/
+
+
+    function eventoRenderForm() {
+        var kk = 120;
+        var scrH = screen.height;
+        var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+        var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+        if (southH == 0) {
+            southH = 30;
+        }
+        var dimCentral = (scrH - (northH + southH) - kk);
+        App.formactual.setHeight(dimCentral);
+    }
+
+    var ALTURADEF = screen.height;
+    var indicaCambios = false;
+    function setIndicaCambios(value) {
+        indicaCambios = value;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("setIndicaCambiosFormulario"))',
+            params: {
+                indica: (value ? 1 : 0)
+            }
+        });
+    }
+
+    var Valores;
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_YELLOW02 = "#D9A407";
+
+
+    var changeModalidad = function (value) {
+        var templateX = '<div unselectable="on" class="circulo" style="background: {0}; width: 14px; height: 14px; ">&nbsp;</div>';
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 6)
+            return Ext.String.format(templateX, '@(COLOR_YELLOW02)', "");
+        if (value == 5)
+            return Ext.String.format(templateX, '@(COLOR_GREEN01)', "");
+        if (value == 19)
+            return Ext.String.format(templateX, '@(COLOR_ROSADO2)', "");
+        if (value == 3)
+            return Ext.String.format(templateX, '@(COLOR_NARANJA)', "");
+        else
+            return Ext.String.format(templateX, '@(COLOR_BLUE01)', "No especificada");
+    };
+
+
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+    var COLOR_YELLOW02 = "#D9A407";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_ORANGE01 = "#E07509";
+
+
+
+
+    var redirect = function () {
+        window.location.href = ' @Url.Action("Index2", "VisorReceta") ';
+    }
+
+
+    var redirect = function () {
+        window.location.href = ' @Url.Action("Index2", "VisorReceta") ';
+    }
+
+
+
+    var change = function (value) {
+        return Ext.String.format(template, (value > 0) ? "green" : "red", value);
+    };
+
+    var pctChange = function (value) {
+        return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+    };
+
+    var onSuccess = function (grid, data) {
+        grid.show();
+        grid.getStore().loadData(data);
+    };
+
+
+
+    function deleteSelected(grid) {
+        var store = grid.store,
+            records = grid.selModel.getSelection();
+
+        store.remove(records);
+        store.load(true);
+    }
+
+
+
+
+
+    var varTipoBuscar = "LOAD";
+
+    var accionBuscarFiltro = function (tipo, fechaActual) {
+        if (App.txtFecha1.getValue() == null) {
+            App.txtFecha1.setValue(fechaActual);
+        }
+        if (App.txtFecha2.getValue() == null) {
+            App.txtFecha2.setValue(fechaActual);
+        }
+        varTipoBuscar = tipo;
+        /*App.GrillaVisorRecetas.getStore().reload();*/
+        varTipoBuscar = 'LOAD';
+
+    };
+    function ConfirmaFinaliza() {
+        Ext.Msg.confirm("Ventana de Confirmación", "¿Está seguro de finalizar Episodio Clínico?", function (btn) {
+            if (btn === "yes") {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("EstadoClinico"))',
+                    params: {
+                        selection: "",
+                        accion: "Finalizar"
+                    }
+                    , success: function (result) { App.GrillaVisorRecetas.getStore().reload(); }
+                });
+            }
+        })
+
+    }
+    function showResult() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("EstadoClinico"))',
+            params: {
+                selection: "",
+                accion: "Finalizar"
+            }
+        });
+    }
+
+
+    function getFormatDate(fecha, parent) {
+        var fechaForm = null;
+        if (fecha != null) {
+            var diaFec = fecha.getDate();
+            var mmFec = fecha.getMonth() + 1;
+            var yyyyFec = fecha.getFullYear();
+            var diaForm = '' + diaFec;
+            var mmForm = '' + mmFec;
+            var yyyyForm = '' + yyyyFec;
+            if (diaFec < 10) {
+                diaForm = '0' + diaFec;
+            }
+            if (mmFec < 10) {
+                mmForm = '0' + mmFec;
+            }
+            fechaForm = diaForm + '/' + mmForm + '/' + yyyyForm;
+        }
+        return fechaForm;
+    };
+    function setDateFormat(compo, fecha) {
+        compo.setValue(getFormatDate(fecha, '99/99/9999'));
+    };
+
+
+
+    function mostrarAlarmaReglas(data) {
+        if (data != null) {
+            if (data[0].ESTADOBOOL) {
+                Ext.Msg.show({
+                    title: "Advertencia Motor Reglas",
+                    msg: data[0].DESCRIPCION,
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+
+    function chkFechasActosFiltros(fechaActual) {
+        var checkAll = App.chFechas.getValue();
+        if (checkAll) {
+            App.txtFecha1.setDisabled(true);
+            App.txtFecha1.setValue(null);
+            App.txtFecha2.setDisabled(true);
+            App.txtFecha2.setValue(null);
+        } else {
+            App.txtFecha1.setValue(fechaActual);
+            App.txtFecha2.setValue(fechaActual);
+            App.txtFecha1.setDisabled(false);
+            App.txtFecha2.setDisabled(false);
+        }
+    }
+
+    function InsertRow(valor, estado) {
+        var grid = Ext.getCmp("GrillaVisorRecetas");
+        if (valor.getValue() != '') {
+            SecuenciaMax = parseInt(SecuenciaMax) + 1;
+            var obj = JSON.parse(valor.getValue());
+            var CantidadRes = 0;
+             CantidadRes = obj.Cantidad;
+            var DescripcionLocalVar = obj.Version;
+            var episodio = obj.ValorCodigo5;
+            var linea = obj.Linea;
+            var familia = obj.Familia;
+            var subfamilia = obj.SubFamilia;
+            var codigo = obj.CodigoComponente;
+            var estado = obj.Estado;
+            
+
+            if (validaDuplicado(obj.CodigoComponente, grid)) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("showMensajeNotify"))',
+                    params: {
+                        titulo: 'Advertencia',
+                        message: 'Ya existe registro',
+                        tipo: 'WARNING'
+                    }
+                });
+                valor.setValue('');
+                return;
+            }
+
+            setIndicaCambios(true);
+            grid.store.insert(0, {
+
+
+            /* IdEpisodioAtencion: episodio,*/
+                RecetadoMed: estado,
+                FechaCreacion: new Date(),
+                GrupoMedicamento: obj.GrupoMedicamento,
+                IdPaciente: '@Paciente',
+                EpisodioClinico: '@EpiClinico',
+                IdEpisodioAtencion: '@EpiAtencion',
+                Secuencia: SecuenciaMax,
+                Linea: linea,
+                Familia: familia,
+                SubFamilia: subfamilia,
+                TipoComponente: obj.TipoComponente,
+                CodigoComponente: codigo,
+                Medicamento:DescripcionLocalVar,
+                Version: CantidadRes,
+                Cantidad: 0,
+                Estado: 1/*,
+                Accion: 'NUEVO'*/
+
+            });
+            valor.setValue('');
+            Ext.Function.defer(function () {
+                grid.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+            }, 100);
+        }
+
+    }
+
+    function validaDuplicado(valor) {
+        var estados = false;
+        App.StoreTasks.each(function (r) {
+            if (trim(r.get('CodigoComponente')) == trim(valor)) estados = true;
+        });
+        // alert(estados);
+        return estados;
+    }
+
+    function trim(str) {
+        return str.replace(/^\s+|\s+$/g, "");
+    }
+
+
+
+    function guardarSolicitud() {
+        var grid = Ext.getCmp("GrillaVisorRecetas");
+        /*var cantidad = grid.getSelectionModel().getCount();*/
+        var isError = false;
+
+      /*  if (cantidad < 1) {
+            seleccionDataActual = null;
+            alert("No ha seleccionado ningún registro");
+
+        }
+        else {
+            var Selecionados = grid.getSelectionModel().getSelection();/*[0];*/
+           /* var row = grid.store.indexOf(Selecionados);*/
+            /*alert(row);*/
+            var ArrayList0 = new Array();
+            var ArrayList1 = new Array();
+            var temp = '';
+
+            var FA_DevolucionProducto = {
+                /* IdPaciente: Selecionados[i].get('IdPaciente'),
+                 EpisodioClinico: Selecionados[i].get('EpisodioClinico'),
+                 IdEpisodioAtencion: Selecionados[i].get('IdEpisodioAtencion'),*/
+                Observacion: App.txtObservacion.getValue(),
+                NumeroDocumento: App.txtDocumento.getValue()
+               /* IdDevolucionProducto: parseInt(App.txtIdSolicitudProducto.getValue())*/
+                /*  Estado: Selecionados[i].get('Estado')*/
+            };
+            ArrayList0.push(FA_DevolucionProducto);
+
+
+            grid.store.each(function (r) {
+                /********/
+                if (parseInt(r.get('Cantidad')) > parseInt(r.get('Version'))) {
+                    var mensaje = 'La cantidad solicitada del medicamento ' + r.get('Medicamento') + ' no debe ser mayor a la solicitada por el médico ' + ' (Cantidad: ' + r.get('Version') + ')';
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: 'Advertencia',
+                            message: mensaje,
+                            tipo: 'WARNING'
+                        }
+                    });
+
+                    isError = true;
+                    return false;
+                };
+                /******/
+                var FA_DevolucionProductoDetalle = {
+                    IdPaciente: r.get('IdPaciente'),
+                    EpisodioClinico: r.get('EpisodioClinico'),
+                    IdEpisodioAtencion: r.get('IdEpisodioAtencion'),
+                    Secuencia: r.get('Secuencia'),
+                    Linea: r.get('Linea'),
+                    Familia: r.get('Familia'),
+                    SubFamilia: r.get('SubFamilia'),
+                    Medicamento: r.get('Medicamento'),
+                    /*CodigoOA: r.get('CodigoOA'),*/
+                    /*FechaCreacion: Selecionados[i].get('FechaCreacion'),*/
+                    CodigoComponente: r.get('CodigoComponente'),
+                    GrupoMedicamento: r.get('GrupoMedicamento'),
+                    Cantidad: r.get('Cantidad'),
+                    Estado: r.get('Estado'),
+                    Accion: r.get('Accion')
+                };
+                ArrayList1.push(FA_DevolucionProductoDetalle);
+
+            });
+            if (isError == false) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("Save_Solicitud"))',
+                    params: {
+                        selectionArray1: ArrayList0,
+                        selectionArray2: ArrayList1
+                        /*Evento: 'Server'*/
+                    }
+                });
+
+                parent.App.txtRecargarX.setValue('RELOAD');
+            }
+        }
+  /*  }*/
+
+    function eventoVisorReporte(param1) {
+        if (param1 == 'HC') {
+            window.location.href = '@Url.Action("HCEReportesView_total", "VisorReceta")';
+        } else {
+            window.location.href = '@Url.Action("HCEReportesViewDev", "DevolucionMedicamento")';
+        }
+    }
+
+    function setImpresion(store) {
+        App.btnImpresion.setVisible(false);
+        var contar = 0;
+        if (store != null) {
+            store.each(function (r) {
+                contar++;
+            });
+        }
+        if (contar > 0) {
+
+            App.btnImpresion.setVisible(true);
+        }
+    }
+
+    function deleteActual(grid, record) {
+        seleccRecordActual = record;
+
+        if (record != null) {
+
+
+         /*   if (record.data.TipoComponente == "M") {*/
+                setIndicaCambios(true);
+                var store = Ext.getStore('StoreTasks');
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("Delete_SolicitudDetalle"))',
+                    params: {
+                        accion: 'DELETE',
+                        codigo: record.data.CodigoComponente,
+                        secuencia: record.data.Secuencia
+                    }
+                });
+                store.remove(record);
+                record = null;
+
+         /*   }
+            else {
+                Ext.net.DirectMethod.request({
+                    url: '(Url.Action("showMensajeNotify"))',
+                    params: {
+                        titulo: 'Advertencia',
+                        message: 'No se puede eliminar los medicamentos recetados por el médico',
+                        tipo: 'WARNING'
+                    }
+                });
+                record = null;
+            }*/
+
+        }
+    };
+
+        function Deshabilita(record, index) {
+            /*App.StoreTasks.each(function (r) {
+                if (r.get('TipoComponente') != "M") {
+                   var idx= App.GrillaVisorRecetas.getView().findRowIndex(r.target);
+                   var row =  App.GrillaVisorRecetas.getStore().getAt(idx);
+                   row.style.backgroundColor = 'red';
+                }
+            });*/
+
+            var c = record.get('Estado');
+            if (c != 1) {
+                record.get('Cantidad').set
+                return 'x-trigger-noedit'/*'disabled-row'*/
+            }
+        };
+        function Recetados() {
+            /*var RecordsSelect = [];*/
+            App.StoreTasks.each(function (r) {
+                if (r.get('TipoComponente') != "M") {
+                   /*var idx= App.GrillaVisorRecetas.getView().findRowIndex(r.target);
+                   var row =  App.GrillaVisorRecetas.getStore().getAt(idx);
+                   row.style.backgroundColor = 'red';*/
+                   r.set('RecetadoMed', 1);
+                }
+                if (r.get('Estado') != 1) {
+                    /*var idx= App.GrillaVisorRecetas.getView().findRowIndex(r.target);
+                    var row =  App.GrillaVisorRecetas.getStore().getAt(idx);
+                    row.style.backgroundColor = 'red';*/
+                    /*r.set('RecetadoMed', 1);*/
+                 /*   App.GrillaVisorRecetas.getView().getSelectionModel().select(r.index, true, false);*/
+                    /* /*alert(r.index);*/
+                 /*   RecordsSelect.push(r.index);*/
+                   /* r.get('CodigoOA').setDisabled(true);/* setReadOnly(true);/**/
+                     /*App.GrillaVisorRecetas.getPlugin('rowEditing').editor.form.findField('CodigoOA').disable();*/
+                }
+            });
+
+           /* App.GrillaVisorRecetas.getView().getSelectionModel().select(0,2);*/
+
+            /*var c = record.get('TipoComponente');
+            if (c != 'M') {
+                return 'recetado-med'/
+                record.set('RecetadoMed', 1);
+            }*/
+        }
+
+
+        var changeEstado = function (value) {
+            var template = '<span style="color:{0};">{1}</span>';
+            if (value == 1)
+                return Ext.String.format(template, COLOR_YELLOW02, "Pendiente");
+            if (value == 2)
+                return Ext.String.format(template, COLOR_BLUE01, "Devuelto");
+            if (value == 3)
+                return Ext.String.format(template, COLOR_GREEN01, "Despachado");
+            if (value == 4)
+                return Ext.String.format(template, COLOR_RED01, "Anulado");
+        };
+
+        var changeModalidad2 = function (value) {
+            var templateX = '<div unselectable="on" class="circulo" style="background: {0}; width: 11px; height: 11px; ">&nbsp;</div>';
+            var template = '<span style="color:{0};">{1}</span>';
+           /* if (value == 6)
+                return Ext.String.format(templateX, '(COLOR_YELLOW02)', "");
+            if (value == 5)
+                return Ext.String.format(templateX, '(COLOR_GREEN01)', "");
+            if (value == 19)
+                return Ext.String.format(templateX, '(COLOR_ROSADO2)', "");*/
+            if (value == 1)
+                return Ext.String.format(templateX, '@(COLOR_NARANJA)', "");
+            else
+                return Ext.String.format(templateX, '@(COLOR_BLANCO)', "");
+        };
+/*****/
+        function validarAgrupacion(param1, index) {
+            var grid = Ext.getCmp("GrillaVisorRecetas");
+            if (RecordsSelect.length > 0) {
+
+                if (param1.Estado != 1)
+                {
+
+                    grid.getSelectionModel().select(index, true, false);
+                   /* alert("No puede deseleccionar un medicamento con este estado");*/
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: 'Advertencia',
+                            message: 'No puede deseleccionar un medicamento con este estado',
+                            tipo: 'WARNING'
+                        }
+                    });
+                    /* return false;
+                    */
+
+                    /*grid.getSelectionModel().select(index, true, false);*/
+                }
+                for (var x = 0; x < RecordsSelect.length; x++) {
+                    App.GrillaVisorRecetas.getView().getSelectionModel().select(RecordsSelect[x], true, false);
+                }
+            }
+           /* else {
+
+                if (param1.IdPaciente != seleccionDataActual.IdPaciente) {
+
+                    if (param1.IdEpisodioAtencion != seleccionDataActual.IdEpisodioAtencion) {
+                        alert("No puede seleccionar de un Episodio de Atención diferente");
+                        grid.getSelectionModel().deselect(param1);
+
+                    }
+                    else {
+                        alert("No puede seleccionar desde un Paciente diferente");
+                        grid.getSelectionModel().deselect(index);
+
+                    }
+
+                }
+
+                // var grid = Ext.getCmp("GridPanel1");
+                var cantidad = grid.getSelectionModel().getCount();
+
+                if (cantidad == 1) {
+
+
+                    var selectedRecord = grid.getSelectionModel().getSelection()[0];
+                    var row = grid.store.indexOf(selectedRecord);
+
+                    if (row == index) {
+                        seleccionDataActual = null;
+                    }
+                }
+            }*/
+        }
+        /*****/
+        function validaSeleccion(param1, index) {
+            if (RecordsSelect.length > 0) {
+
+                if (param1.Estado != 1)
+                {
+                    return false;
+                }
+            }
+
+        }
+        function editarCantidad(ev)
+        {
+            if (ev.record.data.Estado != 1){
+            ev.setReadOnly(true);
+           /* Ext.getCmp(ev.id).getEl().dom.setAttribute('readOnly', true);
+            alert(ev.id);*/
+
+            }
+
+        }
+
+
+        function eventoagregarmedicamentos() {
+
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("AddMedicamentoDevol"))',
+                params: {
+                    MODO: 'VER'
+
+
+                }
+            });
+
+        };
+
+        function eventoCancelar(form) {
+
+            App.bar.setDisabled(true);
+            var reload = true;
+            if (reload) {
+                parent.App.txtRecargarX.setValue('RELOAD');
+                // beforeSave(form);
+            }
+
+        };
+
+
+
+    </script>
+}
+@section cuerpo
+{
+
+
+    @(Html.X().Viewport().ID("ViewP")
+                .Layout(LayoutType.VBox)
+
+        .LayoutConfig(
+            new VBoxLayoutConfig { Align = VBoxAlign.Stretch }
+        )
+        .Listeners(l =>
+        {
+            /* l.Render.Handler = "eventoRenderForm2();";*/
+            l.AfterLayout.BroadcastOnBus = "App.resize";
+            l.AfterLayout.Single = true;
+        })
+
+        .Items(regions =>
+        {
+
+            regions
+                .Add(
+                Html.X().FormPanel()
+                 .TopBar(
+
+                    X.Toolbar().ID("bar")
+                        .Height(30)
+                            .Items(
+                                    X.TextField().Hidden(true)
+                                     .ID("txtEventoUnidServicioNuevoEpiHCE")
+                                     .Listeners(l =>
+                                     {
+                                         /* l.Change.Handler = "eventoSeleccionUnidadServicio(this);";*/
+
+                                     })
+                                     ,
+                /* X.Button()
+                    .Text("Buscar Pacientes")
+                    .Icon(Icon.PageWhiteFind)
+                    .Handler("accionBuscarFiltro('FILTRO',new Date());")
+                    ,*/
+                                X.ToolbarFill(),
+                                X.Button()
+                                .ID("btnGuardar").Disabled(false)
+                                .Text("Guardar").Hidden(false)
+                                .Icon(Icon.PageSave)
+                .Handler("guardarSolicitud();")
+                                ,
+                                X.Button()
+                                .Text("Cancelar")
+                                .ID("btnCancel").Hidden(false)
+                                .Icon(Icon.Cancel)
+                                .OnClientClick("eventoCancelar(this.up('form'));"),
+                                X.Button()
+                                .ID("btnImprimir")
+                                 .Text("Imprimir").Hidden(false)
+                                .Icon(Icon.Report).Handler("eventoVisorReporte('');")
+
+                              ))
+
+                .ItemID("center")
+                .DefaultAnchor("100%")
+                .AutoScroll(true)
+                .Height(600)
+
+                .Header(false)
+                .Border(true)
+                .ID("formactual")
+                /* .Listeners(l =>
+                 {
+                     l.Render.Handler = "eventoRenderForm();";
+
+                 })*/
+               .Items(Html.X().Panel()
+                    .ItemID("north")
+                    .Margins("0 2 0 2")
+                    .Header(true)
+                    .Border(false)
+                    .Layout(LayoutType.Card)
+                    .Items(
+                             Html.X().FieldSet()
+                               .ColumnWidth(0.4)
+                               .Title("Datos Generales")
+                //.Border(false)
+                               .MarginSpec("05 05 05 05")
+                               .Defaults(d =>
+                               {
+                                   d.Add(new Parameter("LabelWidth", "170"));
+                                   d.Add(new Parameter("DefaultAnchor", "100%"));
+                                   d.Add(new Parameter("LabelAlign", "Left"));
+                               })
+
+                               .DefaultAnchor("100%")
+                               .FieldDefaults(d =>
+                               {
+                                   d.LabelAlign = LabelAlign.Left;
+                               })
+                                .Items(
+
+                                    Html.X().Container()
+                                       .Layout(LayoutType.HBox)
+                                       .Defaults(d =>
+                                       {
+                                           d.Add(new Parameter("LabelWidth", "110"));
+                                       })
+                                       .Items(
+                                        X.TextField()
+                                     .ID("RecepcionaRecurso")
+                                     .Listeners(l =>
+                                     {
+                                         l.Change.Handler = "InsertRow(this,'Logico');";
+                                     })
+                                     .Hidden(true),
+
+                                           X.Label()
+                                             .Text("Fecha:")
+                                             .ID("labelFechas"),
+                                               X.Component().Width(30),
+                                              X.Component().Width(32),
+                                               X.Component().Width(33)
+                                             ,
+                                           X.DateField()
+                                            .ID("txtFecha1")
+                                             .Width(110).Value(DateTime.Now)
+                                             .ReadOnly(true),
+                                           X.DateField()
+                                            .ID("txtFecha2").Hidden(true)
+                                             .Width(110).Value(DateTime.Now)
+                                             .ReadOnly(true),
+                                             X.Component().Width(30),
+                                              X.Component().Width(30),
+                                                X.Component().Width(30),
+                                                 X.Component().Width(30),
+                                               X.Component().Width(20),
+                                               X.Component().Width(20),
+                                             X.Label()
+                                                 .Text("N° Documento:")
+                                                 .ID("lblDocumento")
+
+                                                 ,
+                                                    X.Component().Width(30),
+                                              X.Component().Width(10),
+
+
+                                               X.TextField()
+                                                 .ID("txtDocumento")
+                //.Width(350)
+                                                 .ReadOnly(true),
+                                                 X.Label()
+                                                 .Text("ID Solicitud :")
+                                                 .ID("lblidSolicitud").Hidden(true)
+
+                                                 ,
+                                                    X.Component().Width(30),
+                                              X.Component().Width(10),
+
+
+                                               X.TextField()
+                                                 .ID("txtIdSolicitudProducto").Hidden(true)                //.Width(350)
+                                                 .ReadOnly(true)
+
+                                         ),
+                                  Html.X().Container()
+                                       .Layout(LayoutType.HBox)
+                                       .Defaults(d =>
+                                       {
+                                           d.Add(new Parameter("LabelWidth", "110"));
+                                       })
+                                       .Items(
+                                               X.Label()
+                                                 .Text("Paciente:")
+                                                 .ID("lblPaciente")
+
+                                                ,
+                                                   X.Component().Width(30),
+                                              X.Component().Width(30),
+                                               X.Component().Width(20),
+                                               X.TextField()
+                                                 .ID("txtPaciente").Width(250)
+                //.Width(350)
+                //.Disabled(true)
+                                                 .ReadOnly(true)
+
+                                                 ,
+                                                  X.Component().Width(20)
+
+                                                 ,
+                                                   X.Label()
+                                                 .Text("CodigoOA:")
+                                                 .ID("lblOA")
+
+                                                ,
+                                                   X.Component().Width(60),
+                                                X.Component().Width(8),
+                                               X.TextField()
+                                                 .ID("txtCodigoOA").Width(143)
+                //.Width(350)
+                //.Disabled(true)
+                                                 .ReadOnly(true)
+
+                                        ),
+                                     Html.X().Container()
+                                       .Layout(LayoutType.HBox)
+                                       .Defaults(d =>
+                                       {
+                                           d.Add(new Parameter("LabelWidth", "110"));
+                                       })
+                                       .Items(
+
+
+                                              X.Label()
+                                                 .Text("Observacion:")
+                                                 .ID("lblObservacion")
+                                                 ,
+                                              X.Component().Width(30),
+                                              X.Component().Width(12),
+                                              X.Component().Width(19),
+
+                                               X.TextArea()
+                                                 .ID("txtObservacion")
+                                                 .Width(539)
+                                                 ),
+
+                                       Html.X().Container()
+                                       .Layout(LayoutType.HBox)
+                                       .Defaults(d =>
+                                       {
+                                           d.Add(new Parameter("LabelWidth", "110"));
+                                       })
+                                       .Items(
+                                          X.Component().Width(570),
+
+                                          X.Button().ID("btnagregar").Text("Agregar").Icon(Icon.Add).Width(100)
+                                             .Handler("eventoagregarmedicamentos();")
+
+
+                                       )
+                                 )
+                       ),
+                        Html.X().Panel()
+               .ItemID("center")
+
+               .Header(false)
+               .Border(false)
+               .Items(
+                        Html.X().GridPanel()
+                // .Title("Listado de Pacientes: " + Model.CONCEPTODESCRIPCION)
+
+                                        .Scroll(ScrollMode.Both)
+                                        .AutoScroll(true)
+                                        .Layout(LayoutType.Anchor)
+                                        .Anchor("100% 100%")
+                                        .ID("GrillaVisorRecetas")
+                                        .Margins("0 0 2 2")
+                                        .Border(false)
+
+                                        .Store(store => store.Add(
+                                         Html.X().Store()
+                                        .ID("StoreTasks")
+                                        .AutoLoad(true)
+                                        .RemoteSort(false)
+                                        .IsPagingStore(true)
+                                       .RemotePaging(true)
+                                       .PageSize(10)
+                                       .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                           .Url("GrillaListadoMedicamentoPacientes")
+                                                           .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                           .Root("data")
+                                                           .TotalProperty("total")
+                                                             /*  .IDProperty("Secuencia")*/
+                                                           ))))
+                                        .Parameters(ps =>
+                                        ps.Add(
+                                                new
+                                                {
+                                                    start = 0,
+                                                    limit = 5,
+                                                    // txtHC = JRawValue.From("App.txtHC.getValue()"),
+                                                    txtFecha1 = JRawValue.From("App.txtFecha1.getValue()"),
+                                                    txtFecha2 = JRawValue.From("App.txtFecha2.getValue()"),
+                                                    //txtHCA = JRawValue.From("App.txtHCA.getValue()"),
+                                                    //txtCodigoOA = JRawValue.From("App.txtCodigoOA.getValue()"),
+                                                    txtPaciente = JRawValue.From("App.txtPaciente.getValue()"),
+                                                    //tipoConsulta = "CA",
+                                                    //tipoConsulta = JRawValue.From("App.cmbTipoConsulta.getValue()"),
+                                                    tipoEstado = JRawValue.From("App.txtObservacion.getValue()"),
+                                                    //idespecialidad = JRawValue.From("App.cmbBuscarEsp.getValue()"),
+                                                    tipoBuscar = JRawValue.From("varTipoBuscar")
+                                                    //tipoListado = PAR_TIPOLISTADO
+
+                                                }
+                                            )
+                                        ).Listeners(l => { l.Load.Handler = "Recetados();"; })
+                                        .Model(model => model.Add(Html.X().Model()
+                                                       .Fields(fields =>
+                                                       {
+                                                           fields.Add(Html.X().ModelField().Name("IdPaciente").Type(ModelFieldType.Int));
+                                                           fields.Add(Html.X().ModelField().Name("NombreCompleto"));
+                                                           fields.Add(Html.X().ModelField().Name("EpisodioClinico"));
+                                                           fields.Add(Html.X().ModelField().Name("IdEpisodioAtencion"));
+                                                           fields.Add(Html.X().ModelField().Name("Secuencia"));
+                                                           fields.Add(Html.X().ModelField().Name("Linea"));
+                                                           fields.Add(Html.X().ModelField().Name("Familia"));
+                                                           fields.Add(Html.X().ModelField().Name("SubFamilia"));
+
+                                                           fields.Add(Html.X().ModelField().Name("TipoComponente"));
+                                                           fields.Add(Html.X().ModelField().Name("FechaCreacion"));
+                                                           fields.Add(Html.X().ModelField().Name("GrupoMedicamento"));
+                                                           fields.Add(Html.X().ModelField().Name("CodigoComponente"));
+                                                           fields.Add(Html.X().ModelField().Name("CodigoComponente"));
+                                                           fields.Add(Html.X().ModelField().Name("Medicamento"));
+                                                           fields.Add(Html.X().ModelField().Name("Cantidad"));
+                                                           fields.Add(Html.X().ModelField().Name("CodigoOA"));
+                                                           fields.Add(Html.X().ModelField().Name("Estado"));
+                                                           fields.Add(Html.X().ModelField().Name("Accion"));
+                                                           fields.Add(Html.X().ModelField().Name("RecetadoMed"));
+                                                           fields.Add(Html.X().ModelField().Name("Version"));
+                                                           /* fields.Add(Html.X().ModelField().Name("NPedido"));
+                                                            fields.Add(Html.X().ModelField().Name("Cama"));    */
+                                                       }
+                                                       )
+                                                       ))))
+
+
+                                       .ColumnModel(columnModel =>
+                                       {
+                                           //columnModel.Columns.Add(Html.X().RowNumbererColumn());
+                                           // columnModel.Columns.Add(Html.X().Column().Text("Modalidad").DataIndex("TipoPaciente").Width(80).Hidden(false).Renderer("changeModalidad").Align(Alignment.Left));
+
+                                           columnModel.Columns.Add(Html.X().Column().Text("IdPaciente").DataIndex("IdPaciente").Width(50).Hidden(true));
+
+
+                                           columnModel.Columns.Add(Html.X().Column().Text("EpisodioClinico").DataIndex("EpisodioClinico").Width(100).Hidden(true));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Recetado<br/>Médico").DataIndex("RecetadoMed").Renderer("changeModalidad2").Width(55).Hidden(false));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Secuencia").DataIndex("Secuencia").Width(80).Hidden(true));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Linea").DataIndex("Linea").Width(150).Hidden(true));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Familia").DataIndex("Familia").Width(150).Hidden(true));
+                                           columnModel.Columns.Add(Html.X().Column().Text("SubFamilia").DataIndex("SubFamilia").Width(280).Hidden(true));
+                                           columnModel.Columns.Add(Html.X().Column().Text("TipoComponente").DataIndex("TipoComponente").Width(50).Hidden(true));
+                                           /*columnModel.Columns.Add(Html.X().Column().Text("Cantidad").DataIndex("CodigoOA").Width(80).Hidden(false));*/
+                                           //////////////////MOSTRADOS
+                                           columnModel.Columns.Add(Html.X().Column().Text("Paciente").DataIndex("NombreCompleto").Width(250).Hidden(true));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Episodio<br/>Atención").DataIndex("IdEpisodioAtencion").Width(60).Hidden(true));
+                                           columnModel.Columns.Add(Html.X().DateColumn().Text("Fecha").DataIndex("FechaCreacion").Width(85).Format("dd/MM/yyyy"));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Grupo").DataIndex("GrupoMedicamento").Width(80).Hidden(true));
+                                           columnModel.Columns.Add(Html.X().Column().Text("IdMedicamento").DataIndex("CodigoComponente").Width(80).Hidden(true));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Medicamento").DataIndex("Medicamento").Width(300));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Cantidad<br/>Despachada").DataIndex("Version").Width(85).Hidden(false));
+                                           columnModel.Columns.Add(
+                                               Html.X().ComponentColumn().Editor(true).Text("Cantidad<br/>a Devolver").DataIndex("Cantidad").Component(
+                                                             Html.X().NumberField().MinValue(1).Listeners(l => { l.AfterRender.Handler = "editarCantidad(this);"; })
+                                                             ).Width(80).Hidden(false));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Renderer("changeEstado").Width(90).Hidden(false));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Accion").DataIndex("Accion").Width(80).Hidden(true));
+                                           /*columnModel.Columns.Add(Html.X().Column().Text("N° Pedido").DataIndex("NPedido").Width(80));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Cama").DataIndex("Cama").Width(50).Hidden(true));*/
+                                           columnModel.Columns.Add(Html.X().CommandColumn().Text("Accion").Width(60).Commands(
+                                                        Html.X().GridCommand()
+                                                        .CommandName("Delete")
+                                                        .Icon(Icon.Delete)
+                                               //.Text("Eliminar")
+                                                        )
+                                                        .Listeners(ls => ls.Command.Handler = "deleteActual(this.up('grid'),record);"));
+
+
+                                       })
+                                       .BottomBar(bar => bar.Add(Html.X().PagingToolbar()
+                                                                         .DisplayInfo(true)
+                                           //.DisplayMsg("Displaying customers {0} - {1} of {2}")
+                                                                         ))
+                //.View(view => view.Add(Html.X().GridView().TrackOver(false)))
+
+
+
+                                       .Border(false)
+                // .Listeners(l => l.CellClick.Handler = "addPersonaAtencion(record.data);"
+
+                                    //  )
+                                    .ViewConfig(X.GridView().GetRowClass(l => { l.Handler = "return Deshabilita(record, index);"; }))
+
+                                  /* .SelectionModel(
+                                    X.CheckboxSelectionModel()
+                                        .Mode(SelectionMode.Multi).CheckOnly(true)
+
+                                    )*/
+                                    .Listeners(l =>
+                                    {
+                                      /*  l.Deselect.Handler = "validarAgrupacion(record.data, index);";*/
+                                        /*l.BeforeSelect.Handler = "validaSeleccion(record.data, index);";*/
+                                        /* l.Deselect.*/
+                                    }
+            )
+
+                    )
+                       )
+                );
+        }
+        )
+    )
+
+    @(X.KeyNav()
+                        .Target("={document.body}")
+            /*.Down(a => a.Handler = "move(#{Window1}, 'down');")
+            .Home(a => a.Handler = "move(#{Window1}, 'home');")*/
+                                .Enter(a => a.Handler = "accionBuscarFiltro('FILTRO',new Date());")
+    )
+
+}

@@ -1,0 +1,810 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SG_Opcion
+
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+
+
+}
+
+@section cabecera
+{
+    <script>
+        var COLOR_BLUE01 = "#284A89";
+        var COLOR_RED01 = "#990000";
+        var COLOR_GREEN01 = "#177506";
+        var COLOR_YELLOW02 = "#D9A407";
+
+        var handler = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+            Ext.Msg.alert('Editing' + (record.get('done') ? ' completed task' : ''), record.get('task'));
+        };
+        var accionReloadNodoRoot = function () {
+            if (true) {
+                var tree = App.TreePanelOpciones;
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("setNodoRootGeneral"))',
+                    params: {
+                        tipo: 0,
+                        text: '1|Sistema HCE',
+                        id: 'WA',
+                        leaf: false
+                    },
+                    success: function (node) {
+                        if (!Ext.isEmpty(node)) {
+                            tree.setRootNode(node);
+                        }
+                        else {
+                            tree.getRootNode().removeAll();
+                        }
+                    }
+                });
+            } else {
+            }
+        };
+
+
+        var NodoFound = null;
+        var getNodoTree = function (nodo, idmatch, NodoFoundMet) {
+            if (nodo != null && NodoFoundMet == null) {
+                if (nodo.data.id == idmatch) {
+                    NodoFound = nodo;
+                } else {
+                    if (nodo.childNodes.length > 0) {
+                        nodo.eachChild(function (child) {
+                            getNodoTree(child, idmatch, NodoFound);
+                        });
+                    } else {
+                        getNodoTree(null, idmatch, NodoFound);
+                    }
+                }
+            }
+        };
+
+        var IDItemActivo;
+        var IDItemNivel;
+        var valInteger;
+        var habilitaID = function (str) {
+            if (str == "WA") {
+                IDItemNivel = 0;
+            } else {
+                var res = str.split("|");
+                IDItemActivo = res[0];
+                IDItemNivel = res[1];
+                //  alert(IDItemActivo + '/' + IDItemNivel);
+            }
+        }
+
+        var changeDescripcion = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+            var template = '<span style="color:{0};">{1}</span>';
+            //alert('TEST::GRID:' + grid + ";CI:;" + colIndex + ";AI:;" + actionItem + ";EVE:;" + event + ";RECo:;" + record.value + ";ROWw:;" + row.originalValue);
+            var texto = colIndex.data.text;
+            var vector = texto.split('|');
+            var show = "";            
+            if (vector.length>1) {
+                show = vector[1];
+            }            
+            return Ext.String.format(template, 'black', show);
+        };
+        var changeCodigo = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+            var template = '<span style="color:{0};">{1}</span>';
+            var texto = colIndex.data.text;
+            var vector = texto.split('|');
+            var show = "";            
+            if (vector.length > 2) {
+                show = vector[2];
+            }
+            //alert('TEST::GRID:' + grid + ";CI:;" + colIndex + ";AI:;" + actionItem + ";EVE:;" + event + ";RECo:;" + record.value + ";ROWw:;" + row.originalValue);
+            return Ext.String.format(template, 'black', show);
+        };
+
+        var changeEstado = function (grid, rowIndex, colIndex, actionItem, event, record, row) {            
+            var template = '<span style="color:{0};">{1}</span>';
+            var texto = colIndex.data.text;
+            var vector = texto.split('|');
+            var show = "";            
+            if (vector.length > 5) {
+                show = vector[5];
+                var template = '<span style="color:{0};">{1}</span>';
+                if (show == '2') {
+                    return Ext.String.format(template, COLOR_BLUE01, "Activo");
+                }
+                if (show == '1') {
+                    return Ext.String.format(template, COLOR_RED01, "Inactivo");
+                }
+                
+            }
+            //alert('TEST::GRID:' + grid + ";CI:;" + colIndex + ";AI:;" + actionItem + ";EVE:;" + event + ";RECo:;" + record.value + ";ROWw:;" + row.originalValue);
+            return Ext.String.format(template, 'black', show);
+        };
+    </script>
+
+
+    <script>
+    //LÒGICA DE UNA COLUMAN DE GRILLA
+    //var template = '<span style="color:{0};">{1}</span>';
+
+    var varAux = "1";
+    var varTipoBuscar = "LOAD";
+
+
+    var seleccionActual = null;
+    var selActualIndicaAsignacion = null;
+    function setSeleccion(param1) {
+        seleccionActual = param1;
+    }
+
+    var seleccionRecordActual = null;
+    function setSeleccionRecord(record) {
+        seleccionRecordActual = record;
+        var texto = record.data.text;
+        var vector = texto.split('|');
+        var formato = 0;
+        seleccionActual = 0;        
+        if (vector.length > 0) {
+            formato = vector[0];
+            if (vector.length > 2) {
+                seleccionActual = vector[2];
+                if (vector.length > 6) {
+                    selActualIndicaAsignacion = vector[6];
+                    
+                    if (selActualIndicaAsignacion != 2) {
+                        App.COMPO_ASIGNACION.setDisabled(true);
+                    } else {
+                        App.COMPO_ASIGNACION.setDisabled(false);
+                    }
+                }
+            }
+            
+        }
+
+    }
+
+    var Valores;
+    var template = '<span style="color:{0};">{1}</span>';
+
+
+
+
+    // funciones relacionadas a al GRILLA
+    var onSuccess = function (grid, data) {
+        grid.show();
+        grid.getStore().loadData(data);
+    };
+
+    function deleteSelected(grid) {
+        var store = grid.store,
+           records = grid.selModel.getSelection();
+        store.remove(records);
+        App.Window1.AutoDestroy(true);
+
+    };
+    function nuevo() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("SG_OpcionRegistro"))',
+            params: {
+                MODO: 'NUEVO',
+                id: 0
+            }
+        });
+    };
+    function addNuevo() {
+        if (seleccionActual != null) {
+            estadoNodeReload = 'EXPAND';
+            var status = seleccionActual;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("SG_OpcionRegistro"))',
+                params: {
+                    MODO: 'NUEVO',
+                    id: status
+                }
+            });
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Seleccionar el elemento Padre.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+    };
+    function modificarSelected() {
+        if (seleccionActual != null) {
+            if (seleccionActual > 0) {
+                estadoNodeReload = 'REFRESH';
+                var status = seleccionActual;
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("SG_OpcionRegistro"))',
+                    params: {
+                        MODO: 'UPDATE',
+                        id: status
+                    }
+                });
+            } else {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "No aplica esta operación para el elemento seleccionado.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Seleccionar un Elemento.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+    }
+    function eliminarSelected() {
+        if (seleccionActual != null) {
+            if (seleccionActual > 0) {
+                estadoNodeReload = 'REFRESH';
+                var status = seleccionActual;
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("SG_OpcionRegistro"))',
+                    params: {
+                        MODO: 'DELETE',
+                        id: status
+                    }
+                });
+            } else {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "No aplica esta operación para el elemento seleccionado.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Seleccionar un Elemento.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+    }
+
+    function verSelected() {
+        eventoVerSelected(seleccionActual);
+    }
+    function eventoVerSelected(param1) {
+        if (App.compoVER.isVisible(true)) {
+            if (seleccionActual != null) {
+                if (seleccionActual > 0) {
+                    var status = seleccionActual;
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("SG_OpcionRegistro"))',
+                        params: {
+                            MODO: 'VER',
+                            id: status
+                        }
+                    });
+                } else {
+                    Ext.Msg.show({
+                        title: "Advertencia",
+                        msg: "No aplica esta operación para el elemento seleccionado.",
+                        icon: Ext.Msg.WARNING,
+                        minWidth: 200,
+                        buttons: Ext.Msg.OK
+                    });
+                }
+
+            } else {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Debe Seleccionar un Elemento.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+        }
+        }
+
+
+        function addFormatoAsignacion() {
+        if (seleccionActual != null) {
+            if (seleccionActual > 0) {
+                var status = seleccionActual;
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("OpcionesAsignacionRegistro"))',
+                    params: {
+                        MODO: 'UPDATE',
+                        id: status
+                    }
+                });
+             } else {
+                 Ext.Msg.show({
+                     title: "Advertencia",
+                     msg: "No aplica esta operación para el elemento seleccionado.",
+                     icon: Ext.Msg.WARNING,
+                     minWidth: 200,
+                     buttons: Ext.Msg.OK
+                 });
+             }
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Seleccionar un Elemento.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+        }
+
+
+        function operacionNodoSelected(oper) {
+            if (seleccionActual != null) {
+                if (seleccionActual > 0) {
+                    estadoNodeReload = 'EXPAND';
+                    var status = seleccionActual;
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("setOperacionNodoOpciones"))',
+                        params: {
+                            MODO: oper,
+                            id: status
+                        }
+                    });
+                } else {
+                    Ext.Msg.show({
+                        title: "Advertencia",
+                        msg: "No aplica esta operación para el elemento seleccionado.",
+                        icon: Ext.Msg.WARNING,
+                        minWidth: 200,
+                        buttons: Ext.Msg.OK
+                    });
+                }
+
+            } else {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Debe Seleccionar un Elemento.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+        }
+
+        var filterTree = function (tf, e) {
+            if (e.getKey() == Ext.EventObject.ENTER) {
+                var tree = App.TreePanelOpciones;
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("setNodoRootOpcion"))',
+                params: {
+                    tipo: 0
+                },
+
+                success: function (node) {
+
+                    if (!Ext.isEmpty(node)) {
+                        tree.setRootNode(node);
+                        filterTreeIn(tf, e);
+                    }
+                    else {
+                        tree.getRootNode().removeAll();
+                        filterTreeIn(tf, e);
+                    }
+                }
+
+            });
+        }
+    };
+    var filterTreeIn = function (tf, e) {
+        if (e.getKey() == Ext.EventObject.ENTER) {
+
+            var tree = App.TreePanelOpciones,
+                text = tf.getRawValue();
+            tree.clearFilter();
+            if (Ext.isEmpty(text, false)) {
+                var re = new RegExp(".*" + "" + ".*", "i");
+
+                tree.filterBy(function (node) {
+                    return re.test(node.data.text);
+                });
+            }
+            if (e.getKey() === Ext.EventObject.ESC) {
+                clearFilter();
+            } else {
+                var re = new RegExp(".*" + text + ".*", "i");
+
+                tree.filterBy(function (node) {
+                    return re.test(node.data.text);
+                });
+            }
+        }
+    }
+
+    var clearFilter = function () {
+        var field = this,
+            tree = App.TreePanelOpciones;
+
+        field.setValue("");
+        tree.clearFilter(true);
+        tree.getView().focus();
+    };
+
+    var accionBuscarFiltro = function (tipo) {
+        varTipoBuscar = tipo;
+        App.TreePanelOpciones.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+
+    var estadoNodeReload = null;
+    var accionFinal = function (btn) {
+        App.TreePanelOpciones.getSelectionModel().deselectAll();
+        seleccionActual = null;        
+        if (seleccionRecordActual != null) {
+            var tree = App.TreePanelOpciones;
+            NodoFound = null;
+            NodoFound = App.StoreOpcion.getNodeById(seleccionRecordActual.data.id);
+            if (NodoFound != null) {
+                if (NodoFound) {
+                    if(estadoNodeReload == 'EXPAND'){
+                        if (NodoFound) {
+                            App.StoreOpcion.load({ node: NodoFound });
+                        }
+                        estadoNodeReload = null;
+                    } else if(estadoNodeReload == 'REFRESH'){
+                        var tempParent = NodoFound.parentNode;
+                        if (tempParent) {
+                            App.StoreOpcion.load({ node: tempParent });
+                        }
+                        estadoNodeReload = null;
+                    }                    
+                }
+            }
+        }
+    }; 
+
+    var eventoCheckFiltro = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+
+    function eventoRenderForm() {
+        var kk = 140;
+        var scrH = screen.height;
+        var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+        var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+        if (southH == 0) {
+            southH = 30;
+        }
+        var panelH = App.PanelFiltros.getHeight();
+        var dimCentral = (scrH - (northH + southH) - kk);
+        //App.TreePanelOpciones.setHeight(dimCentral);
+    }
+    var eventoCargarMain = function () {
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("addPermisosFormatos"))',
+            params: {
+                data: 'FORMATO',
+                indica: 'PERMISO',
+            },
+            success: function (result) { accionSetPermisos(result.data); }
+        });
+    };
+    var accionSetPermisos = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                if (data[i].ACCION == 'BUSCAR' && App.compoBUSCAR != null) {
+                    App.compoBUSCAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'NUEVO' && App.compoNUEVO != null) {
+                    App.compoNUEVO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    App.COMPO_COPY.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    App.COMPO_PASTE.setVisible((data[i].campoInt01 == 2 ? true : false));                    
+                } else if (data[i].ACCION == 'MODIFICAR' && App.compoMODIFICAR != null) {
+                    App.compoMODIFICAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'ELIMINAR' && App.compoELIMINAR != null) {
+                    App.compoELIMINAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'VER' && App.compoVER != null) {
+                    App.compoVER.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'ACCESO' && App.compoACCESO != null) {
+                    App.compoACCESO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'HABILITADO' && App.compoHABILITADO != null) {
+                    App.compoHABILITADO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'OBLIGA' && App.compoOBLIGA != null) {
+                    App.compoOBLIGA.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'PRIORIDADAGOPCION' && App.compoPRIORIDADAGOPCION != null) {
+                    App.compoPRIORIDADAGOPCION.setVisible((data[i].campoInt01 == 2 ? true : false));
+                }
+            }
+        }
+    };
+    </script>
+}
+
+@section cuerpo
+{
+    @(
+ Html.X().Viewport()
+        .AutoScroll(true)
+        .Layout(LayoutType.Border)
+        .Items(
+           X.Panel()
+               .ID("PanelFiltros")
+              .Title("Listado de Opciones")
+        //.Header(false)
+              .Border(false)
+              .Region(Region.North)
+              .Split(true)
+             .Collapsible(true)
+             .Listeners(l =>
+             {
+                 l.Render.Handler = "eventoRenderForm();";
+             })
+        //.Header(false)
+              .Height(60)
+              .MaxHeight(170)
+              .TopBar(
+                         X.Toolbar()
+                        .Height(30)
+                            .Items(
+                              X.Button()
+                                 .Text("Buscar")
+                             .Icon(Icon.Find)
+                             .Handler("accionBuscarFiltro('FILTRO');").Hidden(true),
+        //X.ToolbarSpacer(),
+        // X.ToolbarSeparator(),
+                                X.Button()
+                                        .Text("Agregar Nuevo").ID("compoNUEVO")
+                                    .Icon(Icon.ApplicationFormAdd)
+                                     .Handler("addNuevo(); "),
+                                X.Button()
+                                        .Text("Modificar").ID("compoMODIFICAR")
+                                    .Icon(Icon.ApplicationFormEdit)
+                                    .Handler("modificarSelected();")
+                                         ,
+                                X.Button()
+                                        .Text("Eliminar").ID("compoELIMINAR")
+                                    .Icon(Icon.ApplicationFormDelete)
+                                .Handler("eliminarSelected();"),                                   
+                                    X.Button()
+                                            .Text("Ver").ID("compoVER")
+                                        .Icon(Icon.ApplicationViewDetail)
+                                        .Handler("verSelected();"),
+                                       X.ToolbarSeparator(),
+                                       X.ToolbarSpacer(40),
+                                        X.Button()
+                                        .Text("Copiar").ID("COMPO_COPY")
+                                        .ToolTip("Copia el elemento seleccionado y su contenido, si lo hibiese.")
+                                        .Icon(Icon.PageCopy)
+                                         .Handler("operacionNodoSelected('COPIAR');"),
+                                        X.Button()
+                                         .Text("Pegar").ID("COMPO_PASTE")
+                                         .ToolTip("Pega los elementos copiados como contenido del elemento seleccionado y guarda los cambios. ")
+                                        .Icon(Icon.PagePaste)
+                                        .Handler("operacionNodoSelected('PEGAR');"),                                                                                 
+                                 X.ToolbarFill(),
+                                 X.Button().Text("Agregar Asignacion").ID("COMPO_ASIGNACION")
+                                 .Icon(Icon.BookAdd)
+                                     .Handler("addFormatoAsignacion();")
+                              )
+              )
+             .Items(X.Panel()
+                    .Layout(LayoutType.HBox)
+                    .BodyPadding(5)
+                    .Border(false)
+                    .MarginSpec("1 20 1 1")
+                    .Items(
+                        X.FieldSet()
+                        .Flex(1)
+                        .Title("Filtros")
+                        .MarginSpec("5 0 5 5")
+                        .Padding(5)
+                        .Layout(LayoutType.HBox)
+                        .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch })
+                        .Defaults(d =>
+                        {
+                            d.Add(new Parameter("LabelWidth", "120"));
+                        })
+                        .Items(
+                        Html.X().Container().Layout(LayoutType.VBox)
+                        .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Left })
+                        .Items(
+                            Html.X().Container().Layout(LayoutType.HBox)
+                            .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch })
+                            .Items(
+                               X.Checkbox()
+                               .FieldLabel("Id Opción")
+                               .ID("chkID")
+                               .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chkID,App.tfBuscarId);")
+                               .Checked(true),
+                               X.TextField()
+                               .ID("tfBuscarId")
+                               .Disabled(true)
+                               .FieldLabel("")
+                            ),
+                            Html.X().Container().Layout(LayoutType.HBox)
+                            .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch })
+                            .Items(
+                                X.Checkbox()
+                                .FieldLabel("Nombre")
+                                .ID("chkNombre")
+                                .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chkNombre,App.tfBuscarNombre);")
+                                .Checked(true),
+                                X.TriggerField()
+                                .ID("tfBuscarNombre")
+                                .Disabled(true)
+                                .AutoFocus(true)
+                                .EnableKeyEvents(true)
+                                .FieldLabel("")
+                                .Triggers(
+                                                X.FieldTrigger()
+                                                .HideTrigger(true)
+                                            )
+                            )
+                          )
+                          ,
+                          Html.X().Container().Layout(LayoutType.VBox)
+                          .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Left })
+                          .Items(
+                                Html.X().Container().Layout(LayoutType.HBox)
+                                .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch })
+                                .Items(
+                                        X.Checkbox()
+                                        .FieldLabel("Cód. Opción")
+                                        .ID("chkCod")
+                                        .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chkCod,App.tfBuscarCod);")
+                                        .Checked(true),
+                                        X.TextField()
+                                        .ID("tfBuscarCod")
+                                    .Disabled(true)
+                                    .FieldLabel("")
+                                ),
+                               Html.X().Container().Layout(LayoutType.HBox)
+                              .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch })
+                               .Items(
+                                    X.Checkbox()
+                                    .FieldLabel("Estado")
+                                    .ID("es")
+                                    .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.es,App.tfBuscarEst);")
+                                    .Checked(true),
+                                    X.ComboBox()
+                                    .ID("tfBuscarEst")
+                                    .Name("buscarEst")
+                                    .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("ESTADOINT").Select(d => new ListItem(d.Name, d.ID)))
+                                    .FieldLabel("")
+                                    .SimpleSubmit(true)
+                                    .Disabled(true).Editable(false)
+                               )
+                          )
+                      ).Hidden(true)
+                    )
+             ),
+            X.Panel()
+        //.BaseCls("x-plain").Flex(1)
+                .Region(Region.Center)
+        //.AutoScroll(true)
+        //.Scroll(ScrollMode.Both)
+                .ItemID("center")
+        //.Height(600)
+               .Header(false)
+               .Border(false)
+               .Items(
+                    X.TreePanel()
+                    .Header(false)
+
+                    .ID("TreePanelOpciones")
+        //.Title("LISTADO")
+        //.DefaultAnchor("100")
+                    .AutoScroll(true)
+                    .Collapsible(true)
+                    .UseArrows(true)
+                    .RootVisible(true)
+                    .MultiSelect(true)
+                    .SingleExpand(true)
+                    .FolderSort(true)
+                    .Height(500)
+                    .Border(false)
+                    .ColumnModel(
+
+                            X.TreeColumn()
+                            .Text("Opciones - Nombre")
+                            .Flex(1)
+                            .Renderer("changeDescripcion")
+                            .DataIndex("Nombre"),
+                            X.Column().Text("Id Opción").Width(150)
+                           .Renderer("changeCodigo")
+                            .DataIndex("IdOpcion").ID("codigo"),
+                            X.Column().Text("Estado").Width(150)
+                            .Renderer("changeEstado")
+                            .DataIndex("Estado").ID("estaodo"),
+        /*
+         X.ComponentColumn()
+         .Editor(true)
+         .DataIndex("CodigoOpcion")
+         .Flex(1)
+         .Text("Código")
+         .Component(
+            Html.X().TextField()
+            .ID("codigo")                                                           
+                  
+        ),*/
+
+                            X.ActionColumn()
+                                .Text("Edit")
+                            .Width(40)
+                            .MenuDisabled(true)
+                            .Align(Alignment.Center)
+                            .Items(
+                                X.ActionItem()
+                                .Tooltip("Edit task")
+                                .Icon(Icon.PageWhiteEdit)
+                                .Handler("handler")
+                                .IsDisabled(func =>
+                                {
+                                    func.Handler = "return !record.data.IdOpcion;";
+                                })
+                            )
+                            )
+
+                            .Store(
+                            X.TreeStore()
+                                
+                           .ID("StoreOpcion")
+                            .Proxy(
+                            X.AjaxProxy().Url(Url.Action("GetTreeViewSG_Opcion"))
+                            )
+        //.Parameters(new
+        //{
+        //    modo = JRawValue.From("record.data.id")
+        //    //tipo = new JRawValue("App.cmbTipoCuidadoPrev.getValue()")
+        //}) 
+                            .Parameters(ps =>
+                                ps.Add(new
+                                {
+                                    //start = 0,
+                                    //limit = 10,                                                                                                                                            
+                                    id = JRawValue.From("App.tfBuscarId.getValue()"),
+                                    nombre = JRawValue.From("App.tfBuscarNombre.getValue()"),
+                                    codigo = JRawValue.From("App.tfBuscarCod.getValue()"),
+                                    estado = JRawValue.From("App.tfBuscarEst.getValue()"),
+                                    tipoBuscar = JRawValue.From("varTipoBuscar")
+                                })
+                            )
+                           .LoadProxy()
+                          )
+
+                          .Root(
+                                Html.X().Node().NodeID("WA").Text("1|Sistema HCE")
+                            )
+                            .Listeners(l =>
+                            {
+                                l.ItemClick.Handler = "habilitaID(record.data.id);";                                
+                                l.CellDblClick.Handler = "eventoVerSelected(record.data.text);";
+                                l.CellClick.Handler = "setSeleccionRecord(record);";
+                            })
+                            .Expand()
+        //.BottomBar(bar => bar.Add(
+        //Html.X().PagingToolbar()))
+                     )
+                )
+                    .Listeners(l => l.Render.Handler = "eventoCargarMain();")
+    )
+    @(X.KeyNav()
+                        .Target("={document.body}")
+            /*.Down(a => a.Handler = "move(#{Window1}, 'down');")
+            .Home(a => a.Handler = "move(#{Window1}, 'home');")*/
+                        .Enter(a => a.Handler = "accionBuscarFiltro('FILTRO');")
+    )
+
+}

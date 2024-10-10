@@ -1,0 +1,453 @@
+﻿@model SoluccionSalud.Entidades.Entidades.VW_PERSONAPACIENTE
+
+@{
+    var X = Html.X();
+    var funcionX = "alert('XXXXXXXXX');";
+    var modoDesc =
+        (Model.ACCION == "NUEVO" ? "Nuevo" :
+        (Model.ACCION == "UPDATE" ? "Modificar" :
+        (Model.ACCION == "DELETE" ? "Eliminar" :
+        (Model.ACCION == "VER" ? "Ver" : "--"))));
+
+    var indicaModoLectura =
+        !(Model.ACCION == "NUEVO" ? true :
+        (Model.ACCION == "UPDATE" ? true :
+        (Model.ACCION == "DELETE" ? false :
+        (Model.ACCION == "VER" ? false : false))));
+
+    var indicaModoLecturaKey =
+        !(Model.ACCION == "NUEVO" ? true :
+        (Model.ACCION == "UPDATE" ? false :
+        (Model.ACCION == "DELETE" ? false :
+        (Model.ACCION == "VER" ? false : false))));
+
+    var indicatriaje = true;
+}
+
+<script>
+    var template = 'color:{0};';
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_RED01 = "#990000";
+
+    var COLOR_BORDER_ERROR = "red";
+    var COLOR_BORDER_DEF = "#b5b8c8";
+    var COLOR_BACKGROUND_NOEDIT = "#9FBCB9";
+
+
+    var change = function (value, meta) {
+        return value;
+
+    };
+
+    var validarCampo = function (componente) {
+        if (componente.getValue() != null) {
+            if (componente.getValue().trim() == 0) {
+                componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+
+            } else {
+                componente.setFieldStyle("border-color: " + COLOR_BORDER_DEF);
+            }
+        } else {
+            componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+
+        }
+    };
+
+    function seleccionadorCuerpoHumano() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorCuerpoHumano"))',
+            params: {
+                accionSeleccion: 'getSeleccionPadreMaestroCuerpoHumano',
+                accionListado: 'LISTARPAG'
+            }
+        });
+    };
+
+ function modificarSelected() {
+       Ext.net.DirectMethod.request({
+            url: '@(Url.Action("PacienteTriaje"))',
+            params: {
+                AccionSeleccion: 'getSeleccionadorLugar',
+                AccionListado: 'COMBOSGENERICOS'
+            }
+        });
+    }
+
+    function cerrarWindow() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Se registró correctamente el usuario.',
+                accion: null
+            }
+        });
+    };
+
+    var onSuccess = function (data) {
+        accionMensajes(data);
+    };
+
+    var onFailure = function (modo) {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Un error en el evento ',
+                titulo: "Error",
+                tipo: 'ERROR'
+            }
+        });
+    };
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+        } else {
+            App.taAlerts.setVisible(false);
+        }
+
+    };
+
+    var getInvalidFields = function (form) {
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+        });
+        return invalidFields;
+    };
+
+    var beforeSave = function (form) {
+        var FieldsInvalidos = getInvalidFields(form);
+        if (!form.getForm().isValid()) {
+            if (FieldsInvalidos.length > 0) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("addRecursosValidacion"))',
+                    params: {
+                        data: FieldsInvalidos,
+                        indica: 'VALIDAR',
+                    },
+                    success: function (result) {
+                        accionMensajes(result.data);
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("addRecursosValidacion"))',
+                            params: {
+                                data: FieldsInvalidos,
+                                indica: 'RESTART',
+                            }
+                        });
+                    }
+                });
+
+            }
+        }
+    };
+
+
+    function Limpiar() {
+
+        document.getElementById('Persona-inputEl').value = 0;
+
+        document.getElementById('ApellidoMaterno-inputEl').value = "";
+        document.getElementById('ApellidoMaterno-inputEl').readOnly = false;
+
+        document.getElementById('ApellidoPaterno-inputEl').readOnly = false;
+        document.getElementById('ApellidoPaterno-inputEl').value = "";
+
+        document.getElementById('Nombres-inputEl').readOnly = false;
+        document.getElementById('Nombres-inputEl').value = "";
+
+        document.getElementById('FechaNacimiento-inputEl').readOnly = false;
+        document.getElementById('FechaNacimiento-inputEl').value = "";
+
+        document.getElementById('Sexo-inputEl').readOnly = false;
+        document.getElementById('Sexo-inputEl').value = "";
+
+        document.getElementById('Busqueda-inputEl').readOnly = false;
+        document.getElementById('Busqueda-inputEl').value = "";
+
+        document.getElementById('Documento-inputEl').readOnly = false;
+        document.getElementById('Documento-inputEl').value = "";
+
+        document.getElementById('Direccion-inputEl').readOnly = false;
+        document.getElementById('Direccion-inputEl').value = "";
+
+
+
+    }
+    function seleccionadorLugar() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorLugar"))',
+            params: {
+                AccionSeleccion: 'getSeleccionadorLugar',
+                AccionListado: 'COMBOSGENERICOS'
+            }
+        });
+    };
+
+    function validarCantidadPac(objPac, valorPac, valorCombo) {
+        if (valorCombo == "D") {
+            if (valorPac.length > 8) {
+                objPac.setValue(valorPac.substring(0, 8));
+                return;
+            }
+        }
+        if (valorCombo == "R") {
+            if (valorPac.length > 11) {
+                objPac.setValue(valorPac.substring(0, 11));
+                return;
+            }
+        }
+    };
+
+    function seleccionadorPersonas() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorPersonas"))',
+            params: {
+                accionSeleccion: 'getSeleccionadorPersonas',
+                accionListado: 'LISTARPAG'
+            },
+            success: function (result) {
+               App.btnSave.Disabled(false)
+            }
+        });
+    };
+</script>
+
+@(Html.X().Window()
+           .Width(580)
+        .Height(300)
+        .Maximizable(true)
+        .Modal(true)
+        .OnEsc("false")
+        .AutoScroll(true)
+        .Layout(LayoutType.Fit)
+        .CloseAction(CloseAction.Destroy)
+        .Icon(Icon.ApplicationForm)
+            .ID("WindowPacienteTriaje")
+            .Title("Registro de Paciente4")
+        .Padding(4)
+
+         .Items(
+         Html.X().FormPanel().ID("FormPanel2").Frame(false).Border(false).AutoScroll(true).Layout(LayoutType.VBox).LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+        //Html.X().Container().Layout(LayoutType.VBox).LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+             .Items(
+                    Html.X().FormPanel().Layout(LayoutType.Form).Width(500).FieldDefaults(d => { d.LabelWidth = 120; }).BodyPadding(10).Frame(false).Border(false)
+            .Items(
+                    Html.X().Container().Layout(LayoutType.VBox).LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                .Items(
+                     X.FieldSet().Title("Información General").FieldDefaults(d => { d.LabelWidth = 90; d.InputWidth = 120; })
+                        .Items(
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                            X.TextFieldFor(c => c.EsCliente).FieldLabel("Es Cliente").ReadOnly(indicaModoLectura).Hidden(true).Value("S"),
+                            X.TextFieldFor(c => c.EsEmpleado).FieldLabel("Es Empleado").ReadOnly(indicaModoLectura).Hidden(true).Value("N"),
+                            X.TextFieldFor(c => c.EsOtro).FieldLabel("Es Otro").ReadOnly(indicaModoLectura).Hidden(true).Value("N"),
+                            X.TextFieldFor(c => c.EsProveedor).FieldLabel("Es Proveedor").ReadOnly(indicaModoLectura).Hidden(true).Value("N"),
+                            X.TextFieldFor(c => c.EsPaciente).FieldLabel("Es Paciente").ReadOnly(indicaModoLectura).Hidden(true).Value("S"),
+                            X.TextFieldFor(m => m.Persona).Width(230).Height(20).LabelWidth(105).FieldLabel("Paciente").Hidden(false).ReadOnly(true).RightButtons(X.Button().Text("...").Disabled(Model.ACCION == "NUEVO" ? false : true).Handler("seleccionadorPersonas();")),
+                            X.ComboBoxFor(x => x.TipoPersona).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboMiscelaneoLista.GetComboGenericoTxt("TIPOPERSON")
+                            .Select(d => new ListItem(d.Name, d.Codigo))).ReadOnly(true).FieldLabel("Tipo Persona").LabelWidth(105).Value("N").Editable(false).SimpleSubmit(true).Hidden(true),
+                            X.DateFieldFor(c => c.FechaNacimiento).FieldLabel("Fecha Nacimiento").LabelWidth(130).ReadOnly(true),
+                            X.TextFieldFor(c => c.LugarNacimiento).FieldLabel("Lugar Nacim.").ReadOnly(true).Hidden(true)
+                            ),
+
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                            X.TextFieldFor(c => c.ApellidoPaterno).FieldLabel("Apellido Paterno").LabelWidth(105).ReadOnly(true),
+                            X.ComboBoxFor(x => x.EstadoCivil).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenericoTxt("ESTADOCIVI")
+                            .Select(d => new ListItem(d.Name, d.Codigo))).ReadOnly(true).Value("S").FieldLabel("Estado Civil").LabelWidth(105).Editable(false).SimpleSubmit(true).Hidden(true),
+                            X.ComboBoxFor(x => x.Sexo).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenericoTxt("TIPOSEXO")
+                            .Select(d => new ListItem(d.Name, d.Codigo))).ReadOnly(true).FieldLabel("Sexo").LabelWidth(130).Value("M").Editable(false).SimpleSubmit(true),
+                            X.TextFieldFor(x => x.Nacionalidad).FieldLabel("Nacionalidad").LabelWidth(100).ReadOnly(true).Value("Peruana").Hidden(true)
+                            ),
+
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                                X.TextFieldFor(c => c.ApellidoMaterno).FieldLabel("Apellido Materno").LabelWidth(105).ReadOnly(true),
+                                X.TextFieldFor(c => c.Telefono).FieldLabel("Teléfono").LabelWidth(105).ReadOnly(true).Hidden(true),
+                            X.ComboBoxFor(f => f.EstadoPaciente).Editable(false).Name("buscarEst").Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("ESTADOINT").Select(d => new ListItem(d.Name, d.ID))).FieldLabel("Estado").Value(2)
+                            .SimpleSubmit(true).LabelWidth(130).ReadOnly(true).Hidden(true),
+                                X.TextFieldFor(c => c.NivelInstruccion).FieldLabel("Nivel Instrucción").LabelWidth(130).ReadOnly(true).Hidden(true),
+                                X.TextField().ID("tfPais").LabelWidth(130).FieldLabel("País").ReadOnly(true).RightButtons(X.Button().Text("...").Disabled(false).Handler("seleccionadorLugar();")),
+                            X.TextFieldFor(m => m.Pais).FieldLabel("").Hidden(true)
+                            ),
+
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                                X.TextFieldFor(c => c.Nombres).FieldLabel("Nombres").LabelWidth(105).ReadOnly(true).Hidden(true),
+                                X.TextFieldFor(c => c.Celular).FieldLabel("Celular").LabelWidth(105).ReadOnly(false).LabelWidth(105).Hidden(true),
+                                X.ComboBoxFor(c => c.rangoEtario).FieldLabel("Rango Etario").Hidden(true).Editable(false).LabelWidth(130).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboMiscelaneoLista.GetComboGenericoTxt("RANGETARIO")
+                            .Select(d => new ListItem(d.Name, d.Codigo))).ReadOnly(true).SimpleSubmit(true),
+                                X.TextField().ID("tfDepartamento").FieldLabel("Departamento").ReadOnly(true).LabelWidth(130),
+                            X.TextFieldFor(m => m.Departamento).FieldLabel("").Hidden(true)
+                            ),
+
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                                X.TextFieldFor(c => c.NombreCompleto).FieldLabel("Nombre Completo").LabelWidth(105).Hidden(true),
+                                X.TextFieldFor(c => c.CorreoElectronico).FieldLabel("Correo").LabelWidth(105).ReadOnly(true).Hidden(true),
+                                X.TextFieldFor(c => c.edad).FieldLabel("Edad").ReadOnly(true).LabelWidth(130).Hidden(true),
+                                    X.TextField().ID("tfProvincia").FieldLabel("Provincia").ReadOnly(true).LabelWidth(105),
+                            X.TextFieldFor(m => m.Provincia).FieldLabel("").Hidden(true),
+                                 X.TextField().ID("tfDistrito").FieldLabel("Distrito").ReadOnly(true).LabelWidth(130)
+                            ),
+
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                            X.TextFieldFor(c => c.Paciente).FieldLabel("Código Paciente").LabelWidth(105).ReadOnly(true).Hidden(true),
+                                X.TextFieldFor(c => c.Busqueda).FieldLabel("Búsqueda").LabelWidth(105).ReadOnly(false),
+                                X.TextFieldFor(c => c.TipoPaciente).FieldLabel("Tipo Paciente").LabelWidth(105).ReadOnly(true).Value(5).Hidden(true),
+                                X.TextFieldFor(c => c.Direccion).FieldLabel("Dirección").ReadOnly(true).LabelWidth(130),
+
+                            X.TextFieldFor(m => m.CodigoPostal).FieldLabel("").Hidden(true)
+                            ),
+
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                            X.ComboBoxFor(x => x.TipoDocumento).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboMiscelaneoLista.GetComboGenericoTxt("TIPODOCUME")
+                            .Select(d => new ListItem(d.Name, d.Codigo))).ReadOnly(false).FieldLabel("Tipo Documento").LabelWidth(105).Value("D").Editable(false).SimpleSubmit(true),
+                                    X.TextFieldFor(x => x.Documento).FieldLabel("Documento").LabelWidth(130).ReadOnly(true).Listeners(l => l.Change.Handler = "validarCantidadPac(App.Documento,App.Documento.getValue(),App.TipoDocumento.getValue());"),
+                            X.TextFieldFor(x => x.DocumentoIdentidad).FieldLabel("DNI").Hidden(true).LabelWidth(130).ReadOnly(false).Listeners(l => l.Change.Handler = "validarCantidadPac(App.DocumentoIdentidad,App.DocumentoIdentidad.getValue(),App.TipoDocumento.getValue());"),
+                            X.TextFieldFor(c => c.IDPACIENTE_OK).FieldLabel("ID PACIENTE_OK").ReadOnly(true).Hidden(true),
+                            X.TextFieldFor(c => c.IndicadorAsistencia).FieldLabel("Indicador Asistencia").ReadOnly(true).Hidden(true).Value(1),
+                            X.TextFieldFor(c => c.CantidadAsistencia).FieldLabel("Cantidad Asistencia").ReadOnly(true).Hidden(true).Value(0),
+                            X.TextFieldFor(c => c.IndicadorMigradoSiteds).FieldLabel("Indicador MigradoSiteds").ReadOnly(true).Hidden(true).Value(1),
+                            X.TextFieldFor(c => c.IndicadorCodigoBarras).FieldLabel("Indicador Codigo Barras").ReadOnly(true).Hidden(true).Value(1)
+                            )
+                            )
+
+                )
+                ),
+                    Html.X().FormPanel().Layout(LayoutType.Form).Width(500).Hidden(true).FieldDefaults(d => { d.LabelWidth = 120; }).BodyPadding(10).Frame(false).Border(false)
+                .Items(
+                    Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                    .Items(
+                        X.FieldSet().Title("Información Adicional").FieldDefaults(d => { d.LabelWidth = 90; d.InputWidth = 120; })
+                        .Items(
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                            X.TextFieldFor(c => c.CodigoHC).FieldLabel("Cod. H.C.").ReadOnly(true).LabelWidth(105),
+                            X.TextFieldFor(c => c.RutaFoto).FieldLabel("Foto").ID("Urlfoto").LabelWidth(130).ReadOnly(true)
+                            ),
+
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                            X.TextFieldFor(c => c.CodigoHCAnterior).FieldLabel("Cod. H.C. Ant.").ReadOnly(true).LabelWidth(105),
+                            X.DateFieldFor(c => c.FechaIngreso).FieldLabel("Fecha Ingreso").LabelWidth(130).ReadOnly(true)
+                            ),
+
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                            X.TextFieldFor(c => c.CodigoHCSecundario).FieldLabel("Cod. H.C. Sec.").ReadOnly(true).LabelWidth(105),
+                            X.TextFieldFor(c => c.AreaLaboral).FieldLabel("Area Laboral").LabelWidth(130).ReadOnly(true)
+                            ),
+
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                            X.TextFieldFor(c => c.Raza).FieldLabel("Raza").ReadOnly(true).Value("Blanca").LabelWidth(105),
+                            X.TextFieldFor(c => c.Ocupacion).FieldLabel("Ocupación").ReadOnly(true).LabelWidth(130)
+                            ),
+
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                            X.ComboBoxFor(c => c.Religion).FieldLabel("Religión").Editable(false).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboMiscelaneoLista.GetComboGenericoTxt("TIPOREL")
+                            .Select(d => new ListItem(d.Name, d.Codigo))).ReadOnly(true).Value("C").SimpleSubmit(true).LabelWidth(105),
+                            X.TextFieldFor(c => c.LugarProcedencia).FieldLabel("Lugar Procedencia").ReadOnly(true).LabelWidth(130)
+                            ),
+
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                            X.TextFieldFor(c => c.UbicacionHHCC).FieldLabel("Ubic. HH.CC.").ReadOnly(true).LabelWidth(105),
+                            X.TextFieldFor(c => c.TipoAlmacenamiento).FieldLabel("Tipo Almacenamiento").LabelWidth(130).ReadOnly(true).Value("AC")
+                            ),
+
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                            X.TextFieldFor(c => c.CodigoAsegurado).FieldLabel("Código Asegurado").LabelWidth(105).ReadOnly(true)
+                            )
+                            ),
+                            X.FieldSet().Title("Foto").FieldDefaults(d => { d.LabelWidth = 90; d.InputWidth = 120; })
+                            .Items(
+                            Html.X().Image().ID("IMG").ImageUrl("~/resources/images/default_user.png").MarginSpec("0 05 0 05").Width(120).Height(132)
+                            ),
+                            X.FieldSet().Title("Información Relacionada").FieldDefaults(d => { d.LabelWidth = 90; d.InputWidth = 120; })
+                            .Items(
+                                X.ComboBoxFor(f => f.Estado).Editable(false).Name("buscarEst").Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenericoTxt("ESTADOVAR")
+                                .Select(d => new ListItem(d.Name, d.Codigo))).FieldLabel("").Value("A").SimpleSubmit(true).ReadOnly(true),
+                                X.TextFieldFor(m => m.UltimoUsuario).FieldLabel("").ReadOnly(true),
+                                X.DateFieldFor(m => m.UltimaFechaModif).ID("dfFechaModif").Format("dd/MM/yyyy").ReadOnly(true).HideLabel(true).Width(80).FieldLabel(""),
+                                X.TimeFieldFor(m => m.UltimaFechaModif).Width(80).Format("H:mm:ss").ReadOnly(true).FieldLabel("")
+                                )
+                            )
+                        ),
+                        X.TextArea().ID("taAlerts")
+                        .Border(false)
+                        .StyleSpec("background:white;border:1px solid gray;")
+                        .FieldStyle("color: red")
+                        .Hidden(true)
+                        .ReadOnly(indicaModoLectura)
+
+                )
+                     .TopBar(
+            X.Toolbar().Height(30)
+            .Items(
+            X.ToolbarFill(),
+                X.Button().Text((Model.ACCION == "VER" ? "Aceptar" : "Nuevo")).Handler("Limpiar()")
+                    .Icon((Model.ACCION == "VER" ? Icon.Accept : Icon.ShapeSquareAdd))
+        //.DirectEvents(de =>
+        //{
+        //    de.Click.Url = Url.Action("cerrarWindow");
+        //    de.Click.ExtraParams.Add(new Parameter("id", "WindowCuerpoHumano", ParameterMode.Value));
+        //})
+                ,
+            X.Button().Hidden((Model.ACCION == "VER" ? true : false)).ID("btnSave").Disabled(true)
+            .Text((Model.ACCION == "DELETE" ? "Eliminar" : "Guardar"))
+            .Icon((Model.ACCION == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave)).DirectEvents(de =>
+            {
+                de.Click.Url = Url.Action("save_Paciente");
+                de.Click.EventMask.ShowMask = true;
+                de.Click.Before = "App.btnSave.setDisabled(true); " + "beforeSave(App.FormPanel2); return App.FormPanel2.getForm().isValid(); ";
+                de.Click.After = "App.btnSave.setDisabled(false); ";
+                de.Click.ExtraParams.Add(new Parameter("MODO", Model.ACCION, ParameterMode.Value));
+                de.Click.ExtraParams.Add(new Parameter("idWindow", "WindowPacienteTriaje", ParameterMode.Value));
+                de.Click.Success = "onSuccess(result.data);";
+                de.Click.Failure = "onFailure('" + Model.ACCION + "');";
+            }),
+                X.Button().Text((Model.ACCION == "VER" ? "Aceptar" : "Cancelar")).Handler("App.WindowPacienteTriaje.close()")
+            .Icon((Model.ACCION == "VER" ? Icon.Accept : Icon.Cancel))
+        //.DirectEvents(de =>
+        //{
+        //    de.Click.Url = Url.Action("cerrarWindow");
+        //    de.Click.ExtraParams.Add(new Parameter("id", "WindowCuerpoHumano", ParameterMode.Value));
+        //})
+            ,
+
+            X.ToolbarSpacer(20)
+            )
+            )
+
+    )
+    .DirectEvents(de =>
+    {
+        de.Render.Url = Url.Action("postWindowMedico");
+        de.Render.ExtraParams.Add(new Parameter("idPais", "" + Model.Pais, ParameterMode.Value));
+        de.Render.ExtraParams.Add(new Parameter("idDepa", "" + Model.Departamento, ParameterMode.Value));
+        de.Render.ExtraParams.Add(new Parameter("idProv", "" + Model.Provincia, ParameterMode.Value));
+        de.Render.ExtraParams.Add(new Parameter("idDist", "" + Model.CodigoPostal, ParameterMode.Value));
+    }).CloseAction(CloseAction.Destroy)
+)
+

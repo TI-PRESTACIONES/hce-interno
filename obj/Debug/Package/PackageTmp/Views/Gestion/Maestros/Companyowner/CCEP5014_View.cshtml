@@ -1,0 +1,355 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.companyowner
+
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+}
+@section cabecera
+{
+    <script>
+        var varTipoBuscar = "LOAD";
+        var varAux = "1";
+
+    var seleccionActual = null;
+    function setSeleccion(param1) {
+        seleccionActual = param1;
+    }
+
+    var Valores;
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_YELLOW02 = "#D9A407";
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 'A') {
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        }
+        if (value == 'I') {
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+        }
+    };
+
+
+    var pctChange = function (value) {
+        return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+    };
+
+    var onSuccess = function (grid, data) {
+        grid.show();
+        grid.getStore().loadData(data);
+    };
+
+    function deleteSelected(grid) {
+        var store = grid.store,
+           records = grid.selModel.getSelection();
+        store.remove(records);
+        App.Window1.AutoDestroy(true);
+
+    };
+    function nuevo() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("CompanyownerRegistro"))',
+            params: {
+                MODO: 'NUEVO',
+                Sucursal: 0
+            }
+        });
+    };
+    function modificarSelected(grid) {
+        if (seleccionActual != null) {
+            var status = seleccionActual;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("CompanyownerRegistro"))',
+                params: {
+                    MODO: 'UPDATE',
+                    Sucursal: status
+                }
+            });
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Seleccionar un Elemento.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+     }
+     function eliminarSelected(grid) {
+        if (seleccionActual != null) {
+            var status = seleccionActual;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("CompanyownerRegistro"))',
+                params: {
+                    MODO: 'DELETE',
+                    Sucursal: status
+                }
+            });
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Seleccionar un Elemento.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+        }
+
+    function verSelected() {
+        eventoVerSelected(seleccionActual);
+    }
+    function eventoVerSelected(param1) {
+        if (App.compoVER.isVisible(true)) {
+            if (param1 != null) {
+                var status = param1;
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("CompanyownerRegistro"))',
+                    params: {
+                        MODO: 'VER',
+                        Sucursal: status
+                    }
+                });
+            } else {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Debe Seleccionar un Elemento.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+        }
+    }
+
+    var accionBuscarFiltro = function (tipo) {
+        varTipoBuscar = tipo;
+        App.GridPanel1.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+
+    var accionFinal = function (btn) {
+        App.GridPanel1.getSelectionModel().deselectAll();
+        seleccionActual = null;
+        App.GridPanel1.getStore().reload();
+    };
+
+    var eventoCheckFiltro = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+
+    function eventoRenderForm() {
+        var kk = 140;
+        var scrH = screen.height;
+        var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+        alert('TEST::' + northH);
+        var southH = 5;
+        if (southH == 0) {
+            southH = 30;
+        }
+        var dimCentral = (scrH - (northH + southH) - kk);
+        App.GridPanel1.setHeight(dimCentral);
+    }
+    var eventoCargarMain = function () {
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("addPermisosFormatos"))',
+            params: {
+                data: 'FORMATO',
+                indica: 'PERMISO',
+            },
+            success: function (result) { accionSetPermisos(result.data); }
+        });
+    };
+    var accionSetPermisos = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                if (data[i].ACCION == 'BUSCAR' && App.compoBUSCAR != null) {
+                    App.compoBUSCAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'NUEVO' && App.compoNUEVO != null) {
+                    App.compoNUEVO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'MODIFICAR' && App.compoMODIFICAR != null) {
+                    App.compoMODIFICAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'ELIMINAR' && App.compoELIMINAR != null) {
+                    App.compoELIMINAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'VER' && App.compoVER != null) {
+                    App.compoVER.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'ACCESO' && App.compoACCESO != null) {
+                    App.compoACCESO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'HABILITADO' && App.compoHABILITADO != null) {
+                    App.compoHABILITADO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'OBLIGA' && App.compoOBLIGA != null) {
+                    App.compoOBLIGA.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'PRIORIDADAGOPCION' && App.compoPRIORIDADAGOPCION != null) {
+                    App.compoPRIORIDADAGOPCION.setVisible((data[i].campoInt01 == 2 ? true : false));
+                }
+            }
+        }
+    };
+    </script>
+}
+
+@section cuerpo
+{
+    @(
+ Html.X().Viewport()
+        .AutoScroll(true)
+        .Layout(LayoutType.Border)
+        .Items(
+           X.Panel()
+                          .Title("Listado de Companyowner")
+        //.Header(false)
+              .Border(false)
+              .Region(Region.North)
+              .Split(true)
+             .Collapsible(true)
+        //.Header(false)
+              .Height(150)
+                  .TopBar(
+                             X.Toolbar()
+                            .Height(30)
+                                .Items(  
+                           X.Button()
+                                .Text("Buscar").ID("compoBUSCAR")
+                                .Icon(Icon.Find)
+                                     .Handler("accionBuscarFiltro('FILTRO');"),
+                                            X.ToolbarSeparator(),
+                                            X.ToolbarSpacer()
+                                  )
+                  )
+            .Items(X.Panel()
+               .Layout(LayoutType.HBox)
+               .BodyPadding(5)
+               .Border(false)
+               .MarginSpec("1 20 1 1")
+                    .Items(
+                            X.FieldSet()
+                                .Flex(1)
+                                .Title("Filtros")
+                                .MarginSpec("5 5 5 5")
+                                .Defaults(d =>
+                                {
+                                    d.Add(new Parameter("LabelWidth", "120"));
+                                })
+                                .Items(
+
+                                   Html.X().Container().Layout(LayoutType.HBox)
+                                   .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                   .Items(
+                                   X.Checkbox()
+                                   .FieldLabel("Código")
+                                   .ID("cod")
+                                   .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.cod,App.tfBuscarCod);")
+                                       .Checked(true),
+                                   X.TextField()
+                                       .ID("tfBuscarCod").Disabled(true)
+                                   .Name("buscarCod")
+                                       .FieldLabel(""),
+                                       X.Checkbox()
+                                       .FieldLabel("Descripción")
+                                           .ID("des")
+                                       .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.des,App.tfBuscarDesc);")
+                                       .Checked(true),
+                                   X.TextField()
+                                       .ID("tfBuscarDesc").Disabled(true)
+                                   .Name("buscarDesc")
+                                   .FieldLabel("")),
+
+                                   Html.X().Container().Layout(LayoutType.HBox)
+                                   .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                       .Items(
+                                 
+                                        )
+                                )
+                    )
+             ),
+            X.Panel()        
+                .Region(Region.Center)      
+                .ItemID("center")       
+               .Header(false)
+               .Border(false)
+               .Items(
+                   X.GridPanel()
+                   .AllowDeselect(true)
+                        .Border(false)
+                        .Scroll(ScrollMode.Both)
+                        .AutoScroll(true)
+                        .ID("GridPanel1")        
+                        .Margins("0 0 0 0")
+        ///CONFIGURAR EL STORE
+                        .Store(store => store.Add(
+                                 Html.X().Store()
+                                     .ID("Store1")
+                                     .AutoLoad(true)
+                                     .RemoteSort(false)
+                                     .IsPagingStore(true)
+                                     .RemotePaging(true)
+                                     .PageSize(10)////CAMBIAR DE ACUERDO A ALGÚN UN CRITERIO
+                                     .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                            .Url("getGrillacompanyowner")
+                                            .Reader(reader => reader.Add(Html.X().JsonReader()
+                                            .Root("data")
+                                            .TotalProperty("total")
+                                                .IDProperty("companyowner1"))))
+                                      )
+                                     .Parameters(ps =>
+                                                ps.Add(new
+                                                {
+                                                    descripcion = JRawValue.From("App.tfBuscarDesc.getValue()"),
+                                                    codigo = JRawValue.From("App.tfBuscarCod.getValue()"),
+                                                    estado = "",
+                                                    tipoBuscar = JRawValue.From("varTipoBuscar")
+                                                })
+                                         )
+                                     .Model(model => model.Add(Html.X().Model()
+                                             .Fields(fields =>
+                                             {
+                                                 fields.Add(Html.X().ModelField().Name("companyowner1"));
+                                                 fields.Add(Html.X().ModelField().Name("description"));
+                                                 fields.Add(Html.X().ModelField().Name("company"));
+                                                 fields.Add(Html.X().ModelField().Name("percentage"));
+                                                 fields.Add(Html.X().ModelField().Name("owner"));                                                
+                                             }))
+                                            )
+                                          )
+                               )
+
+                            ///CONFIGURAR LAS COLUMNAS
+                            .ColumnModel(columnModel =>
+                            {
+                                columnModel.Columns.Add(Html.X().Column().Text("Código").DataIndex("companyowner1").Width(80));
+                                columnModel.Columns.Add(Html.X().Column().Text("Descripción").DataIndex("description").Flex(1));
+                                columnModel.Columns.Add(Html.X().Column().Text("Company").DataIndex("company").Width(100));
+                                columnModel.Columns.Add(Html.X().Column().Text("Porcentage").DataIndex("percentage").Width(300));
+                                columnModel.Columns.Add(Html.X().Column().Text("Owner").DataIndex("owner").Width(300));                                
+                            })
+                             .View(Html.X().GridView().TrackOver(false))
+                             .Border(false)
+                            .Listeners(l => l.CellClick.Handler = "setSeleccion(record.data.companyowner);")
+                                .Listeners(l => l.CellDblClick.Handler = "eventoVerSelected(record.data.companyowner);")
+                            .BottomBar(bar => bar.Add(
+                                Html.X().PagingToolbar()
+                            ))
+
+                )
+        )
+            .Listeners(l => l.Render.Handler = "eventoCargarMain();")
+    )
+
+    @(X.KeyNav()
+                    .Target("={document.body}")
+                    .Enter(a => a.Handler = "accionBuscarFiltro('FILTRO');")
+    )
+}

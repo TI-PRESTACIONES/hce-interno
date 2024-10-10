@@ -1,0 +1,1216 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_HC_Alergia_FE
+
+@{
+
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+    var indicaVisiblePrint = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_VISIBLE_IMPRESION;
+    var visibleImpresion = (indicaVisiblePrint == 2/* && Model.Accion == "UPDATE"*/ ? true : false);
+    //var visibleImpresion = (Model.Accion == "UPDATE" ? true : false);
+    var isVista = (Model.Accion == "VISTA" ? true : false);
+    var isNuevo = (Model.Accion == "NUEVO" ? true : false);
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VISTA" ? false : false))));
+    var indicaTieneHistoriaN = ((Model.Accion == "NUEVO" || (Model.Accion != "NUEVO" && Model.TieneHistoria == "N")) ? false : true);
+    var COLOER_IND_OBLIGA = AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("COL_BCOBLI"); ;
+    var DESC_ADD = "Proc. médicos (CIAP -2)";
+    var COLOR_BLUE01 = "#284A89";
+}
+
+@section cabecera
+{
+    <link rel="stylesheet" href="@Url.Content("~/resources/css/main.css")" />
+    <style>
+        html body {
+            padding: 0px;
+            background: none;
+            background: none;
+            background: none;
+            background-attachment: fixed;
+            background-position: center;
+            font-family: tahoma,verdana,sans-serif;
+            background-color: #ffffff;
+        }
+    </style>
+
+    <script>
+
+
+        var indicaCambios = false;
+        function setIndicaCambios(value) {
+            indicaCambios = value;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("setIndicaCambiosFormulario"))',
+                params: {
+                    indica: (value ? 1 : 0)
+                }
+            });
+
+            var val = '@visibleImpresion';
+            var vis = '@isVista';
+
+            if (vis == 'False') {
+                if (val == 'True') {
+
+                    if (value == true) {
+                        App.btnImpresion.setDisabled(true);
+                        App.btnImpresionHC.setDisabled(true);
+                        parent.App.btnGuardarFirma.setDisabled(true);
+                    } else {
+                        App.btnImpresion.setDisabled(false);
+                        App.btnImpresionHC.setDisabled(false);
+                        parent.App.btnGuardarFirma.setDisabled(false);
+                    }
+                }
+            }
+
+        };
+
+        function eventoValidaRegla() {
+            var APMiscelaneos = new Array();
+            var MA_MiscelaneosDetalle = {
+                ValorEntero1: 1,
+                ACCION: "PO_EXAMENGENICOLO"
+            };
+            APMiscelaneos.push(MA_MiscelaneosDetalle);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("POSaludControlGinecologia"))',
+                params: {
+                    PacienteID: 0,
+                    valor: 0,
+                    regla: 'POSaludControlGinecologia',
+                    arrays: APMiscelaneos
+                },
+                success: function (result) { mostrarAlarma(result.data); }
+            });
+
+
+        };
+        var mostrarAlarma = function (data) {
+
+            if (data[0].ESTADOBOOL) {
+                Ext.Msg.show({
+                    title: "Advertencia Motor Reglas",
+                    msg: data[0].DESCRIPCION,
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+        }
+        function eventoRenderForm() {
+
+            var kk = 195;
+            var scrH = screen.height;
+            var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+            var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+
+            if (southH == 0) {
+                southH = 30;
+            } else if (parent.App.PanelMainSouth.collapsed) {
+                southH = 30;
+            }
+            var dimCentral = (scrH - (northH + southH) - kk);
+            App.formactual.setHeight(545);
+
+            var v = '@isNuevo';
+            if (v == 'True') {
+                App.btnImpresion.setVisible(false);
+                App.btnImpresionHC.setVisible(false);
+            }
+        }
+
+
+        var ALTURADEF = screen.height;      
+
+        var seleccRecordActual = null;
+        function setSeleccionActual(record) {
+            seleccRecordActual = record;
+        }
+
+        var count = 0;
+        function InsertRow(valor, estado, soloLectura) {
+
+            var fecha_actual = new Date();
+
+            if (soloLectura == '1') {
+                setIndicaCambios(false);
+            } else {
+                if (valor.getValue() != '') {
+
+                    var obj = JSON.parse(valor.getValue());
+                    var DescripcionLocalVar = obj.DescripcionLocal;
+                    // Descomponer Inicio
+                    var cadena1 = '';
+                    var cadena2 = '';
+                    var posicion = 0;
+
+                    for (var i = 0; i < DescripcionLocalVar.length; i++) {
+                        if (DescripcionLocalVar[i] == '|') {
+                            posicion = i;
+                        }
+
+                    }
+
+                    for (var i = 0; i < DescripcionLocalVar.length; i++) {
+                        if (i < posicion) {
+                            cadena1 = cadena1 + DescripcionLocalVar[i];
+                        } else if (i > posicion) {
+                            cadena2 = cadena2 + DescripcionLocalVar[i];
+                        }
+                    }
+
+                    var DescripcionLocalVar2 = '';
+                    DescripcionLocalVar2 = cadena1;
+
+                    // Descomponer Inicio
+
+
+                    if (validaDuplicado(DescripcionLocalVar)) {
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("showMensajeNotify"))',
+                            params: {
+                                titulo: 'Advertencia',
+                                message: 'Ya existe registro',
+                                tipo: 'WARNING'
+                            }
+                        });
+                        valor.setValue('');
+                        return;
+                    }
+
+                    var grid = Ext.getCmp("grillaExamenes");
+                    var cuenta = grid.getStore().count();
+                    setIndicaCambios(true);
+                    grid.store.insert(parseInt(cuenta), {
+                        CodigoElemento: 'New' + count++,
+                        ValorEntero1: 2,
+                        ValorCodigo1: DescripcionLocalVar,
+                        ValorCodigo3: DescripcionLocalVar2,
+                        ValorCodigo5: '',
+                        // ValorFecha: new Date(),
+                        /* ValorEntero2:57,*/
+                        ACCION: 'NUEVO'
+                    });
+                    Ext.Function.defer(function () {
+                        grid.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+                    }, 100);
+                    valor.setValue('');
+                }
+            }
+        }
+
+        function validaDuplicado(valor) {
+            var estados = false;
+            var valor1
+            var valor2
+
+            App.storeExamenes.each(function (r) {
+                if (trim(r.get('ValorCodigo1')) == trim(valor)) estados = true;
+            });
+
+            return estados;
+        }
+
+        function trim(str) {
+            return str.replace(/^\s+|\s+$/g, "");
+        }
+
+
+
+        function deleteActual(record, grid, tipo) {
+
+
+            seleccRecordActual = record;
+            if (seleccRecordActual != null) {
+
+
+                var store = grid.store;
+
+                setIndicaCambios(true);
+                var par1 = seleccRecordActual.data.ValorCodigo1;
+                var par2 = seleccRecordActual.data.CodigoElemento;
+                store.remove(seleccRecordActual);
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("CCEP00F2_addEliminar_SS_HC_Alergia_FE"))',
+                    params: {
+                        MODO: 'DELETEDETALLE',
+                        codigo: par1,
+                        secuencia: par2,
+                        tipoRegistro: tipo
+                    }
+                });
+
+                seleccRecordActual = null;
+            }
+        };
+        function deleteActualOld(record) {
+
+            seleccRecordActual = record;
+            if (seleccRecordActual != null) {
+
+                setIndicaCambios(true);
+                var store = App.grillaExamenes.store;
+
+                var par1 = seleccRecordActual.data.ValorCodigo1;
+                var par2 = seleccRecordActual.data.CodigoElemento;
+                store.remove(seleccRecordActual);
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("CCEP00F2_addEliminar_SS_HC_Alergia_FE"))',
+                    params: {
+                        MODO: 'DELETEDETALLE',
+                        codigo: par1,
+                        secuencia: par2
+                    }
+                });
+                seleccRecordActual = null;
+            }
+        };
+
+        var onSuccess = function (data) {
+            App.btnOnEdit.setVisible(false);
+            App.btnCancel.setVisible(true);
+            App.formactual.setDisabled(true);
+            var reload = true;
+
+            if (data != null) {
+                if (data.length > 0) {
+                    reload = false
+                    App.cmdGuardar.setDisabled(false);
+                    App.formactual.setDisabled(false);
+                    if (data[0].TIPOMSG == 'EXCEPTION') {
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("showMensajeNotify"))',
+                            params: {
+                                titulo: data[0].TITULO,
+                                message: data[0].DESCRIPCION,
+                                tipo: 'ERROR'
+                            }
+                        });
+                    } else {
+                        accionMensajes(data);
+                    }
+                }
+            }
+
+            if (reload) {
+
+                //alert('reload - true');
+                var varTieneHistoria = App.IDTieneHistoria.getValue();
+                //alert(varTieneHistoria);
+                /*   if (varTieneHistoria == 'S') {*/
+                //alert('onSuccess reload');
+                parent.App.txtRecargarX.setValue('RELOAD');
+                /* }*/
+
+
+            }
+            else {
+                //alert('reload - false');
+            }
+
+        };
+
+        var onFailure = function (data) {
+            App.cmdGuardar.setDisabled(false);
+        };
+
+        var eventoOnEditar = function (btn) {
+            App.cmdGuardar.setDisabled(false);
+            App.btnOnEdit.setVisible(false);
+            App.btnCancel.setVisible(true);
+        };
+
+        function eventoCancelarTest() {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("eventoCancelarForm"))',
+                params: {
+                    indica: ''
+                }
+            });
+        }
+
+        function eventoCancelar(form) {
+            //form.getForm().reset();
+            //App.taAlerts.setVisible(false);
+            //App.conthbIndicaError.setVisible(false);
+            //App.storeExamenes.reload();
+            //setIndicaCambios(false);
+            //App.storeExamenesManual.reload();
+
+            App.bar.setDisabled(true);
+            var reload = true;
+            if (reload) {
+                parent.App.txtRecargarX.setValue('RELOAD');
+                // beforeSave(form);
+            }
+        }
+
+
+        function eventoVisorReporte(param1) {
+            if (param1 == 'HC') {
+                window.location.href = '@Url.Action("HCEReportesView_total", "HClinica")';
+            } else {
+                window.location.href = '@Url.Action("HCEReportesView", "HClinica")';
+            }
+        }
+
+
+
+    </script>
+
+    <script>
+        var hhValidation = function (h) {
+            str = h.value;
+            tempo = "'";
+            str = str.replace('javascript:myFunction(' + tempo, '');
+            str = str.replace('%20', ' ');
+            str = str.replace('%C3%B3', 'ó');
+            str = str.replace('%C3%A1', 'á');
+            str = str.replace('%C3%A9', 'é');
+            str = str.replace('%C3%AD', 'í');
+            str = str.replace('%C3%BA', 'ú');
+            str = str.replace('%C3%B1', 'ñ');
+
+            str = str.replace('%C3%8D', 'Í');
+            str = str.replace('%C3%93', 'Ó');
+            str = str.replace('%C3%81', 'Á');
+            str = str.replace('%C3%91', 'Ñ');
+            str = str.replace('%C3%9A', 'Ú');
+            str = str.replace(tempo + ')', '');
+            h.setValue(str);
+        }
+
+        function EnviarData(grid) {
+            var reload = true;
+            beforeSave(App.formactual);
+            if (App.formactual.getForm().isValid()) {
+
+                //App.cmdGuardar.setDisabled(true);
+                //source = App.grillaExamenes;
+                //var store = App.storeExamenes;
+                var invalidFieldsGrid = new Array();
+                var status = 0;
+                var i = 1;
+                var valores = "";
+                var mensajes = "";
+
+                //var records = App.grillaExamenes.getSelectionModel().getSelection();
+
+                var ArrayListC = new Array();
+                var fecha = App.FechaCreacion.getValue();
+                var HC_Alergias_Obs = {
+                    //     IdMedico: App.IdMedico.getValue(),
+                    TieneHistoria: App.IDTieneHistoria.getValue(),
+                    UsuarioCreacion: App.UsuarioCreacion.getValue(),
+                    //  FechaCreacion: App.FechaCreacion.getValue(),
+                    Version: fecha
+
+                }
+                ArrayListC.push(HC_Alergias_Obs);
+
+                var ArrayRecurso = new Array();
+                App.storeExamenes.each(function (r) {
+
+                    var MA_MiscelaneosDetalle = {
+                        CodigoElemento: r.get('CodigoElemento'),
+                        ValorEntero1: r.get('ValorEntero1'),
+                        ValorCodigo1: r.get('ValorCodigo1'),
+                        ValorFecha: r.get('ValorFecha'),
+                        ValorEntero2: r.get('ValorEntero2'),
+                        ValorCodigo2: r.get('ValorCodigo2'),
+                        ValorCodigo3: r.get('ValorCodigo3'),
+                        ValorCodigo5: r.get('ValorCodigo5'),
+                        ACCION: (r.get('ACCION') == 'NUEVO' ? 'DETALLE' : 'UPDATEDETALLE')
+                    };
+                    ArrayRecurso.push(MA_MiscelaneosDetalle);
+                    i = i + 1;
+                });
+
+                var ArrayManual = new Array();
+                App.storeExamenesManual.each(function (r) {
+                    var MA_MiscelaneosDetalle = {
+                        CodigoElemento: r.get('CodigoElemento'),
+                        ValorEntero1: r.get('ValorEntero1'),
+                        ValorCodigo1: r.get('ValorCodigo1'),
+                        ValorFecha: r.get('ValorFecha'),
+                        ValorEntero2: r.get('ValorEntero2'),
+                        ValorCodigo2: r.get('ValorCodigo2'),
+                        ValorCodigo5: r.get('ValorCodigo5'),
+                        ACCION: (r.get('ACCION') == 'NUEVO' ? 'DETALLE' : 'UPDATEDETALLE')
+                    };
+                    ArrayManual.push(MA_MiscelaneosDetalle);
+                    i = i + 1;
+                });
+
+                App.Accion.value = mensajes;
+                if (invalidFieldsGrid.length > 0) {
+                    addRecursosValidacion(invalidFieldsGrid);
+                    App.cmdGuardar.setDisabled(false);
+                    App.formactual.setDisabled(false);
+                } else {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("CCEP00F2_Save_SS_HC_Alergia_FE"))',
+                        params: {
+                            selectionArray0: ArrayListC,
+                            selectionArray1: ArrayRecurso,
+                            //selectionArray1: "recurso",
+                            selectionArray2: ArrayManual,
+                            //selectionArray2: "Manuela",
+                            text: '0'
+                        }
+                         , success: function (result) {
+                             onSuccess(result.data);
+                         }
+                    });
+                }
+                return true;
+
+            } else {
+                App.cmdGuardar.setDisabled(false);
+                //   return false;
+            }
+            App.cmdGuardar.setDisabled(false);
+        }
+
+        var accionMensajes = function (data) {
+            var mensajes = "";
+            if (data.length > 0) {
+                for (var i = 0; i < data.length; i++) {
+                    mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+                }
+                App.taAlerts.setVisible(true);
+                App.taAlerts.setValue(mensajes);
+                App.conthbIndicaError.setVisible(true);
+                App.taAlerts.focus();
+
+            } else {
+                App.taAlerts.setVisible(false);
+                App.conthbIndicaError.setVisible(false);
+            }
+        };
+
+        var getInvalidFields = function (form) {
+            var invalidFields = new Array();
+            var fields = form.getForm().getFields();
+            fields.filterBy(function (field) {
+                if (!field.isValid()) {
+                    var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                        NombreCampo: field.name,
+                        IdEvento: (field.isValid() ? 1 : 0),
+                        ValorTexto: field.name + ': ' + field.getErrors()
+                    };
+                    invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+                }
+            });
+            return invalidFields;
+        };
+
+        var beforeSave = function (form) {
+            App.taAlerts.setVisible(false);
+            App.taAlerts.setValue(null);
+            App.conthbIndicaError.setVisible(false);
+            var FieldsInvalidos = getInvalidFields(form);
+            if (FieldsInvalidos.length > 0) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("addRecursosValidacion"))',
+                    params: {
+                        data: FieldsInvalidos,
+                        indica: 'VALIDAR',
+                    },
+                    success: function (result) { accionMensajes(result.data); }
+                });
+            }
+        };
+
+        var indicaCambios = false;
+        function setIndicaCambios(value) {
+            indicaCambios = value;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("setIndicaCambiosFormulario"))',
+                params: {
+                    indica: (value ? 1 : 0)
+                }
+            });
+
+            var val = '@visibleImpresion';
+            var vis = '@isVista';
+
+            if (vis == 'False') {
+                if (val == 'True') {
+
+                    if (value == true) {
+                        App.btnImpresion.setDisabled(true);
+                        App.btnImpresionHC.setDisabled(true);
+                    } else {
+                        App.btnImpresion.setDisabled(false);
+                        App.btnImpresionHC.setDisabled(false);
+
+                    }
+                }
+            }
+
+        };
+
+        // eventoRadio(this, 'P1', 1)
+        var eventoRadio = function (rd, pregunta, valor) {
+
+            var varRadioValue = rd.getValue();
+            var FieldSet1 = App.fsAlergia;
+
+            if (varRadioValue) {
+                if (pregunta == 'P1') {
+
+                    //if (valor == 1) {
+                    //    FieldSet1.setVisible(true);
+                    //}
+                    //if (valor == 2) {
+                    //    FieldSet1.setVisible(false);
+                    //}
+
+                    if (valor == 1) {
+                        App.cmdAgregar.setDisabled(false);
+                        App.cmdServicios.setDisabled(false);
+                        App.IDTieneHistoria.setValue("S");
+                        App.cmdGuardar.setDisabled(false);
+                    }
+                    if (valor == 2) {
+                        App.cmdAgregar.setDisabled(true);
+                        App.cmdServicios.setDisabled(true);
+                        App.IDTieneHistoria.setValue("N");
+                    }
+
+
+                }
+
+            } else {
+
+                if (pregunta == 'P1') {
+
+                    //if (valor == 1) {
+                    //    FieldSet1.setVisible(false);
+                    //}
+                    //if (valor == 2) {
+                    //}
+
+                    if (valor == 1) {
+                        App.cmdGuardar.setDisabled(false);
+                    }
+                    if (valor == 2) {
+                    }
+                }
+
+            }
+        };
+
+        var countOtras = 0; // a counter for new records de Otras
+        function addRecord(grid, grupo, IdUnidad) {
+
+            //if ((componenteAdd.getValue() != null) && (componenteAdd.getValue() != '')) {
+
+            //var valorSelec = componenteAdd.getValue();
+            //if (validaDuplicado(grupo, valorSelec)) {
+            //    Ext.Msg.show({
+            //        title: "Advertencia",
+            //        msg: "Ya existe el Registro de Otras Inmunización",
+            //        icon: Ext.Msg.WARNING,
+            //        minWidth: 200,
+            //        buttons: Ext.Msg.OK
+            //    });
+            //} else {
+            var contar = grid.store.count();
+
+            grid.store.insert(parseInt(contar), {
+                CodigoElemento: 'New' + count++,
+                ValorEntero1: 2,
+                ValorCodigo1: '',
+                ValorFecha: new Date(),
+                /* ValorEntero2:57,*/
+                ACCION: 'NUEVO'
+            }
+                                  );
+
+
+            // }
+            //} else {
+            //    Ext.Msg.show({
+            //        title: "Advertencia",
+            //        msg: "Debe Ingresar Otra Inmunización para añadirlo.",
+            //        icon: Ext.Msg.INFO,
+            //        minWidth: 200,
+            //        buttons: Ext.Msg.OK
+            //    });
+            //}
+
+            //App.cmbTipAt.setValue('');
+        };
+
+
+        function eventoActivarSeleccion(button, event) {
+
+            var panelServ = Ext.getCmp('East1');
+
+            parent.App.East1.expand();
+
+            var numero = button.id.replace('cmdServicios', '');
+
+            Ext.getCmp(button.id).hide();
+
+            Ext.getCmp('cmdServicios_Activo' + numero).show();
+            parent.App.txtparametro.setValue("MEDLINEA");
+            //alert("entro receta individual");
+            parent.App.cbLinea.clearValue();
+            parent.App.cbLinea.getStore().load();
+            parent.App.cbLinea.setValue("04");
+
+            for (var i = 0; i < numerogrupo; i++) {
+
+                if (i != numero) {
+                    Ext.getCmp('cmdServicios_Activo' + i).hide();
+                    Ext.getCmp('cmdServicios' + i).show();
+                }
+            }
+
+
+
+            //var idGrillaActiva = 'grillaExamenes' + numero;
+
+            //grillaActiva = idGrillaActiva;
+
+
+            //if (grillaActiva != 'grillaExamenes0') {
+            //    App.NumeroStore.setValue(numero);
+            //}
+            //else {
+
+            //}
+        };
+
+        function eventoDesactivarSeleccion(button, event) {
+            parent.App.East1.collapse();
+            var numero = button.id.replace('cmdServicios_Activo', '')
+            Ext.getCmp(button.id).hide();
+            Ext.getCmp('cmdServicios' + numero).show();
+
+        };
+
+        //var a = 0;
+        //function remplazarCaracter(event) {
+        //    var codigo = event.which || event.keyCode ;
+
+        //    if (App.btnImpresion.setDisabled(false)) {
+        //        if (codigo == 8 || codigo == 46) {
+        //            a++;
+        //            //alert(a);
+        //            setIndicaCambios(true);
+        //        } if (a >= 2) {
+        //            //alert("no paso");
+        //            event.Handled = false;
+        //            return;
+        //        }
+        //    }
+        //}
+
+
+        var keyCode
+        function ReplaceCaracterEspec(e) {
+            /*Capturar tecla pulsada*/
+            if (window.event) keyCode = window.event.keyCode;
+            else if (e) keyCode = e.which;
+            var prueba = keyCode;
+            // alert(keyCode);
+            //
+            if (prueba == 60) {
+                var textactual = e.getValue();
+                e.value = e.setValue(textactual + " ");
+            }
+            var texto = e.getValue();
+            var vacio = "";
+            var cadena = vacio + e.getValue();
+            var recortado = cadena.substr(-1, 1);
+            // alert(recortado + ' antes');
+            if (recortado == "<" || recortado == ">") {
+                //  alert(recortado + ' despues');
+                e.value = e.setValue(texto + " ");
+            }
+            //if (prueba == 13) {
+            //    App.btnImpresion.setDisabled(true)
+            //    App.btnImpresionHC.setDisabled(true)
+
+            //}
+        }
+
+
+
+
+    </script>
+}
+
+@section cuerpo{
+    @(Html.X().Viewport().ID("ViewportXD")
+         .Layout(LayoutType.VBox)
+
+         .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+         .Listeners(l => { l.AfterLayout.BroadcastOnBus = "App.resize"; l.AfterLayout.Single = true; })
+        .Items(regions =>
+        {
+            regions.Add(Html.X().FormPanel()
+                .DefaultAnchor("100%").AutoScroll(true).Height(340).Header(false)
+                .Border(true).ID("formactual").Listeners(l => { l.Render.Handler = "eventoRenderForm();"; })
+                .Items(
+                    X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                    .Items(
+
+                        X.TextFieldFor(m => m.TieneHistoria).ID("IDTieneHistoria").Hidden(true)
+                     , X.RadioGroupFor(m => m.TieneHistoria, new List<Radio.Config> {
+                            new Radio.Config{BoxLabel = "Si",
+                                             InputValue = "S",
+                                             ReadOnly =indicaModoLectura,
+                                             Handler="eventoRadio(this, 'P1', 1);"
+                                            },
+                            new Radio.Config{BoxLabel = "No",
+                                             Disabled= indicaTieneHistoriaN,
+                                             InputValue = "N",
+                                             ReadOnly =indicaModoLectura,
+                                             Handler="eventoRadio(this, 'P1', 2);"
+                                             }
+                        })
+                        .Vertical(false)
+                        .PaddingSpec("15")
+                        .LabelWidth(200).Width(300)
+                        .FieldLabel("¿Tiene usted historia de alergias?")
+                //.Defaults(d =>
+                //{
+                //    d.Add(new Parameter("LabelWidth", "180"));
+                //    d.Add(new Parameter("DefaultAnchor", "50%"));
+                //})
+                        .AnchorVertical("100%")),
+
+                X.FieldSet().ID("fsAlergia")
+                 .ColumnWidth(0.4).Title("ANTECEDENTES PERSONALES - ALERGIAS").MarginSpec("0 05 0 05").Defaults(d =>
+                    {
+                        d.Add(new Parameter("LabelWidth", "150"));
+                        d.Add(new Parameter("DefaultAnchor", "100%"));
+                        d.Add(new Parameter("LabelAlign", "Left"));
+                    })
+                .DefaultAnchor("100%").FieldDefaults(d => { d.LabelAlign = LabelAlign.Left; })
+                .Items(
+                X.TextField().ID("RecepcionaRecurso").Listeners(l => { l.Change.Handler = "InsertRow(this,'Logico','" + (indicaModoLectura ? 1 : 0) + "');"; }).Hidden(true),
+
+
+
+                //** Grilla 1 Inicio*
+
+                X.GridPanel()
+                .ID("grillaExamenesManual")
+                .Border(true)
+                .PaddingSpec("5")
+                .Store(
+                    Html.X()
+                        .Store()
+                        .ID("storeExamenesManual")
+                        .Model(
+                          Html.X()
+                              .Model()
+                              .IDProperty("CodigoElemento")
+                              .Fields(
+                                    new ModelField("CodigoElemento", ModelFieldType.String),
+                                    new ModelField("ValorCodigo1", ModelFieldType.String),
+                                    new ModelField("ValorEntero1", ModelFieldType.Int),
+                                    new ModelField("ValorFecha", ModelFieldType.Date),
+                                    new ModelField("ValorEntero2", ModelFieldType.Int),
+                                    new ModelField("ValorCodigo2", ModelFieldType.String),
+                                    new ModelField("ValorCodigo3", ModelFieldType.String),
+                                    new ModelField("ValorCodigo5", ModelFieldType.String),
+                                    new ModelField("ACCION", ModelFieldType.String)
+                                    )
+                              )
+                        .AutoLoad(true)
+                        .RemoteSort(false)
+                        .IsPagingStore(true)
+                        .RemotePaging(true)
+                        .PageSize(5)
+                        .Proxy(proxy => proxy.Add(Html.X()
+                                                      .AjaxProxy()
+                                                      .Url("CCEP00F2_ALERGIA")
+                                                      .Reader(reader => reader.Add(Html.X()
+                                                                                        .JsonReader()
+                                                                                        .Root("data")
+                                                                                        .TotalProperty("total")
+                                                                                        .IDProperty("CodigoElemento")
+                                                                                    )
+                                                              )
+                                                     .ExtraParams(e => e.Add(new Parameter("Tipo", "MA")))
+                                                  )
+                             )
+                      )
+                .ColumnModel(
+                Html.X().ComponentColumn().Editor(true)
+                                              .Text("CodigoElemento").Hidden(true)
+                                              .DataIndex("CodigoElemento")
+                                              .Width(100)
+                                              .Component(
+                                                    Html.X().TextField().ReadOnly(indicaModoLectura)
+
+                                            ),
+                 Html.X().ComponentColumn().Editor(true)
+                                            .DataIndex("ValorEntero1")
+                                            .Text("Tipo Alergia")
+                                            .Width(110)
+                                            .Component(
+                                                Html.X().ComboBox().ReadOnly(indicaModoLectura)
+                                                        .ID("cbAlergia2")
+                                                        .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("TIPALERGIA").Select(d => new ListItem(d.Name, d.ID)))
+                                                        .SimpleSubmit(true).Editable(false)
+                                                        .Listeners(l => { l.Select.Handler = "setIndicaCambios(true);"; })
+                                                ),
+
+                    Html.X().ComponentColumn().Editor(true)
+                                              .Text("Nombre")
+                                              .DataIndex("ValorCodigo1")
+                                              .Flex(1)
+                                              .Component(
+                                                    Html.X().TextField().ReadOnly(indicaModoLectura)
+                //.Listeners(l => { l.Change.Handler = "hhValidation(this);"; })
+                                                    .EnableKeyEvents(true)  //Hace que funcione el evento KeyPress y otros mas
+                                                    .Listeners(l =>
+                                                    {
+                                                        l.KeyPress.Handler = "setIndicaCambios(true); ReplaceCaracterEspec(this);";
+                                                        //l.KeyDown.Handler = "remplazarCaracter(event);";
+                                                        l.KeyDown.Handler = "setIndicaCambios(true);";
+                                                        l.Change.Handler = "hhValidation(this);";
+                                                    })
+                                            ),
+
+
+
+                   Html.X().ComponentColumn().Editor(true)
+                //.DataIndex("ValorFecha")
+                                             .DataIndex("ValorCodigo5")
+                                             .Text("¿Desde Cuándo?")
+                                             .Width(110)
+                                             .Component(
+                                                    Html.X().TextField().ReadOnly(indicaModoLectura)
+                                                    .Listeners(l => { l.Change.Handler = "hhValidation(this);"; })
+                                                    .EnableKeyEvents(true)  //Hace que funcione el evento KeyPress y otros mas
+                                                    .Listeners(l =>
+                                                    {
+                                                        l.KeyPress.Handler = "setIndicaCambios(true); ReplaceCaracterEspec(this);";
+                                                        l.KeyDown.Handler = "setIndicaCambios(true);";
+                                                    })
+
+                                                     //Html.X().DateField().ReadOnly(indicaModoLectura)
+                //.EnableKeyEvents(true)  //Hace que funcione el evento KeyPress y otros mas
+                //.Listeners(l => { l.KeyPress.Handler = "setIndicaCambios(true);"; })
+                //.Listeners(l => { l.Select.Handler = "setIndicaCambios(true);"; })
+                           ),
+
+                    Html.X().ComponentColumn().Editor(true)
+                                              .Hidden(false)
+                                              .DataIndex("ValorEntero2")
+                                              .Text("Estudio por alergista")
+                                              .Width(130)
+                                              .Component(
+                                                Html.X().ComboBox().ReadOnly(indicaModoLectura)
+                                                        .Editable(false)
+                                                        .QueryMode(DataLoadMode.Local)
+                                                        .TriggerAction(TriggerAction.All)
+                                                        .EmptyText("Seleccione ")
+                                                        .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("TABCOLABORACION").Select(d => new ListItem(d.Name, d.ID)))
+                                                        .Listeners(l => { l.Select.Handler = "setIndicaCambios(true);"; })
+                                            )
+                    ,
+
+
+                    Html.X().ComponentColumn().Editor(true)
+                                              .DataIndex("ValorCodigo2")
+                                              .Text("Observaciones")
+                                              .Flex(1)
+                                              .Component(
+                                                    Html.X().TextField().ReadOnly(indicaModoLectura)
+                                                    .EnableKeyEvents(true)  //Hace que funcione el evento KeyPress y otros mas
+                                                    .Listeners(l =>
+                                                    {
+                                                        l.KeyPress.Handler = "setIndicaCambios(true); ReplaceCaracterEspec(this);";
+                                                        //l.KeyDown.Handler = "remplazarCaracter(event);";
+                                                        l.KeyDown.Handler = "setIndicaCambios(true);";
+                                                        l.Change.Handler = "hhValidation(this);";
+                                                    })
+                           ),
+
+                    Html.X().CommandColumn().Width(70).Text("Eliminar")
+                            .Commands(
+                                Html.X().GridCommand().Disabled(indicaModoLectura)
+                                        .CommandName("Delete").Icon(Icon.Delete).Text(""))
+                            .Listeners(ls => ls.Command.Handler = "deleteActual(record, this.up('grid'),'MA');")
+                              )
+                .SelectionModel(
+                    Html.X().RowSelectionModel().Mode(SelectionMode.Multi)
+                            )
+                .Plugins(
+                Html.X().CellEditing()
+                        )
+                .Listeners(l => l.CellClick.Handler = "setSeleccionActual(record);")
+                .TopBar(
+                    Html.X().Toolbar().Hidden(indicaModoLectura)
+                            .Items(
+                                Html.X().ToolbarSeparator(),
+                                Html.X().Label().Html("<b><font color='" + COLOR_BLUE01 + "'> Detalle" + " -GENERALES </font></b>")
+                                , X.ToolbarFill()
+                                , X.Button().Text("Agregar").ID("cmdAgregar")
+                //.Handler("parent.App.txtEventoBienes.setValue('FILTRO_X');")
+                                    .Handler("addRecord(App.grillaExamenesManual, 'IdOtrasVacunas',  '" + Model.UnidadReplicacion + "');")
+                                    .Icon(Icon.Add)
+                             )
+                    ),
+                // Fin Grilla 1
+
+                //** Grilla 2 Inicio*
+
+                X.GridPanel()
+                .ID("grillaExamenes")
+                .Border(true)
+                .PaddingSpec("5")
+                .Store(
+                    Html.X()
+                        .Store()
+                        .ID("storeExamenes")
+                        .Model(
+                          Html.X()
+                              .Model()
+                              .IDProperty("CodigoElemento")
+                              .Fields(
+                                    new ModelField("CodigoElemento", ModelFieldType.String),
+                                    new ModelField("ValorCodigo1", ModelFieldType.String),
+                                    new ModelField("ValorEntero1", ModelFieldType.Int),
+                                    new ModelField("ValorFecha", ModelFieldType.Date),
+                                    new ModelField("ValorEntero2", ModelFieldType.Int),
+                                    new ModelField("ValorCodigo2", ModelFieldType.String),
+                                    new ModelField("ValorCodigo3", ModelFieldType.String),
+                                    new ModelField("ValorCodigo5", ModelFieldType.String),
+                                    new ModelField("ACCION", ModelFieldType.String)
+                                    )
+                              )
+                        .AutoLoad(true)
+                        .RemoteSort(false)
+                        .IsPagingStore(true)
+                        .RemotePaging(true)
+                        .PageSize(5)
+                        .Proxy(proxy => proxy.Add(Html.X()
+                                                      .AjaxProxy()
+                                                      .Url("CCEP00F2_ALERGIA")
+                                                      .Reader(reader => reader.Add(Html.X()
+                                                                                        .JsonReader()
+                                                                                        .Root("data")
+                                                                                        .TotalProperty("total")
+                                                                                        .IDProperty("CodigoElemento")
+                                                                                    )
+                                                              )
+                                                     .ExtraParams(e => e.Add(new Parameter("Tipo", "RE")))
+                                                  )
+                             )
+                      )
+                .ColumnModel(
+
+                 //Html.X().ComponentColumn().Editor(true)
+                //                           .DataIndex("ValorEntero1")
+                //                           .Hidden(true)
+                //                           .Text("Tipo Alergia")
+                //                           //.Width(110)
+                //                           .Component(
+                //                               Html.X().ComboBox().ReadOnly(indicaModoLectura)
+                //                                       .ID("cbAlergia")
+                //                                       .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("TIPALERGIA").Select(d => new ListItem(d.Name, d.ID)))
+                //                                       .SimpleSubmit(true).Editable(false)
+                //                                       .Listeners(l => l.Select.Handler = "setIndicaCambios(true);")
+                //                               ),
+
+
+
+                    Html.X().ComponentColumn().Editor(true)
+                                              .Text("Nombre hide")
+                                              .DataIndex("ValorCodigo1")
+                                              .Hidden(true)
+                //.Flex(1)
+                                              .Component(
+                                                    Html.X().TextField().ReadOnly(true).Listeners(l => { l.Change.Handler = "hhValidation(this);"; })
+                                            ),
+
+                    Html.X().ComponentColumn().Editor(true)
+                                              .Text("Nombre")
+                                              .DataIndex("ValorCodigo3")
+                                              .Flex(1)
+                                              .Component(
+                                                    Html.X().TextField().ReadOnly(true).Listeners(l =>
+                                                    {
+                                                        l.Change.Handler = "hhValidation(this);";
+                                                    })
+                                            ),
+
+
+                   Html.X().ComponentColumn().Editor(true)
+                //.DataIndex("ValorFecha").
+                   .DataIndex("ValorCodigo5")
+                   .Text("¿Desde Cuándo?").Width(110)
+                   .Component(
+                                                    Html.X().TextField().ReadOnly(indicaModoLectura)
+                                                    .Listeners(l => { l.Change.Handler = "hhValidation(this);"; })
+                                                    .EnableKeyEvents(true)  //Hace que funcione el evento KeyPress y otros mas
+                                                    .Listeners(l =>
+                                                    {
+                                                        l.KeyPress.Handler = "setIndicaCambios(true); ReplaceCaracterEspec(this);";
+                                                        l.KeyDown.Handler = "setIndicaCambios(true);";
+
+                                                    })
+
+                             //Html.X().DateField().ReadOnly(indicaModoLectura)
+                //.EnableKeyEvents(true)  //Hace que funcione el evento KeyPress y otros mas
+                //.Listeners(l => { l.KeyPress.Handler = "setIndicaCambios(true);"; })
+                //.Listeners(l => { l.Select.Handler = "setIndicaCambios(true);"; })
+                           ),
+
+                    Html.X().ComponentColumn().Editor(true)
+                                              .DataIndex("ValorEntero2")
+                                              .Hidden(false)
+                                              .Text("Estudio por alergista")
+                                              .Width(130)
+                                              .Component(
+                                                Html.X().ComboBox().ReadOnly(indicaModoLectura)
+                                                        .Editable(false)
+                                                        .QueryMode(DataLoadMode.Local)
+                                                        .TriggerAction(TriggerAction.All)
+                                                        .EmptyText("Seleccione ")
+                                                        .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("TABCOLABORACION").Select(d => new ListItem(d.Name, d.ID)))
+                                                        .Listeners(l => { l.Select.Handler = "setIndicaCambios(true);"; })
+                                            )
+                    ,
+
+
+                    Html.X().ComponentColumn().Editor(true)
+                                              .DataIndex("ValorCodigo2")
+                                              .Text("Observaciones")
+                                              .Flex(1)
+                                              .Component(
+                             Html.X().TextField().ReadOnly(indicaModoLectura)
+                             .EnableKeyEvents(true)  //Hace que funcione el evento KeyPress y otros mas
+                             .Listeners(l =>
+                             {
+                                 l.KeyPress.Handler = "setIndicaCambios(true); ReplaceCaracterEspec(this);";
+                                 //l.KeyDown.Handler = "remplazarCaracter(event);";
+                                 l.KeyDown.Handler = "setIndicaCambios(true);";
+                                 l.Change.Handler = "hhValidation(this);";
+                             })
+                             ),
+
+                    Html.X().CommandColumn()
+                            .Width(70)
+                            .Text("Eliminar")
+                            .Commands(
+                                Html.X().GridCommand().Disabled(indicaModoLectura)
+                                        .CommandName("Delete")
+                                        .Icon(Icon.Delete).Text("")
+                                     )
+                            .Listeners(ls => ls.Command.Handler = "deleteActual(record, this.up('grid'),'RE');")
+                              )
+                .SelectionModel(
+                    Html.X().RowSelectionModel().Mode(SelectionMode.Multi)
+                            )
+                .Plugins(
+                Html.X().CellEditing()
+                        )
+                .Listeners(l => l.CellClick.Handler = "setSeleccionActual(record);")
+                .TopBar(
+                    Html.X().Toolbar().Hidden(indicaModoLectura)
+                            .Items(
+                                Html.X().Label()
+                                .Html("<b><font color='" + COLOR_BLUE01 + "'> Detalle" + " -ESPECIFICAS </font></b>")
+                                , X.ToolbarFill(), X.ToolbarSeparator()
+                                , Html.X().Button().ID("cmdServicios") //referencia --> Btn DesactivoActivo
+                                .Html("<b>Catálogo</b>")
+                                .Handler("parent.App.txtEventoBienes.setValue('FILTRO_X'); eventoActivarSeleccion(App.cmdServicios);")
+                                .Icon(Icon.PluginDisabled)
+                                , Html.X().Button().ID("cmdServicios_Activo") //referencia --> Btn Activo
+                                .Html("<b>Catálogo</b>")
+                                .Handler("parent.App.txtEventoBienes.setValue('FILTRO_X');  eventoDesactivarSeleccion(App.cmdServicios_Activo);")
+                                .Icon(Icon.PluginGo).Hidden(true)
+                             )
+                    ),
+                // Fin Grilla 2
+                X.Component().Height(60),
+
+
+                 X.HiddenFor(m => m.Accion),
+                X.TextFieldFor(m => m.FechaCreacion).Hidden(true),
+                X.DateFieldFor(m => m.FechaModificacion).Hidden(true),
+                X.TextFieldFor(m => m.UsuarioCreacion).Hidden(true),
+                X.TextFieldFor(m => m.UsuarioModificacion).Hidden(true),
+                X.TextFieldFor(m => m.Estado).Hidden(true),
+                X.TextArea().ID("taAlerts").Border(false).StyleSpec("background:white;border:1px solid gray;").FieldStyle("color: red").Hidden(true).ReadOnly(true)
+                )
+                ).MinButtonWidth(40).TopBar(
+                X.Toolbar().ID("bar")
+                .Items(
+                X.ToolbarSpacer(20),
+                X.TextField().Width(15).FieldStyle("border-color: " + COLOER_IND_OBLIGA).ReadOnly(true).Hidden(indicaModoLectura),
+                X.Label().Html("<b><font color='" + COLOER_IND_OBLIGA + "'>Campos Obligatorios</font></b>").Hidden(indicaModoLectura),
+                X.ToolbarSpacer(20)
+                                ,
+                                Html.X().Container().Layout(LayoutType.HBox)
+                                .ID("conthbIndicaError").Hidden(true).Items(
+                                    X.Label().Html("<font  size='1.9em'; color='red'>(</font>"),
+                                    X.Label().Html("<font  size='3.9em'; color='red'><b>&#161;</b></font>"),
+                                    X.Label().Html("<font  size='1.9em'; color='red'>) Verificar los errores presentados</font>")
+                                ),
+
+
+                  X.ToolbarFill(),
+                                X.Button()
+                                .Text("Imprimir")
+                                .Icon(Icon.Report)
+                                .Hidden(!visibleImpresion)
+                                .ID("btnImpresion")
+                                .Handler("eventoVisorReporte('');")
+                            , X.Button()
+                             .Text("Imprimir Todos")
+                             .Icon(Icon.ReportGo)
+                             .Hidden(!visibleImpresion)
+                             .ID("btnImpresionHC")
+                             .Handler("eventoVisorReporte('HC');")
+                                ,
+
+                X.ToolbarSpacer().Width(40),
+                X.Button()
+                    .Text("Guardar")
+                    .ID("cmdGuardar").Hidden(indicaModoLectura)
+                    .Icon(Icon.Disk)
+                    .CausesValidation(true)
+                //.DirectEvents(de =>
+                //{
+                //    de.Click.Url = Url.Action("CCEP00F2_Save_SS_HC_Alergia_FE");
+                //    de.Click.EventMask.ShowMask = true;
+                //    de.Click.Before = "return EnviarData('grid');";
+                //    //de.Click.Before = "return EnviarData(this.up('grid'));";
+                //    de.Click.Success = "onSuccess(result.data);";
+                //    de.Click.Failure = "onFailure();";
+                //}),
+
+                    .Handler("App.cmdGuardar.setDisabled(true); EnviarData(this.up('grid'));")
+                    ,
+
+                X.Button().Text("Cancelar").ID("btnCancel").Icon(Icon.Cancel).Handler("eventoCancelar(this.up('form'));").Hidden(indicaModoLectura),
+                X.Button().Text("Editar").ID("btnOnEdit").Icon(Icon.ApplicationFormEdit).Hidden(true).Handler("eventoOnEditar(App.btnOnEdit);"),
+                X.Button().Text("Variados").ID("cmdBuscar").Icon(Icon.Cancel).Hidden(true).OnClientClick("this.up('form').getForm().reset();")
+                )
+
+
+
+                ).Listeners(l => { l.FieldChange.Handler = "setIndicaCambios(true);"; })
+
+
+                );
+        })
+    )}

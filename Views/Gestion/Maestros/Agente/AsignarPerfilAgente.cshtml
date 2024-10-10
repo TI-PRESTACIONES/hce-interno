@@ -1,0 +1,363 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SG_Agente
+
+
+@{
+    var X = Html.X();
+
+    var esTipoUsuario = (Model.TipoAgente==2?true:false);
+    var descAgente = Model.Nombre;
+    var descTipoAgente = (Model.TipoAgente == 2 ? "Agente-Usuario":
+            (Model.TipoAgente == 1 ? "Agente-perfil" : "No def."));
+
+    var descSeleccion = (Model.TipoAgente == 2 ? "Agente-Pefil" : "Agente-Usuario");
+    var modoSeleccion = (Model.TipoAgente == 2 ? "LISTARPERFILES" : "LISTARUSUARIOS");
+    
+    var COLOR_BLUE01_temp = "#284A89";
+    var COLOR_RED01_temp = "#990000";
+    var COLOR_GREEN01_temp = "#177506";
+    var COLOR_YELLOW02_temp = "#D9A407";
+    
+}
+
+<script>
+
+    var template = 'color:{0};';
+    var cuenta = 0;
+    var change = function (value, meta) {
+        return value;
+
+    };
+
+
+    function addRecord(grid, agente, tipoAgente) {
+        if (App.cmbPerfilAdd.getValue() != null) {                        
+            var valorSelec = App.cmbPerfilAdd.getValue();
+            var perfil = (tipoAgente == 2 ? valorSelec : agente);
+            var usua = (tipoAgente == 2 ? agente : valorSelec);
+            if (validaDuplicado(perfil, usua)) {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Ya existe el Registro",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            } else {
+                cuenta = cuenta + 1;
+                grid.store.insert(0,
+                        {
+                            IdPerfil: (tipoAgente == 2 ? valorSelec : agente),
+                            IdUsuario: (tipoAgente == 2 ? agente : valorSelec),
+                            Estado: 2,
+                            Accion: 'INSERT',
+                            UsuarioCreacion: App.cmbPerfilAdd.getRawValue()
+                        });
+            }
+             
+        }else{
+            Ext.Msg.show({
+                title: "Advertencia" + usuario,
+                msg: "Debe seleccionar un Perfil/Usuario para añadirlo.",
+                icon: Ext.Msg.INFO,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+
+    };
+
+    function validaDuplicado(valor1, valor2) {
+        var estados = false;        
+        App.StoreAsignarPerfil.each(function (r) {            
+            if (r.get('IdPerfil') == valor1
+                && r.get('IdUsuario') == valor2
+                ) {
+                estados = true;
+            }
+        });        
+        return estados;
+    }
+    function trim(str) {
+        return str.replace(/^\s+|\s+$/g, "");
+    }
+
+
+    function deleteActual(record) {
+        var store = App.GridPanelPerfilUsuario.store;
+        store.remove(record);
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("add_DataDeletePerfilAgente"))',
+            params: {
+                MODO: 'DELETE',
+                usuario: record.data.IdUsuario,
+                perfil: record.data.IdPerfil
+            }
+        });
+
+    };
+
+    function save_PerfilAgente(agente) {
+        var i = 0;
+        var store = App.StoreAsignarPerfil;
+        var status;
+        var perfilusuariosArray = new Array();
+        store.each(function (r) {
+            var SG_PerfilUsuario = {
+                IdPerfil: r.get('IdPerfil'),
+                IdUsuario: r.get('IdUsuario'),
+                Estado: r.get('Estado'),
+                Accion: r.get('Accion')
+            };
+            perfilusuariosArray.push(SG_PerfilUsuario);
+        });
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("save_PerfilAgente"))',
+            params: {
+                MODO: 'NUEVO',
+                idWindow: "WindowAsignarPerfil",
+                data: perfilusuariosArray,
+                codagente: agente
+            }
+        });
+    };
+
+</script>
+
+@(Html.X().Store()
+        .ID("StoreComboPerfil")
+        .Model(Html.X().Model()
+            .IDProperty("IdAgente")
+            .Fields(
+            new ModelField("IdAgente"),
+            new ModelField("Nombre")
+            )
+        )
+        .DataSource(SoluccionSalud.Service.SG_AgenteService.
+             SvcSG_Agente.listarSG_AgenteAccion(null, modoSeleccion))
+)
+
+
+@(Html.X().Store()
+        .ID("StoreComboPerfilGrid")
+        .Model(Html.X().Model()
+            .IDProperty("IdAgente")
+            .Fields(
+            new ModelField("IdAgente"),
+            new ModelField("Nombre")
+            )
+        )
+        .DataSource(SoluccionSalud.Service.SG_AgenteService.
+             SvcSG_Agente.listarSG_AgenteAccion(null, modoSeleccion))
+)
+
+@(Html.X().Window()
+    .Width(550)
+    .Height(350)
+    .Maximizable(true)
+    .Modal(true)
+    .Constrain(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowAsignarPerfil")
+        .Title("Asignación de Perfiles")
+    .Padding(4)
+        //.X(0)
+        //.Y(0)
+        .TopBar(
+            X.Toolbar()
+            .Height(30)
+            .Items(
+                X.ToolbarSpacer(),
+                  X.Label().Html("<b><span style='color:" + COLOR_BLUE01_temp + ";'>" + descTipoAgente + ": " + Model.Nombre + "</span> </b>")                                
+                ,                
+                X.ToolbarFill(),
+                X.Button()
+                    .Text((Model.ACCION == "DELETE" ? "Eliminar" : "Guardar"))
+                    .Icon((Model.ACCION == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave))
+                        .Handler("save_PerfilAgente('" + Model.CodigoAgente + "');"),
+                X.Button()
+                    .Text("Cancelar")
+                    .Icon(Icon.Cancel)
+                    .DirectEvents(de =>
+                     {  //Model.ACCION : Posee el MODO ACTUAL
+                         de.Click.Url = Url.Action("cerrarWindow");
+                         //de.Click.EventMask.ShowMask = true;
+                         de.Click.ExtraParams.Add(new Parameter(
+                               "id", "WindowAsignarPerfil", ParameterMode.Value));
+                         //de.Click.Success = "onSuccess(result.data,'" + Model.ACCION + "');";
+                         //de.Click.Failure = "onSuccess(result.data,'"+ Model.ACCION + "');";
+                     }),
+                                          X.ToolbarSpacer(20)     
+                                         )
+                                     )
+    .Items(
+            X.GridPanel()
+                .ID("GridPanelPerfilUsuario")
+                .Border(false)
+                    .TopBar(
+                                    X.Toolbar()
+                                    .Items(
+                                        Html.X().ComboBox().ID("cmbPerfilAdd").LabelWidth(150)
+                                            .StoreID("StoreComboPerfil").Editable(false)
+                                        .DisplayField("Nombre")
+                                         .ValueField("IdAgente")
+                                         .FieldLabel("Seleccionar " + descSeleccion)
+                                         
+                                         ,
+                                         X.Button()
+                                                .Text("Agregar")
+                                                .Icon(Icon.Add)
+                                                .Width(90)
+                                                    .Handler("addRecord(this.up('grid'),'" + Model.IdAgente + "'," + Model.TipoAgente+ ");")
+                                    )
+                    )
+                    .Store(
+                    Html.X().Store()
+        //.AutoSync(true)
+                        .ID("StoreAsignarPerfil")
+                        .Model(
+                                Html.X().Model()
+                                .IDProperty(esTipoUsuario ? "IdPerfil" : "IdUsuario")
+        //.IDProperty("USUARIO")
+                                .Fields(
+                                        Html.X().ModelField().Name("IdPerfil"),
+                                        Html.X().ModelField().Name("IdUsuario"),
+                                        Html.X().ModelField().Name("Estado"),
+                                        Html.X().ModelField().Name("UsuarioCreacion"),
+
+                                        Html.X().ModelField().Name("Accion")
+                                )
+                            )
+                            .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                   .Url("getGrillaListaPerfilAgente")
+                                //.Url("../LPacientes/GrillaListadoPacientes")
+                                //.Url("../Controllers/Maestros/Usuario/UsuarioController/GrillaListadoPacientes")
+                                    .Reader(reader => reader.Add(Html.X().JsonReader()
+                                    .Root("data")
+                                    .TotalProperty("total")
+                                     .IDProperty(esTipoUsuario ? "IdPerfil" : "IdUsuario")
+                                        //.IDProperty("USUARIO")
+                                    )))
+                            )
+                            //.PageSize(10)
+                            /*.ServerProxy(
+                                Html.X().AjaxProxy()
+                                    .Url(Url.Action("getGrillaListaPerfilUsuario"))
+                                    //.ExtraParams
+                                    //.ExtraParams(new { containerId = "West1" })
+
+                            )*/
+                            .Parameters(ps =>
+                                ps.Add(new
+                                    {
+                                        agente = Model.IdAgente,
+                                        tipoagente = Model.TipoAgente
+                                     })
+                            )                            
+                            .AutoLoad(true)
+                        )
+                        .ColumnModel(
+        /*Html.X().ComponentColumn()
+            .Editor(true)
+                .DataIndex("PERFIL")
+            .Flex(1)
+            .Text("perfil")
+            .Component(Html.X().ComboBox()
+
+            .StoreID("StoreComboPerfil")
+            .DisplayField("NOMBRE")
+            .ValueField("USUARIO1")
+            ),*/
+                                     Html.X().ComponentColumn()
+                                                .Editor(true)
+                                                 .DataIndex("IdPerfil")
+                                                 .Text("Perfil")
+                                                .Width(80)
+                                                .Hidden(!esTipoUsuario)
+                                                .Component(
+                                                Html.X().TextField().ReadOnly(true)
+                                                    ),
+                                         Html.X().ComponentColumn()
+                                                    .Editor(true)
+                                                    .DataIndex("IdUsuario")
+                                                    .Text("Usuario")
+                                                    .Width(80)
+                                                     .Hidden(esTipoUsuario)
+                                                    .Component(
+                                                    Html.X().TextField().ReadOnly(true)
+                                                        ),
+                                  Html.X().ComponentColumn()
+                                                .Editor(true)
+                                                 .DataIndex("UsuarioCreacion")
+                                                 .Text(descSeleccion)
+                                                 .Flex(1)
+                                                .Hidden(false)
+                                                .Component(
+                                                Html.X().TextField().ReadOnly(true)
+                                                    ) ,                                                        
+                                          Html.X().ComponentColumn()
+                                                        .Editor(true)
+                                                         .DataIndex(esTipoUsuario ? "IdPerfil" : "IdUsuario")
+                                                         //.DataIndex("UsuarioCreacion")
+                                                         .Text(descSeleccion)
+                                                        .Flex(1)
+                                                        .Hidden(true)
+                                                        .Component(
+                                                            /*
+                                                            Html.X().ComboBox().ReadOnly(true)
+                                                                .StoreID("StoreComboPerfilGrid")
+                                                            .DisplayField("Nombre")
+                                                             .ValueField("IdAgente")*/
+                                                                Html.X().NumberField().ReadOnly(true)
+                                                            ),                                                        
+                                        Html.X().ComponentColumn()
+                                            .Editor(true)
+                                                    .DataIndex("Estado")
+                                            .Width(100)
+        //.Flex(1)
+                                            .Text("Estado")
+                                            .Component(Html.X().ComboBox()
+                                                .Editable(false)
+                                                .Items(
+                                                    new ListItem("Activo",2),
+                                                    new ListItem("Inactivo", 1)
+                                                )
+                                            ),
+                                        Html.X().CommandColumn()
+                                            .Width(80)
+                                            .Commands(
+                                                Html.X().GridCommand()
+                                                    .CommandName("Delete")
+                                                    .Icon(Icon.Delete)
+                                                    .Text("Eliminar")
+                                            )
+                                            .Listeners(ls => ls.Command.Handler = "deleteActual(record);"),
+                                     Html.X().ComponentColumn()
+                                                .Editor(true)
+                                                .DataIndex("Accion")
+                                                .Text("Acción")
+                                                .Hidden(true)
+                                                .Component(
+                                                Html.X().TextField().ReadOnly(true)
+                                                    )                                                   
+                                                    
+                            )
+                            .SelectionModel(
+                                    Html.X().RowSelectionModel().Mode(SelectionMode.Multi)
+                            )
+                            .Plugins(
+                                                         Html.X().CellEditing()
+                            )
+
+
+    )
+    .CloseAction(CloseAction.Destroy)
+        //.Html(DateTime.Now.ToLongTimeString())
+
+)
+
+

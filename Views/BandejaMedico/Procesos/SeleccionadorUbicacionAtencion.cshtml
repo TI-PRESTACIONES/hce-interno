@@ -1,0 +1,259 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_HC_Ubicacion
+
+@{
+    var X = Html.X();
+    var idWindow = "WindowSelecUbicacionAtencion";
+
+    //var indicadorModoLectura = (Model.Ruta == "SELECCION" ? false : true);
+    var indicadorModoLectura = false;
+    var indicaMODO = (Model.IdUbicacion != null && Model.IdUbicacion != 0) ? "UPADTE" : "NUEVO";
+    Model.Ruta = "SELECCION";
+    
+    var DESC_TITULO = (Model.TipoUbicacion == "T" ? "Tópico de Atención - "+(indicadorModoLectura ? "Actual (Ver)" : "Seleccionar") :
+                    (Model.TipoUbicacion == "C" ? "Cama  de Atención - " + (indicadorModoLectura ? "Actual (Ver)" : "Seleccionar") :
+                    "Ubicación de Atención - " + (indicadorModoLectura ? "Actual (Ver)" : "Seleccionar")));
+
+    var DESC_INFO = (Model.TipoUbicacion == "T" ? "El Tópico  ya ha sido asignado":
+                    (Model.TipoUbicacion == "C" ? "La Cama ya ha sido asignada":
+                    "La Ubicación de Atención ya ha sido asignada"));                    
+                    
+        var COLOR_BLUE01 = "#284A89";
+}
+
+<script>
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+    var COLOR_GREEN01 = "#177506";
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == -2)
+            return Ext.String.format(template, COLOR_GREEN01, "Activo/Asignado");
+        if (value == 2)
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+
+    var seleccionRecordActual = null;
+
+
+    function setSeleccion(record) {
+        seleccionRecordActual = record;
+    }
+
+
+    function enviarSeleccion() {
+        if (seleccionRecordActual != null) {
+            enviarSeleccionDirect(seleccionRecordActual);
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Seleccionar un elemento.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+
+    }
+
+    function enviarSeleccionDirect(record) {
+        if ('@(Model.Ruta)'!= "VER") {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action(Model.Accion))',
+                params: {
+                    MODO: '@(indicaMODO)',
+                    unidadrep: record.data.UnidadReplicacion,
+                    tipo: record.data.TipoUbicacion,
+                    id: record.data.IdUbicacion,
+                    cod: record.data.Codigo,
+                    descripcion: record.data.Nombre,
+                    idWindow: "WindowSelecUbicacionAtencion"
+                }
+            });
+        }
+    }
+
+    var eventoCheckFiltro = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+    var varTipoBuscar = "LOAD";
+    var accionBuscarFiltroSelecc = function (tipo) {
+        varTipoBuscar = tipo;
+        App.GridPanelSelUbicacion.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+</script>
+
+
+
+@(Html.X().Window()
+    .Width(480)
+    .Height(380)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+     .ID(idWindow)
+        .Title(DESC_TITULO)
+    .Padding(4)
+        //.X(0)
+        .Y(10)
+    .TopBar(
+                                     X.Toolbar()
+                                     .Height(30)
+                                         .Items(
+                                       X.Button()
+                                        .Text("Buscar")
+                                                .Icon(Icon.Find).Hidden(indicadorModoLectura)
+                                             .Handler("accionBuscarFiltroSelecc('FILTRO');"),
+                                                    X.ToolbarFill(),
+                                        X.Button()
+                                        .Text((Model.IdUbicacion != null && Model.IdUbicacion != 0) ?
+                                                "Reasignar selección" : "Asignar selección")
+                                        .Hidden(indicadorModoLectura)
+                                        .Icon(Icon.Accept)
+                                                .Handler("enviarSeleccion();")
+
+                                                 ,
+                                        //X.Button()
+                                        //    .Text((indicadorModoLectura ? "Aceptar" : "Cancelar"))                                           
+                                        //    .Icon((indicadorModoLectura ? Icon.Accept : Icon.Cancel))
+                                        //     .DirectEvents(de =>
+                                        //      {
+                                        //          de.Click.Url = Url.Action("cerrarWindow");
+                                        //          de.Click.ExtraParams.Add(new Parameter(
+                                        //                "id", "WindowSelecUbicacionAtencion", ParameterMode.Value));
+                                        //      })
+
+                                              X.Button()
+                                     .Text("Cancelar").Handler("App.WindowSelecUbicacionAtencion.close();").Icon(Icon.Cancel)
+                                              
+                                              
+                                         )
+
+    )
+    .Items(
+                        X.GridPanel()
+
+                            .TopBar(
+                                X.Toolbar()
+                                .Items(
+                                    X.ToolbarSpacer(10),
+                                   X.Checkbox().FieldLabel("Descripción")
+                                       .ID("chkId").Checked(true).Hidden(indicadorModoLectura)
+                                    .Handler("eventoCheckFiltro(App.chkId,App.tfBuscarSeleccDesc);").LabelWidth(70),
+                                    X.TextField().Hidden(indicadorModoLectura)
+                                    .ID("tfBuscarSeleccDesc").Disabled(true)
+                                    .FieldLabel(""),
+                                    X.Label().Hidden((Model.IdUbicacion != null && Model.IdUbicacion!=0) ? false : true)
+                                    .Html("<b><font color='" + COLOR_BLUE01 + "'>"+DESC_INFO+"</font></b>"),                                  
+                                    X.ToolbarFill()
+                                )
+                            )
+                            .Border(false)
+                            .Scroll(ScrollMode.Both)
+                            .AutoScroll(true)
+                                .ID("GridPanelSelUbicacion")
+        // .DefaultAnchor("100%")
+        //.Anchor("100% 100%")
+                            .Margins("0 0 0 0")
+
+                            // CONFIGURAR EL STORE
+                            .Store(store => store.Add(
+                                     Html.X().Store()
+                                         .ID("StoreSelUbicacion")
+                                         .AutoLoad(true)
+                                         .RemoteSort(false)
+                                         .IsPagingStore(true)
+                                         .RemotePaging(true)
+                                         .PageSize(10)////CAMBIAR DE ACUERDO A ALGÚN UN CRITERIO
+                                         .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                 .Url(Url.Action("getGrillaUbicacion"))
+                                             //.Url("../LPacientes/GrillaListadoPacientes")
+                                             //.Url("../Controllers/Maestros/Usuario/UsuarioController/GrillaListadoPacientes")
+                                                .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                .Root("data")
+                                                .TotalProperty("total")
+                                                     //.IDProperty("UnidadReplicacion")
+                                                     .IDProperty("IdUbicacion")
+                                                     )))
+                                                    )
+                                                    .Parameters(ps =>
+                                                    ps.Add(new
+                                                    {
+                                                        nombre = JRawValue.From("App.tfBuscarSeleccDesc.getValue()"),
+                                                        sucursal = Model.UnidadReplicacion,
+                                                        idubicacion = Model.IdUbicacion,
+                                                        tipoubicacion = Model.TipoUbicacion, //AUX                                                        
+                                                        tipoBuscar = JRawValue.From("varTipoBuscar")
+                                                    })
+                                                    )
+                                         .Model(model => model.Add(Html.X().Model()
+                                                 .Fields(fields =>
+                                                 {
+                                                     fields.Add(Html.X().ModelField().Name("UnidadReplicacion"));
+                                                     fields.Add(Html.X().ModelField().Name("Codigo"));
+                                                     fields.Add(Html.X().ModelField().Name("IdUbicacionPadre"));
+                                                     fields.Add(Html.X().ModelField().Name("TipoUbicacion"));
+                                                     fields.Add(Html.X().ModelField().Name("Nombre"));
+                                                     fields.Add(Html.X().ModelField().Name("Nivel"));
+                                                     fields.Add(Html.X().ModelField().Name("RutaDescripcion"));
+                                                     fields.Add(Html.X().ModelField().Name("Estado"));
+                                                     fields.Add(Html.X().ModelField().Name("IdUbicacion"));
+                                                     fields.Add(Html.X().ModelField().Name("Ruta"));
+
+                                                 }))
+                                                )
+                                              )
+                                   )
+
+                                ///CONFIGURAR LAS COLUMNAS
+                                .ColumnModel(columnModel =>
+                                {
+                                    columnModel.Columns.Add(Html.X().Column().Text("Código").DataIndex("Codigo").Width(90));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Id").DataIndex("IdUbicacion").Width(90).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Tipo Ubicación").DataIndex("TipoUbicacion").Width(100).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Nombre").DataIndex("Nombre").Width(200));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(100).Renderer("changeEstado"));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Id Padre").DataIndex("IdUbicacionPadre").Width(90)); 
+                                })
+                                 .View(Html.X().GridView().TrackOver(false))
+        //.View(view => view.Add(Html.X().GridView().TrackOver(false)))
+                                 .Border(false)
+                                .Listeners(l => l.CellDblClick
+                                           .Handler = "enviarSeleccionDirect(record);")
+                                .Listeners(l => l.CellClick
+                                   .Handler = "setSeleccion(record);")
+                                .BottomBar(bar => bar.Add(
+                                    Html.X().PagingToolbar()
+                                    //.DisplayInfo(true)
+                                    //.DisplayMsg("Displaying customers {0} - {1} of {2}"))
+                                ))
+
+                               /*.TopBar(X.Panel()
+                                    .Height(50)
+                                    .Title("Buscador")
+                                    .Border(false)
+                                )   */
+    )
+
+    .CloseAction(CloseAction.Destroy)
+
+)
+@(
+ X.KeyNav()
+        .Target("WindowSelecUbicacionAtencion")
+    .Enter(a => a.Handler = "accionBuscarFiltroSelecc('FILTRO');")
+)

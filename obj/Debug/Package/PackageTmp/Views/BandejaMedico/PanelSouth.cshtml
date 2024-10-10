@@ -1,0 +1,415 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SEGURIDADCONCEPTO
+
+@using Region = Ext.Net.Region
+@{
+    ViewBag.Title = "South1Hijo";
+    var X = Html.X();
+}
+<script>
+
+    var selActualEpiClinico = null;
+    var selActualEpiAtencion = null;
+    var selActualAccion = null;
+
+
+    var template = '<span style="color:{0};">{1}</span>';
+    var change = function (value) {
+        return Ext.String.format(template, (value > 0) ? "green" : "red", value);
+    };
+    var pctChange = function (value) {
+        return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+    };
+    var onSuccess = function (grid, data) {
+        grid.show();
+        grid.getStore().loadData(data);
+    };
+
+    function setSelectClinico(param1, param2, param3) {
+        App.TxtSeleccion.setValue(param1);
+        selActualEpiClinico = param1;
+        selActualEpiAtencion = param2;
+        selActualAccion = param3;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("SelectClinico"))',
+            params: {
+                Clinico: selActualEpiClinico,
+                Atencion: selActualEpiAtencion
+            }
+        });
+        if (selActualAccion == "Carajo") {
+            alert("llegosalido selccione" + param1 + " " + param2 + " " + param3);
+        }
+       
+    }
+
+    function editCentral() {
+        if (selActualAccion != null) {
+            var valores = selActualEpiAtencion;
+            var Form = "";
+ 
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("EditCentral"))',
+                params: {
+                    selection: valores,
+                    text: Form
+                }
+            });
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Seleccionar un Elemento con un código de Formulario correcto.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+    };
+    function VisorWindows() {
+        if (selActualAccion != null) {
+            var Clinico = selActualEpiClinico;
+            var Atencion = selActualEpiAtencion;
+            var Accion = selActualAccion;
+            var Vistas = "VisorFormularios";
+            if (Vistas == "Carajo") {
+                alert("llegosalido selccione" + Clinico + " " + Atencion + " " + Vistas);
+            }
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("VisorFormularios"))',
+                params: {
+                    Clinico: Clinico,
+                    Atencion: Atencion,
+                    Form: Vistas,
+                    Accion: Accion
+                }
+            });
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Seleccionar un Elemento con un código de Formulario correcto.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+    };
+    function validarfechas(obj,fecha1, fecha2) {        
+        if (fecha1!=null) {
+            if (fecha1 > fecha2) {
+                obj.setValue(null);
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Las fecha inicial no debe ser mayor que la fecha final.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+        }
+    }
+
+</script>
+
+@(Html.X().Store()
+        .ID("StoreComboProcesos")
+        .Model(Html.X().Model()
+            .IDProperty("CONCEPTO")
+            .Fields(
+                new ModelField("CONCEPTO"),
+                new ModelField("DESCRIPCION")
+            )
+        )
+        .DataSource(SoluccionSalud.Service.SeguridadService.SvcSeguridadConcepto.
+            GetSelectSP(Model))
+)
+
+@(Html.X().GridPanel()
+        // .Title("Customers")
+         //.Scroll(ScrollMode.Both)
+         //.AutoScroll(true)
+        //.Width(600)
+        //.Height(160)
+         .ID("GridPanel1")
+         .Layout(Ext.Net.LayoutType.Fit)
+         .Margins("0 0 2 2")
+         .Border(false)
+         .AutoScroll(true)
+         .TopBar(Html.X().Toolbar()
+                .Items(
+        // Html.X().Button()
+        //     .Text("Bitácora")
+        //    .Icon(Icon.Film),
+        // .Handler("this.up('grid').store.insert(0, new Person());this.up('grid').editingPlugin.startEdit(0, 0);"),
+        //  Html.X().ToolbarSeparator(),                      
+                        X.Checkbox()
+                        .FieldLabel("Procesos")
+                        .LabelWidth(50)
+                        .ID("chkProceso")
+                        .Listeners(l => l.Change.Handler = @"var checkAll = #{chkProceso}.getValue();
+                          if(checkAll){     
+                       #{comboProceso}.setDisabled(true);
+                       #{comboProceso}.setValue(null);
+                          }else{
+                       #{comboProceso}.setDisabled(false);   
+                          }")
+                        .Checked(true),                        
+                       Html.X().ComboBox()
+                              .ID("comboProceso")
+                              .Editable(true)
+                              //.MinWidth(200)
+                              .DisplayField("DESCRIPCION")
+                              .ValueField("CONCEPTO")                              
+                              //.MinLengthText("280")
+                              //.MinLength(300)
+                              .StoreID("StoreComboProcesos")
+                              //.FieldLabel("Procesos")
+                              .Width(150)
+                             
+                              .QueryMode(DataLoadMode.Local)
+                             // .TriggerAction(TriggerAction.Query)
+                              .TriggerAction(TriggerAction.All)
+                              .EmptyText("Seleccione un Proceso").Disabled(true),
+                            /*.Listeners(ls =>
+                                ls.Select.Handler = "alert('TEST'+App.comboProceso.y);"
+                            )*/
+                            /*.Items(
+                                    new ListItem("Diagnósticos", "BE"),
+                                    new ListItem("Consultas", "BR")
+                                 ),*/
+                                              //Html.X().ToolbarSeparator(),
+                            /*
+                            Html.X().ComboBox()
+                                    .ID("comboServicio")
+                                    .Editable(false)
+                                    .FieldLabel("Servicio")
+                                        .Width(150)
+                                         .LabelWidth(50)
+                                    .QueryMode(DataLoadMode.Local)
+                                    .TriggerAction(TriggerAction.All)
+                                    .EmptyText("Select a country")
+                                    .Listeners(ls =>
+                                        ls.Select.Handler = "App.ComboBoxCity.clearValue(); App.ComboBoxCity.getStore().load()"
+                                      )
+                                    .Items(
+                                          new ListItem("Servicio1", "BE"),
+                                           new ListItem("Servicio2", "BR")
+                                       ),*/
+                         Html.X().ToolbarSeparator(),
+                         X.Checkbox()
+                         .FieldLabel("Prof. de Salud")
+                          .LabelWidth(80)
+                         .ID("chkPersonal")
+                        .Listeners(l => l.Change.Handler = @"var checkAll = #{chkPersonal}.getValue();
+                          if(checkAll){     
+                       #{comboPersonal}.setDisabled(true);
+                       #{comboPersonal}.setValue(null);
+                          }else{
+                       #{comboPersonal}.setDisabled(false);   
+                          }")
+                         .Checked(true),                           
+                         Html.X().ComboBox()
+                                  .ID("comboPersonal")
+                                  .Width(100)
+                                   
+                                  .Editable(false)
+                                  //.FieldLabel("Prof. de Salud")                                   
+                                  .QueryMode(DataLoadMode.Local)
+                                  .TriggerAction(TriggerAction.All)
+                                  .EmptyText("Seleccione una opción")
+        //.Listeners(ls =>
+        //  ls.Select.Handler = "App.ComboBoxCity.clearValue(); App.ComboBoxCity.getStore().load()")
+
+                                  .Items(
+                                        new ListItem("Médicos", "BE"),
+                                        new ListItem("Enfermera", "BR")
+                                     ).Disabled(true),
+                               Html.X().ToolbarSeparator(),
+                                X.Checkbox()
+                                .FieldLabel("Buscar")
+                                 .LabelWidth(50)
+                                 .ID("chkBuscar")
+                                  .Listeners(l => l.Change.Handler = @"var checkAll = #{chkBuscar}.getValue();
+                                      if(checkAll){     
+                                   #{txtBuscar}.setDisabled(true);
+                                   #{txtBuscar}.setValue(null);
+                                      }else{
+                                   #{txtBuscar}.setDisabled(false);   
+                                      }")
+                                    .Checked(true),                                  
+                                    Html.X().TextField()
+                                        .ID("txtBuscar")                                                                                 
+                                        .Width(120)
+                                        .Disabled(true),
+                                        //.LabelWidth(50)
+                                        //.FieldLabel("Buscar"),
+                                Html.X().ToolbarSeparator(),
+                                   X.Checkbox()
+                                    //.FieldLabel("Desde")
+                                     //.LabelWidth(50)
+                                     .ID("chkFecha")
+                                      .Listeners(l => l.Change.Handler = @"var checkAll = #{chkFecha}.getValue();
+                                      if(checkAll){     
+                                           #{dfDesde}.setDisabled(true);
+                                           #{dfDesde}.setValue(null);
+                                            #{dfHasta}.setDisabled(true);
+                                           #{dfHasta}.setValue(null);
+                                      }else{
+                                           #{dfDesde}.setDisabled(false);
+                                           #{dfDesde}.setValue(null);
+                                            #{dfHasta}.setDisabled(false);
+                                           #{dfHasta}.setValue(null);
+                                      }")
+                                        .Checked(true),                                 
+                                   Html.X().DateField()
+                                        .ID("dfDesde")
+                                        .LabelWidth(40)                                        
+                                        .Width(150)
+                                        .Listeners(l => l.Change.Handler
+                                                = "validarfechas(App.dfDesde,App.dfDesde.getValue(),App.dfHasta.getValue());")                                        
+                                        .FieldLabel("Desde").Disabled(true),
+                                Html.X().ToolbarSeparator(),
+                                   Html.X().DateField()
+                                            .ID("dfHasta")
+                                        .Width(150)
+                                        .LabelWidth(40)
+                                        .Listeners(l => l.Change.Handler
+                                               = "validarfechas(App.dfHasta,App.dfDesde.getValue(),App.dfHasta.getValue());")
+                                        .FieldLabel("Hasta").Disabled(true),
+                                  X.TextField()
+                                  .ID("TxtSeleccion")
+                                  .Hidden(true),
+                            Html.X().ToolbarSeparator(),
+                            Html.X().Button()
+                                .Text("Filtrar")
+                                .Icon(Icon.FolderFind)
+                                .DirectEvents(directEvents =>
+                                                {
+                                                    directEvents.Click.Url = "HClinica/ListadoPacienteEpisodioAtencion";
+                                                    directEvents.Click.Success = "onSuccess(App.GridPanel1, result.data);";
+                                                    directEvents.Click.EventMask.ShowMask = true;
+                                                    directEvents.Click.EventMask.Msg = "Loading...";
+                                                    directEvents.Click.ExtraParams.Add(new
+                                                            {
+                                                                start = 0,
+                                                                limit = 4,
+                                                                proceso = JRawValue.From("App.comboProceso.getValue()"),
+                                                                profSalud = JRawValue.From("App.comboPersonal.getValue()"),
+                                                                txtbuscar = JRawValue.From("App.txtBuscar.getValue()"),
+                                                                fechaDesde = JRawValue.From("App.dfDesde.getValue()"),
+                                                                fechaHasta = JRawValue.From("App.dfHasta.getValue()"),
+                                                            });
+                                              }),
+                           // Html.X().Button()
+                           //         .Text("Nuevo Epis.")
+                           //         .Icon(Icon.ShapeSquareAdd)
+                           //         .ID("cmdNuevoEpisodio")
+                           //         .DirectEvents(directEvents =>
+                           //                             {
+                           //                                 directEvents.Click.Url = "HClinica/EstadoClinico";
+                           //                                 directEvents.Click.EventMask.Msg = "Loading...";
+                           //                                 directEvents.Click.ExtraParams.Add(new
+                           //                                 {
+                           //                                     selection = "",
+                           //                                     accion = "Nuevo"
+                           //                                 });
+                           //                             }),
+                           //Html.X().Button()
+                           //         .Text("Nueva Aten.")
+                           //         .Icon(Icon.ShapeSquareGo)
+                           //         .ID("cmdContinuaEpisodio")
+                           //         .DirectEvents(directEvents =>
+                           //                         {
+                           //                             directEvents.Click.Url = "HClinica/EstadoClinico";
+                           //                             directEvents.Click.EventMask.Msg = "Loading...";
+                           //                             directEvents.Click.ExtraParams.Add(new
+                           //                             {
+                           //                                 selection = JRawValue.From("App.TxtSeleccion.getValue()"),
+                           //                                 accion = "Continuar" 
+                           //                             });
+                           //                         }),
+                            Html.X().Button()
+                                    .Text("Ver")
+                                    .ID("cmdVer")
+                                    .Icon(Icon.ApplicationFormEdit)
+                                        .Listeners(l =>
+                                        {
+                                            l.Click.Handler =
+                                                // "aRecordMast.add(App.GridPanel1.getSelectionSubmit().getSelectionModelField().getValue());"; 
+                                                "VisorWindows();";
+                                    })
+                )
+          )
+       .Store(store => store.Add(
+                                Html.X().Store()
+                                          .ID("StoreListaAtenciones")
+        .AutoLoad(true)
+        .RemoteSort(false)
+        .IsPagingStore(true)
+        .RemotePaging(true)
+        .PageSize(4)
+        .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                    .Url("HClinica/ListadoPacienteEpisodioAtencion")
+                            .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                                   .Root("data")
+                                                                   .TotalProperty("total")
+                                                                            .IDProperty("Accion")))))
+                    
+        .Parameters(ps => 
+                    //ps.Add(new StoreParameter("grupo", Model.GRUPO, ParameterMode.Value)),
+                    ps.Add(
+                    new{
+                        start = 0,
+                        limit = 4,
+                        proceso = JRawValue.From("App.comboProceso.getValue()"),
+                        profSalud = JRawValue.From("App.comboPersonal.getValue()"),
+                        txtbuscar = JRawValue.From("App.txtBuscar.getValue()"),
+                        fechaDesde = JRawValue.From("App.dfDesde.getValue()"),
+                        fechaHasta = JRawValue.From("App.dfHasta.getValue()"),
+                    }                                    
+            )                 
+        )          
+                                                                
+        .Model(model => model.Add(Html.X().Model()
+                        .Fields(fields =>
+                        {
+                            fields.Add(Html.X().ModelField().Name("EpisodioClinico"));
+                            fields.Add(Html.X().ModelField().Name("IdEpisodioAtencion"));
+                            //fields.Add(Html.X().ModelField().Name("Persona"));
+                            fields.Add(Html.X().ModelField().Name("PersonalSaludNombre"));
+                            fields.Add(Html.X().ModelField().Name("especialidadNombre"));                            
+                            fields.Add(Html.X().ModelField().Name("MotivoConsulta"));
+                            //fields.Add(Html.X().ModelField().Name("FechaNacimiento"));                                                        
+                            fields.Add(Html.X().ModelField().Name("Accion"));
+                            fields.Add(Html.X().ModelField().Name("FechaRegistro"));
+                            
+                             
+                        })))))
+
+
+        .ColumnModel(columnModel =>
+        {
+            columnModel.Columns.Add(Html.X().Column().Text("EpisodioClinico").DataIndex("EpisodioClinico").Width(100).Hidden(true));
+            columnModel.Columns.Add(Html.X().Column().Text("IdEpisodioAtencion").DataIndex("IdEpisodioAtencion").Width(100).Hidden(true));
+            
+            //columnModel.Columns.Add(Html.X().Column().Text("Paciente").DataIndex("Persona").Width(100).Hidden(true));
+            columnModel.Columns.Add(Html.X().Column().Text("Atiende").DataIndex("PersonalSaludNombre").Width(250));
+            columnModel.Columns.Add(Html.X().Column().Text("Especialidad").DataIndex("especialidadNombre").Width(250));
+            columnModel.Columns.Add(Html.X().Column().Text("Diagnostico").DataIndex("MotivoConsulta").Width(300));
+            //columnModel.Columns.Add(Html.X().Column().Text("Fecha").DataIndex("FechaNacimiento").Width(100));                        
+            columnModel.Columns.Add(Html.X().Column().Text("Form").DataIndex("Accion").Width(100).Hidden(true));
+            columnModel.Columns.Add(Html.X().Column().Text("Fecha de registro").DataIndex("FechaRegistro").Width(120));
+
+        })
+        .View(view => view.Add(Html.X().GridView().TrackOver(false)))
+        .Listeners(l => l.CellDblClick
+            .Handler = "setSelectClinico(record.data.EpisodioClinico,record.data.IdEpisodioAtencion,record.data.Accion);")
+        .Listeners(l => l.CellClick
+            .Handler = "setSelectClinico(record.data.EpisodioClinico,record.data.IdEpisodioAtencion,record.data.Accion);")        
+        .BottomBar(bar => bar.Add(Html.X().PagingToolbar()
+                                          .DisplayInfo(true)
+                                          .DisplayMsg("Mostrando {0} - {1} of {2}")))
+         
+        .Border(false)
+
+
+)
+

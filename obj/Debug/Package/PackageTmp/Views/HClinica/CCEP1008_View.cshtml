@@ -1,0 +1,284 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_CE_DICCIONARIO
+
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+    }
+@section cabecera
+{
+<style>
+    html body {
+        padding: 0px;
+        background: none;
+        background: none;
+        background: none;
+        background-attachment: fixed;
+        background-position: center;
+        font-family: tahoma,verdana,sans-serif;
+        background-color: #ffffff;
+    }
+</style>
+
+<script>
+    var onWrite = function (store, operation) {
+        var record = operation.getRecords()[0],
+            name = Ext.String.capitalize(operation.action),
+            verb;
+
+        if (name == 'Destroy') {
+            verb = 'Destroyed';
+        } else {
+            verb = name + 'd';
+        }
+
+        Ext.net.Notification.show({ title: name, html: Ext.String.format("{0} user: {1}<br/>{2}", verb, record.getId(), operation.getResultSet().message) });
+    };
+</script>
+
+    <script>
+        var Valores;
+        var template = '<span style="color:{0};">{1}</span>';
+
+        var change = function (value) {
+            return Ext.String.format(template, (value > 0) ? "green" : "red", value);
+        };
+
+        var pctChange = function (value) {
+            return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+        };
+
+        var onSuccess = function (grid, data) {
+            grid.show();
+            grid.getStore().loadData(data);
+        };
+
+        function deleteSelected(grid) {
+            var store = grid.store,
+                records = grid.selModel.getSelection();
+
+            store.remove(records);
+            store.load(true);
+        }
+
+
+    </script>
+    <script>
+        var refreshTree = function (tree) {
+            App.direct.RefreshMenu({
+                success: function (node) {
+                    if (!Ext.isEmpty(node)) {
+                        tree.setRootNode(node);
+                    }
+                    else {
+                        tree.getRootNode().removeAll();
+                    }
+                }
+            });
+        };
+
+        refreshTree("TreeEast");
+    </script>
+
+  
+
+}
+
+@section cuerpo
+{
+
+    @(Html.X().Viewport()
+        .Layout(LayoutType.VBox)
+        //.Layout(LayoutType.Fit)
+        .LayoutConfig(
+            new VBoxLayoutConfig { Align = VBoxAlign.Stretch }
+        )
+        .Listeners(l =>
+        {
+            l.AfterLayout.BroadcastOnBus = "App.resize";
+            l.AfterLayout.Single = true;
+        })
+        .Items(regions =>
+        {
+        
+            regions.Add(Html.X().Panel()
+                .ItemID("center")
+                .DefaultAnchor("100%")
+                .AutoScroll(true)
+                .Height(340)
+               .Header(false)
+               .Border(true)
+               .Items(
+                      X.FieldSet()
+                            .ColumnWidth(0.4)
+                            .Title("DIAGNÓSTICO")
+                            //.Border(false)
+                            .MarginSpec("0 0 0 10")
+                            .Defaults(d =>
+                            {
+                                d.Add(new Parameter("DefaultAnchor", "100%"));
+                                d.Add(new Parameter("LabelAlign", "Left"));
+                                /*d.Add(new Parameter("LabelAlign", "Right"));
+                                d.Add(new Parameter("Width", "100%"));
+                                d.Add(new Parameter("LabelWidth", "100%"));*/
+                                
+                                d.Add(new Parameter("Width", "500"));
+                                d.Add(new Parameter("LabelWidth", "200"));
+                            })
+
+                            .DefaultAnchor("100%")
+                        .FieldDefaults(d =>
+                        {
+                            d.LabelAlign = LabelAlign.Right;
+                        })
+            
+                            .Items(
+                                       X.GridPanel()
+                                          .TopBar(
+                                                Html.X().Toolbar()
+                                                    .Items(
+                                                        Html.X().Button()
+                                                            .Text("Nuevo")
+                                                            .Icon(Icon.Add)
+                                                            .Handler("this.up('grid').store.insert(0, new PERSONAMAST());this.up('grid').editingPlugin.startEdit(0, 0);"),
+
+                                                        Html.X().Button()
+                                                            .ItemID("btnRemove")
+                                                            .Text("Eliminar")
+                                                            .Icon(Icon.Exclamation)
+                                                            .Handler("this.up('grid').deleteSelected();")
+                                                    )
+                                            )
+                            
+                                        //.Title("Listado de Pacientes")
+                                         .Scroll(ScrollMode.Both)
+                                         .AutoScroll(true)
+                                        .Layout(LayoutType.Anchor)
+                // .DefaultAnchor("100%")
+                                         .Anchor("100% 100%")
+                // .Width(100)
+                //.Width(600)
+                                        .Height(200)
+                                        .ID("GridPanel1")
+                                        .Frame(true)
+                //.Layout(Ext.Net.LayoutType.Auto)
+                                        .Margins("0 0 2 2")
+                                        .Border(false)
+
+                                       .Store(store => store.Add(Html.X().Store()
+
+                                       .AutoLoad(true)
+                                       .RemoteSort(false)
+                                       .IsPagingStore(true)
+                                       .RemotePaging(true)
+                                       .PageSize(5)
+
+                                       .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                           .Url("GrillaCIE10")
+                                                           .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                                                                  .Root("data")
+                                                                                                  .TotalProperty("total")
+                                                                                                  .IDProperty("PERSONA")))))
+                                      .Model(model => model.Add(Html.X().Model()
+                                                       .Fields(fields =>
+                                       {
+
+                                           fields.Add(Html.X().ModelField().Name("PERSONA"));
+
+                                           fields.Add(Html.X().ModelField().Name("APELLIDOPATERNO"));
+                                           fields.Add(Html.X().ModelField().Name("NOMBRECOMPLETO"));
+                                           fields.Add(Html.X().ModelField().Name("TIPODOCUMENTO"));
+                                           fields.Add(Html.X().ModelField().Name("DOCUMENTO"));
+                                           fields.Add(Html.X().ModelField().Name("CODIGOBARRAS"));
+                                           fields.Add(Html.X().ModelField().Name("ESTADO"));
+
+                                       })))))
+
+
+                                       .ColumnModel(columnModel =>
+                                       {
+                                           columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("PERSONA").Flex(1).Hidden(true));
+                                           columnModel.Columns.Add(Html.X().Column().Text("COD.CIE10").DataIndex("APELLIDOPATERNO").Width(80));
+                                           columnModel.Columns.Add(Html.X().Column().Text("NOMBRE DIAGNOSTICO").DataIndex("NOMBRECOMPLETO").Width(280));
+                                           columnModel.Columns.Add(Html.X().Column().Text("TIP.DIAGNOST.").DataIndex("TIPODOCUMENTO").Width(80));
+                                           columnModel.Columns.Add(Html.X().Column().Text("T.ANT.PATOLOG.").DataIndex("DOCUMENTO").Width(100));
+                                           columnModel.Columns.Add(Html.X().Column().Text("TMP.ENFERM.").DataIndex("CODIGOBARRAS").Width(100));
+                                           columnModel.Columns.Add(Html.X().Column().Text("ESTADO").DataIndex("ESTADO").Width(70));
+
+                                       })
+
+                                       .BottomBar(bar => bar.Add(Html.X().PagingToolbar()
+                                                                         .DisplayInfo(true)
+                                                                         .DisplayMsg("Displaying customers {0} - {1} of {2}")))
+                                       .View(view => view.Add(Html.X().GridView()))
+                                       .Border(false)
+                       
+                             )
+     
+                            
+                            
+                     )
+                      .Items(
+                      X.FieldSet()
+                            .ColumnWidth(0.4)
+                            .Title("INFORMACION COMPLEMENTARIA AL DIAGNOSTICO")
+                            .MarginSpec("0 0 0 10")
+                            .Defaults(d =>
+                            {
+                                d.Add(new Parameter("DefaultAnchor", "100%"));
+                                d.Add(new Parameter("LabelAlign", "Left"));
+                                /*d.Add(new Parameter("LabelAlign", "Right"));
+                                d.Add(new Parameter("Width", "100%"));
+                                d.Add(new Parameter("LabelWidth", "100%"));*/
+
+                                d.Add(new Parameter("Width", "500"));
+                                d.Add(new Parameter("LabelWidth", "200"));
+                            })
+
+                            .DefaultAnchor("100%")
+                        .FieldDefaults(d =>
+                        {
+                            d.LabelAlign = LabelAlign.Right;
+                        })
+
+                          .Items(
+ 
+                                X.TextArea()
+                                    .Name("Antecedenteregla")
+                                   // .FieldLabel("Antecedentes")
+                          )
+                     )
+                      
+                      .Items(
+                      
+                     )
+                     
+                    .Buttons(
+                            X.Button()
+                                .Text("Guardar")
+                                .Icon(Icon.Add)
+                                .OnClientClick("var form = this.up('form'); form.getForm().updateRecord(form.down('grid').getSelectionModel().getLastSelected());"),
+                            X.Button()
+                                .Text("Cancelar")
+                                .Icon(Icon.Cancel)
+                                .OnClientClick("this.up('form').getForm().reset();")
+
+                        )                     
+                );
+            /* */
+            
+            
+            /*  */
+            
+            
+
+        }
+        )
+        
+            
+      )
+    
+    }
+      
+ 

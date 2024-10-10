@@ -1,0 +1,477 @@
+﻿@model SoluccionSalud.Entidades.Entidades.WH_ItemMast
+
+@{
+    var X = Html.X();
+    var modoDesc = (Model.Accion == "NUEVO" ? "Nuevo" :
+                    (Model.Accion == "UPDATE" ? "Modificar" :
+                        (Model.Accion == "DELETE" ? "Eliminar" :
+                            (Model.Accion == "VER" ? "Ver" : "--"))));
+
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VER" ? false : false))));
+
+    var indicaModoLecturaKey = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? false :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VER" ? false : false))));
+
+    var STYLE_BACKGROUND_NODEIT = "background: #BBD8D6"; //BBD8D6  #9FBCB9
+    var COLOR_BORDER_DEFAULT = "#b5b8c8";
+
+    var STYLE_BORDER_DEF_VALID01 =
+        (Model.Item != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+    var STYLE_BORDER_DEF_VALID02 =
+            (Model.DescripcionLocal != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+}
+
+<script>
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_RED01 = "#990000";
+
+    var COLOR_BORDER_ERROR = "red";
+    var COLOR_BORDER_DEF = "#b5b8c8";
+    var COLOR_BACKGROUND_NOEDIT = "#9FBCB9";
+
+    var change = function (value, meta) {
+        return value;
+    };
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 0) {
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        }
+        if (value == 2) {
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+        }
+    };
+
+
+    function seleccionadorMedicamento() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorMedicamento"))',
+            params: {
+                accionSeleccion: 'getSeleccionPadreMaestroMedicamento',
+                accionListado: 'LISTARPAG'
+            }
+        });
+    };
+
+    var onSuccess = function (data) {
+        if (data != null) {
+            accionMensajes(data);
+        }
+    };
+
+
+    var onFailure = function (modo) {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Un error en el evento ',
+                titulo: "Error",
+                tipo: 'ERROR'
+            }
+        });
+    };
+
+    function cerrarWindow() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Se registró correctamente el usuario.',
+                accion: null
+            }
+        });
+    }
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "\t *" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+        } else {
+            App.taAlerts.setVisible(false);
+        }
+
+    };
+    var validarCampo = function (componente) {
+        if (componente.getValue() != null) {
+            if (componente.getValue().trim() == 0) {
+                componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+
+            } else {
+                componente.setFieldStyle("border-color: " + COLOR_BORDER_DEF);
+            }
+        } else {
+            componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+
+        }
+    };
+</script>
+
+@(Html.X().Window()
+    .Width(1000)
+    .Height(450)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    //.AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowCuerpoHumano")
+            .Title("Edición de Componentes:" + modoDesc)
+    .Padding(4)
+        //.X(0)
+        //.Y(0)
+    .Items(
+                Html.X().FormPanel()
+                             .Frame(false)
+                             .Border(false)
+                            .AutoScroll(true)
+                            .Layout(LayoutType.VBox)
+                            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                    .Items(
+                        Html.X().FormPanel()
+                             .Frame(false)
+                             .Border(false)
+                            .Layout(LayoutType.HBox)
+                            .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+
+                            .Items(
+                                    Html.X().FormPanel()
+                                    .Layout(LayoutType.Form)
+                                    .Width(990)
+                                    .FieldDefaults(d =>
+                                    {
+                                        d.LabelWidth = 100;
+                                    })
+                                    .BodyPadding(10)
+                                    .Frame(false)
+                                    .Border(false)
+                                    .Items(
+
+                                                X.FieldSet()
+
+                                                    .Title("Información General")
+                                                    .FieldDefaults(d =>
+                                                     {
+                                                         d.LabelWidth = 90;
+                                                         d.InputWidth = 120;
+                                                     })
+                                                     .Items(
+
+                                   Html.X().Container().Layout(LayoutType.HBox)
+                                   .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                   .Items(
+                                             X.TextFieldFor(c => c.Item)
+                                                      .FieldLabel("Articulo").ReadOnly(indicaModoLectura).Width(190)
+                                              .ReadOnly(true),
+
+                                             X.TextFieldFor(c=> c.DescripcionLocal)
+                                                              .FieldLabel("").ReadOnly(indicaModoLectura).Width(190)
+
+                                                      .RightButtons(
+                                                            X.Button().Disabled(indicaModoLectura)
+                                                            .Text("...")
+
+                                                             //.Handler("seleccionadorConceptoSeguridad();")
+                                                        ),
+                                       X.Checkbox()
+                                                   .FieldLabel("Reemplazo").ReadOnly(indicaModoLectura),
+                                       X.Checkbox()
+                                                   .FieldLabel("Impuesto").ReadOnly(indicaModoLectura),
+                                       X.Checkbox()
+                                                   .FieldLabel("Ind. Precio Anual").ReadOnly(indicaModoLectura),
+                                       X.Checkbox()
+                                                    .FieldLabel("Kit").ReadOnly(indicaModoLectura),
+                                       X.TextField()
+                                                    .FieldLabel("").ReadOnly(indicaModoLectura)
+                                              )
+                                              ,
+                                              Html.X().Container().Layout(LayoutType.HBox)
+                                   .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                   .Items(
+                                                 X.TextFieldFor(m => m.Linea)
+                                                        .ID("LineaDescripcion")
+                                                            .FieldLabel("Linea").ReadOnly(indicaModoLectura).Width(190),
+
+                                                        X.TextField()
+                                                             .ID("linea")
+                                                                  .FieldLabel("").ReadOnly(indicaModoLectura).Width(190)
+                                                                  
+                                                      .RightButtons(
+                                                            X.Button().Disabled(indicaModoLectura)
+                                                            .Text("...")
+
+                                                            // .Handler("seleccionadorConceptoSeguridad();")
+                                                        ),
+                                                  
+                                                 X.TextField()
+                                                      .FieldLabel("Centro Costo").ReadOnly(indicaModoLectura),
+
+                                                 X.TextField()
+                                                              .FieldLabel("").ReadOnly(indicaModoLectura)
+                                                      .RightButtons(
+                                                            X.Button().Disabled(indicaModoLectura)
+                                                            .Text("...")
+
+                                                         //    .Handler("seleccionadorConceptoSeguridad();")
+                                                        ))
+                                              ,
+                                              Html.X().Container().Layout(LayoutType.HBox)
+                                   .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                   .Items(
+
+                                                    X.TextFieldFor(m => m.Familia).ID("tfNombre").Width(190)
+                                                   .FieldLabel("Familia").ReadOnly(indicaModoLectura),
+
+                                                        X.TextField()
+                                                        .ID("familia")
+                                                              .FieldLabel("").ReadOnly(indicaModoLectura).Width(190)
+                                                      .RightButtons(
+                                                            X.Button().Disabled(indicaModoLectura)
+                                                            .Text("...")
+
+                                                           //  .Handler("seleccionadorConceptoSeguridad();")
+                                                        ),
+
+                                                     X.TextField()
+                                                          .FieldLabel("Clas. Mov.").ReadOnly(indicaModoLectura),
+
+                                                     X.TextField()
+                                                                  .FieldLabel("").ReadOnly(indicaModoLectura)
+                                                      .RightButtons(
+                                                            X.Button().Disabled(indicaModoLectura)
+                                                            .Text("...")
+
+                                                         //    .Handler("seleccionadorConceptoSeguridad();")
+                                                        ))
+                                              ,
+                                              Html.X().Container().Layout(LayoutType.HBox)
+                                   .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                   .Items(
+
+                                                X.TextFieldFor(m => m.SubFamilia).ID("tfDesc").Width(190)
+                                                .FieldLabel("subfamilia").ReadOnly(indicaModoLectura),
+                                                    X.TextField()
+                                                    .ID("subfamilia")
+                                                              .FieldLabel("").ReadOnly(indicaModoLectura).Width(190)
+                                                      .RightButtons(
+                                                            X.Button().Disabled(indicaModoLectura)
+                                                            .Text("...")
+
+                                                         //    .Handler("seleccionadorConceptoSeguridad();")
+                                                        ),
+
+                                                     X.TextField()
+                                                          .FieldLabel("Cpto. Gasto").ReadOnly(indicaModoLectura),
+
+                                                     X.TextField()
+                                                                  .FieldLabel("").ReadOnly(indicaModoLectura)
+                                                      .RightButtons(
+                                                            X.Button().Disabled(indicaModoLectura)
+                                                            .Text("...")
+
+                                                         //    .Handler("seleccionadorConceptoSeguridad();")
+                                                        )),
+                                              Html.X().Container().Layout(LayoutType.HBox)
+                                   .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                   .Items(
+                                       X.ComboBox()
+                                       .FieldLabel("Grupo").ReadOnly(indicaModoLectura)
+                                       .Items("Numero 1")
+                                       .Items("Numero 2")
+                                       .Items("Numero 3")
+                                   )
+
+                                            )
+                                    )),
+                                Html.X().FormPanel()
+                                .Layout(LayoutType.Form)
+                                .Width(500)
+                                .FieldDefaults(d =>
+                                 {
+                                     d.LabelWidth = 150;
+                                 })
+                                .BodyPadding(10)
+                                .Frame(false)
+                                    .Border(false)
+                                    .Items(
+
+                                                X.FieldSet()
+
+                                                    .Title("Información Adicional")
+                                                    .FieldDefaults(d =>
+                                                     {
+                                                         d.LabelWidth = 90;
+                                                         d.InputWidth = 120;
+                                                     })
+                                                    .Items(
+
+                                                      Html.X().Container().Layout(LayoutType.HBox)
+                                                      .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                                          .Items(
+                                               X.ComboBoxFor(m=> m.Estado)
+                                              .ID("tfBuscarEst")
+                                              .Name("buscarEst")
+                                              .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenericoTxt("ESTADOVAR").Select(d => new ListItem(d.Name, d.Codigo)))
+                                                  .FieldLabel("").ReadOnly(indicaModoLectura)
+                                              .SimpleSubmit(true)
+                                           .FieldLabel("Estado").ReadOnly(indicaModoLectura),
+
+                                                            X.TextFieldFor(m => m.UsuarioCreacion).ID("tfUserCreacion")
+                                                                .FieldLabel("Creación").ReadOnly(true).LabelWidth(60),
+                                                            X.DateFieldFor(m => m.FechaCreacion).ID("dfFechaCreacion")
+                                                            .Format("dd/MM/yyyy").ReadOnly(true).HideLabel(true).Width(80), 
+                                                            X.TimeFieldFor(m => m.FechaCreacion).ID("dfHoraCrea")
+                                                            .Format("H:mm:ss").ReadOnly(true).HideLabel(true),
+                                                            X.TextFieldFor(m => m.UltimoUsuario).ID("tfUserModif")
+                                                                .FieldLabel("Modificación").ReadOnly(true),
+                                                            X.DateFieldFor(m => m.UltimaFechaModif).ID("dfFechaModif")
+                                                            .Format("dd/MM/yyyy").ReadOnly(true).HideLabel(true).Width(80),
+                                                            X.TimeFieldFor(m => m.UltimaFechaModif).ID("dfHoraModif")
+                                                            .Format("H:mm:ss").ReadOnly(true).HideLabel(true).Width(80)                                                        
+                                                     )
+                                     )),
+                                     
+                                Html.X().FormPanel()
+                                .Layout(LayoutType.Form)
+                                .Width(500)
+                                .FieldDefaults(d =>
+                                 {
+                                     d.LabelWidth = 150;
+                                 })
+                                .BodyPadding(10)
+                                .Frame(false)
+                                    .Border(false)
+                                    .Items(
+
+                                                X.FieldSet()
+
+                                                    .Title("Precio")
+                                                    .FieldDefaults(d =>
+                                                     {
+                                                         d.LabelWidth = 90;
+                                                         d.InputWidth = 120;
+                                                     })
+                                                     .Items(
+                   X.GridPanel()
+                        .Border(false)
+                        .Scroll(ScrollMode.Both)
+                        .AutoScroll(true)
+                        .ID("GridPanela")
+                            .Margins("0 0 0 0")
+                            .Store(store => store.Add(
+                                 Html.X().Store()
+                                     .ID("Store1a")
+                                     .AutoLoad(true)
+                                     .RemoteSort(false)
+                                     .IsPagingStore(true)
+                                     .RemotePaging(true)
+                                     .PageSize(10)////CAMBIAR DE ACUERDO A ALGÚN UN CRITERIO
+                                     .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                            .Url("getGrillaComponenteBase")
+                                                        .Reader(reader => reader.Add(Html.X().JsonReader()
+                                            .Root("data")
+                                            .TotalProperty("total")
+                                                             .IDProperty("IdListaBase")
+                                                             .IDProperty("TipoComponente")
+                                                              .IDProperty("CodigoComponente"))))
+                                                )
+                                                 .Model(model => model.Add(Html.X().Model()
+                                             .Fields(fields =>
+                                             {
+                                                 fields.Add(Html.X().ModelField().Name("IdListaBase"));
+                                                 fields.Add(Html.X().ModelField().Name("TipoComponente"));
+                                                 fields.Add(Html.X().ModelField().Name("CodigoComponente"));
+                                                 fields.Add(Html.X().ModelField().Name("Periodo"));
+                                                 fields.Add(Html.X().ModelField().Name("Moneda"));
+                                                 fields.Add(Html.X().ModelField().Name("PrecioUnitarioLista"));
+                                                 fields.Add(Html.X().ModelField().Name("PrecioUnitarioBase"));
+                                                 fields.Add(Html.X().ModelField().Name("FechaValidezInicio"));
+                                                 fields.Add(Html.X().ModelField().Name("FechaValidezFin"));
+                                                 fields.Add(Html.X().ModelField().Name("Estado"));
+                                             }))
+                                            )
+                                          )
+                               )
+                                   .ColumnModel(columnModel =>
+                                {
+                                    columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("IdListaBase").Width(80));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Tipo").DataIndex("TipoComponente").Width(80));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Código").DataIndex("CodigoComponente").Width(100));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Periodo").DataIndex("Periodo").Width(80));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Moneda").DataIndex("Moneda").Width(80));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Precio Unitario Lista").DataIndex("PrecioUnitarioLista").Width(80));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Precio Unitario Base").DataIndex("PrecioUnitarioBase").Width(80));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Fecha Validez Inicio").DataIndex("FechaValidezInicio").Width(120));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Fecha Validez Fin").DataIndex("FechaValidezFin").Width(120));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(80)
+                                        .Renderer("changeEstado")
+                                    );  
+
+                                })
+                        ))
+                         )
+                         .TopBar(
+                             X.Toolbar()
+                             .Height(30)
+                             .Items(
+                                X.ToolbarFill(),
+                                    X.Button()
+                                    .Hidden((Model.Accion == "VER" ? true : false))
+                                    .ID("btnSave")
+                                    .Text((Model.Accion == "DELETE" ? "Eliminar" : "Guardar"))
+                                    .Icon((Model.Accion == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave))
+        //.DirectClickAction("save_Usuario"),
+                                     .DirectEvents(de =>
+                                      {  //Model.ACCION : Posee el MODO ACTUAL
+                                          de.Click.Url = Url.Action("save_Medicamento");
+                                          de.Click.Before = "App.btnSave.setDisabled(true); ";
+                                          de.Click.After = "App.btnSave.setDisabled(false); ";  
+                                          de.Click.EventMask.ShowMask = true;
+                                          de.Click.ExtraParams.Add(new Parameter("MODO", Model.Accion, ParameterMode.Value));
+                                          de.Click.ExtraParams.Add(new Parameter("idWindow", "WindowCuerpoHumano", ParameterMode.Value));
+                                          de.Click.Success = "onSuccess(result.data);";
+                                          de.Click.Failure = "onFailure('" + Model.Accion + "');";
+
+                                      }),
+                                X.Button()
+                                    .Text((Model.Accion == "VER" ? "Aceptar" : "Cancelar"))
+                                    .Icon((Model.Accion == "VER" ? Icon.Accept : Icon.Cancel))  
+                                     .DirectEvents(de =>
+                                      {  //Model.ACCION : Posee el MODO ACTUAL
+                                          de.Click.Url = Url.Action("cerrarWindow");
+                                          //de.Click.EventMask.ShowMask = true;
+                                          de.Click.ExtraParams.Add(new Parameter(
+                                                "id", "WindowCuerpoHumano", ParameterMode.Value));
+                                          //de.Click.Success = "onSuccess(result.data,'" + Model.ACCION + "');";
+                                          //de.Click.Failure = "onSuccess(result.data,'"+ Model.ACCION + "');";
+                                      }),
+                                          X.ToolbarSpacer(20)     
+                                 )
+                            )
+
+                //)
+            )
+                .DirectEvents(de =>
+                {
+                    de.Render.Url = Url.Action("postWindowMedicamentos");
+                    de.Render.ExtraParams.Add(new Parameter(
+                          "linea", "" + Model.Linea, ParameterMode.Value));
+                    de.Render.ExtraParams.Add(new Parameter(
+                          "familia", "" + Model.Familia, ParameterMode.Value));
+                    de.Render.ExtraParams.Add(new Parameter(
+                          "subfamilia", "" + Model.SubFamilia, ParameterMode.Value));
+                })
+    .CloseAction(CloseAction.Destroy)
+)

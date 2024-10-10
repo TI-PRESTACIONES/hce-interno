@@ -1,0 +1,401 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_HC_FormatoCampo
+
+@{
+    var X = Html.X();
+    var idWindow = "WindowAgente";
+    var modoDesc = (Model.Accion == "NUEVO" ? "Nuevo" :
+                    (Model.Accion == "UPDATE" ? "Modificar" :
+                        (Model.Accion == "DELETE" ? "Eliminar" :
+                            (Model.Accion == "VER" ? "Ver" : "--"))));
+
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VER" ? false : false))));
+
+    var indicaModoLecturaKey = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? false :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VER" ? false : false))));
+
+    var STYLE_BACKGROUND_NODEIT = "background: #BBD8D6"; //BBD8D6  #9FBCB9
+    var COLOR_BORDER_DEFAULT = "#b5b8c8";
+
+    var STYLE_BORDER_DEF_VALID01 =
+        (Model.SecuenciaCampo != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+    var STYLE_BORDER_DEF_VALID02 =
+            (Model.IdFormato != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+
+}
+
+<script>
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_RED01 = "#990000";
+
+    var COLOR_BORDER_ERROR = "red";
+    var COLOR_BORDER_DEF = "#b5b8c8";
+    var COLOR_BACKGROUND_NOEDIT = "#9FBCB9";
+
+    var change = function (value, meta) {
+        return value;
+    };
+
+    function seleccionadorFormato() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorFormato"))',
+            params: {
+                AccionSeleccion: 'getSeleccionFormatoC',
+                AccionListado: 'LISTARPAG'
+            }
+        });
+    };
+
+    function seleccionadorTablaCampo() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorTablaCampo"))',
+            params: {
+                accionSeleccion: 'getSeleccionTablaCampo',
+                accionListado: 'LISTARPAG'
+            }
+        });
+    };
+
+    function cerrarWindow() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Se registró correctamente el Agente.',
+                accion: null
+            }
+        });
+    }
+
+    var onSuccess = function (data) {
+        if (data != null) {
+            accionMensajes(data);
+        }
+    };
+
+    var onFailure = function (modo) {
+        App.btnSave.setDisabled(false);
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Un error en el evento ',
+                titulo: "Error",
+                tipo: 'ERROR'
+            }
+        });
+    };
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "\t *" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+        } else {
+            App.taAlerts.setVisible(false);
+        }
+
+    };
+
+    var validarCampo = function (componente) {
+        if (componente.getValue() != null) {
+            if (componente.getValue().trim() == 0) {
+                componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+
+            } else {
+                componente.setFieldStyle("border-color: " + COLOR_BORDER_DEF);
+            }
+        } else {
+            componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+
+        }
+    };
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+        } else {
+            App.taAlerts.setVisible(false);
+        }
+
+    };
+
+    var getInvalidFields = function (form) {
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+        });
+        return invalidFields;
+    };
+
+    var beforeSave = function (form) {
+        var FieldsInvalidos = getInvalidFields(form);
+        if (!form.getForm().isValid()) {
+            if (FieldsInvalidos.length > 0) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("addRecursosValidacion"))',
+                    params: {
+                        data: FieldsInvalidos,
+                        indica: 'VALIDAR',
+                    },
+                    success: function (result) {
+                        accionMensajes(result.data);
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("addRecursosValidacion"))',
+                            params: {
+                                data: FieldsInvalidos,
+                                indica: 'RESTART',
+                            }
+                        });
+                    }
+                });
+
+            }
+        }
+    };
+
+    var eventoCheck = function (check, componente) {
+        var checkAll = check.getValue();
+        if (!checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    }
+
+</script>
+
+@(Html.X().Window()
+    .Width(450)
+    .Height(450)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID(idWindow)
+        .Title("Registro de Formato Campo:" + modoDesc)
+    .Padding(4)
+        //.X(0)
+        //.Y(0)
+    .Items(
+                    Html.X().FormPanel().ID("FormPanel1")
+                             .Frame(false)
+                             .Border(false)
+                            .AutoScroll(true)
+                            .Layout(LayoutType.VBox)
+                            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                    .Items(
+                        Html.X().FormPanel()
+                             .Frame(false)
+                             .Border(false)
+                            .Layout(LayoutType.HBox)
+                            .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+
+                            .Items(
+                                    Html.X().FormPanel()
+                                    .Layout(LayoutType.Form)
+                                    .Width(600)
+                                    .FieldDefaults(d =>
+                                    {
+                                        d.LabelWidth = 100;
+                                    })
+                                    .BodyPadding(10)
+                                    .Frame(false)
+                                    .Border(false)
+                                    .Items(
+
+
+                                                                       X.TextFieldFor(m => m.IdCampo).Width(60).ReadOnly(true).Hidden(true)
+                                                                .FieldLabel(""),
+
+                                                                 X.TextFieldFor(m => m.TipoCampo).Width(60).ReadOnly(true).Hidden(true)
+                                                              .FieldLabel(""),
+
+                                            X.NumberFieldFor(c => c.SecuenciaCampo)
+                                                                      .FieldLabel("Secuencia")
+                                                                      .ReadOnly(true).Width(250).Hidden(true),
+                                     
+                                          X.TextFieldFor(c => c.IdFormato).Width(200)
+                                           .ReadOnly(true)
+                                           .FieldLabel("Formato"),
+
+                                                  X.TextField().ID("txtIdPadreF").Width(300)
+                                               .ReadOnly(true)
+                                                            .FieldLabel("Código"),
+
+                                              X.TextField().ID("txtIdDesF").Width(300)
+                                               .ReadOnly(true)
+                                                            .FieldLabel("Nombre Formato")
+                                                 .RightButtons(
+                                                X.Button().Text("...").Disabled(indicaModoLectura)
+                                                    .Handler("seleccionadorFormato();"))       
+                                              ,
+
+                                   X.TextFieldFor(m => m.IdFavoritoTabla).ReadOnly(true).Width(200)
+                                                .FieldLabel("Tabla"),
+
+                                                           X.TextFieldFor(m => m.ValorPorDefecto).ReadOnly(indicaModoLectura).Width(300)
+                                                                      .FieldLabel("Nombre Tabla").ReadOnly(true)
+                                                           .RightButtons(                                                                                                                                
+                                                            X.Button().Text("...").Disabled(indicaModoLectura)
+                                                        .Handler("seleccionadorTablaCampo();")),
+
+                                                 
+
+                                                   X.ComboBoxFor(m => m.IdSeccionFormato).Width(300).FieldLabel("Sección").Value(1)
+                                                   .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("CORREC").Select(d => new ListItem(d.Name, d.ID)))
+                                                        .SimpleSubmit(true).ReadOnly(indicaModoLectura).Editable(false)
+
+                                                            ,
+                                                          
+                                               
+
+                                                      X.TextFieldFor(m => m.Formula).ReadOnly(indicaModoLectura).Width(300)
+                                                          .FieldLabel("Formula"),
+                                                    
+                                                   X.ComboBoxFor(m => m.Estado).Width(300)
+                                              .Editable(false)
+                                              .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico
+                                              .GetComboGenerico("ESTADOINT").Select(d => new ListItem(d.Name, d.ID)))
+                                              .FieldLabel("Estado").Value(2)
+                                              .SimpleSubmit(true).ReadOnly(indicaModoLectura)   
+                                            ,   X.NumberFieldFor(c => c.IndicadorObligatorio)
+                                                .FieldLabel("Indica Obligatorio")
+                                                    .ReadOnly(indicaModoLectura).Width(300)
+                                                             
+                                    )
+                                    
+
+                                    ),
+                                    Html.X().FormPanel()
+                                    .Layout(LayoutType.Form)
+                                    .Width(500)
+                                    .FieldDefaults(d =>
+                                     {
+                                         d.LabelWidth = 150;
+                                     })
+                                    .BodyPadding(10)
+                                    .Frame(false)
+                                        .Border(false)
+                                        .Items(
+
+                                                    X.FieldSet()
+
+                                                        .Title("Información Adicional")
+                                                        .FieldDefaults(d =>
+                                                         {
+                                                             d.LabelWidth = 90;
+                                                             d.InputWidth = 120;
+                                                         })
+                                        .Items(
+                                                
+                                                          Html.X().Container().Layout(LayoutType.HBox)
+                                                          .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                                
+                                                           .Items(
+                                                                X.TextFieldFor(m => m.UsuarioCreacion)
+                                                                    .FieldLabel("Creación").ReadOnly(true),
+                                                                    
+                                                                X.DateFieldFor(m => m.FechaCreacion)
+                                                                .Format("dd/MM/yyyy").ReadOnly(true).HideLabel(true).Width(80),
+                                                                
+                                                           X.TimeFieldFor(m => m.FechaCreacion).ID("dfHoraCrea").Format("H:mm:ss").ReadOnly(true).HideLabel(true).Width(80)
+                                                           ),
+                                                            Html.X().Container().Layout(LayoutType.HBox)
+                                                            .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+
+                                                            .Items(
+                                                                X.TextFieldFor(m => m.UsuarioModificacion)
+                                                                    .FieldLabel("Modificación").ReadOnly(true),
+                                                                    
+                                                                X.DateFieldFor(m => m.FechaModificacion)
+                                                                .Format("dd/MM/yyyy").ReadOnly(true).HideLabel(true).Width(80),
+                                                                
+                                                             X.TimeFieldFor(m => m.FechaModificacion).ID("dfHoraModif").Format("H:mm:ss").ReadOnly(true).HideLabel(true).Width(80)
+                                                            )
+                                                         )
+                                             ),
+
+                                X.TextArea().ID("taAlerts")
+                                 .Border(false)
+                                 .StyleSpec("background:white;border:1px solid gray;")
+                                 .FieldStyle("color: red")
+                                 .Hidden(true)
+                                 .ReadOnly(true)
+                         )
+                         .TopBar(
+                             X.Toolbar()
+                             .Height(30)
+                             .Items(
+                                X.ToolbarFill(),
+                                    X.Button()
+                                            .Hidden((Model.Accion == "VER" ? true : false))
+                                            .ID("btnSave")
+                                            .Text((Model.Accion == "DELETE" ? "Eliminar" : "Guardar"))
+                                            .Icon((Model.Accion == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave))
+    
+                                             .DirectEvents(de =>
+                                             {
+                                                 de.Click.Url = Url.Action("save_formatocampo");
+                                                      de.Click.Before = "App.btnSave.setDisabled(true); " +
+                                                                    "beforeSave(App.FormPanel1); return App.FormPanel1.getForm().isValid(); ";
+                                                      de.Click.After = "App.btnSave.setDisabled(false); ";
+                                                      de.Click.EventMask.ShowMask = true;
+                                                      de.Click.ExtraParams.Add(new Parameter("MODO", Model.Accion, ParameterMode.Value));
+                                                      de.Click.ExtraParams.Add(new Parameter("idWindow", idWindow, ParameterMode.Value));
+                                                      de.Click.Success = "onSuccess(result.data);";
+                                                      de.Click.Failure = "onFailure('" + Model.Accion + "');";
+
+                                                  }),
+                                        X.Button()
+                                            .Text((Model.Accion == "VER" ? "Aceptar" : "Cancelar"))
+                                            .Icon((Model.Accion == "VER" ? Icon.Accept : Icon.Cancel))
+                                     .DirectEvents(de =>
+                                      {  
+                                          de.Click.Url = Url.Action("cerrarWindow");
+                                          de.Click.ExtraParams.Add(new Parameter(
+                                                "id", idWindow, ParameterMode.Value));
+                                      }),
+                                      X.ToolbarSpacer(20)
+                                 )
+                            )
+)
+
+
+                            .DirectEvents(de =>
+                            {
+                                de.Render.Url = Url.Action("postWindowTablaCampo");
+                                de.Render.ExtraParams.Add(new Parameter(
+                                      "idfavorito", "" + Model.IdFavoritoTabla, ParameterMode.Value));
+                                de.Render.ExtraParams.Add(new Parameter(
+                                      "idcampo", "" + Model.IdCampo, ParameterMode.Value));
+                                de.Render.ExtraParams.Add(new Parameter(
+                                      "idformato", "" + Model.IdFormato, ParameterMode.Value));
+                            })
+    .CloseAction(CloseAction.Destroy)
+)
+

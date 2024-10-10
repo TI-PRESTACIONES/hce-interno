@@ -1,0 +1,388 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.PERSONAMAST
+@{
+    var X = Html.X();
+    var COLORBORDE="#ef092c";
+    var STYLE_TEXT = "Border : none; background: none; font: normal 11px tahoma; height: 18px;";
+    var STYLE_BORDERFIELDSET = "border-color: #FA5858;";
+    var STYLE_BORDERFIELDSET2 = "border: 1px solid #ef092c;";                       
+    var STYLE_LABEL = "'width:100px;height: 18px; margin-right:5px; font: bold 11px tahoma ; color: #284A89 ' >";
+    var STYLE_LABEL_SMALL = "'width:10px;height: 18px; margin-right:5px; font: bold 11px tahoma ; color: #284A89 ' >";
+    var STYLE_LABELALERGIAS = "'width:100px;height: 18px; margin-right:5px; font: bold 11px tahoma ; color: #FA5858 ' >";
+    
+    var STYLE_ETQ_ABR = "<label style= ";
+    var STYLE_ETQ_CER = "</label>";
+
+    var STYLE_ETQ_ABRTITULO = "<b style= ";
+    var STYLE_ETQ_CERTITULO = "</b>";
+    var COLORBLU01 = "#284A89";
+
+    if (Model.Direccion == "" && Model.DireccionEmergencia == "")
+    {
+        COLORBLU01 = "#136af1";
+        COLORBORDE = "#b5b8c8";
+        STYLE_LABELALERGIAS = "'width:100px;height: 18px; margin-right:5px; font: bold 11px tahoma ; color: #284A89 ' >";
+    }
+    else
+    {
+        COLORBLU01 = "#284A89";
+        COLORBORDE = "#ef092c";
+        STYLE_LABELALERGIAS = "'width:100px;height: 18px; margin-right:5px; font: bold 11px tahoma ; color: #FA5858 ' >";
+    }
+        
+                                                    
+}
+
+<script>
+
+    var seleccionDataActual = null;
+    function setSeleccionRecord(record) {
+        seleccionDataActual = record;
+    }
+
+    @*function verAcompanante() {
+             
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("verAcompanante"))',
+                params: {
+                    MODO: 'VER'
+                    
+
+                }
+            });
+         
+    };*@
+
+
+    function verDetallePaciente() {
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("verDetallePaciente"))',
+            params: {
+                MODO: 'VER'
+
+
+            }
+        });
+
+    };
+
+    function calcular_edad(fecha) {
+        var edad = null;
+        var FechaNac = null;
+        if (fecha != null) {
+            var fechaActual = new Date();
+            var diaActual = fechaActual.getDate();
+            var mmActual = fechaActual.getMonth() + 1;
+            var yyyyActual = fechaActual.getFullYear();
+            var diaCumple = fecha.getDate();
+            var mmCumple = fecha.getMonth() + 1;
+            var yyyyCumple = fecha.getFullYear();
+            edad = yyyyActual - yyyyCumple;
+            if ((mmActual < mmCumple) || (mmActual == mmCumple && diaActual < diaCumple)) {
+                edad--;
+            }
+        }
+        return edad;
+    };
+
+    function setValorEdad(componente, fechaNac) {
+        var edad = calcular_edad(fechaNac);
+        componente.setValue(edad);
+    };
+
+    function eventoCallValidaReglaGen(TIPO_REGLA) {
+        if (TIPO_REGLA = 'REGLA01') {
+
+        } else {
+
+        }
+    }
+
+
+
+</script>
+
+
+@(X.Panel()
+        .ID("North001")
+        .Layout(LayoutType.HBox)
+        //.AutoScroll(true)
+        .Border(false)
+        .DefaultAnchor("100% 100%")
+        //.LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.StretchMax })
+        .Listeners(l =>
+            {
+                l.AfterLayout.BroadcastOnBus = "App.resize";
+                l.AfterLayout.Single = true;
+                l.AfterLayout.Handler = "App.fsPreexistencias.setWidth(300);";
+                /*l.AfterRender.Handler =
+                    "eventoValidaReglaGen('POSaludControlGinecologia', '" + (Url.Action("POSaludControlGinecologia")) + "');" +
+                    "eventoValidaReglaGen('POSaludExamenLaboratorio', '" + (Url.Action("POSaludExamenLaboratorio")) + "');" +                                        
+                    "";*/
+            })
+        .Items(
+                X.Panel()
+                //.Title("Datos básicos del paciente")
+                // .ResizableConfig(new Resizer() { MinHeight = 120, MinWidth = 120, Transparent = true })
+                .ID("West1.1")
+                .Width(460)
+                .MinWidth(225)
+                .MaxWidth(500)
+                .Split(true)
+                .Border(false)
+                .Items(
+                    X.Panel()
+                    .Border(false)
+                    .BodyPadding(6)
+                    .Items(
+                            X.FieldSet()
+                            .Title("<b>Datos básicos del paciente</b>")
+                            .ColumnWidth(0.4)
+                            .MarginSpec("0 0 0 5")
+                            .Defaults(d =>
+                            {
+                                // d.Add(new Parameter("Width", "80"));
+                                d.Add(new Parameter("LabelWidth", "80"));
+                            })
+                            // .DefaultAnchor("100%")
+                            .FieldDefaults(d =>
+                            {
+                                d.LabelAlign = LabelAlign.Left;
+                            })
+                            .Layout(LayoutType.HBox)
+                            .Items(
+                                     Html.X().Container()
+                                     .Layout(LayoutType.VBox)
+                                       .Items(
+                                           Html.X().Container()
+                                           .Layout(LayoutType.HBox)                    
+                                               .Layout(LayoutType.Column)
+                                               .Items(
+                                                   Html.X().TextFieldFor("Nombre").ReadOnly(true)
+                                                    .FieldLabel(STYLE_ETQ_ABR+STYLE_LABEL+"Nombre" + STYLE_ETQ_CER)
+                                                      .FieldStyle(STYLE_TEXT)
+                                                      .LabelSeparator("")
+                                                         .Text(Model.NombreCompleto)
+                                                         
+                                                             .Width(300)
+                                                             
+                                            //Html.X().Label()
+                                            //.Text(" Foto"),
+
+                                          )
+                                    ,
+                                    Html.X().Container()
+                                    .Layout(LayoutType.HBox)                               
+                                    .Items(
+                                         Html.X().DateFieldFor("Nacio").ReadOnly(true).ID("dfFechaNac")
+                                        .LabelSeparator("")
+                                         .FieldStyle(STYLE_TEXT)
+                                         .FieldLabel(STYLE_ETQ_ABR + STYLE_LABEL + "Nació" + STYLE_ETQ_CER)                                        
+                                        .Value(Model.FechaNacimiento)
+                                        .Width(190),
+                                        Html.X().Label()
+                                        .Text("   ")
+                                        ,
+                                        Html.X().TextField().ReadOnly(true).ID("tfEdad")
+                                        .LabelSeparator("")
+                                        .LabelWidth(35)
+                                        .FieldStyle(STYLE_TEXT)
+                                        .FieldLabel(STYLE_ETQ_ABR + STYLE_LABEL_SMALL + " Edad" + STYLE_ETQ_CER)                                        
+                                        .Listeners(l =>
+                                        {
+                                            l.AfterRender.Handler = "setValorEdad(App.tfEdad,App.dfFechaNac.getValue());";
+                                        })
+                                    //.Text((Model.edad!=null?Model.edad.ToString().Trim():""))
+                                        .Width(110)
+                                    ),
+                                    Html.X().Container()
+                                    .Layout(LayoutType.HBox)                               
+                                    .Items(
+                                        Html.X().TextFieldFor("sexo").ReadOnly(true).MarginSpec("0 0 -1 0")
+                                        .LabelSeparator("")
+                                        .FieldStyle(STYLE_TEXT)
+                                        .FieldLabel(STYLE_ETQ_ABR + STYLE_LABEL + " Sexo" + STYLE_ETQ_CER)
+                                        .LabelSeparator("")
+                                        .Text((Model.Sexo == "M" ? "Masculino" :
+                                                (Model.Sexo == "F" ? "Femenino" :
+                                                    "--"))
+                                        )
+                                        .Width(190),
+                                        Html.X().TextFieldFor("OA").ReadOnly(true).MarginSpec("0 0 -1 0")
+                                        .LabelSeparator("")
+                                        .LabelWidth(35)
+                                        .FieldStyle(STYLE_TEXT)
+                                        .FieldLabel(STYLE_ETQ_ABR + STYLE_LABEL + "OA" + STYLE_ETQ_CER)
+                                        .LabelSeparator("")
+                                        .Text(Model.CodigoBarras)                                        
+                                        .Width(110)
+                                    ),
+
+                                         Html.X().Container()
+                                        .Layout(LayoutType.HBox)
+                                        .Items(
+                                                  Html.X().TextFieldFor("TP").ReadOnly(true).LabelSeparator("").MarginSpec("0 0 -1 0")
+                                        .FieldStyle(STYLE_TEXT)
+                                        .FieldLabel(STYLE_ETQ_ABR + STYLE_LABEL + " Tipo Paciente" + STYLE_ETQ_CER)
+                                        .Text(Model.RutaFirma)
+                                        .Width(280)
+                                            ,
+
+                                            X.Button().Text("DETALLE").ID("comboBUSCAR").Icon(Icon.ReportUser).ToolTip("VER DETALLE").Width(70)
+                                                 .Handler("verDetallePaciente();")  
+                                        )
+                                    ,                                    
+                                    
+                                    
+
+                                         
+                                    
+                                    
+                                     Html.X().TextAreaFor("EA").ReadOnly(true).LabelSeparator("")                              
+                                    .Rows(1)
+                                    .FieldStyle(STYLE_TEXT)
+                                    .FieldLabel(STYLE_ETQ_ABR + STYLE_LABEL + " Empresa Asegurado" + STYLE_ETQ_CER)                                     
+                                    .Text(Model.DireccionReferencia)
+                                    .Width(320)
+                                                                    
+                                         
+
+                                    ),
+                                 
+                           
+                            
+                             Html.X().Container()
+                            .Layout(LayoutType.Absolute)
+                            .Items(Html.X().Image()
+                            .ImageUrl("~/Content/Imagen/pacientes/" + (Model.Persona != null ? Model.Persona.ToString().Trim() + ".jpg" : "none.png"))
+                            //.ImageUrl("~/Content/Imagen/pacientes/none.png")
+                            .ApplyStyles("position: relative") 
+                            
+                            
+                                         
+                                                                                                                              
+                            ) 
+                           
+                                        
+                        )
+                        )
+                        
+                      
+                              
+                    ),
+                    X.Panel().Flex(1)
+                    .ID("Center1.1")
+                    //.ResizableConfig(new Resizer()
+                    //{ MinHeight = 120, MinWidth = 220, Transparent = true })
+                    .Split(true)
+                    .Border(false)
+                    .Layout(LayoutType.Fit)
+                    .Items(
+                        X.Panel()
+                        //.Title("Center")
+                        .Border(false)
+                        .BodyPadding(6)
+                        .Layout(LayoutType.VBox)
+                            
+                        .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                        .Items(
+
+                                     X.FieldSet().Collapsible(true)
+                                .ColumnWidth(0.4)
+                            //aqui me quede
+                                    .Title(STYLE_ETQ_ABR + STYLE_LABELALERGIAS + "Alergia a :" + STYLE_ETQ_CER)
+
+                            .ID("fsAlergias")
+                            .MarginSpec("0 0 0 5")
+                            .Layout(LayoutType.VBox)
+                                     .StyleSpec("border: 1px solid "+COLORBORDE+";")                  
+                            .DefaultAnchor("100% 100%")
+                                .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch})
+                            .Items(
+                                 Html.X().TextArea().ReadOnly(true).LabelSeparator("")
+                                .FieldStyle(STYLE_TEXT)
+                                .FieldLabel(STYLE_ETQ_ABR + STYLE_LABELALERGIAS + " Medicamentos :" + STYLE_ETQ_CER)                                          
+                                
+                                .Rows(1)
+                                .Text(Model.Direccion),
+                                    Html.X().TextArea().ReadOnly(true).LabelSeparator("")
+                                .FieldStyle(STYLE_TEXT)
+                                      .FieldLabel(STYLE_ETQ_ABR + STYLE_LABELALERGIAS + " Alimentos :" + STYLE_ETQ_CER)                                
+                                .Text(Model.DireccionEmergencia)
+                                // .Text("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxwqwqwqAAAAAAAAAAAAAAAAAA")
+                                .Rows(3)
+                            )
+                           )
+                    )
+                        
+                    ,
+                    X.Panel()
+                     .ID("East1.1")
+                    //.ResizableConfig(new Resizer() { MinHeight = 120, MinWidth = 120, Transparent = true })
+                       .Split(true)
+                        .Border(false)
+                        .Layout(LayoutType.Fit)
+                    .Items(
+                        X.Panel()
+                           .Border(false)
+                            .BodyPadding(6)
+                            .Layout(LayoutType.VBox)
+                            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                        .Items(
+                            X.FieldSet()
+                           .Layout(LayoutType.Fit)
+                            .ID("fsPreexistencias")
+                            .Title("<b>Preexistencias</b>")
+                            .ColumnWidth(0.4)
+                            .MarginSpec("0 0 0 5")
+                            /*.Defaults(d =>
+                            {
+                                d.Add(new Parameter("Width", "500"));
+                                d.Add(new Parameter("LabelWidth", "200"));
+                            })
+                            .DefaultAnchor("100%")
+                            */
+                            .FieldDefaults(d =>
+                            {
+                                d.LabelAlign = LabelAlign.Left;
+                            })
+                            .Items(
+                                      Html.X().TextArea().ReadOnly(true)
+                                        .FieldStyle(STYLE_TEXT)
+                                            .Rows(2)
+                                             .FieldLabel(STYLE_ETQ_ABR + STYLE_LABEL + " Preexistencias" + STYLE_ETQ_CER) 
+                                            //.FieldLabel("Preexistencias")                                        
+                                            .Text(Model.CuentaMonedaLocal_tmp)
+                                             
+                            ),
+                             
+                           X.FieldSet().Collapsible(true)
+                           .ColumnWidth(0.4)
+                            .Title("<b>Tratamiento Activo</b>")
+                           .MarginSpec("0 0 0 5")
+                           .Layout(LayoutType.VBox)
+                           .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                           .Items(
+                                     Html.X().TextArea().ReadOnly(true).LabelSeparator("")
+                                    .FieldStyle(STYLE_TEXT)
+                                    .FieldLabel(STYLE_ETQ_ABR + STYLE_LABEL + " Tratamientos" + STYLE_ETQ_CER) 
+                                    .Rows(1)
+                                        .Text(Model.CorrelativoSCTR)
+
+                        )
+                        
+                                                      
+                        
+                        )
+                    )
+
+                 
+             )
+             
+                
+
+
+)
+
+

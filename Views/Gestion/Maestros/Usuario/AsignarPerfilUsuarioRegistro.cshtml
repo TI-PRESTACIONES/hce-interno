@@ -1,0 +1,280 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SEGURIDADPERFILUSUARIO
+
+
+@{
+    var X = Html.X();
+}
+
+<script>
+
+    var template = 'color:{0};';
+    var cuenta = 0;
+    var change = function (value, meta) {
+        return value;
+
+    };
+
+    
+    function addRecord(grid, usuario) {
+        if (App.cmbPerfilAdd.getValue() != null) {
+            cuenta = cuenta + 1;            
+            grid.store.insert(0,
+                    {
+                        PERFIL: App.cmbPerfilAdd.getValue(),
+                        USUARIO: usuario,
+                        ESTADO: 'A',
+                        ACCION:'INSERT'
+                    });
+        }else{
+            Ext.Msg.show({
+                title: "Advertencia" + usuario,
+                msg: "Debe seleccionar un perfil para añadirlo.",
+                icon: Ext.Msg.INFO,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+
+    };
+
+    function deleteActual(record) {
+        var store = App.GridPanelPerfilUsuario.store;
+        var par1 = record.data.USUARIO;
+        var par2 = record.data.PERFIL;
+        
+        store.remove(record);
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("addEliminar_PerfilUsuario"))',
+            params: {
+                MODO: 'DELETE',
+                usuario: par1,
+                perfil: par2
+            }
+        });
+
+    }; 
+
+    function save_PerfilUsuario(usuario) {        
+        var i = 0;
+        var store = App.StoreAsignarPerfil;
+        var status;
+        var perfilusuariosArray = new Array();
+        store.each(function (r) {
+            var SEGURIDADPERFILUSUARIO = {
+                PERFIL: r.get('PERFIL'),
+                USUARIO: r.get('USUARIO'),
+                ESTADO: r.get('ESTADO'),
+                ACCION: r.get('ACCION')
+            };
+            perfilusuariosArray.push(SEGURIDADPERFILUSUARIO);
+        });
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("save_PerfilUsuario"))',
+            params: {
+                MODO: 'NUEVO',
+                idWindow: "WindowAsignarPerfil",
+                data: perfilusuariosArray
+            }
+        });
+    };
+
+</script>
+
+@(Html.X().Store()
+        .ID("StoreComboPerfil")
+        .Model(Html.X().Model()
+            .IDProperty("USUARIO1")
+            .Fields(
+                new ModelField("USUARIO1"),
+                new ModelField("NOMBRE")
+            )
+        )
+        .DataSource(SoluccionSalud.Service.UsuarioService.
+        SvcUsuario.listarUsuarioAccion(null, "LISTARPERFILES"))
+)
+
+@(Html.X().Window()
+    .Width(500)
+    .Height(350)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .Constrain(true)
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowAsignarPerfil")
+        .Title("Asignación de Perfiles")
+    .Padding(4)
+        //.X(0)
+        //.Y(0)
+        .TopBar(
+            X.Toolbar()
+            .Height(30)
+            .Items(
+                X.ToolbarFill(),
+                X.Button()
+                    .Text((Model.ACCION == "DELETE" ? "Eliminar" : "Guardar"))
+                    .Icon((Model.ACCION == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave))
+                    .Handler("save_PerfilUsuario('" + Model.ACCION + "');"),
+                        /*
+                     .DirectEvents(de =>
+                     {  //Model.ACCION : Posee el MODO ACTUAL
+                         de.Click.Url = Url.Action("save_PerfilUsuario");
+                         de.Click.EventMask.ShowMask = true;
+                         de.Click.ExtraParams.Add(new Parameter("MODO", Model.ACCION, ParameterMode.Value));
+                         de.Click.ExtraParams.Add(new Parameter("idWindow", "WindowAsignarPerfil", ParameterMode.Value));
+                         de.Click.Success = "onSuccess('" + Model.ACCION + "');";
+                         de.Click.Failure = "onFailure('" + Model.ACCION + "');";
+                     }),*/
+                X.Button()
+                    .Text("Cancelar")
+                    .Icon(Icon.Cancel)
+                    .DirectEvents(de =>
+                     {  //Model.ACCION : Posee el MODO ACTUAL
+                         de.Click.Url = Url.Action("cerrarWindow");
+                         //de.Click.EventMask.ShowMask = true;
+                         de.Click.ExtraParams.Add(new Parameter(
+                               "id", "WindowAsignarPerfil", ParameterMode.Value));
+                         //de.Click.Success = "onSuccess(result.data,'" + Model.ACCION + "');";
+                         //de.Click.Failure = "onSuccess(result.data,'"+ Model.ACCION + "');";
+                     })
+                                         )
+                                     ) 	        
+    .Items(
+            X.GridPanel()
+                .ID("GridPanelPerfilUsuario")
+                .Border(false)
+                    .TopBar(
+                                    X.Toolbar()
+                                    .Items(
+                                        Html.X().ComboBox().ID("cmbPerfilAdd")
+                                        .StoreID("StoreComboPerfil")
+                                        .DisplayField("NOMBRE")
+                                        .ValueField("USUARIO1")
+                                        .FieldLabel("Seleccionar Perfil")
+                                         ,
+                                         X.Button()
+                                                .Text("Agregar")
+                                                .Icon(Icon.Add)
+                                                .Width(90)
+                                                .Handler("addRecord(this.up('grid'),'" + Model.USUARIO + "');")                                 
+                                    )
+                    )                
+                    .Store(
+                    Html.X().Store()
+                        //.AutoSync(true)
+                        .ID("StoreAsignarPerfil")                         
+                        .Model(
+                                Html.X().Model()
+                                .IDProperty("PERFIL")
+                                //.IDProperty("USUARIO")
+                                .Fields(
+                                    Html.X().ModelField().Name("PERFIL"),
+                                    Html.X().ModelField().Name("USUARIO"),
+                                    Html.X().ModelField().Name("ESTADO"),
+                                    Html.X().ModelField().Name("ACCION")
+                                )
+                            )
+                            .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                        .Url("getGrillaListaPerfilUsuario")                                         
+                                    //.Url("../LPacientes/GrillaListadoPacientes")
+                                    //.Url("../Controllers/Maestros/Usuario/UsuarioController/GrillaListadoPacientes")
+                                    .Reader(reader => reader.Add(Html.X().JsonReader()
+                                    .Root("data")
+                                    .TotalProperty("total")
+                                    .IDProperty("PERFIL")
+                                     //.IDProperty("USUARIO")
+                                    )))                                  
+                            )                            
+                            //.PageSize(10)
+                            /*.ServerProxy(
+                                Html.X().AjaxProxy()
+                                    .Url(Url.Action("getGrillaListaPerfilUsuario"))
+                                    //.ExtraParams                                                                                                                                    
+                                    //.ExtraParams(new { containerId = "West1" })
+                                    
+                            )*/
+                            .Parameters(ps =>
+                            //ps.Add(new StoreParameter("grupo", Model.GRUPO, ParameterMode.Value)),
+                                ps.Add(new StoreParameter("usuario", Model.USUARIO, ParameterMode.Value))
+                            )  
+                            .AutoLoad(true)
+                        )
+                        .ColumnModel(
+                                /*Html.X().ComponentColumn()
+                                    .Editor(true)
+                                        .DataIndex("PERFIL")
+                                    .Flex(1)
+                                    .Text("perfil")
+                                    .Component(Html.X().ComboBox()
+                                 
+                                    .StoreID("StoreComboPerfil")
+                                    .DisplayField("NOMBRE")
+                                    .ValueField("USUARIO1")
+                                    ),*/                      
+                                     Html.X().ComponentColumn()
+                                                .Editor(true)
+                                                .DataIndex("PERFIL")
+                                                .Text("Perfil")
+                                                .Flex(1)
+                                                .Component(
+                                                Html.X().TextField().ReadOnly(true)                                                                     
+                                                    ),
+
+                                        Html.X().ComponentColumn()
+                                            .Editor(true)
+                                                .DataIndex("ESTADO")
+                                            .Width(100)
+                                            //.Flex(1)
+                                            .Text("Estado")                                            
+                                            .Component(Html.X().ComboBox()
+                                                .Editable(true)
+                                                .Items(
+                                                    new ListItem("Activo","A"),
+                                                    new ListItem("Inactivo", "I")
+                                                )
+                                            ),
+                                        Html.X().CommandColumn()
+                                            .Width(80)
+                                            .Commands(
+                                                Html.X().GridCommand()
+                                                    .CommandName("Delete")
+                                                    .Icon(Icon.Delete)
+                                                    .Text("Eliminar")                    
+                                            )
+                                            .Listeners(ls => ls.Command.Handler = "deleteActual(record);") ,
+                                     Html.X().ComponentColumn()
+                                                .Editor(true)
+                                                .DataIndex("USUARIO")
+                                                .Text("Perfil")                                                
+                                                .Hidden(true)
+                                                .Component(
+                                                Html.X().TextField().ReadOnly(true)                                                                     
+                                                    ),
+                                     Html.X().ComponentColumn()
+                                                .Editor(true)
+                                                .DataIndex("ACCION")
+                                                .Text("Acción")
+                                                .Hidden(true)                                                
+                                                .Component(
+                                                Html.X().TextField().ReadOnly(true)                                                                     
+                                                    )                                                                                                
+                            )
+                            .SelectionModel(
+                                    Html.X().RowSelectionModel().Mode(SelectionMode.Multi)
+                            )
+                            .Plugins(
+                                                         Html.X().CellEditing()
+                            )    
+
+                                                                                          
+    )
+    .CloseAction(CloseAction.Destroy)
+    //.Html(DateTime.Now.ToLongTimeString())
+
+)
+
+

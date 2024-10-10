@@ -1,0 +1,438 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_HC_EpisodioAtenciones
+@{
+    ViewBag.Title = "Partial Content";
+    Layout = "";
+    var X = Html.X();
+
+    var PAR_CODTRABAJADORMEDICO = "" + (AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("CODTRABMED") != null ?
+        AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("CODTRABMED") : "08");
+
+    var CODIGO_TRANSACT_HCE = Model.DescansoMedico;
+
+    var CODIGO_OA = Model.CodigoOA;
+
+    var IDPACIENTE = Model.IdPaciente;
+    var NOMBREPAC = Model.ObservacionFirma;
+
+    var indicaEPiClinicoAsignado = (Model.FlagFirma != null ? true : false);
+    var indicaEsMedico = (Model.TipoTrabajador == PAR_CODTRABAJADORMEDICO ? true : false);
+    var indicaSoloLectura = (Model.ESTADOFORMULARIO == "VISTA" ? true : false);
+
+    var indicaEpiClinicoVisible = indicaEsMedico && !indicaEPiClinicoAsignado && !indicaSoloLectura;
+    var indicaContinuarEpiClinicoVisible = indicaEsMedico && !indicaEPiClinicoAsignado
+        && (Model.IdTipoInterConsulta > 0) && !indicaSoloLectura;
+
+    var indicaVisibleCopy = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_VISIBLE_COPY;
+
+    var indicaVisibleHistorialComp = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_FORM_COMPARTIDO;
+
+    var indicaVisiblePrint = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.ESTADOFORMULARIO_ACCION;
+
+    var visibleImpresionGen = (indicaVisiblePrint == "VISTA" ? true : false);
+
+    //var Episodio = AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("CODTRABMED");
+}
+<script>
+
+    function DoInicio() {
+        parent.window.location.href = ' @Url.Action("Index", "BandejaMedico") ';
+    };
+    function DoNoInicio() {
+
+    };
+
+    function Inicio() {
+        window.location.href = ' @Url.Action("Index", "HClinica/validarCambiosFormularioInicio") ';
+    }
+
+    function DoFirma() {
+
+        
+    };
+
+
+    function preReloadFormato() {
+        window.setTimeout("reloadFormato();", 2000);
+    }
+    function celdaActiva() {
+
+        var valor = App.txtCelda.getValue();
+        writeCookie("10", valor, 1);
+
+
+    }
+
+    function writeCookie(name, value, days) {
+        var date, expires;
+        if (days) {
+            date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            expires = "; expires=" + date.toGMTString();
+        } else {
+            expires = "";
+        }
+        document.cookie = name + "=" + value + expires + "; path=/";
+    }
+    function getElementsById(elementID) {
+        var elementCollection = new Array();
+        var allElements = document.getElementsByTagName("*");
+        for (i = 0; i < allElements.length; i++) {
+            if (allElements[i].id == elementID)
+                alert(allElements[i].id);
+            elementCollection.push(allElements[i]);
+
+        }
+        return elementCollection;
+    }
+
+    function reloadFormato() {
+        if (App.txtRecargarX.getValue() == 'RELOAD') {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("reloadFormatos"))',
+                params: {
+                    indica: ''
+                }
+            });
+            App.txtRecargarX.setValue(null);
+        }
+    }
+
+    function preReloadNorth() {
+        window.setTimeout("reloadPanelNorth();", 2000);
+    }
+
+    function reloadPanelNorth() {
+        if (App.txtRecargarNorth.getValue() == 'RECARGA') {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("reloadPanelNorthC"))',
+                params: {
+                    indica: ''
+                }
+            });
+            App.txtRecargarNorth.setValue(null);
+        }
+    }
+
+    function eventoAccionEpisodio(valorAccion) {
+        if (true) {
+            var ACCION_ = '';
+            if (valorAccion == 'N') {
+                ACCION_ = 'Nuevo';
+            } else if (valorAccion == 'M') {
+                ACCION_ = 'UPDATE';
+            } else if (valorAccion == 'V') {
+                ACCION_ = 'VISTA';
+            }
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("EstadoClinico"))',
+                params: {
+                    selection: '',
+                    accion: ACCION_
+                }
+                , success: function (result) { reloadFormato(); }
+            });
+
+
+        }
+    };
+
+
+    function continuar(idPaciente, nomPaciente, codOA) {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("ListadoAtenciones"))',
+            params: {
+                MODO: "Consulta",
+                paciente: idPaciente,
+                nombre: nomPaciente,
+                codigooa: codOA
+            }
+        });
+    }
+
+    function eventoRegistroCopiarForm(visible) {
+        var vista = 'Procesos/VisorCopiarFormulario';
+        var container = 'Center1';
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("visorHCECopiarFormularios"))',
+            params: {
+                Accion: 'VER',
+                nombrePaciente: 0,
+                Form: vista,
+                FormContainer: container
+
+            }
+        });
+    }
+
+    function eventoRegistroHistorialForm(visible) {
+        var vista = 'Procesos/VisorHistorialFormatosCompartidos';
+        var container = 'Center1';
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("eventoRegistroHistorialForm"))',
+            params: {
+                Accion: 'VER',
+                nombrePaciente: 0,
+                Form: vista,
+                FormContainer: container
+
+            }
+        });
+    }
+
+    function eventoVisorReporte(param1) {
+        if (param1 == 'HC') {
+            window.location.href = '@Url.Action("HCEReportesView_total", "HClinica")';
+        } else {
+            window.location.href = '@Url.Action("HCEReportesBitacoraView", "HClinica")';
+        }
+
+
+        /*Ext.net.DirectMethod.request({
+            url: '(Url.Action("reloadFormatoReporte"))',
+            params: {
+                indica: '',
+                containerId: 'center1'
+            }
+        });*/
+    }
+
+    function eventoBienesServicios(compon) {
+        if (compon.getValue() != null && compon.getValue() != '') {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("eventoSeleccionarBienServicio"))',
+                params: {
+                    codigoFormato: compon.getValue(),
+                    codigoFiltro: compon.getValue()
+                }
+                , success: function (result) { onSuccessSeleccBienServicio(result.data); }
+
+            });
+            compon.setValue(null);
+        }
+
+    }
+
+    function onSuccessSeleccBienServicio(data) {
+
+    }
+
+    
+
+    
+
+    function firmaMedicoSelected() {
+        /* if (seleccionDataActual != null) {*/
+        var status = "";/*seleccionDataActual.IdPaciente;*/
+        var idEpiAtencion = "";/*seleccionDataActual.IdEpisodioAtencion;*/
+        var varCodigoOA = "";/*seleccionDataActual.CodigoOA;*/
+        var varPaciente = "";/*seleccionDataActual.NombreCompleto;*/
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("eventoFirmaActoMedicoRegistro"))',
+            params: {
+                MODO: 'UPDATE',
+                idpaciente: status,
+                paciente: varPaciente,
+                codigooa: varCodigoOA,
+            }
+        });
+        /* } else {
+             Ext.Msg.show({
+                 title: "Advertencia",
+                 msg: "Debe Seleccionar un Elemento.",
+                 icon: Ext.Msg.WARNING,
+                 minWidth: 200,
+                 buttons: Ext.Msg.OK
+             });
+         }*/
+    }
+
+
+</script>
+@(
+
+
+        //X.TabPanel()
+ X.Panel()
+    .Border(false)
+        //.Region(Region.Center)
+    .ID("TabPanelForm")
+    .TopBar(
+                X.Toolbar().Hidden(indicaSoloLectura)
+                    .StyleSpec("padding-bottom:0px;")
+                    .Items(
+                        X.TabStrip()
+                            .Items(t =>
+                            {
+                                t.Add(X.Tab().ActionItemID("PanelSuperior").Text(Model.Version));
+                                //t.Add(X.Tab().ActionItemID("pnlData").Text("Data"));
+                            })
+                        ,
+        
+                        X.ToolbarSpacer(20),
+                        X.Button()
+                        .ID("btnCopyForm_HCE")
+                        .Text("Copiar")
+                        .Icon(Icon.PageCopy)
+                        .ToolTip("Permite copiar el contenido del Formulario hecho en otra Atención o Visita")
+                        .Hidden((indicaVisibleCopy == 1 ? false : true))
+                        .Handler("eventoRegistroCopiarForm('S');")
+                        ,
+                        X.ToolbarSeparator(),
+                        X.Button()
+                            .Text("Historial")
+                        .Icon(Icon.Bookmark)
+                        .ToolTip("Permite ver el Historial de cambios de este formulario de otras Atenciones o Visitas")
+                            .Hidden((indicaVisibleHistorialComp == 2 ? false : true && !visibleImpresionGen))
+                        .Handler("eventoRegistroHistorialForm('S');")
+                        ,
+        // X.Button()
+        // .Text("Imprimir")
+        // .Icon(Icon.Report)
+        // .Hidden(!visibleImpresionGen)
+        // .ID("btnImpresion")
+        // .Handler("eventoVisorReporte('');"),
+                        X.ToolbarFill(),
+                        X.Button()
+                        .ID("btnNewEpisodio_HCE")
+                        .Text("Nuevo Episodio")
+                        .Icon(Icon.ShapeSquareAdd)
+                         .Disabled(false).Hidden(!indicaEpiClinicoVisible)
+                            .Handler("eventoAccionEpisodio('N');")
+                                        ,
+                        X.Button()
+                         .ID("btnContEpisodio_HCE")
+                         .Disabled(false).Hidden(!indicaContinuarEpiClinicoVisible)
+                        .Text("Continuar Episodio")
+                        .Icon(Icon.ShapeSquareSelect)
+                         .Handler("continuar('" + IDPACIENTE + "' ,'" + NOMBREPAC + "', '" + CODIGO_OA + "' );"),
+                        X.ToolbarSpacer(20),
+                                    X.Button()
+                                        .Text("Guardar y Firmar Atención")
+                                    .Icon(Icon.ShapeSquareAdd)
+                                        .Handler("firmaMedicoSelected();").Hidden(indicaSoloLectura)
+                                    ,
+                        X.ToolbarSeparator(),
+
+                        X.Label().ID("lblNumEpsiodioHCE")
+                            .Text("Episodio Nro : " + CODIGO_TRANSACT_HCE),
+                              X.ToolbarSeparator(),
+                              X.Button()
+                                        .Text("Inicio - Bandeja")
+                                        .Icon(Icon.ApplicationOsxHome)
+                                            .DirectEvents(ev =>
+                                    {
+                                        ev.Click.Url = "HClinica/validarCambiosFormularioInicio";
+                                        ev.Click.Method = HttpMethod.GET;
+                                    })
+                                            ,
+
+                            X.TextField()
+                                .ID("txtCelda")
+                                    .Hidden(true)
+                                    .Listeners(l =>
+                                    {
+                                        l.Change.Handler = "celdaActiva();";
+                                    })
+                                    ,
+                            X.TextField()
+                                .ID("txtRecargarX")
+                                .Hidden(true)
+                                .Listeners(l =>
+                                {
+                                    l.Change.Handler = "preReloadFormato();";
+                                })
+                                ,
+                            X.TextField()
+                                .ID("txtEventoBienes").Hidden(true)
+                                .Listeners(l =>
+                                {
+                                    l.Change.Handler = "eventoBienesServicios(this);";
+                                })
+                                ,
+                        X.TextField().ID("txtRecargarNorth").Hidden(true).Listeners(l => { l.Change.Handler = "preReloadNorth();"; }),
+                        X.ToolbarSeparator(),
+        /*
+            Html.X().Button()
+                    .Text("Nuevo Episodio")
+                    .Icon(Icon.ShapeSquareAdd)
+                    .DirectEvents(directEvents =>
+                                        {
+                                            directEvents.Click.Url = "HClinica/EstadoClinico";
+                                            directEvents.Click.EventMask.Msg = "Loading...";
+                                            directEvents.Click.ExtraParams.Add(new
+                                            {
+                                                selection = "",
+                                                accion = "Nuevo"
+                                            });
+                                        }),
+           Html.X().Button()
+                    .Text("Continuar Episodio")
+                    .Icon(Icon.ShapeSquareGo)
+                    ,
+                X.Button()
+                    .Text("Finaliza Episodio")
+                    .Icon(Icon.ShapeSquareSelect),*/
+                               X.ToolbarSeparator(),
+                               X.Label()
+                                 .ID("idNroAtencion")
+                                .Text("")
+
+                    )
+    )
+    .Items(
+    X.Panel()
+        //  .LayoutConfig(new VBoxLayoutConfig() { Align = VBoxAlign.Center, Pack = BoxPack.Center })
+        .ID("PanelA")
+         .Height(800)
+        //   .StyleSpec("height:100%;")
+        //.Title(Model.DESCRIPCION)
+         .Header(false)
+        .Layout(LayoutType.Fit)
+        //.Layout(Ext.Net.LayoutType.Fit)
+        .Region(Region.Center)
+        //.Margins("2 2 2 2")
+        .Border(false)
+        .Loader(
+            Html.X().ComponentLoader()
+                        .AutoLoad(true)
+                            .Url(Url.Action(Model.Accion))
+                        .ID("iframes")
+                        .Mode(LoadMode.Frame)
+
+            )
+
+        )
+
+        /*.Listeners(l =>
+               {
+                   l.Render.Handler = "eventoResizeCenter();";
+               })
+        .Listeners(l =>
+               {
+                   l.TabChange.Fn = "addToken";
+               })*/
+    .Plugins(plugins => plugins.Add(new TabCloseMenu()))
+
+)
+
+
+@(   X.Panel()
+        //  .LayoutConfig(new VBoxLayoutConfig() { Align = VBoxAlign.Center, Pack = BoxPack.Center })
+       .ID("PanelB")
+         .Height(1)
+         .Border(false)
+        //.Title(Model.DESCRIPCION)
+        .Layout(LayoutType.Fit)
+        .Layout(Ext.Net.LayoutType.Fit)
+        .Region(Region.East)
+        //.Margins("2 2 2 2")
+        //.Border(false)
+         .Loader(Html.X().ComponentLoader()
+                            .Url(Url.Action("PanelEast"))
+                            .Mode(LoadMode.Script)
+                            .Params(new { containerId = "East1" })
+             )
+
+)

@@ -1,0 +1,476 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SG_Agente
+
+@{
+    var X = Html.X();
+    var idWindow = "WindowAgente";
+    var modoDesc = (Model.ACCION == "NUEVO" ? "Nuevo" :
+                    (Model.ACCION == "UPDATE" ? "Modificar" :
+                        (Model.ACCION == "DELETE" ? "Eliminar" :
+                            (Model.ACCION == "VER" ? "Ver" : "--"))));
+
+    var indicaModoLectura = !(Model.ACCION == "NUEVO" ? true :
+                            (Model.ACCION == "UPDATE" ? true :
+                            (Model.ACCION == "DELETE" ? false :
+                            (Model.ACCION == "VER" ? false : false))));
+
+    var indicaModoLecturaKey = !(Model.ACCION == "NUEVO" ? true :
+                            (Model.ACCION == "UPDATE" ? false :
+                            (Model.ACCION == "DELETE" ? false :
+                            (Model.ACCION == "VER" ? false : false))));
+
+    var indicaModoLecturaProce_Almacen = !(Model.ACCION == "NUEVO" ? false :
+                            (Model.ACCION == "UPDATE" ? false :
+                            (Model.ACCION == "DELETE" ? false :
+                            (Model.ACCION == "VER" ? false : false))));
+
+
+        var indicaModoLecturPersona = !(Model.ACCION == "NUEVO" ? true :
+(Model.ACCION == "UPDATE" ? false :
+(Model.ACCION == "DELETE" ? false :
+(Model.ACCION == "VER" ? false : false))));
+
+    var STYLE_BACKGROUND_NODEIT = "background: #D2D6D6"; //BBD8D6  #9FBCB9
+    var COLOR_BORDER_DEFAULT = "#b5b8c8";
+
+    var STYLE_BORDER_DEF_VALID01 = (Model.CodigoAgente != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+    var STYLE_BORDER_DEF_VALID02 = (Model.Descripcion != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+
+}
+
+<script>
+
+
+    var template = 'color:{0};';
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_RED01 = "#990000";
+    var COLOR_BORDER_ERROR = "red";
+    var COLOR_BORDER_DEF = "#b5b8c8";
+    var COLOR_BACKGROUND_NOEDIT = "#9FBCB9";
+
+
+    var change = function (value, meta) {
+        return value;
+
+    };
+
+    function seleccionadorGrupo() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorSGGrupo"))',
+            params: {
+            accionSeleccion: 'getSeleccionSG_Grupo',
+            accionListado: 'LISTARPAG'
+            }
+        });
+    };
+    function seleccionadorPersona() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorPersona"))',
+            params: {
+                accionSeleccion: 'getSeleccionPersonaMaestroAgente',
+                accionListado: 'LISTARPAGSELECUSER'
+            }
+        });
+    };
+    function seleccionadorOpciones() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorOpciones"))',
+            params: {
+                accionSeleccion: 'getSeleccionOpciones',
+                accionListado: 'LISTARPAG'
+            }
+        });
+    };
+    function validarfechas(obj, fecha1, fecha2) {
+        if (fecha2 != null) {
+            if (fecha1 >= fecha2) {
+                obj.setValue(null);
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "La fecha inicial no debe ser mayor o igual que la fecha final.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+        }
+    };
+
+    function validarFechaExpiracion(obj, fecha1, fecha2, fecha3) {
+        
+        if (fecha1 != null && fecha2 != null && fecha3 != null) {
+            if (fecha3 > fecha1 && fecha2 >= fecha3) {
+            } else {
+                obj.setValue(null);
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "La fecha de expiración debe estar dentro del rango fecha inicio y fecha final.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+        } else if (fecha1 == null && fecha2 == null) {
+            obj.setValue(null);
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Ingresar fecha inicio y fecha final.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+    };
+
+    function validargenerico() {
+        alert("fsfs")
+    };
+
+    function cerrarWindow() {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("showMensajeBox"))',
+                params: {
+                    message: 'Se registró correctamente el Agente.',
+                    accion: null
+                }
+            });
+        }
+
+
+        var onSuccess = function (data) {
+            if (data != null) {
+                accionMensajes(data);
+            }
+        };
+
+        var onFailure = function (modo) {
+            App.btnSave.setDisabled(false);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("showMensajeBox"))',
+                params: {
+                    message: 'Un error en el evento ',
+                    titulo: "Error",
+                    tipo: 'ERROR'
+                }
+            });
+        };
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+        } else {
+            App.taAlerts.setVisible(false);
+        }
+
+    };
+
+    var getInvalidFields = function (form) {
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+        });
+        return invalidFields;
+    };
+
+    var beforeSave = function (form) {
+        var FieldsInvalidos = getInvalidFields(form);
+        if (!form.getForm().isValid()) {
+            if (FieldsInvalidos.length > 0) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("addRecursosValidacion"))',
+                    params: {
+                        data: FieldsInvalidos,
+                        indica: 'VALIDAR',
+                    },
+                    success: function (result) {
+                        accionMensajes(result.data);
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("addRecursosValidacion"))',
+                            params: {
+                                data: FieldsInvalidos,
+                                indica: 'RESTART',
+                            }
+                        });
+                    }
+                });
+
+            }
+        }
+    };
+
+        var validarCampo = function (componente) {
+            if (componente.getValue() != null) {
+                if (componente.getValue().trim() == 0) {
+                    componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+
+                } else {
+                    componente.setFieldStyle("border-color: " + COLOR_BORDER_DEF);
+                }
+            } else {
+                componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+
+            }
+        };
+
+        var eventoCheck = function (check, componente) {
+            var checkAll = check.getValue();
+            if (checkAll) {
+                componente.setDisabled(true);
+                componente.setValue(null);
+            } else {
+                componente.setDisabled(false);
+            }
+        };
+
+        var eventoCheckGe = function (check, componente) {
+            var checkAll = check.getValue();
+            if (checkAll) {
+                document.getElementById("Nombre-inputEl").readOnly = false;
+                document.getElementById("Nombre-inputEl").value = "";
+            } else {
+                document.getElementById("Nombre-inputEl").readOnly = true;
+                document.getElementById("Nombre-inputEl").value = "";
+            }
+        };
+
+        var eventoFiltro = function (compo1, compo2) {            
+            if (compo1 == "04") {
+                compo2.setVisible(true);
+            } else {
+                compo2.setVisible(false);
+            }
+        };
+        var eventoCombo = function (valor, componente, componente2,componente3,compo4,compo5) {
+            var val = valor;
+            if (val == 2) {
+                componente.setVisible(true);
+                document.getElementById("Nombre-inputEl").readOnly = true;
+                document.getElementById("Nombre-inputEl").value = "";
+                componente.setValue(null);
+                componente2.setVisible(true);
+                componente2.setValue(null);
+                componente3.setVisible(true);
+                componente3.setValue(null);
+                compo5.setVisible(true);
+                compo5.setValue(null);
+            } else {
+                componente.setVisible(false);
+                document.getElementById("Nombre-inputEl").readOnly = false;
+                document.getElementById("Nombre-inputEl").value = "";
+                componente2.setVisible(false);
+                componente3.setVisible(false);
+                compo4.setVisible(false);
+                compo5.setVisible(false);
+            }
+        }
+
+</script>
+
+@(Html.X().Window()
+    .Width(800)
+    .Height(480)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .Constrain(true)
+    //.AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID(idWindow)
+    .Title("Registro de Agente:" + modoDesc)
+    .Padding(4)
+    .Items(
+                    Html.X().FormPanel().ID("FormPanel1")
+                             .Frame(false)
+                             .Border(false)
+                             .AutoScroll(true)
+                            .Layout(LayoutType.VBox)
+                            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                    .Items(
+                        Html.X().FormPanel()
+                             .Frame(false)
+                             .Border(false)
+                            .Layout(LayoutType.HBox)
+                            .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+
+                            .Items(
+                                    Html.X().FormPanel()
+                                    .Layout(LayoutType.Form)
+                                    .Width(500)
+                                    .FieldDefaults(d =>
+                                    {
+                                        d.LabelWidth = 100;
+                                    })
+                                    .BodyPadding(10)
+                                    .Frame(false)
+                                    .Border(false)
+                                    .Items(
+                                    Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch })
+                                        .Items(
+                                            X.Label().Text("Id Agente:").Width(105),
+                                            X.NumberFieldFor(c => c.IdAgente).Width(65).ReadOnly(true).FieldLabel(""),
+                                            X.Label().Text("").Width(5),                                          
+                                            X.TextFieldFor(m => m.CodigoAgente).Width(250).FieldLabel("Código Agente").ReadOnly(Model.ACCION == "NUEVO" ? false : true).LabelWidth(90)),
+                                            X.TextFieldFor(m => m.Nombre).FieldLabel("Nombre").Width(426).ReadOnly(true),
+                                            X.TextFieldFor(m => m.Descripcion).FieldLabel("Descripción").ReadOnly(indicaModoLectura).Width(426),
+                                            Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch }).Hidden(true)
+                                            .Items(
+                                                X.NumberFieldFor(c => c.IdGrupo).FieldLabel("Grupo").Width(170).ReadOnly(true),
+                                                X.TextField().ID("tfCodGrupo").Width(100).FieldLabel("").ReadOnly(true),
+                                                X.TextField().ID("tfDescGrupo").Width(156).FieldLabel("").ReadOnly(true),
+                                                X.Button().Text("...").Disabled(indicaModoLectura).Handler("seleccionadorGrupo();")),
+                                                Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch })
+                                                .Items(
+                                                    X.NumberFieldFor(c => c.IdOrganizacion).FieldLabel("Organización").Width(150).ReadOnly(true).Hidden(true),
+                                                    X.TextField().ID("tfCodOrg").Width(100).FieldLabel("").ReadOnly(true).Hidden(true),
+                                                    X.TextField().ID("tfDescOrg").Width(200).FieldLabel("").ReadOnly(true).Hidden(true),
+                                                    X.Button().Text("...").Disabled(true).Hidden(true)),
+                                                    Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch })
+                                                    .Items(
+                                                    X.NumberFieldFor(c => c.IdEmpleado).FieldLabel("Persona").Width(170).ReadOnly(true).Hidden(Model.ACCION == "NUEVO" ? false : (Model.TipoAgente == 2?false:true)),
+                                                    X.TextField().ID("tfDescEmp").Width(256).FieldLabel("").ReadOnly(true).Hidden(Model.ACCION == "NUEVO" ? false : (Model.TipoAgente == 2 ? false : true)),
+                                                    X.Button().ID("btnPer").Text("...").Disabled(indicaModoLecturPersona).Handler("seleccionadorPersona();").Hidden(Model.ACCION == "NUEVO" ? false : (Model.TipoAgente == 2 ? false : true))),
+                                                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch })
+                                                        .Hidden(true)
+                                                        .Items(
+                                                        X.NumberFieldFor(c => c.IdOpcionDefecto).FieldLabel("Opción").Width(170).ReadOnly(true),                                        
+                                                        X.TextField().ID("tfDescOpc").Width(256).FieldLabel("").ReadOnly(true),
+                                                        X.Button().Text("...").Disabled(indicaModoLectura).Handler("seleccionadorOpciones();")),
+                                                        X.ComboBoxFor(c => c.tipotrabajador)
+                                                        .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboMiscelaneoLista.GetComboGenericoTxt("TIPOTRABAJ")
+                                                        .Select(d => new ListItem(d.Name, d.Codigo))).FieldLabel("Tipo Profesional")
+                                                        .SimpleSubmit(true)
+                                                         .ReadOnly(true)
+                                                        .Editable(false)
+                                                        .Width(260)
+                                                        .Listeners(l => l.Select.Handler = "eventoFiltro(App.tipotrabajador.getValue(),App.IdCodigo);")
+                                                        //.Hidden(false)
+                                                        .Hidden(Model.ACCION == "NUEVO" ? false : (Model.TipoAgente == 2 ? false : true))
+                                                        ,
+                                                        X.ComboBoxFor(c => c.IdCodigo).Value(1).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboMiscelaneoLista.GetComboGenerico("TIPOTECNOL").Select(d => new ListItem(d.Name, d.ID))).FieldLabel("Tipo Tecnólogo").Editable(false).SimpleSubmit(true).Width(260).Hidden(Model.ACCION == "NUEVO" ? true : (Model.tipotrabajador == "04" ? false : true))
+                                                        //, X.TextFieldFor(c => c.tipotrabajador).Width(256).Listeners(l => l.Change.Handler = "eventoFiltro(App.tipotrabajador.getValue(),App.tipotraba,App.IdCodigo);").Hidden(true)
+
+                                                             ,
+                                                                    X.ComboBoxFor(m => m.Almacen).Editable(false).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("FLATALMACE").Select(d => new ListItem(d.Name, d.ID))).FieldLabel("Almacen").Value(Model.ACCION == "NUEVO" ? 2 : (Model.TipoTransaccion)).SimpleSubmit(true).ReadOnly(indicaModoLecturaProce_Almacen),
+
+                                                            X.ComboBoxFor(m => m.FlatAgente).Editable(false).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("FLATPROCED")
+                                                                        .Select(d => new ListItem(d.Name, d.ID))).FieldLabel("Procedimientos").Value(Model.ACCION == "NUEVO" ? 2 : (Model.FlatAgente)).SimpleSubmit(true).ReadOnly(indicaModoLecturaProce_Almacen)
+                                                        
+                                                                
+                                                        
+                                                        ),
+                                                        
+                                                        
+                                                        
+                                                        Html.X().FormPanel().Layout(LayoutType.Form).Width(260).FieldDefaults(d =>{d.LabelWidth = 100;})
+                                                        .BodyPadding(10).Frame(false).Border(false)
+                                                        .Items(
+                                                         Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch })
+                                            .Items(
+                                                            X.ComboBoxFor(m => m.TipoAgente).ID("cmbTipo").Width(240)
+                                                            .Items(
+                                                            new ListItem("Perfil", 1),
+                                                            new ListItem("Usuario", 2)).ReadOnly(indicaModoLectura).FieldLabel("Tipo Agente").Editable(false).SimpleSubmit(true).Value(Model.ACCION == "NUEVO" ? 2 : (Model.TipoAgente)).Listeners(l => l.Select.Handler = "eventoCombo(App.cmbTipo.getValue(),App.tfDescEmp,App.IdEmpleado,App.tipotrabajador,App.IdCodigo,App.btnPer);")
+                                                   ),             
+                                                   
+                                                            X.DateFieldFor(m => m.FechaInicio).FieldLabel("Fecha Inicio").ReadOnly(indicaModoLectura).Editable(false)
+                                                            .Listeners(l => l.Change.Handler = "validarfechas(App.FechaInicio,App.FechaInicio.getValue(),App.FechaFin.getValue());").Width(240),
+                                                            X.DateFieldFor(m => m.FechaFin).FieldLabel("Fecha Fin").ReadOnly(indicaModoLectura).Editable(false)
+                                                            .Listeners(l => l.Change.Handler = "validarfechas(App.FechaFin,App.FechaInicio.getValue(),App.FechaFin.getValue());"),                                    
+                                                             Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch })
+                                            .Items(
+                                                            X.TextFieldFor(m => m.Clave).InputType(Ext.Net.InputType.Password).FieldLabel("Clave").ReadOnly(indicaModoLectura).Width(240)),
+                                                            Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch })
+                                                            .Items(
+                                                                X.CheckboxGroupFor(c => c.ExpiraClave, new List<Checkbox.Config> { new Checkbox.Config { BoxLabel = "", InputValue = "2", Width = 125, Checked = (Model.ACCION == "NUEVO" ? true : (Model.ExpiraClave == 2 ? true : false)), Handler = "eventoCheck(this,App.FechaExpiracion);", ReadOnly = indicaModoLectura }, }).FieldLabel("Fec. Expiración").ID("ChkgExpira").LabelWidth(97),
+                                                                X.DateFieldFor(m => m.FechaExpiracion).FieldLabel("").Disabled(Model.ACCION == "NUEVO" ? true : (Model.ExpiraClave == 2 ? true : false)).Width(115).ReadOnly(indicaModoLectura).Editable(false)
+                                                                .Listeners(l => l.Change.Handler = "validarFechaExpiracion(App.FechaExpiracion,App.FechaInicio.getValue(),App.FechaFin.getValue(),App.FechaExpiracion.getValue());")),
+                                                              
+                                                                X.CheckboxGroupFor(c => c.IndicadorMultiple, new List<Checkbox.Config> {
+                                                                    new Checkbox.Config{BoxLabel = "", InputValue="2",Checked= ( Model.ACCION=="NUEVO"?false:(Model.IndicadorMultiple==2?true:false)),ReadOnly = indicaModoLectura},}).FieldLabel("Múltiple").LabelWidth(97),
+
+
+
+                                                                         X.CheckboxGroupFor(c => c.flatUsuGenerico, new List<Checkbox.Config> {
+                                                                    new Checkbox.Config{BoxLabel = "", InputValue="2", 
+                                                                        Checked= ( Model.ACCION=="NUEVO"?false:(Model.flatUsuGenerico==2?true:false)),Handler = "eventoCheckGe(this,App.Nombre);",
+                                                                        ReadOnly = indicaModoLectura},})
+                                                                              .Disabled(indicaModoLecturPersona)  
+                                                                        .FieldLabel("Usuario Generico").LabelWidth(97),
+                                                                    
+                                                                    
+                                                                X.ComboBoxFor(m => m.Estado).Editable(false).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("ESTADOINT").Select(d => new ListItem(d.Name, d.ID))).FieldLabel("Estado").Value(Model.ACCION == "NUEVO" ? 2 : (Model.Estado)).SimpleSubmit(true).ReadOnly(indicaModoLectura)
+                                                                    
+                                                            )
+                                                                    ),
+                                                                    Html.X().FormPanel().Layout(LayoutType.Form).Width(500).FieldDefaults(d =>{
+                                                                        d.LabelWidth = 120;}).BodyPadding(10).Frame(false).Border(false)
+                                                                        .Items(
+                                                                        X.FieldSet().Title("Información Referencial").FieldDefaults(d =>{
+                                                                            d.LabelWidth = 90;
+                                                                            d.InputWidth = 120;
+                                                                        })
+                                                                        .Items(
+                                                                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })        
+                                                                        .Items(
+                                                                        X.TextFieldFor(m => m.UsuarioCreacion).FieldLabel("Creación").ReadOnly(true),
+                                                                        X.DateFieldFor(m => m.FechaCreacion).Format("dd/MM/yyyy").ReadOnly(true).HideLabel(true).Width(80),
+                                                                        X.TimeFieldFor(m => m.FechaCreacion).ID("dfHoraCreacion").Format("H:mm:ss").ReadOnly(true).HideLabel(true).Width(80)),
+                                                                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })        
+                                                                        .Items(
+                                                                            X.TextFieldFor(m => m.UsuarioModificacion).FieldLabel("Modificación").ReadOnly(true),
+                                                                            X.DateFieldFor(m => m.FechaModificacion).Format("dd/MM/yyyy").ReadOnly(true).HideLabel(true).Width(80),
+                                                                            X.TimeFieldFor(m => m.FechaModificacion).ID("dfHoraModificacion").Format("H:mm:ss").ReadOnly(true).HideLabel(true).Width(80))
+                                                                            )
+                                                                            ),
+                                                                            X.TextArea().ID("taAlerts")
+                                                                            .Border(false)
+                                                                            .StyleSpec("background:white;border:1px solid gray;")
+                                                                            .FieldStyle("color: red")
+                                                                            .Hidden(true)
+                                                                            .ReadOnly(true)
+                                                                            )
+                                                                            .TopBar(
+                                                                            X.Toolbar().Height(30)
+                                                                            .Items(
+                                                                            X.ToolbarFill(),
+                                                                            X.Button().Hidden((Model.ACCION == "VER" ? true : false)).ID("btnSave").Text((Model.ACCION == "DELETE" ? "Eliminar" : "Guardar"))
+                                                                            .Icon((Model.ACCION == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave)).DirectEvents(de =>{ 
+                                                                                de.Click.Url = Url.Action("save_SG_Agente");
+                                                                                de.Click.EventMask.ShowMask = true;
+                                                                                de.Click.Before = "App.btnSave.setDisabled(true); " +
+                                                                                    "beforeSave(App.FormPanel1); return App.FormPanel1.getForm().isValid(); "; 
+                                                                                de.Click.After = "App.btnSave.setDisabled(false); ";
+                                                                                de.Click.ExtraParams.Add(new Parameter("MODO", Model.ACCION, ParameterMode.Value));
+                                                                                de.Click.ExtraParams.Add(new Parameter("idWindow", idWindow, ParameterMode.Value));
+                                                                                de.Click.Success = "onSuccess(result.data);";
+                                                                                de.Click.Failure = "onFailure('" + Model.ACCION + "');"; }),
+                                                                                X.Button().Text((Model.ACCION == "VER" ? "Aceptar" : "Cancelar")).Icon((Model.ACCION == "VER" ? Icon.Accept: Icon.Cancel))                                                    
+                                                                                .DirectEvents(de =>{  //Model.ACCION : Posee el MODO ACTUAL
+                                                                                    de.Click.Url = Url.Action("cerrarWindow");
+                                                                                    de.Click.ExtraParams.Add(new Parameter("id", idWindow, ParameterMode.Value));
+                                                                                }),
+                                                                                X.ToolbarSpacer(20)     
+                                                                                )
+                                                                                )
+                                                                                ).DirectEvents(de =>{
+                                                                                    de.Render.Url = Url.Action("postWindowAgente");
+                                                                                    de.Render.ExtraParams.Add(new Parameter("idGrupo", "" + Model.IdGrupo, ParameterMode.Value));
+                                                                                    de.Render.ExtraParams.Add(new Parameter("idOrga", "" + Model.IdOrganizacion, ParameterMode.Value));
+                                                                                    de.Render.ExtraParams.Add(new Parameter("idPersona", "" + Model.IdEmpleado, ParameterMode.Value));
+                                                                                    de.Render.ExtraParams.Add(new Parameter("idOpcion", "" + Model.IdOpcionDefecto, ParameterMode.Value));})
+                                                                                    .CloseAction(CloseAction.Destroy)
+                                                                                    )

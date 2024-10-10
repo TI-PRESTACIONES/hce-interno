@@ -1,0 +1,54 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SEGURIDADCONCEPTO
+@{
+    ViewBag.Title = "Partial Content";
+    Layout = "";
+    var X = Html.X();
+}
+
+
+@(
+    X.TabPanel()
+    //.Region(Region.Center)
+   
+    .Items(
+    X.Panel()
+        //  .LayoutConfig(new VBoxLayoutConfig() { Align = VBoxAlign.Center, Pack = BoxPack.Center })
+         .Height(600)
+             .Title(Model.DESCRIPCION)
+        .Layout(LayoutType.Fit)
+        .Layout(Ext.Net.LayoutType.Fit)
+        .Region(Region.Center)
+        //.Margins("2 2 2 2")
+        //.Border(false)
+        /*
+        .TopBar(Html.X().Toolbar()
+                    .Items(Html.X().Button()
+                     .Text("Historia Clínica Electrónica (HCE)")
+                     .Icon(Icon.Add)
+                     .Enable(false)
+                     .DirectEvents(de =>
+                     {
+                         de.Click.Url = Url.Action("GetSelectPacientes");
+                         de.Click.ExtraParams.Add(new { containerId = "Window1" });
+                         de.Click.EventMask.ShowMask = true;
+                         de.Click.EventMask.Target = MaskTarget.CustomTarget;
+                         de.Click.EventMask.CustomTarget = "Window1";
+                         de.Click.Before = "this.disable()";
+                     })
+                    )
+                ) */
+        .Loader(
+            Html.X().ComponentLoader()
+                        .AutoLoad(true)
+                        .Url(Url.Action(Model.CONCEPTO))
+                        .Mode(LoadMode.Frame)
+                        .DisableCaching(true)
+                        .AutoLoad(true)
+            )
+        )
+     .Listeners(l =>
+            {
+                l.TabChange.Fn = "addToken";
+            })
+            .Plugins(plugins => plugins.Add(new TabCloseMenu()))
+)

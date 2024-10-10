@@ -1,0 +1,264 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_HC_FactorRelacionadoNanda
+@{
+    var X = Html.X();
+    var COLOR_BLUE01_temp = "#284A89";
+ 
+  
+}
+
+@Styles.Render("~/Content/texto.css")    
+
+
+<script>
+
+    var template = 'color:{0};';
+    var cuenta = 0;
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+    var change = function (value, meta) { return value; };
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 2)
+            return Ext.String.format(template, COLOR_BLUE01, "ACTIVO");
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01, "INACTIVO");
+    };
+    
+  
+    
+  
+    function seleccionadorFactorRelacionadoBusqueda() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorFactorRelacionadoBusqueda"))',
+            params: {
+                AccionSeleccion: 'getSeleccionFactorRelacionadoBusqueda',
+                AccionListado: 'LISTARPAG'
+            }
+        });
+    };
+
+             
+    
+    function addRecord(grid) {
+        var idFRN = App.IdFRN.getValue();
+        var idNanda = App.IdNanda.getValue();
+        var app = App.tfIdFactorRelacionadonom.getValue();
+        var codEXT = App.tfIdFactorRelacionado.getValue();
+        var Descripcion = App.Descripcion.getValue();
+        var usu = App.UsuarioCreacion.getValue();
+        if (codEXT != null && codEXT != '') {
+          if (Descripcion != null && Descripcion != '') {
+            if (validaDuplicado(app , Descripcion)) {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Ya existe el Registro",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+                });
+            } else {
+            cuenta = cuenta + 1;
+            grid.store.insert(0,
+                    {
+                        IdFRN : idFRN,
+                        IdNanda: idNanda,
+                        IdFactorRelacionado: codEXT,
+                        Descripcion: Descripcion,
+                        UsuarioCreacion: usu,
+                        Estado: 2,
+                        Accion: 'INSERT'
+
+                    });
+            }
+        }
+        else {
+
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Ingresar una Descripcion",
+                icon: Ext.Msg.INFO,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+
+        }
+
+    }
+    else {
+        Ext.Msg.show({
+            title: "Advertencia",
+            msg: "Debe Ingresar un Factor Relacionado",
+            icon: Ext.Msg.INFO,
+            minWidth: 200,
+            buttons: Ext.Msg.OK
+        });
+    }
+    };
+
+
+    function validaDuplicado(valor1, valor2 ) {
+        var estados = false;
+        App.StoreSelFRN.each(function (r) {
+            if ((r.get('IdFactorRelacionado')) == (valor1) && (r.get('Descripcion')) == (valor2)) {
+                estados = true;
+            }
+        });
+        return estados;
+    };
+
+
+  
+
+    function trim(str) { return str.replace(/^\s+|\s+$/g, ""); }
+
+    function deleteActualFRN(record) {
+        var store = App.GridPanelSelFRN.store;
+        store.remove(record);
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("add_DataDeleteGrupoFRN"))',
+            params: {
+                MODO: 'DELETE',
+                id: record.data.IdFRN,
+                idnanda: record.data.IdNanda,
+                idfactorrelacionado: record.data.IdFactorRelacionado
+               
+
+            }
+        });
+
+    };
+
+    function save_grupoFactorRelacionadoNanda(agente, idAg) {
+      
+
+        var store = App.StoreSelFRN;
+        var status;
+        var grupoFactorRelacionadoNandaArray = new Array();
+        store.each(function (r) {
+            var MODO = '';
+        
+                if ((r.get('IdFRN')) == 0) {
+                    MODO = 'INSERT';
+
+                }
+
+                else if ((r.get('IdFRN')) != 0) {
+                    MODO = 'UPDATE';
+                }                  
+            
+                var SS_HC_FactorRelacionadoNanda = {
+
+                IdFRN: r.get('IdFRN'),
+                IdNanda: r.get('IdNanda'),
+                IdFactorRelacionado: r.get('IdFactorRelacionado'),
+                Descripcion : r.get('Descripcion'),
+                Estado: r.get('Estado'),
+                Accion: MODO,
+            };
+            grupoFactorRelacionadoNandaArray.push(SS_HC_FactorRelacionadoNanda);
+        });
+        
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("save_grupoFactorRelacionadoNanda"))',
+            params: {
+                MODO: 'NUEVO',
+                idWindow: "WindowFactorRelacionadoNanda",
+                data: grupoFactorRelacionadoNandaArray
+                
+            }
+        });
+    };
+       
+
+</script>
+
+@(Html.X().Window().Width(680).Height(400).Maximizable(true).Modal(true).OnEsc("false").AutoScroll(true).Layout(LayoutType.Fit).CloseAction(CloseAction.Destroy).Icon(Icon.ApplicationForm).ID("WindowFactorRelacionadoNanda").Title("Asignación de Factor Relacionado").Padding(4).TopBar(
+X.Toolbar().Height(30)
+    .Items(
+        X.ToolbarSpacer(),
+                        X.Label().Html("<b><div style='max-width: 480px;white-space: nowrap;text-overflow: ellipsis;overflow: hidden; color:" + COLOR_BLUE01_temp + ";'><span style='color:" + COLOR_BLUE01_temp + ";'>" + "Nanda" + ": " + Model.IdNanda + " - " + Model.Descripcion + " </span> </div></b>").Hidden(false),
+        X.ToolbarFill(),
+            X.Button().Text((Model.Accion == "DELETE" ? "Eliminar" : "Guardar")).Icon((Model.Accion == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave)).Handler("save_grupoFactorRelacionadoNanda('" + Model.Estado + "' , " + Model.IdNanda + " );"),
+        X.Button().Text("Cancelar").Icon(Icon.Cancel).DirectEvents(de =>
+        {
+            de.Click.Url = Url.Action("cerrarWindow");
+            de.Click.ExtraParams.Add(new Parameter("id", "WindowFactorRelacionadoNanda", ParameterMode.Value));
+        }),
+        X.ToolbarSpacer(20))
+        )
+    .Items(
+        X.Panel().Border(false).Layout(LayoutType.VBox).LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+        .Items(
+            X.FieldSet().Height(120).ColumnWidth(0.4).Title("Agregar Grupo Factor Relacionado para:").MarginSpec("0 05 0 05")
+            .Items(
+            Html.X().Container().Layout(LayoutType.HBox).Defaults(d => { d.Add(new Parameter("LabelWidth", "90")); })
+                .Items(
+
+                        X.TextField().ID("tfIdFactorRelacionado").FieldLabel("Código").ReadOnly(true).Hidden(false).LabelWidth(120)
+                           
+                      //  X.TextFieldFor(m => m.IdFactorRelacionado).Width(200).ReadOnly(true).RightButtons(X.Button().Text("...").Handler("seleccionadorFactorRelacionadoBusqueda();")).FieldLabel("FactorRelacionado").LabelWidth(120),
+                  //  X.TextField().ID("tfIdFactorRelacionadonom").Width(550).FieldLabel("Factor Relacionado").ReadOnly(true).RightButtons(X.Button().Text("...").Handler("seleccionadorFactorRelacionadoBusqueda();"))//.LabelWidth(120),
+                   // X.TextField().ID("tfIdFactorRelacionado").FieldLabel("Id FactorRelacionado").ReadOnly(true).Hidden(false)
+                    ),
+            Html.X().Container().Layout(LayoutType.HBox).Defaults(d => { d.Add(new Parameter("LabelWidth", "90")); })
+                .Items(
+                 //X.TextField().ID("tfIdFactorRelacionado").FieldLabel("Id FactorRelacionado").ReadOnly(true).Hidden(false),
+                  X.TextField().ID("tfIdFactorRelacionadonom").Width(520).FieldLabel("Factor Relacionado").ReadOnly(true).RightButtons(X.Button().Text("...").Handler("seleccionadorFactorRelacionadoBusqueda();")).LabelWidth(120),//
+                        X.TextFieldFor(m => m.Descripcion).FieldLabel("Descripcion").Width(550).LabelWidth(120).Hidden(true),
+                     X.ToolbarFill(),
+                        X.ComboBoxFor(m => m.Estado).Editable(false).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("ESTADOINT").Select(d => new ListItem(d.Name, d.ID))).FieldLabel("Estado").Value(Model.Accion == "NUEVO" ? 2 : (Model.Estado)).SimpleSubmit(true).Hidden(true), //.LabelWidth(120),
+                        X.Button().Text("Agregar").Icon(Icon.Add).Handler("addRecord(App.GridPanelSelFRN);")),
+
+            Html.X().Container().Layout(LayoutType.HBox).Defaults(d => { d.Add(new Parameter("LabelWidth", "90")); })
+                .Items(
+                            X.TextFieldFor(m => m.IdFRN).FieldLabel("IdFRN").ReadOnly(true).Hidden(true),
+                            X.TextFieldFor(m => m.IdNanda).FieldLabel("IdNanda").ReadOnly(true).Hidden(true),
+                        X.TextFieldFor(m => m.UsuarioCreacion).FieldLabel("model").ReadOnly(true).Hidden(true))
+                ),
+                    X.GridPanel().Flex(1).ID("GridPanelSelFRN").Border(false).Store(Html.X().Store().ID("StoreSelFRN").Model(
+                        Html.X().Model().IDProperty("IdFRN").Fields(
+                        Html.X().ModelField().Name("IdFRN"),
+                    Html.X().ModelField().Name("IdNanda"),
+                    Html.X().ModelField().Name("IdFactorRelacionado"),
+                    Html.X().ModelField().Name("Descripcion"),
+                    Html.X().ModelField().Name("Estado"),
+                    Html.X().ModelField().Name("UsuarioCreacion"),
+                    Html.X().ModelField().Name("FechaCreacion"),
+                    Html.X().ModelField().Name("Accion")
+
+                    )).Proxy(proxy => proxy.Add(Html.X().AjaxProxy().Url("getGrillaFactorRelacionadoNanda")
+                    .Reader(reader => reader.Add(Html.X().JsonReader().Root("data").TotalProperty("total").IDProperty("IdFRN")))))
+                    .Parameters(ps => ps.Add(new
+                    {
+                        IdNanda = Model.IdNanda,
+                        //IdNoc = Model.IdNoc,
+                        //tipo = "",
+
+                    })
+                        ).AutoLoad(true)).ColumnModel(
+                        Html.X().ComponentColumn().Editor(true).DataIndex("IdFRN").Text("ID").Width(60).Hidden(true).Component(
+                        Html.X().TextField().ReadOnly(true)),
+                        Html.X().ComponentColumn().Editor(true).DataIndex("IdNanda").Text("IdNanda").Width(60).Hidden(true).Component(
+                        Html.X().TextField().ReadOnly(true)),
+                        Html.X().ComponentColumn().Editor(true).DataIndex("IdFactorRelacionado").Text("Código").Width(60).Hidden(false).Component(
+                        Html.X().TextField().ReadOnly(true)),
+                            Html.X().ComponentColumn().Editor(true).DataIndex("Descripcion").Text("Descripción").Flex(1).Hidden(false).Component(
+                        Html.X().TextField().ReadOnly(false)),
+                        Html.X().ComponentColumn().Editor(true).DataIndex("UsuarioCreacion").Text("UsuarioCreacion").Width(150).Hidden(true).Component(
+                        Html.X().TextField().ReadOnly(true)),
+                        Html.X().ComponentColumn().Editor(true).DataIndex("FechaCreacion").Text("FechaCreacion").Width(60).Hidden(true).Component(
+                        Html.X().TextField().ReadOnly(true)),
+                        Html.X().ComponentColumn().Editor(true).DataIndex("Estado").Width(100).Text("Estado").Component(
+                        Html.X().ComboBox().Editable(false).Items(new ListItem("ACTIVO", 2), new ListItem("INACTIVO", 1))),
+                            Html.X().CommandColumn().Width(60).Text("Eliminar").Commands(
+                        Html.X().GridCommand().CommandName("Delete").Icon(Icon.Delete).Text("")).Listeners(ls => ls.Command.Handler = "deleteActualFRN(record);"),
+                        Html.X().ComponentColumn().Editor(true).DataIndex("Accion").Text("Acción").Hidden(true).Component(
+                        Html.X().TextField().ReadOnly(true)))
+                        .SelectionModel(Html.X().RowSelectionModel().Mode(SelectionMode.Multi))
+                        .Plugins(Html.X().CellEditing())
+                )
+        ).CloseAction(CloseAction.Destroy)
+)
+
+

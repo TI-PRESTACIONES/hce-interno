@@ -1,0 +1,118 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SEGURIDADCONCEPTO
+@{
+    ViewBag.Title = "Partial Content";
+    Layout = "";
+    var X = Html.X();
+    var indicaVisiblePrint = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_VISIBLE_IMPRESION;
+    var visibleImpresion = (indicaVisiblePrint == 2 ? true : false);
+
+}
+
+
+<script>
+    function eventoVisorReporte(param1) {
+        if (param1 == 'HC') {
+           window.location.href = '@Url.Action("HCEReportesView_total", "HClinica")';
+        } else {
+            window.location.href = '@Url.Action("HCEReportesView", "HClinica")';
+           
+        }
+    }
+
+    function setImpresion(store) {
+        App.btnImpresion2.setVisible(false);
+        var contar = 0;
+        if (store != null) {
+            store.each(function (r) {
+                contar++;
+            });
+        }
+        if (contar > 0) {
+            App.btnImpresion2.setVisible(true);
+        }
+    }
+
+  
+
+
+</script>
+
+@(
+
+
+
+        //X.TabPanel()
+ X.Window().ID("WindowVisorCronologiasForm")
+            .Border(true)
+            .Title(Model.DESCRIPCION)
+            .Icon(Icon.ApplicationForm)
+            .Width(900)
+            .Height(450)
+            .Modal(true)
+            .Constrain(true)
+            .CloseAction(CloseAction.Destroy)
+            .Closable(true)
+            .Constrain(true)
+            .AutoScroll(true)
+        //.AutoRender(false)
+            .Layout(LayoutType.Fit)
+        //.Collapsible(true)
+        .Maximizable(true)
+            .TopBar(
+                X.Toolbar()
+                .Items(
+                X.ToolbarFill(),
+                    X.Button()
+                                    .Text("Imprimir")
+                                    .Icon(Icon.Report)
+                                    .Hidden(true)
+                                    //.Hidden(!visibleImpresion)
+                                    .ID("btnImpresion2")
+        // .Handler("eventoReporte('');")
+                                        .DirectEvents(de =>
+                                          {
+                                              // de.Click.Url = Url.Action("cerrarWindow");
+                                              // de.Click.ExtraParams.Add(new Parameter("id", "WindowVisorCronologiasForm", ParameterMode.Value));
+
+                                              de.Click.Url = Url.Action("HCEReportesPartialView");
+                                              //de.Click.ExtraParams.Add(new Parameter("id", "WindowVisorCronologiasForm", ParameterMode.Value));
+                                              //de.Click.Success = "onSuccess(result.data);";
+
+                                          })
+                                    ,
+                                    X.ToolbarSpacer().Width(40)
+                                    ,
+                X.Button().Text("Aceptar").Icon(Icon.Accept)
+                     .Hidden(true)
+                .DirectEvents(de =>
+                    {
+                        de.Click.Url = Url.Action("cerrarWindow");
+                        de.Click.ExtraParams.Add(new Parameter("id", "WindowVisorCronologiasForm", ParameterMode.Value));
+                    })
+                )
+            )
+            .DirectEvents(de =>
+            {
+                de.Hide.Url = Url.Action("cambioSeleccionCronologias");
+                de.Hide.ExtraParams.Add(new Parameter("indica", "DESELECCION", ParameterMode.Value));
+                de.Close.Url = Url.Action("cambioSeleccionCronologias");
+                de.Close.ExtraParams.Add(new Parameter("indica", "DESELECCION", ParameterMode.Value));
+
+            })
+        /*.Listeners(li =>
+              {
+                  li.Hide.Handler ="alert('XXXXXXX');";
+                  li.Close.Handler = "alert('XXXX');";
+                  li.Hide.ExtraParams.Add(new Parameter("indica", "DESELECCION", ParameterMode.Value));
+        })*/
+        //.Y(new Random().Next(300))
+          .Loader(
+                        Html.X().ComponentLoader()
+                                    .AutoLoad(true)
+                                    .Url(Url.Action(Model.CONCEPTO))
+
+                                    .Mode(LoadMode.Frame)
+                        )
+
+
+)

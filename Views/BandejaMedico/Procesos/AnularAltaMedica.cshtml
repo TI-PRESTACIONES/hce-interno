@@ -1,0 +1,528 @@
+﻿@model SoluccionSalud.Entidades.Entidades.VW_ATENCIONPACIENTE
+@{
+    ViewBag.Title = "";
+    Layout = "";
+    var X = Html.X();
+    var idWindow = "WindowFirmarActoMedico";
+    var modoDesc = (Model.Accion == "NUEVO" ? "Nuevo" :
+                    (Model.Accion == "UPDATE" ? "Firmar" :
+                        (Model.Accion == "DELETE" ? "Eliminar" :
+                            (Model.Accion == "VER" ? "Ver" : "--"))));
+    
+    var indicaModoVer = (Model.Accion == "VER" ? true : (Model.Accion == "TODOS" ? true : false));
+    var indicaModoNuevo = (Model.Accion == "NUEVO" ? true : (Model.Accion == "TODOS" ? true : false));
+    var indicaModoUpdate = (Model.Accion == "UPDATE" ? true : (Model.Accion == "TODOS" ? true : false));
+    var usuarioemer = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.USUARIO;
+    var indicaUsuario = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.indicadorUsuario;
+    var PAR_CODTRABAJADORMEDICO_VISITA = "" + (AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("CODTRABMED") != null ?
+        AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("CODTRABMED") : "08");
+
+        
+    var PARAM_ESPECIALIDADSELECC_VISITA = (AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("ESPECIALIDADHCE_SEL") != null ?
+        (int)AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("ESPECIALIDADHCE_SEL") : 0);
+
+
+    var indicaSeleccionEspecialidad = (Model.TipoSituacion == PAR_CODTRABAJADORMEDICO_VISITA) ? true : false;
+
+    var PAR_TIPOTRABAJADORREQUERIDO = Model.TipoHistoria;
+    var indicaEsTipoTrabajadorRequerido = (Model.TipoSituacion == PAR_TIPOTRABAJADORREQUERIDO) ? true : false;
+
+    var indicaAddUbicacionVisible =
+        ((Model.TipoBrevete == "MED_EMERGENCIA" || Model.TipoBrevete == "MED_HOSP_CIRUGIA" ||
+            Model.TipoBrevete == "ENFERM_EMERGENCIAS" || Model.TipoBrevete == "ENFERM_HOSP_CIRUGIAS"
+            ) 
+            ? true 
+            : false
+        );
+
+    var VarTipoUbicacion =
+        ((Model.TipoBrevete == "MED_EMERGENCIA" || Model.TipoBrevete ==  "ENFERM_EMERGENCIAS"            
+            )
+            ? "T"
+            : (Model.TipoBrevete == "MED_HOSP_CIRUGIA" || Model.TipoBrevete == "ENFERM_HOSP_CIRUGIAS"
+            )?"C":"N"
+        ); 
+}
+
+<style>
+    .bold-text {
+        font-weight: bold;
+        padding-left: 32px;
+        margin-bottom: 2px;
+        font-size: 110%;
+    }
+</style>
+
+<script>
+
+    function InicioMedico(mensaje) {
+
+        Ext.Msg.show({
+            title: "Advertencia",
+            msg: mensaje,
+            icon: Ext.Msg.INFO,
+            minWidth: 200,
+            buttons: false
+        });
+
+        parent.window.location.href = ' @Url.Action("Index", "BandejaMedico") ';
+    }
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_GREEN02 = "#224239";
+
+    var COLOR_YELLOW02 = "#D9A407";
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 'CC')
+            return Ext.String.format(template, COLOR_YELLOW02, "Pendiente");
+        if (value == 'CA')
+            return Ext.String.format(template, COLOR_BLUE01, "Atendido");
+        if (value == 'AN')
+            return Ext.String.format(template, COLOR_RED01, "Anulado");
+        if (value == 'FI')
+            return Ext.String.format(template, COLOR_GREEN01, "Firmado");
+    };
+
+    var changeEstadoOA = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01, "Anulado");
+        if (value == 2)
+            return Ext.String.format(template, COLOR_GREEN01, "En Atención");
+        if (value == 3)
+            return Ext.String.format(template, COLOR_BLUE01, "Atendido");
+        if (value == 0)
+            return Ext.String.format(template, COLOR_YELLOW02, "Pendiente");
+    };
+
+    var changeEpiClinico = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        return Ext.String.format(template, COLOR_GREEN02, "Epi. Clínico " + value);
+    };
+    var changeEpiAtencion = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        return Ext.String.format(template, COLOR_GREEN02, "Epi. Atención " + value);
+    };
+    var changeEpiVisita = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        return Ext.String.format(template, COLOR_GREEN02, "Visita " + value);
+    };
+    var codOA_aux = null;
+    var valorModo_aux = null;
+    function eventoAutenticacionPrevia(valores, codOA, empleado, tipoagente, tipoAtencion) {
+        valorModo_aux = valores;
+        codOA_aux = codOA;
+        var idEspecialidadSeleccVisita = null;
+        var especialidadNecesaria = false;
+        var asignacionNecesaria = false;
+        var indicaEspecialidad = '@(indicaSeleccionEspecialidad)';
+        var notaAutencticacion = '';
+
+        if (valores == 'C') {
+            asignacionNecesaria = true;
+            notaAutencticacion = notaAutencticacion + '* Se debe asignar al Personal de Salud \n';
+        }
+
+        if (indicaEspecialidad == 'True') {
+            if (valores == 'C') {
+                idEspecialidadSeleccVisita = '@(PARAM_ESPECIALIDADSELECC_VISITA)';
+                if (idEspecialidadSeleccVisita == null || idEspecialidadSeleccVisita <= 0) {
+                    especialidadNecesaria = true;
+                    notaAutencticacion = notaAutencticacion + '* La especialidad es necesaria  \n';
+                }
+            }
+        }
+        var idEmpleadoCreadorAux = 0;
+        var empleadoCreadorValido = true;
+        if (valores != 'C') {
+            if (seleccionRecordActualVisita != null) {
+                idEmpleadoCreadorAux = seleccionRecordActualVisita.data.IdPersonalSalud;
+                if (empleado != seleccionRecordActualVisita.data.IdPersonalSalud) {
+                    empleadoCreadorValido = false;
+                    notaAutencticacion = notaAutencticacion + '* El trabajador debe ser el mismo que creó el episodio \n';
+                }
+            }
+        }
+        var esTrabRequerido = true;
+        var indicaEsTrabRequerido = '@(indicaEsTipoTrabajadorRequerido)';
+        if (indicaEsTrabRequerido != 'True') {
+            esTrabRequerido = false;
+            notaAutencticacion = notaAutencticacion + '* El tipo de trabajador debe ser el correcto \n';
+        }
+
+        if (empleado != 0 && tipoagente > 1 && !especialidadNecesaria && empleadoCreadorValido && esTrabRequerido && !asignacionNecesaria) {
+            eventoContinuarVisita(valores, codOA, tipoAtencion);
+        } else {
+            if (seleccionRecordActualVisita != null || valores == 'C') {
+                var ACCION_ = '';
+                if (valores == 'C') {
+                    ACCION_ = 'NUEVO';
+                } else if (valores == 'M') {
+                    ACCION_ = 'UPDATE';
+                } else if (valores == 'V') {
+                    ACCION_ = 'VER';
+                }
+
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("AutenticacionAdicional"))',
+                    params: {
+                        MODO: ACCION_,
+                        tipotrab: 'MEDICO',
+                        especialidad: idEspecialidadSeleccVisita,
+                        trabajadorRequerido: '@(PAR_TIPOTRABAJADORREQUERIDO)',
+                        empleadoCreador: idEmpleadoCreadorAux,
+                        mensajes: notaAutencticacion,
+                        campoEvento: 'txtEventoAutenticaVisitaEpi'
+                    }
+                });
+            }
+        }
+    }
+    function eventoAutenticacionSuccess(tipoAtencion) {
+
+        if (App.txtEventoAutenticaVisitaEpi.getValue() != '') {
+            if (valorModo_aux != null && codOA_aux != null) {
+                eventoContinuarVisita(valorModo_aux, codOA_aux, tipoAtencion);
+                codOA_aux = null;
+            }
+            App.txtEventoAutenticaVisitaEpi.setValue('');
+        }
+    }
+    function eventoContinuarVisitaDirect(record, codOA, modo, empleado, tipoagente, tipoAtencion) {
+        if (modo != 'TODOS') {
+            var ACCION_ = '';
+            if (modo == 'NUEVO') {
+                ACCION_ = 'C';
+            } else if (modo == 'UPDATE') {
+                ACCION_ = 'M';
+            } else if (modo == 'VER') {
+                ACCION_ = 'V';
+            }
+            setSeleccionRecordVisita(record);
+            eventoAutenticacionPrevia(ACCION_, codOA, empleado, tipoagente, tipoAtencion);
+        }
+
+    }
+
+    function eventoContinuarVisita(valores, codOA, tipoAtencion_) {
+        if (seleccionRecordActualVisita != null || valores == 'C') {
+            valorModo_aux = valores;
+            if (valores == 'C') {
+
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("SeleccionadorUnidadServicio"))',
+                    params: {
+                        MODO: 'EPISODIO',
+                        campoEvento: 'txtEventoUnidServicioNuevaVisitaHCE',
+                        establecimiento: 0,
+                        tipoAtencion: tipoAtencion_,
+                        accionSeleccion: 'getSeleccionUnidadServicioNuevaVisita',
+                        accionListado: 'LISTARPAG'
+                    }
+                });
+            } else {
+                estadoSelecVisita(valores, codOA, seleccionRecordActualVisita.data.IdUnidadServicio, tipoAtencion_);
+            }
+
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Seleccionar una Atención.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+    }
+
+    function eventoSeleccionUnidadServicioVisita(codOA, compo, tipoAtencion) {
+        if (compo.getValue() != '') {
+            if (valorModo_aux != null) {
+                estadoSelecVisita(valorModo_aux, codOA, compo.getValue(), tipoAtencion);
+                valorModo_aux == null;
+            }
+            compo.setValue('');
+        }
+    };
+
+    function estadoSelecVisita(valores, codOA, idUnidadServ, tipoAtencion_) {
+        var ACCION_ = '';
+        if (valores == 'C') {
+            ACCION_ = 'NUEVO';
+        } else if (valores == 'M') {
+            ACCION_ = 'UPDATE';
+        } else if (valores == 'V') {
+            ACCION_ = 'VER';
+        }
+        var ArrayList = new Array();
+
+        if (seleccionRecordActualVisita != null) {
+            var model = seleccionRecordActualVisita.data;
+            var SS_HC_EpisodioAtencion = {
+                UnidadReplicacion: model.UnidadReplicacion,
+                IdPaciente: model.IdPaciente,
+                EpisodioClinico: model.EpisodioClinico,
+                IdEpisodioAtencion: model.IdEpisodioAtencion,
+                EpisodioAtencion: model.EpisodioAtencion,
+                CodigoOA: codOA,
+                Estado: model.Estado,
+                TipoAtencion: tipoAtencion_,
+                IdOrdenAtencion: model.IdOrdenAtencion,
+                LineaOrdenAtencion: model.LineaOrdenAtencion
+            };
+            ArrayList.push(SS_HC_EpisodioAtencion);
+
+        }
+        var reglaAplica = false;
+        if (valores == 'M') {
+            var APMiscelaneos = new Array();
+            var MA_MiscelaneosDetalle = {
+                ValorEntero1: 1,
+                ACCION: "POSaludFirmaMedico"
+            };
+            APMiscelaneos.push(MA_MiscelaneosDetalle);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("POSaludFirmaMedico"))',
+                params: {
+                    PacienteID: 0,
+                    valor: 0,
+                    regla: 'POSaludFirmaMedico',
+                    arrays: APMiscelaneos
+                },
+                success: function (resultRegla) {
+                    reglaAplica = mostrarAlarmaReglasVisita(resultRegla.data);
+                    if (!reglaAplica) {
+                    } else {
+                        App.GridPanelSelVisita.getStore().reload();
+                    }
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("EstadoSelecVisita"))',
+                        params: {
+                            selection: ArrayList,
+                            accion: ACCION_,
+                            idUnidadServicio: idUnidadServ
+                        },
+                        success: function (data) {
+                            App.WindowVisitaEpi.close();
+                            ActivaUrlContinuar(valores);
+                        }
+                    });
+                }
+            });
+        } else {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("EstadoSelecVisita"))',
+                params: {
+                    selection: ArrayList,
+                    accion: ACCION_,
+                    idUnidadServicio: idUnidadServ
+                },
+                success: function (data) {
+                    App.WindowVisitaEpi.close();
+                    ActivaUrlContinuar(valores);
+                }
+            });
+        }
+    }
+    function mostrarAlarmaReglasVisita(data) {
+        if (data != null) {
+            if (data[0].ESTADOBOOL) {
+                Ext.Msg.show({
+                    title: "Advertencia Motor Reglas",
+                    msg: data[0].DESCRIPCION,
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    function ActivaUrlContinuar(valores) {
+        if (seleccionRecordActualVisita != null || valores == 'C') {
+            switch (valores) {
+                case "C":
+                    parent.window.location.href = ' @Url.Action("Index", "HClinica") ';
+                    break;
+                case "V":
+                    parent.window.location.href = ' @Url.Action("Index", "HClinica") ';
+                    break;
+                case "M":
+                    parent.window.location.href = ' @Url.Action("Index", "HClinica") ';
+                    break;
+                case "F":
+                    break;
+                default:
+            }
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Seleccionar una Atención.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+    };
+    var eventoCheckFiltro = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+    var GlobalSelect = false;
+    var varTipoBuscar = "LOAD";
+
+    var accionBuscarFiltroVisita = function (tipo) {
+     
+        varTipoBuscar = tipo;
+        App.GridPanelSelVisita.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+
+    var seleccionRecordActualVisita = null;
+    function setSeleccionRecordVisita(record) {
+        seleccionRecordActualVisita = record;
+    }
+
+    function eventoAddUbicacionAtencionVisita() {
+        if (seleccionRecordActualVisita != null) {
+
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("beforeSeleccionadorUbicacionAtencion"))',
+                params: {
+                    tipo: '@(VarTipoUbicacion)',
+                    unidadreplicacion: seleccionRecordActualVisita.data.UnidadReplicacion,
+                    idpaciente: seleccionRecordActualVisita.data.IdPaciente,
+                    idepiatencion: seleccionRecordActualVisita.data.IdEpisodioAtencion,
+                    idepiclinico: seleccionRecordActualVisita.data.EpisodioClinico,
+                    accionSeleccion: 'getSaveSeleccionUbicacionAtencionHCE',
+                    accionListado: 'LISTARPAG'
+                }
+            });
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Seleccionar un Elemento.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+    };
+
+</script>
+
+
+@(Html.X().Window()
+    .Width(570)
+    .Height(240)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(false)
+    .Layout(LayoutType.Fit)
+        //.LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.StretchMax })
+
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID(idWindow)
+    .Title("Anular Alta Médica")
+        //.Padding(4)
+        //.X(0)
+        //.Y(0)
+    .Items(
+                Html.X().FormPanel()
+                             .Frame(false)
+                             .Border(false)
+                            .Layout(LayoutType.VBox)
+                            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                    .Items(
+                             Html.X().FieldSet()
+                               .Title("Datos del Episodio")
+                               .MarginSpec("05 05 05 05")
+                                  .Layout(LayoutType.VBox)
+                                  .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                                .Items(
+                                   
+                                    X.TextField()
+                                    .FieldLabel("Código OA")
+                                    .ReadOnly(true)
+                                    .Text(Model.CodigoOA),
+                                             X.TextAreaFor(c => c.ObservacionProxima)
+                                        .FieldLabel("Motivo de Anulación")
+                                            .ReadOnly(false).Hidden(false)
+                                            .Text(Model.ObservacionProxima),
+                                            X.TextField().ID("txtusuario")
+                                                       .FieldLabel("Usuario").Value(@usuarioemer)
+                                                       .ReadOnly(false).Hidden(@indicaUsuario),
+                                             X.TextField().ID("txtPassword")
+                                                .FieldLabel("Contraseña").InputType(Ext.Net.InputType.Password)
+                                            .ReadOnly(false)
+                                          
+                                        
+                                ),
+                             Html.X().FieldSet()
+        //.ColumnWidth(0.4)
+                               .Title("Datos del proceso").Hidden(true)
+        //.Border(false)
+                               .MarginSpec("05 05 05 05")
+        /*.Defaults(d =>
+        {
+            d.Add(new Parameter("LabelWidth", "170"));
+            d.Add(new Parameter("DefaultAnchor", "100%"));
+            d.Add(new Parameter("LabelAlign", "Left"));
+        })*/
+
+                               //.DefaultAnchor("100%")
+                                  .Layout(LayoutType.VBox)
+                                  .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+
+                                .Items(
+                                   
+                                )
+
+                         )
+                         .TopBar(
+                             X.Toolbar()
+                             .Height(30)
+                             .Items(
+                                X.ToolbarFill(),
+                                X.Button()
+                                    .Hidden((Model.Accion == "VER" ? true : false))
+                                    .ID("btnSave")
+                                        .Text((Model.Accion == "DELETE" ? "Eliminar" : "Guardar"))
+                                        .Icon((Model.Accion == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave))
+                                     .DirectEvents(de =>
+                                      {  //Model.ACCION : Posee el MODO ACTUAL
+                                          de.Click.Url = Url.Action("save_anularAltaMedica", "BandejaMedico");
+                                          
+                                         
+                                          de.Click.ExtraParams.Add(new Parameter("MODO", Model.Accion, ParameterMode.Value));
+                                          de.Click.ExtraParams.Add(new Parameter("idWindow", "ANULARALTA", ParameterMode.Value));
+                                          de.Click.ExtraParams.Add(new { password = JRawValue.From("App.txtPassword.getValue()") });
+                                          de.Click.ExtraParams.Add(new { txtusuario = JRawValue.From("App.txtusuario.getValue()") });
+
+                                      }),
+                                X.Button()
+                                        .Text((Model.Accion == "VER" ? "Aceptar" : "Cancelar"))
+                                        .Icon((Model.Accion == "VER" ? Icon.Accept : Icon.Cancel))
+                                                 .Handler("App.WindowFirmarActoMedico.close();")
+                                 )
+                            )
+    )
+
+    .CloseAction(CloseAction.Destroy)
+)

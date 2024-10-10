@@ -1,0 +1,151 @@
+﻿@model List<Ext.Net.Node>
+
+
+@(
+ Html.X().Viewport()
+.Layout(LayoutType.Border)
+ .Items(p =>
+ {
+     p.Add(Html.X().Panel()
+         //.Title("North")
+         .Height(120)
+         .Region(Region.North)
+         .Header(false)
+         .Collapsible(true)
+         .Split(true)
+         .CollapseMode(CollapseMode.Mini)
+         .Margins("0 0 0 0")
+        .Border(true)
+         .Items(
+            Html.X().Container()
+            .ID("North1")
+         //.StyleSpec("border:solid 1px black; height:150px; width:300px;")
+            .Loader(Html.X().ComponentLoader()
+                .Url(Url.Action("PanelNorth"))
+                .Mode(LoadMode.Script)
+                .Params(new { containerId = "North1" })
+
+               )
+            )
+         );
+     p.Add(Html.X().Panel().Title("South")
+         .Height(170)
+        .Region(Region.South)
+        .Header(false)
+        .Collapsible(true)
+        .Split(true)
+        .CollapseMode(CollapseMode.Mini)
+        .Margins("0 0 0 0")
+        .Border(true)
+         //.Loader(
+         //    Html.X().ComponentLoader()
+         //        .AutoLoad(true)
+         //        .Url(Url.Action("South1Hijo"))
+         //        .Mode(LoadMode.Frame)
+         //        .Params(new { containerId = "South1" })
+         // )
+        .Items(
+            Html.X().Container()
+            .ID("South1")
+         //.StyleSpec("border:solid 1px black; height:150px; width:300px;")
+            .Loader(Html.X().ComponentLoader()
+                .Url(Url.Action("PanelSouth"))
+                .Mode(LoadMode.Script)
+                .Params(new { containerId = "South1" })
+
+               )
+         )
+
+        );
+     p.Add(Html.X().Panel().Title("Center")
+
+          .Layout(LayoutType.Anchor)
+         // .Layout(Ext.Net.LayoutType.Fit)
+         //.Height(100)
+         .Region(Region.Center)
+         .Header(false)
+         .Collapsible(true)
+         .Split(true)
+         .CollapseMode(CollapseMode.Mini)
+         //.Margins("0 5 5 5")
+         .Border(true)
+         .Items(items =>
+         {
+             items.Add(new Panel
+             {
+                 ID = "Center1",
+                 Region = Region.Center,
+                 Border = false,
+                 //BodyPadding = 10,
+                 Header = false
+             });
+         }));
+     
+     p.Add(Html.X().Panel()
+         //.Title("West")
+         .Width(100)
+         .Region(Region.West)
+         .Layout(LayoutType.Fit)
+        .Width(240)
+        .Header(false)
+        .Collapsible(true)
+        .Split(true)
+        .CollapseMode(CollapseMode.Mini)
+        .Margins("0 0 0 0")
+        .Border(false)
+
+        .Items(items =>
+        {
+            items.Add(new Panel
+            {
+                ID = "West1",
+              //  Title = "Procesos",
+                Width = 240,
+                Border = true,
+                Layout = "Accordion",
+                Region = Region.West,
+                Loader = Html.X().ComponentLoader()
+                    .Url(Url.Action("PanelWest"))
+                    .Mode(LoadMode.Script)
+                    .Params(new { containerId = "West1" })
+            });
+
+        })
+
+        );
+   
+ 
+     p.Add(Html.X().Panel()
+        .Title("East")
+        .Region(Region.East)
+        .Layout(LayoutType.Fit)
+        .Width(240)
+        .Header(false)
+        .Collapsible(true)
+        .Split(true)
+        .ID("East1")
+        .CollapseMode(CollapseMode.Mini)
+        .Margins("0 0 0 0")
+        .Border(true)
+        .Loader(Html.X().ComponentLoader()
+                    .Url(Url.Action("PanelEast"))
+                    .Mode(LoadMode.Script)
+                    .Params(new { containerId = "East1" })
+         )
+        .Items(items =>
+        {
+            //items.Add(new Panel
+            //{
+            //    Title = "East1",
+            //    HideMode = HideMode.Offsets,
+            //    Icon = Icon.Application,
+            //    Region = Region.East,
+            //    Loader = Html.X().ComponentLoader()
+            //        .Url(Url.Action("PanelEast"))
+            //        .Mode(LoadMode.Script)
+            //        .Params(new { containerId = "East1" })
+
+            //});
+        })
+        );
+ }))

@@ -1,0 +1,716 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_HC_Oftalmologico_FE
+
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+    var indicaVisiblePrint = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_VISIBLE_IMPRESION;
+    var visibleImpresion = (indicaVisiblePrint == 2/* && Model.Accion == "UPDATE"*/ ? true : false);
+    var isVista = (Model.Accion == "VISTA" ? true : false);
+    var isNuevo = (Model.Accion == "NUEVO" ? true : false);
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VISTA" ? false : false))));
+                            
+    var COLOER_IND_OBLIGA = AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("COL_BCOBLI");
+    var MENS_NUMERO = "No se permite un valor negativo.";
+    var PAR_FORMATO02 = "999";
+
+
+}
+@section cabecera
+{
+    <link rel="stylesheet" href="@Url.Content("~/resources/css/main.css")" />
+
+    <style>
+        html body {
+            padding: 0px;
+            background: none;
+            background: none;
+            background: none;
+            background-attachment: fixed;
+            background-position: center;
+            font-family: tahoma,verdana,sans-serif;
+            background-color: #ffffff;
+        }
+    </style>
+
+    <script>
+        function eventoRenderForm() {
+
+            var kk = 195;
+            var scrH = screen.height;
+            var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+            var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+
+            if (southH == 0) {
+                southH = 30;
+            } else if (parent.App.PanelMainSouth.collapsed) {
+                southH = 30;
+            }
+            var dimCentral = (scrH - (northH + southH) - kk);
+            App.formactual.setHeight(545);
+
+            var v = '@isNuevo';
+            if (v == 'True') {
+                App.btnImpresion.setVisible(false);
+                App.btnImpresionHC.setVisible(false);
+            }
+        }
+
+    var indicaCambios = false;
+    function setIndicaCambios(value) {
+        indicaCambios = value;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("setIndicaCambiosFormulario"))',
+            params: {
+                indica: (value ? 1 : 0)
+            }
+        });
+
+        var val = '@visibleImpresion';
+        var vis = '@isVista';
+
+        if (vis == 'False') {
+            if (val == 'True') {
+
+                if (value == true) {
+                    App.btnImpresion.setDisabled(true);
+                    App.btnImpresionHC.setDisabled(true);
+                    parent.App.btnGuardarFirma.setDisabled(true);
+
+                } else {
+                    App.btnImpresion.setDisabled(false);
+                    App.btnImpresionHC.setDisabled(false);
+                    parent.App.btnGuardarFirma.setDisabled(false);
+                }
+            }
+        }
+
+    }
+    var count = 0; // a counter for new records
+
+
+
+    var eventoKey = function (tf, e) {
+        if (e.getKey() == '110' || e.getKey() == '190' || e.getKey() == '100') {
+            var str = tf.getRawValue().replace('.', '');
+            tf.setValue(str);
+        } else if (e.getKey() == '109' || e.getKey() == '189') {
+            var str = tf.getRawValue().replace('-', '');
+            tf.setValue(str);
+        }
+    };
+    var eventoOnEditar = function (btn) {
+        App.cmdGuardar.setDisabled(false);
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+
+    };
+
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+            App.conthbIndicaError.setVisible(true);
+            App.taAlerts.focus();
+        } else {
+            App.taAlerts.setVisible(false);
+            App.conthbIndicaError.setVisible(false);
+        }
+
+    };
+
+
+    var getInvalidFields = function (form) {
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+        });
+        return invalidFields;
+    };
+
+    var beforeSave = function (form) {
+        App.taAlerts.setVisible(false);
+        App.taAlerts.setValue(null);
+        App.conthbIndicaError.setVisible(false);
+        var FieldsInvalidos = getInvalidFields(form);
+        if (FieldsInvalidos.length > 0) {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("addRecursosValidacion"))',
+                params: {
+                    data: FieldsInvalidos,
+                    indica: 'VALIDAR',
+                },
+                success: function (result) { accionMensajes(result.data); }
+            });
+        }
+    };
+
+
+    var onSuccess = function (data) {
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+        App.formactual.setDisabled(true);
+        var reload = true;
+        if (data != null) {
+            if (data.length > 0) {
+                reload = false
+                App.cmdGuardar.setDisabled(false);
+                App.formactual.setDisabled(false);
+                if (data[0].TIPOMSG == 'EXCEPTION') {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: data[0].TITULO,
+                            message: data[0].DESCRIPCION,
+                            tipo: 'ERROR'
+                        }
+                    });
+                } else {
+                    accionMensajes(data);
+                }
+            }
+        }
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+        }
+    };
+    var onFailure = function (data) {
+        App.cmdGuardar.setDisabled(false);
+    };
+
+
+    function eventoCancelar(form) {
+        //form.getForm().reset();
+        //App.taAlerts.setVisible(false);
+        //App.conthbIndicaError.setVisible(false);
+        //setIndicaCambios(false);
+
+        App.bar.setDisabled(true);
+        var reload = true;
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+            // beforeSave(form);
+        }
+    };
+
+    </script>
+    <script>
+
+        var hhValidation = function (h) {
+            str = h.value;
+
+            tempo = "'";
+            str = str.replace('javascript:myFunction(' + tempo, '');
+            str = str.replace('%20', ' ');
+            str = str.replace('%C3%B3', 'ó');
+            str = str.replace('%C3%A1', 'á');
+            str = str.replace('%C3%A9', 'é');
+            str = str.replace('%C3%AD', 'í');
+            str = str.replace('%C3%BA', 'ú');
+            str = str.replace('%C3%B1', 'ñ');
+
+            str = str.replace('%C3%8D', 'Í');
+            str = str.replace('%C3%93', 'Ó');
+            str = str.replace('%C3%81', 'Á');
+            str = str.replace('%C3%91', 'Ñ');
+            str = str.replace('%C3%9A', 'Ú');
+            str = str.replace(tempo + ')', '');
+            h.setValue(str);
+
+        }
+        var mmValidation = function (m) {
+            if (m.getValue() > 59) {
+                m.setValue(59);
+            }
+
+        };
+
+        function eventoVisorReporte(param1) {
+            if (param1 == 'HC') {
+                window.location.href = '@Url.Action("HCEReportesView_total", "HClinica")';
+            } else {
+                window.location.href = '@Url.Action("HCEReportesView", "HClinica")';
+            }
+        };
+
+        var eventoRadioValidacion = function (rd, valor) {
+            var varRadio = rd.getValue();
+            //  alert('mmmm');
+            if (varRadio) {
+
+                    if (valor == 'N') {
+                        App.FrecuenciaCard_FetalAdd.setDisabled(true);
+                        App.FrecuenciaCard_FetalAdd.focus();
+                        App.FrecuenciaCard_FetalAdd.setValue('');
+                    }
+                    else {
+                        App.FrecuenciaCard_FetalAdd.setDisabled(false);
+
+                    }
+
+            } else {
+            }
+        };
+
+        var CalculoIMC = function (obj) {
+            var Talla = parseInt(App.txtTalla.getValue());
+            var Peso = parseFloat(App.txtPeso.getValue());
+            var IMC = parseFloat(App.txtIMC.getValue());
+                var Total = 0;
+                if (IMC == '') {
+                    App.txtIMC.setValue('0');
+                }
+                if (Talla == '')
+                {
+                    App.txtIMC.setValue('');
+                } else {
+                    Total = (Peso / ((Talla * Talla)/10000));
+                   // alert(Total);
+                    var TotalString = Total.toString();
+                    var recortado = TotalString.substring(0, 7);
+                    Total = parseFloat(recortado);
+                    App.txtIMC.setValue(Total);
+                }
+        };
+    </script>
+}
+
+
+@section cuerpo
+{
+
+    @(Html.X().Viewport().ID("ViewportXD")
+        .Layout(LayoutType.VBox)
+
+        .LayoutConfig(
+            new VBoxLayoutConfig { Align = VBoxAlign.Stretch }
+        )
+        .Listeners(l =>
+        {
+            l.AfterLayout.BroadcastOnBus = "App.resize";
+            l.AfterLayout.Single = true;
+        })
+        .Items(regions =>
+        {
+            regions.Add(Html.X().FormPanel()
+                .ItemID("center")
+                .DefaultAnchor("100%")
+                .AutoScroll(true)
+                .Height(400)
+               .Header(false)
+               .Border(true)
+                .ID("formactual")
+                .Listeners(l =>
+                {
+                    l.Render.Handler = "eventoRenderForm(); ";
+
+                })
+               .Items(
+               Html.X().Container().Layout(LayoutType.VBox)
+                                     .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                                     .Items(
+                                      X.Component().Height(10),
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(     
+                                     )
+                                     ),
+
+                       X.FieldSet()
+                        .ID("fsEvolucion")
+                        .ColumnWidth(0.4).Title("<b>Oftalmologia</b>")
+                        .Layout(LayoutType.Fit)
+                        .MarginSpec("05 05 0 05")
+                        .Height(700)
+                        .FieldDefaults(d => { d.LabelAlign = LabelAlign.Left; })
+                        .Items(
+
+                                  Html.X().Container().Layout(LayoutType.VBox)
+                                     .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                                     .Items(
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+                                     X.Label("AV sc:"),
+                                     X.Component().Width(30),
+                                      X.TextFieldFor(c => c.AVscODerecho).FieldLabel("OD:").LabelWidth(20)
+                                     .Width(110).ReadOnly(indicaModoLectura)
+                                     .EnableKeyEvents(true),
+                                      X.Component().Width(20),
+                                X.Label("AV cc:"),
+                                     X.Component().Width(12),
+                                     X.TextFieldFor(c => c.AVccODerecho).FieldLabel("OD:").LabelWidth(20)
+                                     .Width(110).ReadOnly(indicaModoLectura)//.AllowBlank(false),
+                                      .EnableKeyEvents(true),
+                                      X.Component().Width(20),
+                                X.Label("Pin Hold:"),
+                                     X.Component().Width(12),
+                                      X.TextFieldFor(c => c.PinHoldODerecho).FieldLabel("OD:").LabelWidth(20)
+                                     .Width(110).ReadOnly(indicaModoLectura)
+                                      .EnableKeyEvents(true),
+                                X.Component().Width(20),       
+                                X.Label("Cerca:"),
+                                     X.Component().Width(12),
+                                     X.TextFieldFor(c => c.CercaODerecho).FieldLabel("").LabelWidth(20)
+                                     .Width(80).ReadOnly(indicaModoLectura)//.AllowBlank(false),
+                                 
+                                     .EnableKeyEvents(true)
+                                     ),
+                                     X.Component().Height(8),
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+                                     X.Component().Width(63),
+                                     X.TextFieldFor(c => c.AVscOIzquierdo).FieldLabel("OI:").LabelWidth(20)
+                                     .Width(110).ReadOnly(indicaModoLectura)
+                                 
+                                      .EnableKeyEvents(true),
+                                     X.Component().Width(65),
+                                     X.TextFieldFor(c => c.AVccOIzquierdo).FieldLabel("OI:").LabelWidth(20)
+                                     .Width(110).ReadOnly(indicaModoLectura)//.AllowBlank(false),
+                               
+                                     .EnableKeyEvents(true),
+                                     
+                                X.Component().Width(80),
+                                      X.TextFieldFor(c => c.PinHoldOIzquierdo).FieldLabel("OI:").LabelWidth(20)
+                                     .Width(110).MaxLength(6).ReadOnly(indicaModoLectura)
+                                      .EnableKeyEvents(true),
+                                     X.Component().Width(66),
+                                     X.TextFieldFor(c => c.CercaOIzquierdo).FieldLabel("").LabelWidth(20)
+                                     .Width(80).ReadOnly(indicaModoLectura)//.AllowBlank(false),
+                                 
+                                     .EnableKeyEvents(true)
+                                     ),
+                                      X.Component().Height(8),
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+
+                                     X.Component().Width(165),
+                                     
+                                     X.Label("Esfera").Width(70),
+                                      X.Label("Cilindro").Width(85),
+                                     X.Label("Eje").Width(10),
+
+                                     X.Component().Width(280),
+                                      X.Label("AV").Width(70),
+                                      X.Label("ADD").Width(70),
+                                     X.Label("DIP").Width(10)
+                                     
+                                     )
+                                     ,
+                                     
+                                     X.Component().Height(5),
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                    
+                                         
+                                     .Items(
+                                     X.Component().Width(34),
+                                     X.Label("Refracción:").Width(75),
+                                     X.Label("OD:").Width(10),
+                                     X.Component().Width(30),
+                                     X.TextFieldFor(c => c.RefraODerechoEsfera).FieldLabel("").LabelWidth(80)
+                                     .Width(70).ReadOnly(indicaModoLectura)
+                                     .EnableKeyEvents(true),
+                                     
+                                     X.Component().Width(5),
+                                     X.TextFieldFor(c => c.RefraODerechoCilindro).FieldLabel("")
+                                     .Width(70).ReadOnly(indicaModoLectura)
+                                     .EnableKeyEvents(true),
+
+                                      X.Component().Width(5),
+                                     X.TextFieldFor(c => c.RefraODerechoEje).FieldLabel("")
+                                     .Width(70).ReadOnly(indicaModoLectura)
+                                  
+                                     .EnableKeyEvents(true),
+                                     X.Component().Width(100),
+                                     X.Label("Refracción:").Width(75),
+                                     X.Label("OD:").Width(5),
+                                     X.Component().Width(30),
+                                     X.TextFieldFor(c => c.RefracODerechoAV).FieldLabel("").LabelWidth(80)
+                                     .Width(70).ReadOnly(indicaModoLectura)
+                                
+                                     .EnableKeyEvents(true),
+                                     
+                                     X.Component().Width(5),
+                                     X.TextFieldFor(c => c.RefracODerechoADD).FieldLabel("")
+                                     .Width(70).ReadOnly(indicaModoLectura)
+                                 
+                                     .EnableKeyEvents(true),
+
+                                      X.Component().Width(5),
+                                     X.TextFieldFor(c => c.RefracODerechoDIP).FieldLabel("")
+                                     .Width(70).ReadOnly(indicaModoLectura)
+                           
+                                     .EnableKeyEvents(true)
+                                     ),
+
+                                     X.Component().Height(2),
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+                                       X.Component().Width(34),
+                                    X.Label("S/Ciclopejia:").Width(75),
+                                     X.Label("OI:").Width(10),
+                                     X.Component().Width(30),
+                                     X.TextFieldFor(c => c.ScicloPejiaOIzqEsfera).FieldLabel("").LabelWidth(80)
+                                     .Width(70).ReadOnly(indicaModoLectura)
+                                     .EnableKeyEvents(true),
+                                     X.Component().Width(5),
+                                     X.TextFieldFor(c => c.ScicloPejiaOIzqCilindro).FieldLabel("")
+                                     .Width(70).ReadOnly(indicaModoLectura)
+                                     .EnableKeyEvents(true),
+
+                                     X.Component().Width(5),
+                                     X.TextFieldFor(c => c.ScicloPejiaOIzqEje).FieldLabel("")
+                                     .Width(70).ReadOnly(indicaModoLectura)
+                                     .EnableKeyEvents(true),
+
+
+                                     X.Component().Width(100),
+                                     X.Label("C/Ciclopejia:").Width(75),
+                                     X.Label("OI:").Width(5),
+                                     X.Component().Width(30),
+                                     X.TextFieldFor(c => c.CciclopejiaOIzqAV).FieldLabel("").LabelWidth(80)
+                                     .Width(70).ReadOnly(indicaModoLectura)
+                                     .EnableKeyEvents(true),
+
+                                     X.Component().Width(5),
+                                     X.TextFieldFor(c => c.CciclopejiaOIzqADD).FieldLabel("")
+                                     .Width(70).ReadOnly(indicaModoLectura)
+                                     .EnableKeyEvents(true),
+                                      X.Component().Width(5),
+                                     X.TextFieldFor(c => c.CciclopejiaOIzqDIP).FieldLabel("")
+                                     .Width(70).ReadOnly(indicaModoLectura)
+                                     .EnableKeyEvents(true)
+                                     ),
+
+                                     X.Component().Height(20),
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+                                     
+                                     X.Component().Width(85),
+                                     X.TextFieldFor(c => c.Adicion).FieldLabel("Adición:").LabelWidth(60)
+                                     .Width(135).ReadOnly(indicaModoLectura)
+                            
+                                     .EnableKeyEvents(true),
+
+                                    X.Component().Width(30),
+                                     X.TextFieldFor(c => c.DistanciaPupilar).FieldLabel("Distancia Pupilar:").LabelWidth(100)
+                                     .Width(180).ReadOnly(indicaModoLectura)
+                                  
+                                     .EnableKeyEvents(true)
+                                     ),
+                                     X.Component().Height(20),
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+                                     X.Label("Ton.(mmHg):"),
+                                     X.Component().Width(25),
+                                     X.TextFieldFor(c => c.TonShiotz).FieldLabel("Schiotz:").LabelWidth(50)
+                                     .Width(80).ReadOnly(indicaModoLectura)
+                                 
+                                     .EnableKeyEvents(true),
+                                     X.Component().Width(30),
+                                     X.TextFieldFor(c => c.TonODerecho).FieldLabel("OD:").LabelWidth(30)
+                                     .Width(80).ReadOnly(indicaModoLectura)//.AllowBlank(false),
+                                  
+                                      .EnableKeyEvents(true),
+
+                                     X.Component().Width(30),
+                                X.Label("Paquimetria:"),
+                                     X.Component().Width(10),
+                                      X.TextFieldFor(c => c.PaquimetriaODerecho).FieldLabel("OD:").LabelWidth(30)
+                                     .Width(80).ReadOnly(indicaModoLectura)
+                                    
+                                      .EnableKeyEvents(true),
+                                      
+                                X.Component().Width(20),
+                                X.Label("Corrección:"),
+                                     X.Component().Width(10),
+                                     X.TextFieldFor(c => c.CorreccionODerecho).FieldLabel("OD:").LabelWidth(30)
+                                     .Width(80).ReadOnly(indicaModoLectura)//.AllowBlank(false),
+                               
+                                     .EnableKeyEvents(true)
+                                     ),
+                                     
+                                     X.Component().Height(8),
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+                                     X.Component().Width(80),
+                                     X.TextFieldFor(c => c.TonAplanacion).FieldLabel("Aplanación:").LabelWidth(67)
+                                     .Width(97).ReadOnly(indicaModoLectura)
+                                  
+                                     .EnableKeyEvents(true),
+                                     X.Component().Width(30),
+                                     X.TextFieldFor(c => c.TonOIzquierdo).FieldLabel("OI:").LabelWidth(30)
+                                     .Width(80).ReadOnly(indicaModoLectura)//.AllowBlank(false),
+                                   
+                                      .EnableKeyEvents(true),
+
+                                     X.Component().Width(107),
+                                      X.TextFieldFor(c => c.PaquimetriaOIzquierdo).FieldLabel("OI:").LabelWidth(30)
+                                     .Width(80).ReadOnly(indicaModoLectura)
+                                  
+                                      .EnableKeyEvents(true),
+
+                                X.Component().Width(90),
+                                     X.TextFieldFor(c => c.CorreccionOIzquierdo).FieldLabel("OI:").LabelWidth(30)
+                                     .Width(80).ReadOnly(indicaModoLectura)//.AllowBlank(false),
+                                
+                                     .EnableKeyEvents(true)
+                                     ),
+                                     X.Component().Height(8),
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+                                      X.Component().Width(115),
+                                     X.TextFieldFor(c => c.TonOtra).FieldLabel("Otra:").LabelWidth(32)
+                                     .Width(62).ReadOnly(indicaModoLectura)//.AllowBlank(false),
+                                    
+                                     .EnableKeyEvents(true)
+                                     ),
+                                     X.Component().Height(8),
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+                                    X.TextAreaFor(c => c.Parpados_anexos).FieldLabel("Parpados y Anexos").ReadOnly(indicaModoLectura).LabelWidth(150)
+                                    .PaddingSpec("8").Height(100).Width(890)
+                                    .EnableKeyEvents(true)
+                                    .Listeners(l => { l.KeyPress.Handler = "ReplaceCaracterEspec(this)"; })
+                                     ),
+                                     X.Component().Height(8),
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+                                    X.TextAreaFor(c => c.Cornea_Cristalino_Esclera).FieldLabel("Cornea,Cristalino,Esclera").ReadOnly(indicaModoLectura).LabelWidth(150)
+                                    .PaddingSpec("8").Height(100).Width(890)
+                                    .EnableKeyEvents(true)
+                                    .Listeners(l => { l.KeyPress.Handler = "ReplaceCaracterEspec(this)"; })
+                                     ),
+                                     X.Component().Height(8),
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+                                      X.Component().Width(80),
+                                      X.TextFieldFor(c => c.Iris_Pupila).FieldLabel("Iris, Pupila:").LabelWidth(78)
+                                     .Width(820).ReadOnly(indicaModoLectura)
+                                      .EnableKeyEvents(true)
+                                     ),
+                                     X.Component().Height(8),
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                     .Items(
+                                        X.TextAreaFor(c => c.FondOjo_GoniosCopia).FieldLabel("Fondo de Ojo - Gonioscopia").ReadOnly(indicaModoLectura).LabelWidth(152)
+                                    .PaddingSpec("8").Height(100).Width(890)
+                                    .EnableKeyEvents(true)
+                                    .Listeners(l => { l.KeyPress.Handler = "ReplaceCaracterEspec(this)"; })
+                                     )
+                                     )
+                        )
+                ////////ADD PARA MSGS/////
+                        ,
+                        X.HiddenFor(m => m.Accion),
+                        X.DateFieldFor(m => m.FechaCreacion).Hidden(true),
+                        X.DateFieldFor(m => m.FechaModificacion).Hidden(true),
+                        X.TextFieldFor(m => m.UsuarioCreacion).Hidden(true),
+                        X.TextFieldFor(m => m.UsuarioModificacion).Hidden(true),
+                        X.TextFieldFor(m => m.Estado).Hidden(true),
+                        X.TextArea().ID("taAlerts")
+                        .Border(false)
+                        .StyleSpec("background:white;border:1px solid gray;")
+                        .FieldStyle("color: red")
+                        .Hidden(true)
+                        .ReadOnly(true)
+                //////////////////////
+                     )
+
+                    .TopBar(X.Toolbar().ID("bar").Items(
+                                X.ToolbarSpacer(20),
+                                X.TextField().Width(15).FieldStyle("border-color: " + COLOER_IND_OBLIGA).ReadOnly(true).Hidden(indicaModoLectura),
+                                X.Label().Html("<b><font color='" + COLOER_IND_OBLIGA + "'>Campos Obligatorios</font></b>").Hidden(indicaModoLectura),
+
+                                X.ToolbarSpacer(20)
+                                ,
+                                Html.X().Container().Layout(LayoutType.HBox)
+                                .ID("conthbIndicaError").Hidden(true).Items(
+                                    X.Label().Html("<font  size='1.9em'; color='red'>(</font>"),
+                                    X.Label().Html("<font  size='3.9em'; color='red'><b>&#161;</b></font>"),
+                                    X.Label().Html("<font  size='1.9em'; color='red'>) Verificar los errores presentados</font>")
+                                ),
+                                X.ToolbarFill(),
+                               X.Button()
+                                .Text("Imprimir")
+                                .Icon(Icon.Report)
+                                .Hidden(!visibleImpresion)
+                                .ID("btnImpresion")
+                                .Handler("eventoVisorReporte('');")
+                                ,
+                                X.Button()
+                                .Text("Imprimir Todos")
+                                .Icon(Icon.ReportGo)
+                                .Hidden(!visibleImpresion)
+                                .ID("btnImpresionHC")
+                                .Handler("eventoVisorReporte('HC');")
+                                ,
+                                X.ToolbarSpacer().Width(40)
+                                ,
+                            X.Button()
+                                .Text("Guardar")
+                                .Icon(Icon.Disk)
+                                .ID("cmdGuardar").Hidden(indicaModoLectura)
+                                .DirectEvents(de =>
+                                {  //Model.ACCION : Posee el MODO ACTUAL
+                                    de.Click.Url = Url.Action("CCEPF510_Save_Oftalmologico");
+                                    de.Click.EventMask.ShowMask = true;
+                                    de.Click.Before = "beforeSave(App.formactual); return App.formactual.getForm().isValid();";
+                                    de.Click.Success = "onSuccess(result.data);";
+                                    de.Click.Failure = "onFailure();";
+                                }),
+
+                            X.Button()
+                                .Text("Cancelar")
+                                .ID("btnCancel").Hidden(indicaModoLectura)
+                                .Icon(Icon.Cancel)
+                                .Handler("eventoCancelar(this.up('form'));")
+                                ,
+                            X.Button()
+                                .Text("Editar")
+                                .ID("btnOnEdit")
+                                .Icon(Icon.ApplicationFormEdit)
+                                .Hidden(true)
+                                .Handler("eventoOnEditar(App.btnOnEdit);")
+
+                        ))
+                        .Listeners(l => l.FieldChange
+                            .Handler = "setIndicaCambios(true);"
+                        )
+                );
+        }
+        )
+
+
+    )
+
+}
+

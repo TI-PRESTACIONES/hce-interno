@@ -1,0 +1,227 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_HC_CuerpoHumano
+
+@{
+    var X = Html.X();
+}
+
+<script>
+
+    var template = '<span style="color:{0};">{1}</span>';
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 0)
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+
+    var seleccionActual =null;
+    var seleccionActualDesc = null;
+    var seleccionActualCod = null;
+    function setSeleccion(param1,param2,param3) {
+        seleccionActual = param1;
+        seleccionActualDesc = param2;
+        seleccionActualCod = param3;
+    }
+
+
+    function enviarSeleccion(grid) {
+        if (seleccionActual != null) {
+            var status = seleccionActual;
+            var status2 = seleccionActualDesc;
+            var status3 = seleccionActualCod;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action(Model.ACCION))',
+                params: {
+                    MODO: 'get',
+                    id: status,
+                    descripcion: status2,
+                    cod: status3,
+                    idWindow: "WindowSelecCuerpo"
+                }
+            });
+        } else {
+            Ext.Msg.alert('Debe Seleccionar un elemento.');
+        }
+
+    }
+
+    function enviarSeleccionDirect(param1,param2,param3) {
+        var status = param1;
+        var status2 = param2;
+        var status3 = param3;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action(Model.ACCION))',
+            params: {
+                MODO: 'get',
+                id: status,
+                descripcion: status2,
+                cod: status3,
+                idWindow: "WindowSelecCuerpo"
+            }
+        });
+    }
+
+    var eventoCheckFiltro = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+
+    var accionBuscarFiltroSelecc = function (tipo) {
+        varTipoBuscar = tipo;
+        App.GridPanelSelCuerpo.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+</script>
+
+
+
+@(Html.X().Window()
+    .Width(450)
+    .Height(450)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowSelecCuerpo")
+    .Title("Seleccionar Cuerpo Humano")
+    .Padding(4)
+        //.X(0)
+        //.Y(0)
+    .TopBar(
+                                     X.Toolbar()
+                                     .Height(30)
+                                         .Items(
+                                       X.Button()
+                                        .Text("Buscar")
+                                            .Icon(Icon.Find)
+                                             .Handler("accionBuscarFiltroSelecc('FILTRO');"),
+                                                    X.ToolbarFill(),
+                                        X.Button()
+                                            .Text("Aceptar")
+                                            .Icon(Icon.Accept)
+                                        .Handler("enviarSeleccion(App.GridPanelSelCuerpo.getSelectionSubmit().getSelectionModelField().getValue());")
+
+                                                 ,
+                                        X.Button()
+                                            .Text("Cancelar")
+                                            .Icon(Icon.Cancel)
+                                             .DirectEvents(de =>
+                                              {
+                                                  de.Click.Url = Url.Action("cerrarWindow");
+                                                  de.Click.ExtraParams.Add(new Parameter(
+                                                        "id", "WindowSelecCuerpo", ParameterMode.Value));
+                                              }),
+                                          X.ToolbarSpacer(20)     
+                                         )
+
+    )
+    .Items(
+                        X.GridPanel()
+                        
+                            .TopBar(
+                                X.Toolbar()
+                                .Items(
+                                   X.Checkbox().FieldLabel("Descripción").ID("chkId").Checked(true)
+                                           .Handler("eventoCheckFiltro(App.chkId,App.tfBuscarSeleccDesc);").LabelWidth(70),
+                                            X.TextField()
+                                        .ID("tfBuscarSeleccDesc").Disabled(true)
+                                    .FieldLabel(""),
+                                    X.ToolbarFill()                                  
+                                )                            
+                            )
+                            .Border(false)
+                            .Scroll(ScrollMode.Both)
+                            .AutoScroll(true)
+                            .ID("GridPanelSelCuerpo")
+        // .DefaultAnchor("100%")
+        //.Anchor("100% 100%")
+                            .Margins("0 0 0 0")
+                            
+                            ///CONFIGURAR EL STORE
+                            .Store(store => store.Add(
+                                     Html.X().Store()
+                                          .ID("StoreSelCuerpo")
+                                         .AutoLoad(true)
+                                         .RemoteSort(false)
+                                         .IsPagingStore(true)
+                                         .RemotePaging(true)
+                                         .PageSize(10)////CAMBIAR DE ACUERDO A ALGÚN UN CRITERIO
+                                         .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                    .Url("getGrillaCuerpoHumano")
+                                             //.Url("../LPacientes/GrillaListadoPacientes")
+                                             //.Url("../Controllers/Maestros/Usuario/UsuarioController/GrillaListadoPacientes")
+                                                .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                .Root("data")
+                                                .TotalProperty("total")
+                                                 .IDProperty("IdCuerpoHumano"))))
+                                                    )
+                                                    .Parameters(ps =>
+                                                            ps.Add(new
+                                                                    {
+                                                                    descripcion = JRawValue.From("App.tfBuscarSeleccDesc.getValue()"),
+                                                                    tipoBuscar = JRawValue.From("varTipoBuscar")
+                                                                })
+                                                     )
+                                         .Model(model => model.Add(Html.X().Model()
+                                                 .Fields(fields =>
+                                                 {
+                                                     fields.Add(Html.X().ModelField().Name("IdCuerpoHumano"));
+                                                     fields.Add(Html.X().ModelField().Name("Descripcion"));
+                                                     fields.Add(Html.X().ModelField().Name("Estado"));
+                                                     fields.Add(Html.X().ModelField().Name("Codigo"));
+                                                     
+                                                 }))
+                                                )
+                                              )
+                                   )
+
+                                ///CONFIGURAR LAS COLUMNAS
+                                .ColumnModel(columnModel =>
+                                {
+                                    columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("IdCuerpoHumano").Width(80));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Descripción").DataIndex("Descripcion").Width(250));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(100)
+                                    .Renderer("changeEstado"));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Código").DataIndex("Codigo").Width(100).Hidden(true));
+                                    
+                                })
+                                 .View(Html.X().GridView().TrackOver(false))
+        //.View(view => view.Add(Html.X().GridView().TrackOver(false)))
+                                 .Border(false)
+                                .Listeners(l => l.CellDblClick
+                                   .Handler = "enviarSeleccionDirect(record.data.IdCuerpoHumano,record.data.Descripcion,record.data.Codigo);")
+                                .Listeners(l => l.CellClick
+                                   .Handler = "setSeleccion(record.data.IdCuerpoHumano,record.data.Descripcion,record.data.Codigo);")
+                                .BottomBar(bar => bar.Add(
+                                    Html.X().PagingToolbar()
+                                    //.DisplayInfo(true)
+                                    //.DisplayMsg("Displaying customers {0} - {1} of {2}"))
+                                ))
+
+                               /*.TopBar(X.Panel()
+                                    .Height(50)
+                                    .Title("Buscador")
+                                    .Border(false)
+                                )   */
+    )
+
+    .CloseAction(CloseAction.Destroy)
+
+)
+@(
+ X.KeyNav()
+    .Target("WindowSelecCuerpo")
+    .Enter(a => a.Handler = "accionBuscarFiltroSelecc('FILTRO');")
+)

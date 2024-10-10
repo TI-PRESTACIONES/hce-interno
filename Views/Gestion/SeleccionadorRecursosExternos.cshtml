@@ -1,0 +1,259 @@
+﻿@model SoluccionSalud.Entidades.Entidades.ENTITY_GENERALHCE
+
+@{
+    var X = Html.X();
+    var idWindow = "WindowSeleccRecExternos";
+    var modoDesc = (Model.ACCION == "NUEVO" ? "Nuevo" :
+                    (Model.ACCION == "UPDATE" ? "Firmar" :
+                        (Model.ACCION == "DELETE" ? "Eliminar" :
+                            (Model.ACCION == "VER" ? "Ver" : "--"))));
+
+    var indicaModoNuevo = (Model.ACCION == "NUEVO" ? true : false);
+
+    var indicaModoLectura = !(Model.ACCION == "NUEVO" ? true :
+                            (Model.ACCION == "UPDATE" ? true :
+                            (Model.ACCION == "DELETE" ? false :
+                            (Model.ACCION == "VER" ? false : false))));
+
+
+}
+
+<script>
+
+
+    var template = 'color:{0};';
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_RED01 = "#990000";
+
+    var COLOR_BORDER_ERROR = "red";
+    var COLOR_BORDER_DEF = "#b5b8c8";
+    var COLOR_BACKGROUND_NOEDIT = "#9FBCB9";
+
+
+    var varTipoBuscarRecExtParam = "LOAD";
+    var seleccionRecordActualRecExtParam = null;
+
+    function setSeleccionRecExtParam(record) {
+        seleccionRecordActualRecExtParam = record;
+    }
+
+
+    var accionBuscarFiltroRecExtParam = function (tipo) {
+        varTipoBuscarRecExtParam = tipo;
+        App.GridPanelRecExtParam.getStore().reload();
+        varTipoBuscarRecExtParam = 'LOAD';
+    };
+
+
+    function enviarSeleccion() {
+        if (seleccionRecordActualRecExtParam != null) {
+            enviarSeleccionDirectRecExtParam(seleccionRecordActualRecExtParam);
+        } else {
+            Ext.Msg.alert('Debe Seleccionar un elemento.');
+        }
+
+    }
+
+    function enviarSeleccionDirectRecExtParam(record) {
+        var tipo = record.data.TipodeDatoFlag;
+        var status = record.data.ParametroClave;
+        var status2 = '';
+        if (tipo=='T') {
+            status2 = record.data.Texto;
+        } else if (tipo == 'N') {
+            status2 = record.data.Numero;
+        } else if (tipo == 'F') {
+            status2 = record.data.Fecha;
+        }
+        var valorAux = App.txtRecAUX.getValue();
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action(Model.ACCION))',
+            params: {
+                MODO: 'get',                
+                codigo: status,
+                valor: valorAux+''+status2,
+                idWindow: "WindowSeleccRecExternos"
+            }
+        });
+    }
+
+</script>
+
+
+@(Html.X().Window()
+    .Width(460)
+    .Height(400)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+        //.LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.StretchMax })
+
+    .CloseAction(CloseAction.Destroy)
+    //.Icon(Icon.StarGold)
+    .ID(idWindow)
+    .Title("Recursos Externos ")
+        //.Padding(4)
+        //.X(0)
+        //.Y(0)
+    .Items(
+            Html.X().Panel()
+            .Frame(false)
+            .Border(false)
+            .Layout(LayoutType.Card)
+            //.LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+             .TopBar(
+                X.Toolbar()
+                .Height(30)
+                .Items(
+                        X.TextField().Value(Model.campoStr01).ID("txtRecAUX").Hidden(true),
+                        X.TabStrip()
+                            .Items(t =>
+                            {
+                                t.Add(X.Tab().ActionItemID("panel01").Text("Parámetros"));
+                                t.Add(X.Tab().ActionItemID("panel02").Text("Panel 02").Hidden(true));
+                            }),                
+                        X.ToolbarFill(),
+                            X.ToolbarFill(),
+                            X.Button()
+                            .Text("Aceptar")
+                            .Icon(Icon.Accept)
+                            .Handler("enviarSeleccion();")
+                            ,
+                            X.Button()
+                                .Text( "Cancelar")
+                                .Icon((Icon.Cancel))
+                                .DirectEvents(de =>
+                                      {  //Model.ACCION : Posee el MODO ACTUAL
+                                          de.Click.Url = Url.Action("cerrarWindow");
+                                          //de.Click.EventMask.ShowMask = true;
+                                          de.Click.ExtraParams.Add(new Parameter(
+                                                "id", idWindow, ParameterMode.Value));
+                                          //de.Click.Success = "onSuccess(result.data,'" + Model.ACCION + "');";
+                                          //de.Click.Failure = "onSuccess(result.data,'"+ Model.ACCION + "');";
+                                      })
+                    )                                 
+            )
+            .Items(
+                X.Panel()
+                //.Title("Búsqueda por descripción")
+                .Header(false)
+                .ID("panel01")
+                .Border(false)
+                //.BodyPadding(0)
+                .Layout(LayoutType.VBox)
+                .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })                
+                .TopBar(
+                    X.Toolbar().Items(
+                        X.Button()
+                        .Text("Buscar")
+                        .Icon(Icon.PageWhiteFind)
+                            .Handler("accionBuscarFiltroRecExtParam('FILTRO');")                    
+                    )
+                )
+                
+                .Items(
+                    X.FieldSet().Height(50)
+                    .Title("Filtros")
+                    .MarginSpec("5 5 5 10")
+                    .Defaults(d =>
+                    {
+                        d.Add(new Parameter("LabelWidth", "40"));
+                    })
+                    .Items(
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                           // X.Checkbox().FieldLabel("Aplicación").ID("chHAplicacion").Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chHAplicacion,App.cmbBuscarAplicacion);").Checked(true),
+                           // X.ComboBox().ID("cmbBuscarAplicacion").Disabled(true).Name("buscarAplicacion").Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboMiscelaneoLista.GetComboGenericoTxt("APLICACIONESMAST").Select(d => new ListItem(d.Name, d.Codigo))).FieldLabel("").SimpleSubmit(true),
+                            X.Checkbox().FieldLabel("Descripción").ID("chHC").Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chHC,App.tfBuscarDesc);").Checked(true),
+                            X.TextField().ID("tfBuscarDesc").Disabled(true).Name("buscarDesc").FieldLabel("")
+                        )
+                    )                
+                    ,
+                       X.GridPanel().Flex(1)
+                       .AllowDeselect(true)
+                            .Border(false)
+                            .Scroll(ScrollMode.Both)
+                            .AutoScroll(true)
+                            .ID("GridPanelRecExtParam")
+                            .Margins("0 0 0 0")
+        ///CONFIGURAR EL STORE
+                            .Store(store => store.Add(
+                                     Html.X().Store()
+                                         .ID("StoreRecExtParam")
+                                         .AutoLoad(true)
+                                         .RemoteSort(false)
+                                         .IsPagingStore(true)
+                                         .RemotePaging(true)
+                                         .PageSize(15)
+                                         .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                        .Url("getGrillaParametro")
+                                                .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                .Root("data").TotalProperty("total").IDProperty("Texto1")
+                                                     )))
+                                                    )
+                                             .Parameters(ps =>
+                                                    ps.Add(new
+                                                    {
+                                                        descripcion = JRawValue.From("App.tfBuscarDesc.getValue()"),
+                                                        //tipoAplicacion = JRawValue.From("App.cmbBuscarAplicacion.getValue()"),
+                                                        tipoBuscar = JRawValue.From("varTipoBuscarRecExtParam")
+                                                    })
+                                             )
+                                         .Model(model => model.Add(Html.X().Model()
+                                                 .Fields(fields =>
+                                                 {
+                                                     fields.Add(Html.X().ModelField().Name("ParametroClave"));
+                                                     fields.Add(Html.X().ModelField().Name("DescripcionParametro"));
+                                                     fields.Add(Html.X().ModelField().Name("CompaniaCodigo"));
+                                                     fields.Add(Html.X().ModelField().Name("TipodeDatoFlag"));
+                                                     fields.Add(Html.X().ModelField().Name("Estado"));
+                                                     fields.Add(Html.X().ModelField().Name("Texto"));
+                                                     fields.Add(Html.X().ModelField().Name("Numero"));
+                                                     fields.Add(Html.X().ModelField().Name("Fecha"));
+                                                     fields.Add(Html.X().ModelField().Name("Texto1"));
+                                                 }))
+                                                )
+                                              )
+                                   )
+        ///CONFIGURAR LAS COLUMNAS
+                                .ColumnModel(columnModel =>
+                                {
+                                    columnModel.Columns.Add(Html.X().Column().Text("Parámetro").DataIndex("ParametroClave").Width(100));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Descripción").DataIndex("DescripcionParametro").Width(250));
+                                    //columnModel.Columns.Add(Html.X().Column().Text("CIA").DataIndex("CompaniaCodigo").Width(100));
+                                    //columnModel.Columns.Add(Html.X().Column().Text("Tipo de Valor").DataIndex("TipodeDatoFlag").Width(100).Renderer("changeTipoDato"));
+                                    //columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(100).Renderer("changeEstado"));
+                                    //columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("Texto1").Width(50).Hidden(true));
+                                })
+                                 .View(Html.X().GridView().TrackOver(false))
+                                     .Border(false)
+                                     .Listeners(l => l.CellClick.Handler = "setSeleccionRecExtParam(record);")
+                                     .Listeners(l => l.CellDblClick.Handler = "enviarSeleccionDirectRecExtParam(record);")
+                                .BottomBar(bar => bar.Add(
+                                    Html.X().PagingToolbar()
+                                ))                    
+                )
+                ,
+                X.Panel()       
+                .Header(false)
+                .ID("panel02") 
+            )
+                //)
+    )
+        /*.DirectEvents(de =>
+        {
+            de.Render.Url = Url.Action("postWindowAgente");
+            de.Render.ExtraParams.Add(new Parameter(
+                  "idGrupo", "" + Model.IdGrupo, ParameterMode.Value));
+        })*/
+    .CloseAction(CloseAction.Destroy)
+)
+@(
+ X.KeyNav()
+    .Target("WindowSeleccRecExternos")
+    .Enter(a => a.Handler = "accionBuscarFiltroRecExtParam('FILTRO');")
+)

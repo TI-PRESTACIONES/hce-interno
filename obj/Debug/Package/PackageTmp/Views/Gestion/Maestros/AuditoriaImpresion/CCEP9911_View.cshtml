@@ -1,0 +1,459 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_HC_ImpresionHC
+@{
+     ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+}
+
+@section cabecera
+{
+    <script>
+
+    var varTipoBuscar = "LOAD";
+
+    var seleccionActual = null;
+    function setSeleccion(param1) {
+        seleccionActual = param1;
+    }
+
+
+    var Valores;
+    var template = '<span style="color:{0};">{1}</span>';
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_YELLOW02 = "#D9A407";
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 0)
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+
+    var pctChange = function (value) {
+        return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+    };
+
+    var onSuccess = function (grid, data) {
+        grid.show();
+        grid.getStore().loadData(data);
+    };
+
+    function deleteSelected(grid) {
+        var store = grid.store,
+           records = grid.selModel.getSelection();
+        store.remove(records);
+        App.Window1.AutoDestroy(true);
+
+    };
+
+    function verSelected() {
+        eventoVerSelected(seleccionActual);
+    }
+    function eventoVerSelected(param1) {
+
+        if (param1 != null) {
+            var status = seleccionActual.Version;
+            var status2 = seleccionActual.CodigoHC;
+            var status3 = seleccionActual.IdImpresion
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("verDetalleImpresionHC"))',
+                params: {
+                    MODO: 'VER',
+                    tipo:  status,
+                    tipo2: status2,
+                    tipo3: status3
+                }
+            });
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Seleccionar un Elemento.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+
+    }
+
+       
+       
+
+
+        var accionBuscarFiltro = function (tipo) {
+            varTipoBuscar = tipo;
+            App.GridPanel1.getStore().reload();
+            varTipoBuscar = 'LOAD';
+        };
+
+        var accionFinal = function (btn) {
+            App.GridPanel1.getSelectionModel().deselectAll();
+            seleccionActual = null;
+            App.GridPanel1.getStore().reload();
+        };
+
+        var eventoCheckFiltroDos = function (check, componente1, componente2) {
+            var checkAll = check.getValue();
+            if (checkAll) {
+                componente1.setDisabled(true);
+                componente1.setValue(null);
+                componente2.setDisabled(true);
+                componente2.setValue(null);
+            } else {
+                componente1.setDisabled(false);
+                componente2.setDisabled(false);
+            }
+        };
+
+        var eventoCheckFiltro = function (check, componente) {
+            var checkAll = check.getValue();
+            if (checkAll) {
+                componente.setDisabled(true);
+                componente.setValue(null);
+            } else {
+                componente.setDisabled(false);
+            }
+        };
+
+        var changeApp = function (value) {
+            var template = '<span style="color:{0};">{1}</span>';
+            if (value == 'SP4W')
+                return Ext.String.format("Spring Salud Web");
+        };
+
+        var changeModulo = function (value) {
+            var template = '<span style="color:{0};">{1}</span>';
+            if (value == 'BE')
+                return Ext.String.format("BANDEJA ENTRADA");
+            if (value == 'GS')
+                return Ext.String.format("SALUD");
+            if (value == 'HC')
+                return Ext.String.format("HCE");
+        };
+
+        var changeTipo = function (value) {
+            var template = '<span style="color:{0};">{1}</span>';
+            if (value == 'I' || value == 'N')
+                return Ext.String.format("NUEVO");
+            if (value == 'D')
+                return Ext.String.format("ELIMINADO");
+            if (value == 'U')
+                return Ext.String.format("ACTUALIZADO");
+            if (value == 'L')
+                return Ext.String.format("LISTADO");
+            if (value == 'V')
+                return Ext.String.format("VISTA");
+            if (value == 'C')
+                return Ext.String.format("CONTAR PÁGINAS");
+        };
+        var eventoCargarMain = function () {
+
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("addPermisosFormatos"))',
+                params: {
+                    data: 'FORMATO',
+                    indica: 'PERMISO',
+                },
+                success: function (result) { accionSetPermisos(result.data); }
+            });
+        };
+        var accionSetPermisos = function (data) {
+            var mensajes = "";
+            if (data.length > 0) {
+                for (var i = 0; i < data.length; i++) {
+                    if (data[i].ACCION == 'BUSCAR' && App.compoBUSCAR != null) {
+                        App.compoBUSCAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'NUEVO' && App.compoNUEVO != null) {
+                        App.compoNUEVO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'MODIFICAR' && App.compoMODIFICAR != null) {
+                        App.compoMODIFICAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'ELIMINAR' && App.compoELIMINAR != null) {
+                        App.compoELIMINAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'VER' && App.compoVER != null) {
+                        App.compoVER.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'ACCESO' && App.compoACCESO != null) {
+                        App.compoACCESO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'HABILITADO' && App.compoHABILITADO != null) {
+                        App.compoHABILITADO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'OBLIGA' && App.compoOBLIGA != null) {
+                        App.compoOBLIGA.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'PRIORIDADAGOPCION' && App.compoPRIORIDADAGOPCION != null) {
+                        App.compoPRIORIDADAGOPCION.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    }
+                }
+            }
+        };
+    </script>
+}
+
+@section cuerpo
+{
+    @(
+ Html.X().Viewport()
+        .AutoScroll(true)
+        .Layout(LayoutType.Border)
+        .Items(
+           X.Panel()
+              .Title("Listado de Auditoria Impresion")
+              .Border(false)
+              .Region(Region.North)
+              .Split(true)
+              .Collapsible(true)
+              .Height(150)   
+              .TopBar(
+                         X.Toolbar()
+                        .Height(30)
+                            .Items(
+                           X.Button()
+                                .Text("Buscar").ID("compoBUSCAR")
+                            .Icon(Icon.Find)
+                             .Handler("accionBuscarFiltro('FILTRO');"),
+                             
+                              X.Button()
+                                .Text("Detalle de Impresion")
+                                    .Icon(Icon.BookOpen)
+                                                        .Handler("verSelected();"),
+                             
+                                                    X.ToolbarSeparator(),
+                                                    X.ToolbarSpacer(),
+                                                    
+                                                    
+                                                    
+                                                    
+       
+         X.ToolbarFill()
+                              )
+              )
+             .Items(X.Panel()
+                    .Layout(LayoutType.HBox)
+                    .BodyPadding(5)
+                    .Width(1110)
+                    .Border(false)
+                    .MarginSpec("1 20 1 1")
+                    .Items(
+                            X.FieldSet()
+                                .Flex(1)
+                                .Title("Filtros")
+                                .MarginSpec("5 5 5 5")
+                                .Defaults(d =>
+                                {
+                                    d.Add(new Parameter("LabelWidth", "120"));
+                                })
+                                .Items(
+
+                               Html.X().Container().Layout(LayoutType.HBox)
+                               .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                               .Items(
+
+    
+
+                               X.Checkbox()
+                              .FieldLabel("Numero HC")
+                              .ID("NHC")
+                                  .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.NHC,App.tfNHC);")
+                              .Checked(true),
+
+                              X.TextField()
+                                .ID("tfNHC")
+                                .Disabled(true)
+                                .Name("buscarNHC")
+                                .FieldLabel(""),
+                                X.ToolbarSpacer(10),
+                                X.Checkbox()
+                                .FieldLabel("Fecha de Impresion").LabelWidth(130)
+                                .ID("fec1")
+                                .Listeners(l => l.Change.Handler = "eventoCheckFiltroDos(App.fec1,App.FechaUno,App.FechaDos);")
+                                 .Checked(true),
+
+                              X.DateField()
+                                    .ID("FechaUno")
+                                    .Disabled(true)
+                                    .FieldLabel(""),
+
+                                    X.DateField()
+                                    .ID("FechaDos")
+                                    .Disabled(true)
+                                    .FieldLabel("")
+                                                               
+                                  ,
+                             X.ToolbarSpacer(10)
+                        ,
+
+                    X.Checkbox()
+                   .FieldLabel("Ultimo Host Imp").LabelWidth(120)
+                   .ID("UltimoHost")
+                           .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.UltimoHost,App.tfUltimoHost);")
+                   .Checked(true),
+
+                   X.TextField()
+                  .ID("tfUltimoHost")
+                  .Disabled(true)
+                  .Name("buscarUltimoHost")
+                  .FieldLabel("")     
+                                                               
+
+
+
+                                   ),
+
+                                    Html.X().Container().Layout(LayoutType.HBox)
+                                   .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                       .Items(
+                                                      X.Checkbox()
+                                                           .FieldLabel("Nombre Paciente")
+                                                           .ID("IdPaciente")
+                                                               .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.IdPaciente,App.tfBuscarPaciente);")
+                                                           .Checked(true),
+
+                                                           X.TextField()
+                                                                       .ID("tfBuscarPaciente")
+                                                           .Disabled(true)
+                                                           .Name("buscarpaciente")
+                                                               .FieldLabel(""),
+                                                                X.ToolbarSpacer(10)
+                                                                ,
+                                                           X.Checkbox()
+                                                               .FieldLabel("Unidad Replicacion").LabelWidth(130)
+                                                           .ID("UnidadR")
+                                                                               .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.UnidadR,App.tfUnidadR);")
+                                                           .Checked(true)
+                                                           ,
+
+                                                               X.TextField()
+                                                                .ID("tfUnidadR").Disabled(true).Name("buscarUnidadR")
+                                                                   .FieldLabel("")
+                                                                   ,
+                                                                       X.ToolbarSpacer(153),
+
+                                                                         X.Checkbox()
+                                                                   .FieldLabel("Ultimo Usuario Imp").LabelWidth(120)
+                                                               .ID("Usuario")
+                                                                                   .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.Usuario,App.tfUUI);")
+                                                               .Checked(true)  
+                                                                       ,
+                                                            X.TextField()
+                                                                               .ID("tfUUI")
+                                                               .Disabled(true)
+                                                               .Name("buscard")
+                                                                   .FieldLabel("")
+                                                                   
+
+                                   )
+
+
+                                )
+                    )
+             ),
+            X.Panel()
+                .Region(Region.Center)
+                .ItemID("center")
+               .Header(false)
+               .Border(false)
+               .Items(
+                   X.GridPanel()
+                        .AllowDeselect(true)
+                        .Border(false)
+                        .Scroll(ScrollMode.Both)
+                        .AutoScroll(true)
+                        .ID("GridPanel1")
+                        .Height(300)
+                        .Margins("0 0 0 0")
+        ///CONFIGURAR EL STORE
+                        .Store(store => store.Add(
+                                 Html.X().Store()
+                                     .ID("Store1")
+                                     .AutoLoad(true)
+                                     .RemoteSort(false)
+                                     .IsPagingStore(true)
+                                     .RemotePaging(true)
+                                     .PageSize(10)////CAMBIAR DE ACUERDO A ALGÚN UN CRITERIO
+                                     .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                    .Url("getGrillaAuditoriaImpresion")
+                                            .Reader(reader => reader.Add(Html.X().JsonReader()
+                                            .Root("data")
+                                            .TotalProperty("total")
+                                                                     .IDProperty("IdImpresion"))))
+                                      )
+
+                                             .Parameters(ps =>
+                                                    ps.Add(new
+                                                    {
+                                                        codigoHC = JRawValue.From("App.tfNHC.getValue()"),
+                                                        paciente = JRawValue.From("App.tfBuscarPaciente.getValue()"),
+                                                        // fechaImp = JRawValue.From("App.tfFechaImpresion.getValue()"),
+                                                        fecha1 = JRawValue.From("App.FechaUno.getValue()"),
+                                                        fecha2 = JRawValue.From("App.FechaDos.getValue()"),
+                                                        UnidadR = JRawValue.From("App.tfUnidadR.getValue()"),
+                                                        ultimohost = JRawValue.From("App.tfUltimoHost.getValue()"),
+                                                        usuarioimp = JRawValue.From("App.tfUUI.getValue()"),
+                                                       
+                                                       
+                                                        tipoBuscar = JRawValue.From("varTipoBuscar")
+                                                    })
+                                             )
+
+                                             .GroupField("Version")
+                                    .Model(model => model.Add(Html.X().Model()
+                                             .Fields(fields =>
+                                             {
+                                                 fields.Add(Html.X().ModelField().Name("IdImpresion"));
+                                                 fields.Add(Html.X().ModelField().Name("IdPaciente"));
+                                                 fields.Add(Html.X().ModelField().Name("CodigoHC"));
+                                                 fields.Add(Html.X().ModelField().Name("Version"));
+                                                 fields.Add(Html.X().ModelField().Name("FechaImpresion"));                                                 
+                                                 fields.Add(Html.X().ModelField().Name("UsuarioImpresion"));
+                                                 fields.Add(Html.X().ModelField().Name("HostImpresion"));
+                                                 fields.Add(Html.X().ModelField().Name("UnidadReplicacion"));
+                                                 
+                                             }))
+                                            )
+                                          )
+                               )
+
+                            ///CONFIGURAR LAS COLUMNAS
+                            .ColumnModel(columnModel =>
+                            {
+                                columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("IdImpresion").Width(100).Hidden(false));
+                                columnModel.Columns.Add(Html.X().Column().Text("IdPaciente").DataIndex("IdPaciente").Width(100).Hidden(true));
+                                columnModel.Columns.Add(Html.X().Column().Text("HC Paciente").DataIndex("CodigoHC").Width(100));
+                                columnModel.Columns.Add(Html.X().Column().Text("Nombre Paciente").DataIndex("Version").Flex(1));
+                                columnModel.Columns.Add(Html.X().DateColumn().Text("Fecha Última Impresión").DataIndex("FechaImpresion").Width(150).Format("dd/MM/yyyy hh:mm"));
+                                columnModel.Columns.Add(Html.X().Column().Text("Usuario Última Impresión").DataIndex("UsuarioImpresion").Width(150));                
+                                columnModel.Columns.Add(Html.X().Column().Text("Nombre Host").DataIndex("HostImpresion").Width(100));
+                                columnModel.Columns.Add(Html.X().Column().Text("Unidad Replicación").DataIndex("UnidadReplicacion").Width(100).Hidden(false));
+
+
+                            })
+                                 .View(Html.X().GridView().TrackOver(false))
+                                 .Features(
+                                    Html.X().Grouping()
+                                    .ID("Grouping1")
+        //.GroupHeaderTplString("{columnName}: {name} ({[values.rows.length]} {[values.rows.length > 1 ? \"Items\" : \"Item\"]})")
+                                                        .GroupHeaderTplString("{columnName}: {name} - {[values.rows[0].get('Version') == 1? \"Perfil\" :\"\"  ]} ; ({[values.rows.length]} {[values.rows.length > 1 ? \"Items\" : \"Item\"]})")
+                                            .HideGroupedHeader(true)
+                                            .EnableGroupingMenu(false)
+                                 )
+                             .Border(false)
+                           .Listeners(l => l.CellClick.Handler = "setSeleccion(record.data);")
+                           .Listeners(l => l.CellDblClick.Handler = "eventoVerSelected(record.data.IdImpresion);")
+                      
+
+                            .BottomBar(bar => bar.Add(
+                                Html.X().PagingToolbar()
+                            ))
+
+                )
+        )
+            .Listeners(l => l.Render.Handler = "eventoCargarMain();")
+    )
+
+    @(X.KeyNav()
+                    .Target("={document.body}")
+                    .Enter(a => a.Handler = "accionBuscarFiltro('FILTRO');")
+    )
+}

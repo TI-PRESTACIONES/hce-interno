@@ -1,0 +1,1106 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SG_Agente
+
+@{
+    var X = Html.X();
+    var idWindow = "WindowAgenteOpcion";
+    var modoDesc = (Model.ACCION == "NUEVO" ? "Nuevo" :
+                    (Model.ACCION == "UPDATE" ? "Modificar" :
+                        (Model.ACCION == "DELETE" ? "Eliminar" :
+                            (Model.ACCION == "VER" ? "Ver" : "--"))));
+
+    var indicaModoLectura = !(Model.ACCION == "NUEVO" ? true :
+                            (Model.ACCION == "UPDATE" ? true :
+                            (Model.ACCION == "DELETE" ? false :
+                            (Model.ACCION == "VER" ? false : false))));
+
+    var indicaModoLecturaKey = !(Model.ACCION == "NUEVO" ? true :
+                            (Model.ACCION == "UPDATE" ? false :
+                            (Model.ACCION == "DELETE" ? false :
+                            (Model.ACCION == "VER" ? false : false))));
+
+    var STYLE_BACKGROUND_NODEIT = "background: #BBD8D6"; //BBD8D6  #9FBCB9
+    var COLOR_BORDER_DEFAULT = "#b5b8c8";
+
+    var STYLE_BORDER_DEF_VALID01 =
+        (Model.CodigoAgente != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+    var STYLE_BORDER_DEF_VALID02 =
+            (Model.Descripcion != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+
+    var templateColor = "<span style='color:{0};'>{1}</span>";
+    var COLOR_BLUE01_temp = "#284A89";
+    var COLOR_RED01_temp = "#990000";
+    var COLOR_GREEN01_temp = "#177506";
+    var COLOR_YELLOW02_temp = "#D9A407";
+
+
+}
+
+
+<script>
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_YELLOW02 = "#D9A407";
+
+    var handler = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+        Ext.Msg.alert('Editing' + (record.get('done') ? ' completed task' : ''), record.get('task'));
+    };
+    var IDItemActivo;
+    var IDItemNivel;
+    var valInteger;
+    var habilitaID = function (str) {
+        if (str == "WA") {
+            IDItemNivel = 0;
+        } else {
+            var res = str.split("|");
+            IDItemActivo = res[0];
+            IDItemNivel = res[1];
+
+        }
+    };
+    var changeDescripcion = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+        var template = '<span style="color:{0};">{1}</span>';
+        var texto = colIndex.data.text;
+        var vector = texto.split('|');
+        var show = "";
+        if (vector.length > 1) {
+            show = vector[1];
+        }
+        return Ext.String.format(template, 'black', show);
+    };
+    var changeCodigo = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+        var template = '<span style="color:{0};">{1}</span>';
+        var texto = colIndex.data.text;
+        var vector = texto.split('|');
+        var show = "";
+        if (vector.length > 2) {
+            show = vector[2];
+        }
+        return Ext.String.format(template, 'black', show);
+    };
+
+    var changeEstado = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+        var template = '<span style="color:{0};">{1}</span>';
+        var texto = colIndex.data.text;
+        var vector = texto.split('|');
+        var show = "";
+        if (vector.length > 5) {
+            show = vector[5];
+            var template = '<span style="color:{0};">{1}</span>';
+            if (show == '2') {
+                return Ext.String.format(template, COLOR_BLUE01, "Activo");
+            }
+            if (show == '1') {
+                return Ext.String.format(template, COLOR_RED01, "Inactivo");
+            }
+
+        }
+
+        return Ext.String.format(template, 'black', show);
+    };
+
+
+    var changeIndicaAsignacion = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+        var deshabilitado = (App.nfIndicaModoLectura.getValue() == 1 ? true : false);
+        var deshabilitadoCode = (deshabilitado ? "disabled= true" : "");
+        var template = '<span><input type="checkbox" name="cheAcceso" value="2" {1} ' +
+                        'onclick="eventoCheckTree({0},1,this.checked);" ' + deshabilitadoCode + '  ></span>';
+        var texto = colIndex.data.text;
+        var vector = texto.split('|');
+        var show = "";
+        if (colIndex.data.id == 'WA') {
+            return Ext.String.format("", "","");
+        }
+        if (vector.length > 6) {
+            show = vector[6];
+            if (show == '2') {
+                return Ext.String.format(template, "'" + texto + "'", 'checked = "true" ');
+            }
+            if (show == '1') {
+                return Ext.String.format(template, "'" + texto + "'", '');
+            }
+        }
+
+        return Ext.String.format(template, "'" + texto + "'", '');
+    };
+    var changeIndicaNuevo = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+        var deshabilitado = (App.nfIndicaModoLectura.getValue() == 1 ? true : false);
+        var deshabilitadoCode = (deshabilitado ? "disabled= true" : "");
+        var template = '<span><input type="checkbox" name="cheAcceso" value="2" {1} ' +
+                        'onclick="eventoCheckTree({0},2,this.checked);" ' + deshabilitadoCode + ' ></span>';
+        var texto = colIndex.data.text;
+        var vector = texto.split('|');
+        var show = "";
+        if (colIndex.data.id == 'WA') {
+            return Ext.String.format("", "", "");
+        }
+        if (vector.length > 0) {
+            if (vector[0] != '2') {
+                return Ext.String.format("", "", "");
+            }
+        }
+        if (vector.length > 7) {
+            show = vector[7];
+            if (show == '2') {
+                return Ext.String.format(template, "'" + texto + "'", 'checked = "true" ');
+            }
+            if (show == '1') {
+                return Ext.String.format(template, "'" + texto + "'", '');
+            }
+        }
+        return Ext.String.format(template, "'" + texto + "'", '');
+    };
+    var changeIndicaModificar = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+        var deshabilitado = (App.nfIndicaModoLectura.getValue() == 1 ? true : false);
+        var deshabilitadoCode = (deshabilitado ? "disabled= true" : "");
+        var template = '<span><input type="checkbox" name="cheAcceso" value="2" {1} ' +
+                        'onclick="eventoCheckTree({0},3,this.checked);" ' + deshabilitadoCode + ' ></span>';
+        var texto = colIndex.data.text;
+        var vector = texto.split('|');
+        var show = "";
+        if (colIndex.data.id == 'WA') {
+            return Ext.String.format("", "", "");
+        }
+        if (vector.length > 0) {
+            if (vector[0] != '2') {
+                return Ext.String.format("", "", "");
+            }
+        }
+        if (vector.length > 8) {
+            show = vector[8];
+            if (show == '2') {
+                return Ext.String.format(template, "'" + texto + "'", 'checked = "true" ');
+            }
+            if (show == '1') {
+                return Ext.String.format(template, "'" + texto + "'", '');
+            }
+        }
+        return Ext.String.format(template, "'" + texto + "'", '');
+    };
+    var changeIndicaEliminar = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+        var deshabilitado = (App.nfIndicaModoLectura.getValue() == 1 ? true : false);
+        var deshabilitadoCode = (deshabilitado ? "disabled= true" : "");
+        var template = '<span><input type="checkbox" name="cheAcceso" value="2" {1} ' +
+                        'onclick="eventoCheckTree({0},4,this.checked);" ' + deshabilitadoCode + '  ></span>';
+        var texto = colIndex.data.text;
+        var vector = texto.split('|');
+        var show = "";
+        if (colIndex.data.id == 'WA') {
+            return Ext.String.format("", "", "");
+        }
+        if (vector.length > 0) {
+            if (vector[0] != '2') {
+                return Ext.String.format("", "", "");
+            }
+        }
+        if (vector.length > 9) {
+            show = vector[9];
+            if (show == '2') {
+                return Ext.String.format(template, "'" + texto + "'", 'checked = "true" ');
+            }
+            if (show == '1') {
+                return Ext.String.format(template, "'" + texto + "'", '');
+            }
+        }
+        return Ext.String.format(template, "'" + texto + "'", '');
+    };
+
+    var changeIndicaIngreso = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+        var deshabilitado = (App.nfIndicaModoLectura.getValue() == 1 ? true : false);
+        var deshabilitadoCode = (deshabilitado ? "disabled= true" : "");
+        var template = '<span><input type="checkbox" name="cheAcceso" value="2" {1} ' +
+                        'onclick="eventoCheckTree({0},5,this.checked);" ' + deshabilitadoCode + ' ></span>';
+        var texto = colIndex.data.text;
+        var vector = texto.split('|');
+        var show = "";
+        if (colIndex.data.id == 'WA') {
+            return Ext.String.format("", "", "");
+        }
+        if (vector.length > 0) {
+            if (vector[0] != '2') {
+                return Ext.String.format("", "", "");
+            }
+        }
+        if (vector.length > 14) {
+            show = vector[14];
+            if (show == '2') {
+                return Ext.String.format(template, "'" + texto + "'", 'checked = "true" ');
+            }
+            if (show == '1') {
+                return Ext.String.format(template, "'" + texto + "'", '');
+            }
+        }
+        return Ext.String.format(template, "'" + texto + "'", '');
+    };
+
+    var changeIndicaImprimir = function (grid, rowIndex, colIndex, actionItem, event, record, row)
+    {
+        var deshabilitado = (App.nfIndicaModoLectura.getValue() == 1 ? true : false);
+        var deshabilitadoCode = (deshabilitado ? "disabled= true" : "");
+        var template = '<span><input type="checkbox" name="cheAcceso" value="2" {1} ' +
+                        'onclick="eventoCheckTree({0},6,this.checked);" ' + deshabilitadoCode + ' ></span>';
+        var texto = colIndex.data.text;
+        var vector = texto.split('|');
+        var show = "";
+        if (colIndex.data.id == 'WA') {
+            return Ext.String.format("", "", "");
+        }
+        if (vector.length > 0) {
+            if (vector[0] != '2') {
+                return Ext.String.format("", "", "");
+            }
+        }
+        if (vector.length > 15) {
+            show = vector[15];
+            if (show == '2') {
+                return Ext.String.format(template, "'" + texto + "'", 'checked = "true" ');
+            }
+            if (show == '1') {
+                return Ext.String.format(template, "'" + texto + "'", '');
+            }
+        }
+        return Ext.String.format(template, "'" + texto + "'", '');
+
+    };
+
+    var changeIndicaAcceso = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+        var deshabilitado = (App.nfIndicaModoLectura.getValue() == 1 ? true : false);
+        var deshabilitadoCode = (deshabilitado ? "disabled= true" : "");
+        var template = '<span><input type="checkbox" name="cheAcceso" value="2" {1} ' +
+                        'onclick="eventoCheckTree({0},7,this.checked);" ' + deshabilitadoCode + ' ></span>';
+        var texto = colIndex.data.text;
+        var vector = texto.split('|');
+        var show = "";
+        if (colIndex.data.id == 'WA') {
+            return Ext.String.format("", "", "");
+        }
+        if (vector.length > 0) {
+            if (vector[0] != '2') {
+                return Ext.String.format("", "", "");
+            }
+        }
+        if (vector.length > 16) {
+            show = vector[16];
+            if (show == '2') {
+                return Ext.String.format(template, "'" + texto + "'", 'checked = "true" ');
+            }
+            if (show == '1') {
+                return Ext.String.format(template, "'" + texto + "'", '');
+            }
+        }
+        return Ext.String.format(template, "'" + texto + "'", '');
+    };
+
+    var changeIndicaObligatorio = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+        var deshabilitado = (App.nfIndicaModoLectura.getValue() == 1 ? true : false);
+        var deshabilitadoCode = (deshabilitado ? "disabled= true" : "");
+        var template = '<span><input type="checkbox" name="cheAcceso" value="2" {1} ' +
+                        'onclick="eventoCheckTree({0},8,this.checked);" ' + deshabilitadoCode + ' ></span>';
+        var texto = colIndex.data.text;
+        var vector = texto.split('|');
+        var show = "";
+        if (colIndex.data.id == 'WA') {
+            return Ext.String.format("", "", "");
+        }
+        if (vector.length > 0) {
+            if (vector[0] != '2') {
+                return Ext.String.format("", "", "");
+            }
+        }
+        if (vector.length > 11) {
+            show = vector[11];
+            if (show == '2') {
+                return Ext.String.format(template, "'" + texto + "'", 'checked = "true" ');
+            }
+            if (show == '1') {
+                return Ext.String.format(template, "'" + texto + "'", '');
+            }
+        }
+        return Ext.String.format(template, "'" + texto + "'", '');
+
+    };
+
+    var changePerfilUser = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+        var template = '<span style="color:{0};">{1}</span>';
+
+        var texto = colIndex.data.text;
+        var vector = texto.split('|');
+        var show = "";
+        if (colIndex.data.id == 'WA') {
+            return Ext.String.format("", "", "");
+        }
+        if (vector.length > 18) {
+            tipo = vector[17];
+            show = vector[18];
+            if (tipo == '2') {
+                return Ext.String.format(template, COLOR_YELLOW02, show);
+            }
+            else if (tipo == '1') {
+                return Ext.String.format(template, COLOR_GREEN01, show);
+            }
+            else if (tipo == '0') {
+                return Ext.String.format(template, COLOR_YELLOW02, '');
+            }
+        }
+
+        return Ext.String.format(template, "'" + texto + "'", '');
+    };
+
+    var changeUserModif = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+        var template = '<span style="color:{0};">{1}</span>';
+        var texto = colIndex.data.text;
+        var vector = texto.split('|');
+        var show = "";
+        if (vector.length > 19) {
+            show = vector[19];
+        }
+        return Ext.String.format(template, 'black', show);
+    };
+    var changeFechaModif = function (grid, rowIndex, colIndex, actionItem, event, record, row) {
+        var template = '<span style="color:{0};">{1}</span>';
+        var texto = colIndex.data.text;
+        var vector = texto.split('|');
+        var show = "";
+        if (vector.length > 20) {
+            show = vector[20];
+        }
+        return Ext.String.format(template, 'black', show);
+    };
+    var eventoCheckTree = function (value, indica, checked) {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("addCambiosOpciones"))',
+            params: {
+                text: value,
+                indicador: indica,
+                check: checked
+            }
+        });
+        var texto = value;
+        var vector = texto.split('|');
+        var show = "";
+        var i = 0;
+        var textAux = '';
+        if (indica<5) {
+            vector[indica+5] = (checked?2:1);
+        } else if (indica == 5) {
+            vector[14] = (checked ? 2 : 1);
+        } else if (indica == 6) {
+            vector[15] = (checked ? 2 : 1);
+        } else if (indica == 7) {
+            vector[16] = (checked ? 2 : 1);
+        } else if (indica == 8) {
+            vector[11] = (checked ? 2 : 1);
+        }
+
+        if (indica == 1 && vector.length > 18) {
+            vector[18] = App.txtNombreAgente.getValue();
+            vector[17] = App.txtTipoAgente.getValue();
+        }
+
+        for(i=0;i<vector.length-1;i++){
+            textAux = textAux + vector[i] + '|';
+        }
+        textAux = textAux + vector[vector.length - 1];
+        textChanged = textAux;
+        var IdOpcionPadre = '';
+        var IdOpcion = '';
+        if (vector.length > 4) {
+            IdOpcionPadre = vector[4];
+            IdOpcion = vector[2];
+        }
+        var ArrayList1 = new Array();
+        var tree = App.TreePanelOpciones;
+        NodoFound = null;
+        getNodoTree(tree.getRootNode(), IdOpcion, NodoFound);
+        if (NodoFound != null) {
+            NodoFound.data.text = textChanged;
+            NodoFound.data.submit;
+            App.StoreOpcion.save();
+            if (indica == 1) {
+                var textoAux01;
+                var vectorAux;
+                var textPadreChanged;
+                var nodoPadre = NodoFound.parentNode;
+                while (nodoPadre != null) {
+                    textoAux01 = '';
+                    vectorAux = nodoPadre.data.text.split('|');
+                    if (vectorAux.length > 6) {
+                        vectorAux[6] = 2;
+                        for (i = 0; i < vectorAux.length - 1; i++) {
+                            textoAux01 = textoAux01 + vectorAux[i] + '|';
+                        }
+                        textoAux01 = textoAux01 + vectorAux[vectorAux.length - 1];
+                        textPadreChanged = textoAux01;
+                        nodoPadre.data.submit;
+                        nodoPadre.data.text = textPadreChanged;
+                        App.StoreOpcion.save();
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("addCambiosOpciones"))',
+                            params: {
+                                text: textPadreChanged,
+                                indicador: indica,
+                                check: true
+                            }
+                        });
+                    }
+                    nodoPadre = nodoPadre.parentNode;
+                }
+            }
+       /*     var grid = App.TreePanelOpciones;
+            grid.columns.forEach(function (col) {
+                if ((col.text == 'Edit')) {
+                    col.setVisible(true);
+                    col.setVisible(false);
+                }
+            });*/
+        }
+        indicaEventCheck = true;
+
+    };
+    var NodoFound = null;
+    var getNodoTree = function (nodo, idmatch, NodoFoundMet) {
+        if (nodo != null && NodoFoundMet == null) {
+            if (nodo.data.id == idmatch) {
+                NodoFound = nodo;
+            } else {
+                if (nodo.childNodes.length > 0) {
+                    nodo.eachChild(function (child) {
+                        getNodoTree(child, idmatch, NodoFound);
+                    });
+                } else {
+                    getNodoTree(null, idmatch, NodoFound);
+                }
+            }
+        }
+    };
+
+
+    function cerrarWindow() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Se registró correctamente el Agente.',
+                accion: null
+            }
+        });
+    };
+
+        var onSuccess = function (data) {
+            if (data != null) {
+                accionMensajes(data);
+            }
+        };
+
+        var onFailure = function (modo) {
+            App.btnSave.setDisabled(false);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("showMensajeBox"))',
+                params: {
+                    message: 'Un error en el evento ',
+                    titulo: "Error",
+                    tipo: 'ERROR'
+                }
+            });
+        };
+        var accionMensajes = function (data) {
+            var mensajes = "";
+            if (data.length > 0) {
+                for (var i = 0; i < data.length; i++) {
+                    mensajes = mensajes + "\t *" + data[i].DESCRIPCION + "\n";
+                }
+                App.taAlerts.setVisible(true);
+                App.taAlerts.setValue(mensajes);
+            } else {
+                App.taAlerts.setVisible(false);
+            }
+
+        };
+        var validarCampo = function (componente) {
+            if (componente.getValue() != null) {
+                if (componente.getValue().trim() == 0) {
+                    componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+
+                } else {
+                    componente.setFieldStyle("border-color: " + COLOR_BORDER_DEF);
+                }
+            } else {
+                componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+
+            }
+        };
+
+        var eventoCheck = function (check, componente) {
+            var checkAll = check.getValue();
+            if (!checkAll) {
+                componente.setDisabled(true);
+                componente.setValue(null);
+            } else {
+                componente.setDisabled(false);
+            }
+        };
+
+        var guardaTempTrue = function (IDControl, campo) {
+
+        };
+
+        var textChanged = null;
+        var indicaEventCheck = false;
+        var indicaEventSelecHijos = false;
+        var indicaSeleccAddAux = false;
+        var flagSeleccAux = null;
+
+        var seleccionRecordActual = null;
+        function setSeleccionRecordTree(record) {
+            seleccionRecordActual = record;
+
+        }
+        function eventLoad() {
+            if (seleccionRecordActual != null) {
+                if (indicaEventSelecHijos) {
+                    eventoSelectOpcionHijos(flagSeleccAux, indicaSeleccAddAux, seleccionRecordActual);
+                    var grid = App.TreePanelOpciones;
+                    grid.columns.forEach(function (col) {
+                        if ((col.text == 'Edit')) {
+                            col.setVisible(true);
+                            col.setVisible(false);
+                        }
+                    });
+                    indicaEventSelecHijos = true;
+                    indicaSeleccAddAux = false;
+                    flagSeleccAux = null;
+                }
+            }
+        }
+
+        function eventoSeleccionOpcion(flag, indicaAdd) {
+            if (seleccionRecordActual != null) {
+                seleccionRecordActual.expand();
+                indicaEventSelecHijos = true;
+                indicaSeleccAddAux = (indicaAdd ? true : false);
+                flagSeleccAux = flag;
+
+                var index = 0;
+                var indica = 0;
+                if (flag=='ASIGNAR') {
+                    index = 6;
+                    indica = 1;
+                } else if (flag == 'NUEVO') {
+                    index = 7;
+                    indica = 2;
+                } else if (flag == 'MODIFICAR') {
+                    index = 8;
+                    indica = 3;
+                } else if (flag == 'ELIMINAR') {
+                    index = 9;
+                    indica = 4;
+                } else if (flag == 'VER')
+                {
+                    index = 14;
+                    indica = 5;
+                } else if (flag == 'IMPRIMIR') {
+                    index = 15;
+                    indica = 6;
+                }
+                else if (flag == 'ACCESO')
+                {
+                    index = 16;
+                    indica = 7;
+                }
+                else if (flag == 'OBLIGATORIO') {
+                    index = 11;
+                    indica = 8;
+                }
+
+                var NodoFound = seleccionRecordActual;
+                var textoAux01 = '';
+                var textPadreChanged = '';
+                var vectorAux = null;
+                var nodoPadre = NodoFound;
+                while (nodoPadre != null && index > 0) {
+                    textoAux01 = '';
+                    var vectorAux = nodoPadre.data.text.split('|');
+                    if (vectorAux.length > index) {
+                        vectorAux[index] = (indicaAdd ? 2 : 1);
+                        for (i = 0; i < vectorAux.length - 1; i++) {
+                            textoAux01 = textoAux01 + vectorAux[i] + '|';
+                        }
+                        textoAux01 = textoAux01 + vectorAux[vectorAux.length - 1];
+                        textPadreChanged = textoAux01;
+                        nodoPadre.data.submit;
+                        nodoPadre.data.text = textPadreChanged;
+                        App.StoreOpcion.save();
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("addCambiosOpciones"))',
+                            params: {
+                                text: textPadreChanged,
+                                indicador: indica,
+                                check: (indicaAdd ? true : false)
+                            }
+                        });
+                    }
+                    nodoPadre = nodoPadre.parentNode;
+                }
+                eventoSelectOpcionHijos(flag, indicaAdd, seleccionRecordActual);
+
+                var grid = App.TreePanelOpciones;
+                grid.columns.forEach(function (col) {
+                    if ((col.text == 'Edit')) {
+                        col.setVisible(true);
+                        col.setVisible(false);
+                    }
+                });
+            }
+        };
+
+    function eventoSelectOpcionHijos(flag, indicaAdd, nodo) {
+            var indica = 0;
+            if (flag == 'ASIGNAR') {
+                index = 6;
+                indica = 1;
+            } else if (flag == 'NUEVO') {
+                index = 7;
+                indica = 2;
+            } else if (flag == 'MODIFICAR') {
+                index = 8;
+                indica = 3;
+            } else if (flag == 'ELIMINAR') {
+                index = 9;
+                indica = 4;
+            } else if (flag == 'VER') {
+                index = 14;
+                indica = 5;
+            } else if (flag == 'IMPRIMIR') {
+                index = 15;
+                 indica = 6;
+            } else if (flag == 'ACCESO') {
+                index = 16;
+                indica = 7;
+            }
+            else if (flag == 'OBLIGATORIO') {
+                index = 11;
+                indica = 8;
+            }
+
+            var textoAux01 = '';
+            var textChanged = '';
+
+            if (index > 0) {
+                if (nodo.childNodes.length > 0) {
+                    nodo.eachChild(function (child) {
+                        textoAux01 = '';
+                        var vectorAux = child.data.text.split('|');
+                        if (vectorAux.length > index) {
+                            vectorAux[index] = (indicaAdd ? 2 : 1);
+                            for (i = 0; i < vectorAux.length - 1; i++) {
+                                textoAux01 = textoAux01 + vectorAux[i] + '|';
+                            }
+                            textoAux01 = textoAux01 + vectorAux[vectorAux.length - 1];
+                            textChanged = textoAux01;
+                            child.data.submit;
+                            child.data.text = textChanged;
+                            App.StoreOpcion.save();
+                            Ext.net.DirectMethod.request({
+                                url: '@(Url.Action("addCambiosOpciones"))',
+                                params: {
+                                    text: textChanged,
+                                    indicador: indica,
+                                    check: (indicaAdd ? true : false)
+                                }
+                            });
+                        }
+
+                    });
+                } else {
+                }
+            }
+        }
+
+</script>
+
+@(Html.X().Window()
+    .Width(900)
+    .Height(480)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Constrain(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID(idWindow)
+    .Title("Asignación de Opciones de Agente:" + modoDesc)
+    .Padding(4)
+        //.X(0)
+        //.Y(0)
+    .Items(
+        Html.X().FormPanel()
+            .Frame(false)
+            .Border(false)
+        //.AutoScroll(true)
+            .Layout(LayoutType.Fit)
+        //.Layout(LayoutType.VBox)
+        //.LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+            .TopBar(
+                    X.Toolbar()
+                    .Height(30)
+                    .Items(
+                    X.NumberField().Value((indicaModoLectura ? 1 : 0)).ID("nfIndicaModoLectura").Hidden(true),
+                        X.TextField().Value(Model.TipoAgente).ID("txtTipoAgente").Hidden(true),
+                        X.TextField().Value(Model.Nombre).ID("txtNombreAgente").Hidden(true),
+                        X.ToolbarSpacer(),
+                        X.Label().Html("<b><span style='color:" + COLOR_BLUE01_temp + ";'>Agente: " + Model.Nombre + "</span> </b>")
+                        ,
+                    X.ToolbarFill(),
+                    X.Button()
+                        .Hidden((Model.ACCION == "VER" ? true : false))
+                    .ID("btnSave")
+                        .Text((Model.ACCION == "DELETE" ? "Eliminar" : "Guardar"))
+                        .Icon((Model.ACCION == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave))
+        // .Handler(@"this.up('form').submit({clientValidation: false});")
+        //.DirectClickAction("save_Usuario"),
+                    .DirectEvents(de =>
+                                          {  //Model.ACCION : Posee el MODO ACTUAL
+                                              de.Click.Url = Url.Action("save_SG_AgenteOpcion");
+                                              de.Click.EventMask.ShowMask = true;
+                                              de.Click.Before = "App.btnSave.setDisabled(true); ";
+                                              de.Click.After = "App.btnSave.setDisabled(false); ";
+                                              de.Click.ExtraParams.Add(new Parameter("MODO", Model.ACCION, ParameterMode.Value));
+                                              de.Click.ExtraParams.Add(new Parameter("idWindow", idWindow, ParameterMode.Value));
+                                              de.Click.Success = "onSuccess(result.data);";
+                                              de.Click.Failure = "onFailure('" + Model.ACCION + "');";
+
+                                          }),
+                                    X.Button()
+                                              .Text((Model.ACCION == "VER" ? "Aceptar" : "Cancelar"))
+                                              .Icon((Model.ACCION == "VER" ? Icon.Accept : Icon.Cancel))
+                                         .DirectEvents(de =>
+                                          {  //Model.ACCION : Posee el MODO ACTUAL
+                                              de.Click.Url = Url.Action("cerrarWindow");
+                                              //de.Click.EventMask.ShowMask = true;
+                                              de.Click.ExtraParams.Add(new Parameter(
+                                                    "id", idWindow, ParameterMode.Value));
+                                              //de.Click.Success = "onSuccess(result.data,'" + Model.ACCION + "');";
+                                              //de.Click.Failure = "onSuccess(result.data,'"+ Model.ACCION + "');";
+                                          }),
+                                          X.ToolbarSpacer(20)
+                                     )
+            )
+            .Items(
+                    X.TreePanel()
+                     .Header(false)
+                     .ID("TreePanelOpciones")
+                       .Scroll(ScrollMode.Both)
+                       .AutoScroll(true)
+        //.SingleExpand(true)
+                       .Collapsible(true)
+                       .UseArrows(true)
+                       .RootVisible(true)
+                       .MultiSelect(true)
+
+                       .SortableColumns(false)
+                       .Reorderable(false)
+
+
+                       .FolderSort(true)
+                       .Border(false)
+                       .TopBar(
+                          X.Toolbar()
+                            .Height(30)
+                            .Items(
+                                X.ToolbarSpacer(20),
+                                X.Checkbox().ReadOnly(true).Value(true).Width(10).Hidden(indicaModoLectura),
+                                X.Button().Text("").Icon(Icon.ApplicationForm).Hidden(indicaModoLectura)
+                                .ToolTip("Asignar  Opción y opciones contenidas.")
+                                .Handler("eventoSeleccionOpcion('ASIGNAR',true)")
+                                ,
+                                X.ToolbarSpacer(5),
+                                X.Checkbox().ReadOnly(true).Value(false).Width(10).Hidden(indicaModoLectura),
+                                X.Button().Text("").Icon(Icon.ApplicationForm).Hidden(indicaModoLectura)
+                                .ToolTip("Quitar Opción y opciones contenidas.")
+                                .Handler("eventoSeleccionOpcion('ASIGNAR',false)")
+                                ,
+                                X.ToolbarSeparator().Hidden(indicaModoLectura),
+                                X.ToolbarSpacer(90),
+                                X.Checkbox().ReadOnly(true).Value(true).Width(10).Hidden(indicaModoLectura),
+                                    X.Button().Text("").Icon(Icon.ApplicationFormAdd).Hidden(indicaModoLectura)
+                                        .ToolTip("Asignar Permiso 'Procedimiento' en la Opción y Opciones contenidas.")
+                                .Handler("eventoSeleccionOpcion('NUEVO',true)")
+                                ,
+                                X.ToolbarSpacer(5),
+                                    X.Checkbox().ReadOnly(true).Value(false).Width(10).Hidden(indicaModoLectura),
+                                    X.Button().Text("").Icon(Icon.ApplicationFormAdd).Hidden(indicaModoLectura)
+                                        .ToolTip("Quitar Permiso 'Procedimiento' en la Opción y Opciones contenidas.")
+                                .Handler("eventoSeleccionOpcion('NUEVO',false)")
+                                ,
+                                X.ToolbarSeparator().Hidden(indicaModoLectura),
+                                X.ToolbarSpacer(20),
+                                    X.Checkbox().ReadOnly(true).Value(true).Width(10).Hidden(indicaModoLectura).Hidden(true),
+                                    X.Button().Text("").Icon(Icon.ApplicationFormEdit).Hidden(indicaModoLectura).Hidden(true)
+                                    .ToolTip("Asignar Permiso 'Modificar' en la Opción y Opciones contenidas.").Hidden(true)
+                                .Handler("eventoSeleccionOpcion('MODIFICAR',true)")
+                                ,
+                                X.ToolbarSpacer(5),
+                                    X.Checkbox().ReadOnly(true).Value(false).Width(10).Hidden(indicaModoLectura).Hidden(true),
+                                    X.Button().Text("").Icon(Icon.ApplicationFormEdit).Hidden(indicaModoLectura).Hidden(true)
+                                    .ToolTip("Quitar Permiso 'Modificar' en la Opción y Opciones contenidas.").Hidden(true)
+                                .Handler("eventoSeleccionOpcion('MODIFICAR',false)")
+                                ,
+                                X.ToolbarSeparator().Hidden(indicaModoLectura),
+                                X.ToolbarSpacer(20),
+                                    X.Checkbox().ReadOnly(true).Value(true).Width(10).Hidden(indicaModoLectura).Hidden(true),
+                                    X.Button().Text("").Icon(Icon.ApplicationFormDelete).Hidden(indicaModoLectura).Hidden(true)
+                                    .ToolTip("Asignar Permiso 'Eliminar' en la Opción y Opciones contenidas.").Hidden(true)
+                                .Handler("eventoSeleccionOpcion('ELIMINAR',true)")
+                                ,
+                                X.ToolbarSpacer(5),
+                                    X.Checkbox().ReadOnly(true).Value(false).Width(10).Hidden(indicaModoLectura).Hidden(true),
+                                    X.Button().Text("").Icon(Icon.ApplicationFormDelete).Hidden(indicaModoLectura).Hidden(true)
+                                    .ToolTip("Quitar Permiso 'Eliminar' en la Opción y Opciones contenidas.").Hidden(true)
+                                .Handler("eventoSeleccionOpcion('ELIMINAR',false)")
+                                ,
+                                X.ToolbarSeparator().Hidden(indicaModoLectura),
+                                X.ToolbarSpacer(20),
+                                X.Checkbox().ReadOnly(true).Value(true).Width(10).Hidden(indicaModoLectura),
+                                X.Button().Text("").Icon(Icon.ApplicationFormMagnify).Hidden(indicaModoLectura)
+                                    .ToolTip("Asignar Permiso 'Consultar/Ver' en la Opción y Opciones contenidas.")
+                                .Handler("eventoSeleccionOpcion('VER',true)")
+                                ,
+                                X.ToolbarSpacer(5),
+                                X.Checkbox().ReadOnly(true).Value(false).Width(10).Hidden(indicaModoLectura),
+                                X.Button().Text("").Icon(Icon.ApplicationFormMagnify).Hidden(indicaModoLectura)
+                                .ToolTip("Quitar Permiso 'Consultar/Ver' en la Opción y Opciones contenidas.")
+                                .Handler("eventoSeleccionOpcion('VER',false)")
+                                ,
+                                     X.ToolbarSeparator().Hidden(indicaModoLectura),
+                                    X.ToolbarSpacer(20),
+                                     X.Checkbox().ReadOnly(true).Value(true).Width(10).Hidden(indicaModoLectura),
+                                    X.Button().Text("").Icon(Icon.Printer).Hidden(indicaModoLectura)
+                                    .ToolTip("Asignar Permiso 'Imprimir' en la Opción y Opciones contenidas.")
+                                    .Handler("eventoSeleccionOpcion('IMPRIMIR',true)")
+
+                                    ,
+                                    X.ToolbarSpacer(5),
+                                    X.Checkbox().ReadOnly(true).Value(false).Width(10).Hidden(indicaModoLectura),
+                                        X.Button().Text("").Icon(Icon.Printer).Hidden(indicaModoLectura)
+                                    .ToolTip("Quitar Permiso 'Imprimir' en la Opción y Opciones contenidas.")
+                                    .Handler("eventoSeleccionOpcion('IMPRIMIR',false)")
+
+
+                                    ,
+                                X.ToolbarSeparator().Hidden(indicaModoLectura),
+                                X.ToolbarSpacer(20),
+                                X.Checkbox().ReadOnly(true).Value(true).Width(10).Hidden(indicaModoLectura),
+                                X.Button().Text("").Icon(Icon.ApplicationFormMagnify).Hidden(indicaModoLectura)
+                                .ToolTip("Asignar Permiso 'Obligatorio' en la Opción y Opciones contenidas.")
+                                .Handler("eventoSeleccionOpcion('OBLIGATORIO',true)")
+
+                                ,
+                                X.ToolbarSpacer(5),
+                                X.Checkbox().ReadOnly(true).Value(false).Width(10).Hidden(indicaModoLectura),
+                                X.Button().Text("").Icon(Icon.ApplicationFormMagnify).Hidden(indicaModoLectura)
+                                .ToolTip("Quitar Permiso 'Obligatorio' en la Opción y Opciones contenidas.")
+                                .Handler("eventoSeleccionOpcion('OBLIGATORIO',false)")
+                                ,
+
+                                X.ToolbarSeparator().Hidden(indicaModoLectura),
+                                X.ToolbarFill()
+                                ,
+                                X.Label().Html("<b><span style='color:" + COLOR_BLUE01_temp + ";'>Tipo Usuario: </span> </b>")
+                                ,
+                                X.Label().Html("<b><span style='color:" + COLOR_YELLOW02_temp + ";'>&#9608;</span> </b>")
+                                , X.ToolbarSpacer(20)
+                                ,
+                                X.Label().Html("<b><span style='color:" + COLOR_BLUE01_temp + ";'>Tipo Perfil: </span> </b>")
+                                ,
+                                X.Label().Html("<b><span style='color:" + COLOR_GREEN01_temp + ";'>&#9608;</span> </b>")
+                                , X.ToolbarSpacer(20)
+                            )
+                       )
+        //.Height(200)
+        /*.Fields(
+                X.ModelField().Name("IdOpcion"),
+                X.ModelField().Name("Descripcion"),
+                X.ModelField().Name("IndicadorAcceso"),
+            X.ModelField().Name("Estado")
+        ) */
+                            .ColumnModel(
+                                    X.CheckColumn()
+                                    .Text("Asignación")
+                                    .DataIndex("IndicadorAsignacion")
+                                    .Renderer("changeIndicaAsignacion")
+                                    .Width(70),
+                                    X.TreeColumn()
+                                    .Text("Opciones - Nombre")
+        //.Flex(1)
+                                    .Width(250)
+                                    .Renderer("changeDescripcion")
+                                    .DataIndex("Descripcion"),
+                                    X.Column().Text("Id Opción").Width(70)
+                                   .Renderer("changeCodigo")
+                                    .DataIndex("IdOpcion").ID("codigo"),
+                                    X.Column().Text("Estado").Width(70)
+                                    .Renderer("changeEstado")
+                                    .DataIndex("Estado").ID("estado"),
+
+                                     X.CheckColumn()
+                                            .Text("Procedimientos")//.Hidden(true)
+                                        .DataIndex("IndicadorNuevo")
+                                        .Renderer("changeIndicaNuevo")
+                                        .Width(60),
+                                    X.CheckColumn()
+                                             .Text("Modif.").Hidden(true)
+                                         .DataIndex("IndicadorEliminar")
+                                         .Renderer("changeIndicaModificar")
+
+                                         .Width(60),
+                                    X.CheckColumn()
+                                            .Text("Eliminar.").Hidden(true)
+                                        .DataIndex("IndicadorEliminar")
+                                            .Renderer("changeIndicaEliminar")
+                                        .Width(60),
+                                        X.CheckColumn()
+                                        .Text("Consulta")
+                                        .DataIndex("IndicadorIngreso")
+                                        .Renderer("changeIndicaIngreso")
+                                        .Width(60),
+                                        X.CheckColumn()
+                                        .Text("Imprimir")
+                                        .DataIndex("IndicadorImprimir")
+                                        .Renderer("changeIndicaImprimir")
+                                        .Width(60)
+                                        ,
+                                        X.CheckColumn()
+                                        .Text("Obligatorio")
+                                        .DataIndex("IndicadorObligatorio")
+                                        .Renderer("changeIndicaObligatorio")
+                                        .Width(60)
+                                        ,
+                                        X.CheckColumn().Hidden(true)
+                                        .Text("Acceso")
+                                        .DataIndex("IndicadorAcceso")
+                                        .Renderer("changeIndicaAcceso")
+                                        .Width(60),
+                                         X.Column().Text("Perfil/Usuario Origen").Width(160)
+                                         .Renderer("changePerfilUser")
+                                         .DataIndex("NombreAgente").ID("NombreAgente"),
+                                           X.Column().Text("Usuario Modificación").Width(120)
+                                         .Renderer("changeUserModif")
+                                         .DataIndex("UsuarioModificacion").ID("UsuarioModificacion"),
+                                         X.Column().Text("Fecha Modificación").Width(120)
+                                         .Renderer("changeFechaModif")
+                                         .DataIndex("FechaModificacion").ID("FechaModificacion"),
+
+                                       /*
+                                     X.ComponentColumn()
+                                        .Text("Acceso")
+                                        .DataIndex("IndicadorAcceso")
+                                        .Width(80)
+
+                                       // .StopSelection(false)
+                                        .Component(
+                                         X.Checkbox()
+                                        .Listeners(l =>
+                                        {
+                                            l.Change.Handler = "guardaTempTrue(this,'Logico');";
+                                            //l.Render.Handler = "alert('XXXXX'+this.getValue());";
+                                            //l.Render.Handler = "alert('XXXXX'+row.get('TipoAgente')";
+                                        })
+                                    ),
+                                    */
+                                    X.ActionColumn()
+                                        .Text("Edit")
+                                    .Width(40)
+                                    .MenuDisabled(false)
+                                    .Hidden(true)
+        //.Align(Alignment.Center)
+                                    .Items(
+                                        X.ActionItem()
+                                        .Tooltip("Edit task")
+                                        .Icon(Icon.FlagChecked)
+        //.Handler("handler2")
+
+                                        .IsDisabled(func =>
+                                        {
+                                            func.Handler = "return !record.data.text;";
+                                        })
+                                    )
+        //,
+        //Html.X().Column()
+        //.Text("Comentario")
+        //.DataIndex("user")
+        //.Flex(1)
+        //.Editor(Html.X().TextField())
+                                    )
+
+                                    .Store(
+                                    X.TreeStore()
+                                        .ID("StoreOpcion")
+        /* .Model( Html.X().Model()
+             .IDProperty("IdOpcion")
+              .Fields(
+                Html.X().ModelField().Name("IdOpcion"),
+                Html.X().ModelField().Name("Descripcion"),
+                Html.X().ModelField().Name("IndicadorAcceso"),
+                Html.X().ModelField().Name("Estado")
+
+        )
+      ) */
+                                    .Proxy(
+                                        X.AjaxProxy().Url(Url.Action("GetTreeViewSG_OpcionAgenteRegistro"))
+                                    )
+                                    .Listeners(l =>
+                                    {
+                                        l.Load.Handler = "eventLoad() ;";
+                                    })
+        //.Parameters(new
+        //{
+        //    modo = JRawValue.From("record.data.id")
+        //    //tipo = new JRawValue("App.cmbTipoCuidadoPrev.getValue()")
+        //})
+                                    .Parameters(ps =>
+                                        ps.Add(new
+                                        {
+                                            //start = 0,
+                                            //limit = 10,
+                                            idagente = Model.IdAgente,
+                                            estado = 2
+                                            //tipoBuscar = JRawValue.From("varTipoBuscar")
+                                        })
+                                    )
+                                   .LoadProxy()
+                                  )
+
+                                  .Root(
+                                        Html.X().Node().NodeID("WA").Text("1|Sistema HCE")
+                                    )
+                            .Listeners(l =>
+                            {
+                                //l.ItemClick.Handler = "habilitaID(record.data.id);";
+                                //l.CellDblClick.Handler = "eventoVerSelected(record.data.idOpcion);";
+                                l.CellClick.Handler = "setSeleccionRecordTree(record);";
+
+                            })
+
+                                            //.BottomBar(bar => bar.Add(
+        //Html.X().PagingToolbar()))
+            )
+        //)
+    )
+    .DirectEvents(de =>
+    {
+        de.Render.Url = Url.Action("postWindowAgente");
+        de.Render.ExtraParams.Add(new Parameter(
+              "idGrupo", "" + Model.IdGrupo, ParameterMode.Value));
+        de.Render.ExtraParams.Add(new Parameter(
+              "idOrga", "" + Model.IdOrganizacion, ParameterMode.Value));
+        de.Render.ExtraParams.Add(new Parameter(
+              "idPersona", "" + Model.IdEmpleado, ParameterMode.Value));
+        de.Render.ExtraParams.Add(new Parameter(
+              "idOpcion", "" + Model.IdOpcionDefecto, ParameterMode.Value));
+
+    })
+    .CloseAction(CloseAction.Destroy)
+)
+

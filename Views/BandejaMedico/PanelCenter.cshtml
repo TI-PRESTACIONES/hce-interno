@@ -1,0 +1,135 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SEGURIDADCONCEPTO
+@{
+    ViewBag.Title = "Partial Content";
+    Layout = "";
+    var X = Html.X();
+        
+    var indicaVisiblePrint = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_VISIBLE_IMPRESION;
+    var visibleImpresion = (indicaVisiblePrint == 2 ? true : false);
+    
+    //var DESC_CONEXEXTERNAS = ""+( ""+AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("ACTIVOSOA") == "S"?
+    //                    "" : "Sin Conexiones a B.D. externas");
+                        
+    var COLOR_RED01 = "#990000";                        
+}
+<script>
+
+    var ActivaUrlHCE = function (value) {
+
+        window.location.href = ' @Url.Action("Index", "HClinica") ';
+    };
+
+    function preReloadNorth() {
+        window.setTimeout("reloadPanelNorth();", 300);
+    }
+    function preReloadWest() {
+        window.setTimeout("reloadPanelWest();", 300);
+    }
+
+    function reloadPanelNorth() {
+        if (App.txtRecargarNorth.getValue() == 'RECARGA') {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("reloadPanelNorthC"))',
+                params: {
+                    indica: ''
+                }
+            });
+            App.txtRecargarNorth.setValue(null);
+        }
+    }
+    function reloadPanelWest() {
+        if (App.txtRecargarWest.getValue() == 'RECARGA') {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("reloadPanelWestC"))',
+                params: {
+                    indica: ''
+                }
+            });
+            App.txtRecargarWest.setValue(null);
+        }
+    }
+
+    function eventoVisorReporte(param1) {
+        if (param1 == 'HC') {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("HCEReportesView_total"))',
+                params: {
+                }
+            });
+
+        }
+    }
+
+</script>
+    @(
+
+ X.Panel()
+    .Border(false)
+      
+    .ID("TabPanelForm")
+
+    .Items(
+    X.Panel()
+
+        .TopBar(X.Toolbar()
+                    .StyleSpec("padding-bottom:0px;")
+                    .Items(
+                        X.TextField().ID("txtRecargarNorth").Hidden(true).Listeners(l => { l.Change.Handler = "preReloadNorth();"; }),
+                        X.TextField().ID("txtRecargarWest").Hidden(true).Listeners(l => { l.Change.Handler = "preReloadWest();"; }),
+                        X.TabStrip()
+                            .Items(t =>
+                            {
+                                t.Add(X.Tab().ActionItemID("PanelSuperior").Text(Model.DESCRIPCION));                           
+                            })
+                       ,X.ToolbarFill()
+                        ,X.Button()
+                         .Text("Imprimir Todos")
+                         .Icon(Icon.ReportGo).Hidden(true)
+                         //  .Hidden(!visibleImpresion)
+                         .ID("btnImpresionHC")
+                         .Handler("eventoVisorReporte('HC');")
+                       //,X.Label().Html("<font color='" + COLOR_RED01 + "'>"+DESC_CONEXEXTERNAS+"</font>")
+                    )                            
+                )
+     
+        .ID("PanelA")
+         .Height(600)
+         //.Title(Model.DESCRIPCION)
+         .Header(false)
+        .Layout(LayoutType.Fit)
+        .Border(false)
+        .Items(
+                 X.TextField()
+                  .ID("RutaUrl")
+                  .Listeners(l =>
+                  {
+                      l.Change.Handler = "ActivaUrlHCE('valor');";
+                  })
+                  .Hidden(true)
+        )
+        .Loader(
+            Html.X().ComponentLoader()
+                        .AutoLoad(true)
+                        .Url(Url.Action(Model.CONCEPTO))
+
+                        .Mode(LoadMode.Frame)
+            )
+        )     
+    .Plugins(plugins => plugins.Add(new TabCloseMenu()))
+)
+
+
+@(   X.Panel()   
+       .ID("PanelB")
+         .Height(600)
+        //.Title(Model.DESCRIPCION)
+        .Layout(LayoutType.Fit)
+        .Layout(Ext.Net.LayoutType.Fit)
+        .Region(Region.East)      
+         .Loader(Html.X().ComponentLoader()
+                            .Url(Url.Action("PanelEast"))
+                            .Mode(LoadMode.Script)
+                            .Params(new { containerId = "East1" })
+             )
+
+)

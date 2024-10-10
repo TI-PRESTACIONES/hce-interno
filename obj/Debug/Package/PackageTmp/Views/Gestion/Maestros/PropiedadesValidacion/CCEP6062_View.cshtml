@@ -1,0 +1,635 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.VW_SS_HC_TABLAFORMATO_VALIDACION
+
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+
+}
+@section cabecera
+{
+    <script>
+
+    var varAux = "1";
+    var varTipoBuscar = "LOAD";
+
+
+    var seleccionActual = null;
+    var seleccionActual1 = null;
+    var seleccionActual2 = null;
+
+    function setSeleccion(param1, param2, param3) {
+        seleccionActual = param1;
+        seleccionActual1 = param2;
+        seleccionActual2 = param3;
+    }
+
+
+    var Valores;
+    var template = '<span style="color:{0};">{1}</span>';
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_YELLOW02 = "#D9A407";
+
+    var changeIdioma = function (value) {
+        if (value == 'ESP')
+            return Ext.String.format("Español");
+        if (value == 'ING')
+            return Ext.String.format("Ingles");
+    };
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 2)
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+
+    var pctChange = function (value) {
+        return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+    };
+
+    var onSuccess = function (grid, data) {
+        grid.show();
+        grid.getStore().loadData(data);
+    };
+
+    var AbrirAtributo = function (Component, check, Atributo) {
+        Atributo.setDisabled(false);
+    };
+
+    function deleteSelected(grid) {
+        var store = grid.store,
+           records = grid.selModel.getSelection();
+        store.remove(records);
+        App.Window1.AutoDestroy(true);
+
+    };
+    function nuevo() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("PropiedadesValidacionRegistro"))',
+            params: {
+                MODO: 'NUEVO',
+                idPropiedadValidacion: 0,
+                secuenciac: 0,
+                secuenciav: 0
+            }
+        });
+    };
+    function modificarSelected() {
+        if (seleccionActual != null && seleccionActual1 != null && seleccionActual2 != null) {
+            var status = seleccionActual;
+            var status1 = seleccionActual1;
+            var status2 = seleccionActual2;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("PropiedadesValidacionRegistro"))',
+                params: {
+                    MODO: 'UPDATE',
+                    idPropiedadValidacion: status,
+                    secuenciac: status1,
+                    secuenciav: status2
+                }
+            });
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Seleccionar un Elemento.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+     }
+     function eliminarSelected() {
+         if (seleccionActual != null && seleccionActual1 != null && seleccionActual2 != null) {
+             var status = seleccionActual;
+             var status1 = seleccionActual1;
+             var status2 = seleccionActual2;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("PropiedadesValidacionRegistro"))',
+                params: {
+                    MODO: 'DELETE',
+                    idPropiedadValidacion: status,
+                    secuenciac: status1,
+                    secuenciav: status2
+                }
+            });
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Seleccionar un Elemento.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+        }
+
+        function verSelected() {
+            eventoVerSelected(seleccionActual,seleccionActual1,seleccionActual2);
+        }
+
+        function eventoVerSelected(param1, param2, param3) {
+            if (App.compoVER.isVisible(true)) {
+                if (seleccionActual != null) {
+                    var status = seleccionActual;
+                    var status1 = seleccionActual1;
+                    var status2 = seleccionActual2;
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("PropiedadesValidacionRegistro"))',
+                        params: {
+                            MODO: 'VER',
+                            idPropiedadValidacion: status,
+                            secuenciac: status1,
+                            secuenciav: status2
+                        }
+                    });
+                } else {
+                    Ext.Msg.show({
+                        title: "Advertencia",
+                        msg: "Debe Seleccionar un Elemento.",
+                        icon: Ext.Msg.WARNING,
+                        minWidth: 200,
+                        buttons: Ext.Msg.OK
+                    });
+                }
+            }
+        }
+
+
+        function SeleccionadorFormato() {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("seleccionadorFormatoC"))',
+                params: {
+                    accionSeleccion: 'getSeleccionFormatoNuevo',
+                    accionListado: 'LISTARPAG'
+                }
+            });
+        };
+
+        function SeleccionadorFormatoCampo(idformatoset,nombreformaset) {
+            var formatoid = idformatoset.getValue();
+            var formatodes = nombreformaset.getValue();
+
+            if (formatoid != null) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("seleccionadorFormatoCampo"))',
+                    params: {
+                        idformato: formatoid,
+                        nombreformato: formatodes,
+                        accionSeleccion: 'getSeleccionFormatoCampoNuevo',
+                        accionListado: 'LISTARPAG'
+                    }
+                });
+            } else {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Debe Seleccionar un formato antes de un campo.",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+        };
+
+        var accionBuscarFiltro = function (tipo) {
+            varTipoBuscar = tipo;
+            App.GridPanel1.getStore().reload();
+            varTipoBuscar = 'LOAD';
+        };
+
+        var accionFinal = function (btn) {
+            App.GridPanel1.getSelectionModel().deselectAll();
+            seleccionActual = null;
+            seleccionActual1 = null;
+            seleccionActual2 = null;
+            App.GridPanel1.getStore().reload();
+        };
+
+        var eventoCheckFiltro = function (check, componente) {
+            var checkAll = check.getValue();
+            if (checkAll) {
+                componente.setDisabled(true);
+                componente.setValue(null);
+            } else {
+                componente.setDisabled(false);
+            }
+        };
+        var eventoCheckFiltroDos = function (check, componente1, componente2) {
+            var checkAll = check.getValue();
+            if (checkAll) {
+                componente1.setDisabled(true);
+                componente1.setValue(null);
+                componente2.setDisabled(true);
+                componente2.setValue(null);
+            } else {
+                componente1.setDisabled(false);
+                componente2.setDisabled(false);
+            }
+        };
+
+        var eventoCheckFiltroNuevo = function (check, componente1, componente2,componente3,componente4,componente5) {
+            var checkAll = check.getValue();
+            if (checkAll) {
+                componente1.setDisabled(true);
+                componente1.setValue(null);
+                componente2.setDisabled(true);
+                componente2.setValue(null);
+                componente3.setDisabled(true)
+                componente4.setDisabled(true);
+                componente4.setValue(null);
+                componente5.setDisabled(true)
+            } else {
+                componente1.setDisabled(false);
+                componente2.setDisabled(false);
+                componente3.setDisabled(false);
+                componente4.setDisabled(false);
+                componente5.setDisabled(false);
+            }
+        };
+        var eventoCheckFiltrosNuevos = function (check, componente1, componente2) {
+            var checkAll = check.getValue();
+            if (checkAll) {
+                componente1.setDisabled(true);
+                componente1.setValue(null);
+                componente2.setDisabled(true);
+            } else {
+                componente1.setDisabled(false);
+                componente2.setDisabled(false);
+            }
+        };
+        var eventoCargarMain = function () {
+
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("addPermisosFormatos"))',
+                params: {
+                    data: 'FORMATO',
+                    indica: 'PERMISO',
+                },
+                success: function (result) { accionSetPermisos(result.data); }
+            });
+        };
+        var accionSetPermisos = function (data) {
+            var mensajes = "";
+            if (data.length > 0) {
+                for (var i = 0; i < data.length; i++) {
+                    if (data[i].ACCION == 'BUSCAR' && App.compoBUSCAR != null) {
+                        App.compoBUSCAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'NUEVO' && App.compoNUEVO != null) {
+                        App.compoNUEVO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'MODIFICAR' && App.compoMODIFICAR != null) {
+                        App.compoMODIFICAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'ELIMINAR' && App.compoELIMINAR != null) {
+                        App.compoELIMINAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'VER' && App.compoVER != null) {
+                        App.compoVER.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'ACCESO' && App.compoACCESO != null) {
+                        App.compoACCESO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'HABILITADO' && App.compoHABILITADO != null) {
+                        App.compoHABILITADO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'OBLIGA' && App.compoOBLIGA != null) {
+                        App.compoOBLIGA.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    } else if (data[i].ACCION == 'PRIORIDADAGOPCION' && App.compoPRIORIDADAGOPCION != null) {
+                        App.compoPRIORIDADAGOPCION.setVisible((data[i].campoInt01 == 2 ? true : false));
+                    }
+                }
+            }
+        };
+    </script>
+}
+
+@section cuerpo
+{
+    @(
+ Html.X().Viewport()
+        .AutoScroll(true)
+        .Layout(LayoutType.Border)
+        .Items(
+           X.Panel()
+              .Title("Listado de Propiedades de Validación")
+              .Border(false)
+              .Region(Region.North)
+              .Split(true)
+              .Collapsible(true)
+              .Height(185)
+              .TopBar(
+                         X.Toolbar()
+                        .Height(30)
+                            .Items(
+
+                              X.Button()
+                                 .Text("Buscar").ID("compoBUSCAR")
+                             .Icon(Icon.Find)
+                             .Handler("accionBuscarFiltro('FILTRO');"),
+                                 X.ToolbarSeparator(),
+                                 X.ToolbarSpacer(),
+                                X.Button()
+                                        .Text("Nuevo").ID("compoNUEVO")
+                                    .Icon(Icon.ApplicationFormAdd)
+                                    .Handler("nuevo(); "),
+                                X.Button()
+                                        .Text("Modificar").ID("compoMODIFICAR")
+                                    .Icon(Icon.ApplicationFormEdit)
+                                    .Handler("modificarSelected();")
+                                         ,
+                                X.Button()
+                                        .Text("Eliminar").ID("compoELIMINAR")
+                                    .Icon(Icon.ApplicationFormDelete)
+                                .Handler("eliminarSelected();"),
+                                   X.ToolbarSeparator(),
+                                    X.Button()
+                                            .Text("Ver").ID("compoVER")
+                                        .Icon(Icon.ApplicationViewDetail)
+                                        .Handler("verSelected();")
+                              )
+              )
+             .Items(X.Panel()
+                    .Layout(LayoutType.HBox)
+                    .BodyPadding(5)
+                    .Border(false)
+                    .MarginSpec("1 20 1 1")
+                        .Items(
+                                X.FieldSet()
+                                    .Flex(1)
+                                        .Title("Filtros")
+                        .Height(90)
+                                    .MarginSpec("5 5 5 5")
+                                    .Defaults(d =>
+                                    {
+                                        d.Add(new Parameter("LabelWidth", "120"));
+                                    })
+                                    .Items(
+
+                                       Html.X().Container().Layout(LayoutType.HBox)
+                                       .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                               .Items(
+
+                                            X.Checkbox()
+                                                 .FieldLabel("Formato")
+                                             .ID("dessdD")
+                                             .Listeners(l => l.Change.Handler = "eventoCheckFiltroNuevo(App.dessdD,App.nfIdFormato,App.txtIdDesF,App.bn,App.txtIdNomF,App.der);")
+                                             .Checked(true),
+
+                                                         X.NumberFieldFor(m=>m.IdFormato).ID("nfIdFormato").Hidden(true)
+                                                         .FieldLabel("")
+                                                         .ReadOnly(true),
+
+                                                                    X.TextField().ID("txtIdPadreF").Hidden(true)
+                                                            .FieldLabel(""),
+
+                                                        X.TextField().ID("txtIdDesF").Disabled(true).ReadOnly(true)
+                                                         .FieldLabel(""),
+
+                                                        X.Button().Text("...").ID("bn").Disabled(true)
+                                                            .Handler("SeleccionadorFormato();"),
+
+
+                                                 X.Checkbox()
+                                                  .FieldLabel("Componente")
+                                                  .ID("dess")
+                                                              .Listeners(l => l.Change.Handler = "eventoCheckFiltroDos(App.dess,App.txtComponente,App.txtAtributo);")
+                                                  .Checked(true),
+
+                                                           X.ComboBox()
+                                                            .ID("txtComponente")
+                                                            .FieldLabel("")
+                                                            .Disabled(true)
+                                                            .SimpleSubmit(true)
+                                                            .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos
+                                                            .comboModelGenerico.GetComboGenericoTxt("COMPONENTEVA")
+                                                            .Select(d => new ListItem(d.Name, d.Codigo)))
+                                                            .Listeners(ls =>
+                                                                ls.Select.Handler = "App.txtAtributo.clearValue(); App.txtAtributo.getStore().load()").Editable(false),
+
+
+                                                               X.Checkbox()
+                                                       .FieldLabel("Estado")
+                                                       .ID("es")
+                                                        .Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.es,App.tfBuscarEst);")
+                                                      .Checked(true),
+                                               X.ComboBox().Width(200)
+                                                  .ID("tfBuscarEst")
+                                                     .Disabled(true)
+                                          .Name("buscarEst")
+                                          .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("ESTADOINT").Select(d => new ListItem(d.Name, d.ID)))
+                                          .FieldLabel("")
+                                          .SimpleSubmit(true)
+                                          .Editable(false)
+                                                     ),
+
+                                        Html.X().Container().Layout(LayoutType.HBox)
+                                       .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                               .Items(
+
+                                                 
+                                                    X.NumberFieldFor(m=>m.SecuenciaCampo).Disabled(true).Hidden(true)
+                                                     .FieldLabel(""),
+                                                                
+                                                                   X.TextField().ID("txtIdNomF").Disabled(true)
+                                                                   .ReadOnly(true).FieldLabel("Campo").LabelWidth(115)
+                                                                        ,
+
+                                                                    X.Button().Text("...").ID("der").Disabled(true)
+                                                                             .Handler("SeleccionadorFormatoCampo(App.nfIdFormato,App.txtIdDesF);"),
+
+
+                                                              X.ComboBox()
+                                                                       .ID("txtAtributo").Editable(true).FieldLabel("Atributo").LabelWidth(114)
+                                                                .Disabled(true).Editable(false)
+                                                            .TypeAhead(true)
+                                                            .QueryMode(DataLoadMode.Local)
+                                                            .ForceSelection(true)
+                                                            .TriggerAction(TriggerAction.All)
+                                                            .DisplayField("name")
+                                                            .ValueField("codigo")
+                                                            .EmptyText("Loading...")
+                                                            .ValueNotFoundText("Loading...")
+                                                            .Store(Html.X().Store()
+                                                                .AutoLoad(false)
+                                                                .Model(Html.X().Model()
+                                                                    .IDProperty("Codigo")
+                                                                    .Fields(
+                                                                        new ModelField("codigo", ModelFieldType.String) { Mapping = "Codigo" },
+                                                                        new ModelField("name", ModelFieldType.String) { Mapping = "Name" }
+                                                                    )
+                                                                )
+                                                                .Proxy(Html.X().AjaxProxy()
+                                                                    .Url(Url.Action("Familias"))
+                                                                    .Reader(Html.X().JsonReader().Root("data"))
+                                                                )
+                                                                .Parameters(ps =>
+                                                                     ps.Add(new
+                                                                     {
+                                                                         Linea = JRawValue.From("App.txtComponente.getValue()"),
+                                                                         Familia = "",
+                                                                         Accion = "ATRIBUTOVA"
+                                                                     })
+                                                                )
+                                                                .Listeners(ls =>
+                                                                        ls.Load.Handler = @"var combo = App.txtAtributo;
+                                                                                    combo.setValue(records[0].get(combo.valueField));"
+                                                                )
+                                                            )
+
+                                       )
+
+                                    )
+
+                    )
+             ),
+            X.Panel()
+                .Region(Region.Center)
+                .ItemID("center")
+                .Header(false)
+                .Border(false)
+                .Items(
+                   X.GridPanel()
+                        .AllowDeselect(true)
+                        .Border(false)
+                        .Scroll(ScrollMode.Both)
+                        .AutoScroll(true)
+                            .ID("GridPanel1")
+                            .Height(350)
+                        .Margins("0 0 0 0")
+        ///CONFIGURAR EL STORE
+                        .Store(store => store.Add(
+                                 Html.X().Store()
+                                     .ID("Store1")
+                                     .AutoLoad(true)
+                                     .RemoteSort(false)
+                                     .IsPagingStore(true)
+                                     .RemotePaging(true)
+                                     .PageSize(9)////CAMBIAR DE ACUERDO A ALGÚN UN CRITERIO
+                                     .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                            .Url("getPropiedadesValidacion")
+                                            .Reader(reader => reader.Add(Html.X().JsonReader()
+                                            .Root("data")
+                                            .TotalProperty("total")
+                                            .IDProperty("IdFormato"))))
+                                      )
+                                                 .Parameters(ps =>
+                                                        ps.Add(new
+                                                        {
+                                                            id = JRawValue.From("App.nfIdFormato.getValue()"),
+                                                            formato = JRawValue.From("App.txtIdDesF.getValue()"),
+                                                            componente = JRawValue.From("App.txtComponente.getValue()"),
+                                                            atributo = JRawValue.From("App.txtAtributo.getValue()"),
+                                                            campo = JRawValue.From("App.txtIdNomF.getValue()"),
+                                                            estado = JRawValue.From("App.tfBuscarEst.getValue()"),
+                                                            tipoBuscar = JRawValue.From("varTipoBuscar")
+                                                        })
+                                                 )
+                                    .GroupField("FormatoNivelID")
+                                     .Model(model => model.Add(Html.X().Model()
+                                             .Fields(fields =>
+                                             {
+                                                 fields.Add(Html.X().ModelField().Name("IdFormato"));
+                                                 fields.Add(Html.X().ModelField().Name("FormatoNivelID"));
+                                                 fields.Add(Html.X().ModelField().Name("IdFormatoPadre"));
+                                                 fields.Add(Html.X().ModelField().Name("CodigoFormato"));
+                                                 fields.Add(Html.X().ModelField().Name("CodigoFormatoPadre"));
+                                                 fields.Add(Html.X().ModelField().Name("DescripcionFormato"));
+                                                 fields.Add(Html.X().ModelField().Name("TipoFormato"));
+                                                 fields.Add(Html.X().ModelField().Name("IdFavoritoTabla"));
+                                                 fields.Add(Html.X().ModelField().Name("NombreTabla"));
+                                                 fields.Add(Html.X().ModelField().Name("DescripcionTabla"));
+                                                 fields.Add(Html.X().ModelField().Name("TipoTabla"));
+                                                 fields.Add(Html.X().ModelField().Name("IdCampo"));
+                                                 fields.Add(Html.X().ModelField().Name("NombreCampo"));
+                                                 fields.Add(Html.X().ModelField().Name("DescripcionCampo"));
+                                                 fields.Add(Html.X().ModelField().Name("TipoCampo"));
+                                                 fields.Add(Html.X().ModelField().Name("Longitud"));
+                                                 fields.Add(Html.X().ModelField().Name("SecuenciaCampo"));
+                                                 fields.Add(Html.X().ModelField().Name("IdSeccionFormato"));
+                                                 fields.Add(Html.X().ModelField().Name("ValorPorDefecto"));
+                                                 fields.Add(Html.X().ModelField().Name("Formula"));
+                                                 fields.Add(Html.X().ModelField().Name("SecuenciaValidacion"));
+                                                 fields.Add(Html.X().ModelField().Name("TipoValidacion"));
+                                                 fields.Add(Html.X().ModelField().Name("FlagTipoDato"));
+                                                 fields.Add(Html.X().ModelField().Name("ValorTexto"));
+                                                 fields.Add(Html.X().ModelField().Name("ValorNumerico"));
+                                                 fields.Add(Html.X().ModelField().Name("ValorDate"));
+                                                 fields.Add(Html.X().ModelField().Name("IdComponente"));
+                                                 fields.Add(Html.X().ModelField().Name("NombreComponente"));
+                                                 fields.Add(Html.X().ModelField().Name("TipoComponente"));
+                                                 fields.Add(Html.X().ModelField().Name("IdAtributo"));
+                                                 fields.Add(Html.X().ModelField().Name("NombreAtributo"));
+                                                 fields.Add(Html.X().ModelField().Name("IdiomaProperty"));
+                                                 fields.Add(Html.X().ModelField().Name("EstadoValidacion"));
+                                             }))
+                                            )
+                                          )
+                               )
+
+                            ///CONFIGURAR LAS COLUMNAS
+                                .ColumnModel(columnModel =>
+                                {
+                                    columnModel.Columns.Add(Html.X().Column().Text("Orden").DataIndex("IdFormato").Hidden(true).Width(30));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Formato").DataIndex("FormatoNivelID").Hidden(true).Width(60));
+                                    columnModel.Columns.Add(Html.X().Column().Text("IdFormatoPadre").DataIndex("IdFormatoPadre").Hidden(true).Width(60));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Codigo Formato").DataIndex("CodigoFormato").Width(110).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("CodigoFormatoPadre").DataIndex("CodigoFormatoPadre").Hidden(true).Width(100));
+                                    columnModel.Columns.Add(Html.X().Column().Text("DescripcionFormato").DataIndex("DescripcionFormato").Width(170));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Tipo Formato").DataIndex("TipoFormato").Hidden(true).Width(60));
+                                    columnModel.Columns.Add(Html.X().Column().Text("IdFavoritoTabla").DataIndex("IdFavoritoTabla").Hidden(true).Width(60));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Nombre Tabla").DataIndex("NombreTabla").Hidden(true).Width(150));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Descripción Tabla").DataIndex("DescripcionTabla").Width(160));
+                                    columnModel.Columns.Add(Html.X().Column().Text("TipoTabla").DataIndex("TipoTabla").Hidden(true).Width(60));
+                                    columnModel.Columns.Add(Html.X().Column().Text("IdCampo").DataIndex("IdCampo").Hidden(true).Width(60));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Campo").DataIndex("NombreCampo").Width(150));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Descripción Campo").DataIndex("DescripcionCampo").Hidden(true).Width(160));
+                                    columnModel.Columns.Add(Html.X().Column().Text("TipoCampo").DataIndex("TipoCampo").Hidden(true).Width(60));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Longitud Campo").DataIndex("Longitud").Width(120).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("SecuenciaCampo").DataIndex("SecuenciaCampo").Hidden(true).Width(60));
+                                    columnModel.Columns.Add(Html.X().Column().Text("IdSeccionFormato").DataIndex("IdSeccionFormato").Hidden(true).Width(60));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Descripción Campo Formato").DataIndex("ValorPorDefecto").Width(180).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Formula").DataIndex("Formula").Width(150).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("SECUENCIAV").DataIndex("SecuenciaValidacion").Hidden(true).Width(60));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Tipo Validación").DataIndex("TipoValidacion").Hidden(true).Width(120));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Tipo Dato").DataIndex("FlagTipoDato").Hidden(true).Width(100));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Tipo Númerico").DataIndex("ValorNumerico").Hidden(true).Width(120));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Tipo Date").DataIndex("ValorDate").Hidden(true).Width(130));
+                                    columnModel.Columns.Add(Html.X().Column().Text("IdComponente").DataIndex("IdComponente").Hidden(true).Width(60));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Componente").DataIndex("NombreComponente").Width(150));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Tipo Componente").DataIndex("TipoComponente").Width(140).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("IdAtributo").DataIndex("IdAtributo").Hidden(true).Width(60));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Atributo").DataIndex("NombreAtributo").Width(150));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Idioma").DataIndex("IdiomaProperty").Width(100).Renderer("changeIdioma"));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Tipo Texto").DataIndex("ValorTexto").Width(180));                                
+                                    columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("EstadoValidacion").Width(100)
+                                           .Renderer("changeEstado")
+                                           );
+                                })          
+                             .View(Html.X().GridView().TrackOver(false))
+                             .Features(
+                                Html.X().Grouping()
+                                .ID("Grouping1")
+                                        .GroupHeaderTplString("{columnName}: {name} - {[values.rows[0].get('TipoAgente') == 1? \"Perfil\" :\"\"  ]} ; ({[values.rows.length]})")
+                                        .HideGroupedHeader(true)
+                                        .EnableGroupingMenu(false)
+                             )
+                                 .Border(false)
+                                .Listeners(l => l.CellClick
+                                .Handler = "setSeleccion(record.data.FormatoNivelID,record.data.SecuenciaCampo,record.data.SecuenciaValidacion);")
+                                .Listeners(l => l.CellDblClick
+                                .Handler = "eventoVerSelected(record.data.FormatoNivelID,record.data.SecuenciaCampo,record.data.SecuenciaValidacion);")
+
+                            .BottomBar(bar => bar.Add(
+                              Html.X().PagingToolbar()))
+
+                            )
+
+
+                )
+                    .Listeners(l => l.Render.Handler = "eventoCargarMain();") 	
+    )
+
+    @(X.KeyNav()
+                    .Target("={document.body}")
+                    .Enter(a => a.Handler = "accionBuscarFiltro('FILTRO');")
+    )
+}

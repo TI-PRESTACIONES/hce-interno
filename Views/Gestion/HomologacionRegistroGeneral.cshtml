@@ -1,0 +1,511 @@
+﻿@model SoluccionSalud.Entidades.Entidades.MA_MiscelaneosDetalle
+
+@{
+    var X = Html.X();
+
+    var DescTitulo = "";
+    var indicaVisibleColCodNumHCE_1 = false;
+    var indicaVisibleColCodNumHCE_2 = false;
+    var indicaVisibleColCodStrHCE_1 = false;
+    var indicaVisibleColCodStrHCE_2 = false;
+
+    var indicaVisibleColCodStrEXT_2 = false;
+
+    var nombreColCodNumHCE_1 = "";
+    var nombreColCodNumHCE_2 = "";
+    var nombreColCodStrHCE_1 = "";
+    var nombreColCodStrHCE_2 = "";
+    var nombreColCodStrEXT_1 = "";
+    var nombreColCodStrEXT_2 = "";
+    
+    if (Model.CodigoTabla=="TABLA_ESPECIALIDAD")
+    {
+        indicaVisibleColCodNumHCE_1 = true;
+        DescTitulo = "Especialidad";
+        nombreColCodNumHCE_1 = "Id Especialidad";
+        nombreColCodStrEXT_1 = "Código Externo";
+    }
+    else if (Model.CodigoTabla == "TABLA_SUCURSAL")
+    {
+        indicaVisibleColCodStrHCE_1 = true;
+        DescTitulo = "Sucursal";
+        nombreColCodStrHCE_1 = "Sucursal";
+        nombreColCodStrEXT_1 = "Código Externo";
+    }
+    else if (Model.CodigoTabla == "TABLA_PACIENTE")
+    {
+        indicaVisibleColCodNumHCE_1 = true;
+        indicaVisibleColCodStrEXT_2 = true;
+        DescTitulo = "Paciente";
+        nombreColCodNumHCE_1 = "Id Paciente";
+        nombreColCodStrEXT_1 = "Número HHCC";
+        nombreColCodStrEXT_2 = "DNI";
+    }
+    else if (Model.CodigoTabla == "TABLA_SERVICIO")
+    {
+        indicaVisibleColCodNumHCE_1 = true;        
+        DescTitulo = "Servicio";
+        nombreColCodNumHCE_1 = "Id Servicio";
+        nombreColCodStrEXT_1 = "Tipo Servicio";        
+    }
+    else if (Model.CodigoTabla == "TABLA_DIAGNOSTICO")
+    {
+        indicaVisibleColCodNumHCE_1 = true;
+        DescTitulo = "Diagnóstico";
+        nombreColCodNumHCE_1 = "Id Diagnóstico";
+        nombreColCodStrEXT_1 = "Codigo Diagnóstico";
+    }
+    else if (Model.CodigoTabla == "TABLA_MEDICO")
+    {
+        indicaVisibleColCodNumHCE_1 = true;
+        DescTitulo = "Médico";
+        nombreColCodNumHCE_1 = "Id Médico";
+        nombreColCodStrEXT_1 = "Codigo Médico";
+    }
+    else if (Model.CodigoTabla == "TABLA_UNID_SERVICIO")
+    {
+        indicaVisibleColCodNumHCE_1 = true;        
+        DescTitulo = "Servicio";
+        nombreColCodNumHCE_1 = "Id Unid. Servicio";
+        nombreColCodStrEXT_1 = "Tipo Servicio";        
+    }    
+        
+    var COLOR_BLUE01_temp = "#284A89";
+    var COLOR_RED01_temp = "#990000";
+    var COLOR_GREEN01_temp = "#177506";
+    var COLOR_YELLOW02_temp = "#D9A407";
+
+}
+
+<script>
+
+    var template = 'color:{0};';
+    var cuenta = 0;
+    var change = function (value, meta) {
+        return value;
+
+    };
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 'A')
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == 'I')
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+
+    function addRecord(grid) {
+        var codEXT_1 = App.txtCodigoExterno_1.getValue();
+        var codEXT_2 = App.txtCodigoExterno_2.getValue();
+        var app = App.cmbAppExterna.getValue();
+        var idHCE_1 = App.ValorEntero1.getValue();
+        var idHCE_2 = App.ValorEntero2.getValue();
+        var codHCE_1 = App.ValorCodigo1.getValue();
+        var codHCE_2 = App.ValorCodigo2.getValue();
+        var descripcion = '@(Model.DescripcionLocal)';
+        if (codEXT_1 != null && codEXT_1 != '') {
+            if (validaDuplicado('' + app, '' + codEXT_1)) {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Ya existe el Registro",
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            } else {
+                cuenta = cuenta - 1;
+                grid.store.insert(0,
+                        {
+                            RowID: cuenta,
+                            AplicacionCodigo: app,
+                            Compania:'999999',
+                            CodigoTabla: '@(Model.CodigoTabla)',
+                            CodigoElemento: codEXT_1,
+                            ValorCodigo1: codHCE_1,
+                            ValorCodigo2: codHCE_2,
+                            ValorEntero1: idHCE_1,
+                            ValorEntero2: idHCE_2,
+                            ValorCodigo3: codEXT_2,
+                            ValorEntero3: app,
+                            Nombre: descripcion,                                                        
+                            ACCION: 'INSERTHOMOLOGACION'
+
+                        });
+            }
+
+        }else{
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Ingresar el Código del Elemento Externo.",
+                icon: Ext.Msg.INFO,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+
+    };
+
+    function validaDuplicado(valor1, valor2) {
+        var estados = false;
+        App.StoreHomologacion_Esp.each(function (r) {
+            if (trim('' + r.get('ValorEntero3')) == trim(valor1)
+                && trim('' + r.get('CodigoElemento')) == trim(valor2)
+                ) {
+                estados = true;
+            }
+        });
+
+        return estados;
+    }
+    function trim(str) {
+        return str.replace(/^\s+|\s+$/g, "");
+    }
+
+    function deleteActual(record) {
+        var store = App.GridPanelHomologacion.store;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("add_DataDeleteHomologacionGeneral"))',
+            params: {
+                MODO: 'DELETEHOMOLOGACION',
+                tabla: '@(Model.CodigoTabla)',
+                appEXT: record.data.ValorEntero3,
+                idHCE: record.data.ValorEntero1,
+                codHCE: record.data.ValorCodigo1,
+                codigoEXT_1: record.data.CodigoElemento,
+                codigoEXT_2: record.data.ValorCodigo3
+            }
+        });
+        store.remove(record);
+    };
+
+    function save_Homologacion() {
+        var store = App.StoreHomologacion_Esp;
+        var status;
+        var sysArray = new Array();
+        store.each(function (r) {
+            if (r.get('ACCION') != null && r.get('ACCION') != '') {
+                var MA_MiscelaneosDetalle = {
+                    RowID: r.get('RowID'),
+                    AplicacionCodigo: r.get('AplicacionCodigo'),
+                    Compania: r.get('Compania'),
+                    CodigoTabla: r.get('CodigoTabla'),
+                    CodigoElemento: r.get('CodigoElemento'),
+                    ValorCodigo1: r.get('ValorCodigo1'),
+                    ValorCodigo2: r.get('ValorCodigo2'),
+                    ValorEntero1: r.get('ValorEntero1'),
+                    ValorEntero2: r.get('ValorEntero2'),
+                    ValorCodigo3: r.get('ValorCodigo3'),
+                    ValorEntero3: r.get('ValorEntero3'),
+                    Nombre: r.get('Nombre'),
+                    ACCION: 'INSERTHOMOLOGACION'
+                };
+                sysArray.push(MA_MiscelaneosDetalle);
+            }
+        });
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("save_HomologacionGeneral"))',
+            params: {
+                MODO: 'NUEVO',
+                idWindow: "WindowHomologacion_Esp",
+                data: sysArray,
+                id: 0
+            }
+        });
+    };
+
+</script>
+
+
+@(Html.X().Window()
+    .Width(690)
+    .Height(450)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowHomologacion_Esp")
+        .Title("Recurso de Homologación: "+DescTitulo)
+    .Padding(4)
+        //.X(0)
+        //.Y(0)
+        .TopBar(
+            X.Toolbar()
+            .Height(30)
+            .Items(
+                /*X.ToolbarSpacer(),
+                      X.Label().Html("<b><span style='color:" + COLOR_BLUE01_temp + ";'>" + "" + DescTitulo+":" + Model.DescripcionLocal + "</span> </b>")
+                ,*/
+                X.ToolbarFill(),
+                X.Button()
+                    .Text((Model.ACCION == "DELETE" ? "Eliminar" : "Guardar"))
+                     .Icon((Model.ACCION == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave))
+                     .Handler("save_Homologacion();"),
+                X.Button()
+                    .Text("Cancelar")
+                    .Icon(Icon.Cancel)
+                    .DirectEvents(de =>
+                     {  //Model.ACCION : Posee el MODO ACTUAL
+                         de.Click.Url = Url.Action("cerrarWindow");
+                         //de.Click.EventMask.ShowMask = true;
+                         de.Click.ExtraParams.Add(new Parameter(
+                               "id", "WindowHomologacion_Esp", ParameterMode.Value));
+                         //de.Click.Success = "onSuccess(result.data,'" + Model.ACCION + "');";
+                         //de.Click.Failure = "onSuccess(result.data,'"+ Model.ACCION + "');";
+                     }),
+                X.ToolbarSpacer(20)
+             )
+           )
+    .Items(
+            X.Panel()
+            .Border(false)
+            .Layout(LayoutType.VBox)
+            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+            .TopBar(
+                X.Toolbar()
+                //.Height(30)
+                .Items(
+                    X.ToolbarSpacer(),
+                    X.Label().Html("<b><span style='color:" + COLOR_BLUE01_temp + ";'>" + "" + DescTitulo+":" + Model.DescripcionLocal + "</span> </b>")
+                                    
+                )            
+            )
+            .Items(
+                X.FieldSet().Flex(1)
+                .ColumnWidth(0.4)                                
+                .Title("Agregar Recurso de Homologación:")
+                .MarginSpec("0 05 0 05")
+                .Items(
+                    Html.X().Container().Layout(LayoutType.HBox).MarginSpec("00 00 05 00").LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch })
+                    .Defaults(d =>
+                    {
+                        d.Add(new Parameter("LabelWidth", "150"));
+                        d.Add(new Parameter("Width", "500"));
+                    })
+                    .Items(
+                        Html.X().ComboBox().ID("cmbAppExterna").Value(1).Editable(false)
+                        //.FieldStyle("background: " + COLOR_REDbackg + "; border-color: " + COLOER_IND_OBLIGA)
+                        .FieldLabel("Aplicativo Externo")
+                        //.ReadOnly(indicaModoLectura)
+                        .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico
+                            .GetComboGenericoMiscelaneos("WA", "999999", "APPPEXTERN").Select(d => new ListItem(d.Name, d.ID)))
+                        .SimpleSubmit(true)
+                    ,
+                    X.Component().Flex(1),
+                    X.Button().Text("Agregar").Icon(Icon.Add).Width(100)
+                    .Handler("addRecord(App.GridPanelHomologacion);")
+                    )
+                    ,
+                    Html.X().Container().Layout(LayoutType.VBox).MarginSpec("00 00 05 00").LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Left })
+                    .Defaults(d =>
+                    {
+                        d.Add(new Parameter("LabelWidth", "150"));
+                        d.Add(new Parameter("Width", "400"));
+                    })
+                    .Items(
+                        X.TextField().ID("txtCodigoExterno_1").FieldLabel(nombreColCodStrEXT_1)
+                        ,
+                         X.TextField().ID("txtCodigoExterno_2").FieldLabel(nombreColCodStrEXT_2)
+                         .Hidden(!indicaVisibleColCodStrEXT_2)
+                        ,
+                         X.NumberFieldFor(m => m.ValorEntero1).FieldLabel(nombreColCodNumHCE_1).ReadOnly(true)
+                             .Hidden(!indicaVisibleColCodNumHCE_1)
+                         ,
+                         X.NumberFieldFor(m => m.ValorEntero2).FieldLabel(nombreColCodNumHCE_2).ReadOnly(true)
+                             .Hidden(!indicaVisibleColCodNumHCE_2)
+                         ,
+                         X.TextFieldFor(m => m.ValorCodigo1).FieldLabel(nombreColCodStrHCE_1).ReadOnly(true)
+                            .Hidden(!indicaVisibleColCodStrHCE_1)
+                         ,
+                         X.TextFieldFor(m => m.ValorCodigo2).FieldLabel(nombreColCodStrHCE_2).ReadOnly(true)
+                            .Hidden(!indicaVisibleColCodStrHCE_2)                             
+                    )                    
+                )
+                ,
+                X.GridPanel().Flex(2)
+                            .ID("GridPanelHomologacion")
+                    .Border(false)
+                        .Store(
+                        Html.X().Store()
+        //.AutoSync(true)
+                                .ID("StoreHomologacion_Esp")
+                            .Model(
+                                    Html.X().Model()
+                                                .IDProperty("RowID")
+                                    .Fields(
+                                            Html.X().ModelField().Name("AplicacionCodigo").Type(ModelFieldType.String),
+                                            Html.X().ModelField().Name("Compania").Type(ModelFieldType.String),
+                                            Html.X().ModelField().Name("CodigoTabla").Type(ModelFieldType.String),
+                                            Html.X().ModelField().Name("CodigoElemento").Type(ModelFieldType.String),
+
+                                            Html.X().ModelField().Name("DescripcionLocal").Type(ModelFieldType.String),
+                                            Html.X().ModelField().Name("ValorCodigo1").Type(ModelFieldType.String),
+                                            Html.X().ModelField().Name("ValorCodigo2").Type(ModelFieldType.String),
+                                            Html.X().ModelField().Name("ValorCodigo3").Type(ModelFieldType.String),
+                                            Html.X().ModelField().Name("ValorEntero1").Type(ModelFieldType.Int),
+                                            Html.X().ModelField().Name("ValorEntero2").Type(ModelFieldType.Int),                                                        
+                                            Html.X().ModelField().Name("ValorEntero3").Type(ModelFieldType.Int), //AUX APLICATIVO ID
+                                            Html.X().ModelField().Name("ValorEntero4").Type(ModelFieldType.Int),
+                                            Html.X().ModelField().Name("ValorEntero5").Type(ModelFieldType.Int),
+                                            Html.X().ModelField().Name("ACCION").Type(ModelFieldType.String),
+                                            
+                                                Html.X().ModelField().Name("RowID").Type(ModelFieldType.Int)
+                                            
+                                    )
+                                )
+                                .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                          .Url("getGrillaHomologacionGeneral")
+                                    //.Url("../LPacientes/GrillaListadoPacientes")
+                                    //.Url("../Controllers/Maestros/Usuario/UsuarioController/GrillaListadoPacientes")
+                                        .Reader(reader => reader.Add(Html.X().JsonReader()
+                                        .Root("data")
+                                        .TotalProperty("total")
+                                                 .IDProperty("RowID")
+                                        )))
+                                )
+        //.PageSize(10)
+        /*.ServerProxy(
+            Html.X().AjaxProxy()
+                .Url(Url.Action("getGrillaListaPerfilUsuario"))
+                //.ExtraParams
+                //.ExtraParams(new { containerId = "West1" })
+
+        )*/
+                                .Parameters(ps =>
+                                    ps.Add(new
+                                        {
+                                            id_1 = Model.ValorEntero1,
+                                            id_2 = Model.ValorEntero2,
+                                            codigo_1 = Model.ValorCodigo1,
+                                            codigo_2 = Model.ValorCodigo2,
+                                            tabla = Model.CodigoTabla,
+                                            tipoBuscar = ""
+                                        })
+                                )
+                                .AutoLoad(true)
+                            )
+                            .ColumnModel(
+                                         Html.X().ComponentColumn()
+                                                    .Editor(true)
+                                                    .DataIndex("RowID")
+                                                     .Text("ID")
+                                                    .Width(80)
+                                                    .Hidden(true)
+                                                    .Component(
+                                                    Html.X().TextField().ReadOnly(true)
+                                                        ),
+                                             Html.X().ComponentColumn()
+                                                        .Editor(true)
+                                                        .DataIndex("ValorEntero3")
+                                                        .Text("Aplicativo Externo")
+                                                        .Flex(1)
+                                                        .Hidden(false)
+                                                        .Component(
+                                                            Html.X().ComboBox().ReadOnly(true)
+                                                            .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico
+                                                            .GetComboGenericoMiscelaneos("WA", "999999", "APPPEXTERN").Select(d => new ListItem(d.Name, d.ID)))
+                                                            .SimpleSubmit(true)
+
+                                                        ),
+                                          Html.X().ComponentColumn()
+                                                        .Editor(true)
+                                                         .DataIndex("DescripcionLocal")
+                                                         .Text("Descripción")
+                                                         .Flex(1)
+                                                        .Hidden(true)
+                                                        .Component(
+                                                        Html.X().TextField().ReadOnly(true)
+                                                            ),
+                                              Html.X().ComponentColumn()
+                                                            .Editor(true)
+                                                            .DataIndex("CodigoElemento")
+                                                            .Text(nombreColCodStrEXT_1)
+                                                             .Width(100)
+                                                            .Hidden(false)
+                                                            .Component(
+                                                                     Html.X().TextField().ReadOnly(true)
+                                                                ),
+                                                  Html.X().ComponentColumn()
+                                                                .Editor(true)
+                                                                 .DataIndex("ValorCodigo3")
+                                                                .Text(nombreColCodStrEXT_2)
+                                                                 .Width(100)
+                                                                .Hidden(!indicaVisibleColCodStrEXT_2)
+                                                                .Component(
+                                                                         Html.X().TextField().ReadOnly(true)
+                                                                    ),                                                                
+                                               Html.X().ComponentColumn()
+                                                            .Editor(true)
+                                                             .DataIndex("ValorEntero1")
+                                                             .Text(nombreColCodNumHCE_1)
+                                                            .Width(90)
+                                                            .Hidden(!indicaVisibleColCodNumHCE_1)
+                                                            .Component(
+                                                                Html.X().NumberField().ReadOnly(true)                                                                
+                                                              ),
+                                                   Html.X().ComponentColumn()
+                                                                .Editor(true)
+                                                                 .DataIndex("ValorEntero2")
+                                                                 .Text(nombreColCodNumHCE_2)
+                                                                .Width(90)
+                                                                 .Hidden(!indicaVisibleColCodNumHCE_2)
+                                                                .Component(
+                                                                    Html.X().NumberField().ReadOnly(true)
+                                                                  ),                                                              
+                                                Html.X().ComponentColumn()
+                                                             .Editor(true)
+                                                             .DataIndex("ValorCodigo1")
+                                                              .Text(nombreColCodStrHCE_1)
+                                                             .Width(100)
+                                                              .Hidden(!indicaVisibleColCodStrHCE_1)
+                                                             .Component(
+                                                                Html.X().TextField().ReadOnly(true)
+                                                              ),
+                                                    Html.X().ComponentColumn()
+                                                                 .Editor(true)
+                                                                 .DataIndex("ValorCodigo2")
+                                                                  .Text(nombreColCodStrHCE_2)
+                                                                 .Width(100)
+                                                                 .Hidden(!indicaVisibleColCodStrHCE_2)
+                                                                 .Component(
+                                                                    Html.X().TextField().ReadOnly(true)
+                                                                  ),
+                                            Html.X().CommandColumn()
+                                                .Width(80)
+                                                .Commands(
+                                                    Html.X().GridCommand()
+                                                        .CommandName("Delete")
+                                                        .Icon(Icon.Delete)
+                                                        .Text("Eliminar")
+                                                )
+                                                .Listeners(ls => ls.Command.Handler = "deleteActual(record);"),
+                                         Html.X().ComponentColumn()
+                                                    .Editor(true)
+                                                    .DataIndex("ACCION")
+                                                    .Text("Acción")
+                                                    .Hidden(true)
+                                                    .Component(
+                                                    Html.X().TextField().ReadOnly(true)
+                                                        )
+
+                                )
+                                .SelectionModel(
+                                        Html.X().RowSelectionModel().Mode(SelectionMode.Multi)
+                                )
+                                .Plugins(
+                                    Html.X().CellEditing()
+                                )
+            )
+
+    )
+    .CloseAction(CloseAction.Destroy)
+        //.Html(DateTime.Now.ToLongTimeString())
+
+)
+
+

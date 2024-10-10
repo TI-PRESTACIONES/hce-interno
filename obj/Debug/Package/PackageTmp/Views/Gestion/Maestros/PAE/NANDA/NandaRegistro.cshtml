@@ -1,0 +1,302 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_HC_NANDA
+
+@{
+    var X = Html.X();   
+    var modoDesc = (Model.Accion == "NUEVO" ? "Nuevo" :
+                   (Model.Accion == "UPDATE" ? "Modificar" :
+                   (Model.Accion == "DELETE" ? "Eliminar" :
+                   (Model.Accion == "VER" ? "Ver" : "--"))));
+
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VER" ? false : false))));
+
+    var indicaModoLecturaKey = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? false :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VER" ? false : false))));
+
+
+    var indicaModoLectura2 = !(Model.Accion == "NUEVO" ? false :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VER" ? false : false))));                        
+                            
+
+    var STYLE_BACKGROUND_NODEIT = "background: #BBD8D6";
+    var COLOR_BORDER_DEFAULT = "#b5b8c8";
+
+    var STYLE_BORDER_DEF_VALID01 = (Model.IdNanda != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+    var STYLE_BORDER_DEF_VALID02 = (Model.Descripcion != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+}
+
+
+<script>
+    var change = function (value, meta) {
+        return value;
+    };
+
+    var onSuccess = function (data) {
+        accionMensajes(data);
+    };
+
+    var onFailure = function (modo) {
+        App.btnSave.setDisabled(false);
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Un error en el evento ',
+                titulo: "Error",
+                tipo: 'ERROR'
+            }
+        });
+    };
+
+    function cerrarWindow() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Se registró correctamente',
+                Accion: null
+            }
+        });
+    }
+
+    var showResult = function (btn) {
+        Ext.Msg.notify("Aceptar", "You clicked the " + btn + " button");
+    };
+
+    function seleccionadorNanda() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorNanda"))',
+            params: {
+                AccionSeleccion: 'getSeleccionPadreNanda',
+                AccionListado: 'LISTARPAG'
+            }
+        });
+    };
+
+    
+    function seleccionadorDominioPAEBusqueda() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorDominioPAEBusqueda"))',
+            params: {
+                AccionSeleccion: 'getSeleccionadorDominioPAEBusqueda',
+                AccionListado: 'LISTARPAG'
+            }
+        });
+    };
+
+    function seleccionadorClasePAEBusqueda() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorClasePAEBusqueda"))',
+            params: {
+                AccionSeleccion: 'getSeleccionadorClasePAEBusqueda',
+                AccionListado: 'LISTARPAG'
+            }
+        });
+    };
+    
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+        } else {
+            App.taAlerts.setVisible(false);
+        }
+
+    };
+
+    var getInvalidFields = function (form) {
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+        });
+        return invalidFields;
+    };
+
+
+    var beforeSave = function (form) {
+        var FieldsInvalidos = getInvalidFields(form);
+        if (!form.getForm().isValid()) {
+            if (FieldsInvalidos.length > 0) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("addRecursosValidacion"))',
+                    params: {
+                        data: FieldsInvalidos,
+                        indica: 'VALIDAR',
+                    },
+                    success: function (result) {
+                        accionMensajes(result.data);
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("addRecursosValidacion"))',
+                            params: {
+                                data: FieldsInvalidos,
+                                indica: 'RESTART',
+                            }
+                        });
+                    }
+                });
+
+            }
+        }
+    };
+
+
+   /* function contar(txt) {
+
+
+        var largo = document.getElementById(txt).val().length //$("#" + txt).val().length
+
+
+        if (largo > 10) {
+            return false
+        }
+
+        return true
+
+    };*/
+
+
+
+
+</script>
+
+@(Html.X().Window()
+    .Width(600)
+    .Height(500)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+        //.AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+        .ID("WindowNanda")
+                .Title("Maestro Nanda:" + modoDesc)
+    .Padding(4)
+    .Items(
+                    Html.X().FormPanel().ID("FormPanel1")
+                             .Frame(false)
+                             .Border(false)
+                            .AutoScroll(true)
+                            .Layout(LayoutType.VBox)
+                            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                    .Items(
+                        Html.X().FormPanel()
+                             .Frame(false)
+                             .Border(false)
+                            .Layout(LayoutType.HBox)
+                            .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+
+                            .Items(
+                                Html.X().FormPanel().Layout(LayoutType.Form).Width(550).Height(230).FieldDefaults(d => { d.LabelWidth = 100; }).BodyPadding(10).Frame(false).Border(false)
+                                .Items(
+                                    X.TextFieldFor(m => m.Codigo).Width(300).ReadOnly(false).FieldLabel("Código").MaxLength(10).AllowBlank(false).BlankText("debe ingresar el código"), //.EnableKeyEvents(true).Listeners(l => { l.KeyPress.Fn = "return contar(Codigo)"; }), //Handler="return texto(event,Codigo)"),                               
+                                X.TextField().FieldLabel("Padre").ID("nomPadre").Flex(1).ReadOnly(true).RightButtons(X.Button().Text("...").Disabled(indicaModoLectura).Handler("seleccionadorNanda();")).FieldLabel("Padre"),             
+                                X.TextFieldFor(m => m.CodigoPadre).Width(200).ReadOnly(true).Hidden(true),
+                                    X.TextFieldFor(m => m.Descripcion).FieldLabel("Descripción").Flex(1).ReadOnly(false).Hidden(false).AllowBlank(false).BlankText("debe ingresar la descripción"),
+                                        X.TextFieldFor(m => m.DescripcionCorta).FieldLabel("Desc. Corta").Width(300).ReadOnly(indicaModoLectura).Hidden(true),
+                                    X.ComboBoxFor(m => m.TipoFactor).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("FACTORENTER").Select(d => new ListItem(d.Name, d.ID))).FieldLabel("TipoFactor").ReadOnly(indicaModoLectura).Editable(false).SimpleSubmit(true).Hidden(true),
+                                    X.ComboBoxFor(m => m.Nivel).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("NIVELENTER").Select(d => new ListItem(d.Name))).FieldLabel("Nivel").ReadOnly(indicaModoLectura).Editable(false).SimpleSubmit(true).Hidden(true),
+                                X.TextFieldFor(m => m.CadenaRecursiva).FieldLabel("CadenaRecursiva").ReadOnly(indicaModoLectura),
+                                    X.TextField().ID("tfIdDominioPAEnom").Flex(1).FieldLabel("DominioPAE").ReadOnly(true).RightButtons(X.Button().Text("...").Handler("seleccionadorDominioPAEBusqueda();")).LabelWidth(100),
+                                X.TextFieldFor(m => m.IdDominioPAE).Width(200).FieldLabel("Id. Dominio").ReadOnly(indicaModoLectura).Hidden(true),
+                                X.TextField().ID("tfIdClasePAEnom").Flex(1).FieldLabel("ClasePAE").ReadOnly(true).RightButtons(X.Button().Text("...").Handler("seleccionadorClasePAEBusqueda();")).LabelWidth(100),
+                                X.TextFieldFor(m => m.IdClasePAE).Width(200).FieldLabel("Id. Clase").ReadOnly(indicaModoLectura).Hidden(true),
+                                X.NumberFieldFor(c => c.Orden).FieldLabel("Órden").ReadOnly(indicaModoLectura).Width(200),
+                                            X.ComboBoxFor(m => m.Estado).Editable(true).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("ESTADOINT").Select(d => new ListItem(d.Name, d.ID))).FieldLabel("Estado").Value(Model.Accion == "NUEVO" ? 2 : (Model.Estado)).SimpleSubmit(true).ReadOnly(indicaModoLectura2).Width(300)
+                                ),
+
+                                    Html.X().FormPanel().Layout(LayoutType.Form).Width(300).FieldDefaults(d => { d.LabelWidth = 60; }).BodyPadding(10).Frame(false).Border(false)
+                                    .Items(
+                                    X.NumberFieldFor(m => m.IdNanda).FieldLabel("Id").Width(120).ReadOnly(true).Hidden(true),
+                                            X.TextField().FieldLabel("Id. Padre").ID("nfIdPadre").Width(120).ReadOnly(true).Hidden(true))),
+
+                                        Html.X().FormPanel().Layout(LayoutType.Form).Width(500).FieldDefaults(d => { d.LabelWidth = 150; }).BodyPadding(10).Frame(false).Border(false)
+                                        .Items(
+                                        X.FieldSet().Title("Información Adicional").FieldDefaults(d => { d.LabelWidth = 90; d.InputWidth = 120; })
+
+                                        .Items(
+                                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                        .Items(
+                                        X.TextFieldFor(m => m.UsuarioCreacion).FieldLabel("Creación").ReadOnly(true),
+                                        X.DateFieldFor(m => m.FechaCreacion).Format("dd/MM/yyyy").ReadOnly(true).HideLabel(true),
+                                        X.TimeFieldFor(m => m.FechaCreacion).ID("dfHoraCreacion").Format("H:mm:ss").ReadOnly(true).HideLabel(true)
+                                        ),
+                                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                        .Items(
+                                        X.TextFieldFor(m => m.UsuarioModificacion).FieldLabel("Modificación").ReadOnly(true),
+                                        X.DateFieldFor(m => m.FechaModificacion).Format("dd/MM/yyyy").ReadOnly(true).HideLabel(true),
+                                        X.TimeFieldFor(m => m.FechaModificacion).ID("dfHoraModificacion").Format("H:mm:ss").ReadOnly(true).HideLabel(true))
+                                        )
+                                            ),
+                                        X.TextArea().ID("taAlerts")
+                                        .Border(false)
+                                        .StyleSpec("background:white;border:1px solid gray;")
+                                        .FieldStyle("color: red")
+                                        .Hidden(true)
+                                        .ReadOnly(true)
+
+                         )
+                         .TopBar(
+                             X.Toolbar()
+                             .Height(30)
+                             .Items(
+                                X.ToolbarFill(),
+                                X.Button()
+                                        .Hidden((Model.Accion == "VER" ? true : false))
+                                        .ID("btnSave")
+                                        .Text((Model.Accion == "DELETE" ? "Eliminar" : "Guardar"))
+                                        .Icon((Model.Accion == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave))
+                                     .DirectEvents(de =>
+                                      {
+                                          de.Click.Url = Url.Action("save_Nanda");
+                                          de.Click.Before = "App.btnSave.setDisabled(true); " +
+                                                        "beforeSave(App.FormPanel1); return App.FormPanel1.getForm().isValid(); ";
+                                          de.Click.After = "App.btnSave.setDisabled(false); ";
+                                          de.Click.EventMask.ShowMask = true;
+                                          de.Click.ExtraParams.Add(new Parameter("MODO", Model.Accion, ParameterMode.Value));
+                                          de.Click.ExtraParams.Add(new Parameter("idWindow", "WindowNanda", ParameterMode.Value));
+                                          de.Click.Success = "onSuccess(result.data);";
+                                          de.Click.Failure = "onFailure('" + Model.Accion + "');";
+
+                                      }),
+                                X.Button()
+                                            .Text((Model.Accion == "VER" ? "Aceptar" : "Cancelar"))
+                                            .Icon((Model.Accion == "VER" ? Icon.Accept : Icon.Cancel))
+                                     .DirectEvents(de =>
+                                      {
+                                          de.Click.Url = Url.Action("cerrarWindow");
+                                          de.Click.ExtraParams.Add(new Parameter(
+                                                "id", "WindowNanda", ParameterMode.Value));
+                                      }),
+                                          X.ToolbarSpacer(20)
+                                 )
+                            )
+        )
+        .DirectEvents(de =>
+        {
+            de.Render.Url = Url.Action("postWindowNanda");
+            de.Render.ExtraParams.Add(new Parameter(
+                  "id", "" + Model.IdNanda, ParameterMode.Value));
+        
+            
+            
+        })
+    .CloseAction(CloseAction.Destroy)
+)

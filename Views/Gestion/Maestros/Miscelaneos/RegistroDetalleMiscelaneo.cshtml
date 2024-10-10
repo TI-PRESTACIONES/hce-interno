@@ -1,0 +1,337 @@
+﻿@model SoluccionSalud.Entidades.Entidades.MA_MiscelaneosDetalle
+
+@{
+    var X = Html.X();
+    var funcionX = "alert('XXXXXXXXX');";
+    var modoDesc = (Model.ACCION == "NUEVO" ? "Nuevo" :
+                    (Model.ACCION == "UPDATE" ? "Modificar" :
+                        (Model.ACCION == "DELETE" ? "Eliminar" :
+                            (Model.ACCION == "VER" ? "Ver" : "--"))));
+
+
+    var indicaModoLecturaDos = !(Model.ACCION == "NUEVO" ? true :
+                                (Model.ACCION == "UPDATE" ? false :
+                                (Model.ACCION == "DELETE" ? false :
+                                (Model.ACCION == "VER" ? false : false))));
+                            
+    var indicaModoLectura = !(Model.ACCION == "NUEVO" ? true :
+                            (Model.ACCION == "UPDATE" ? true :
+                            (Model.ACCION == "DELETE" ? false :
+                            (Model.ACCION == "VER" ? false : false))));
+
+    var indicaModoLecturaKey = !(Model.ACCION == "NUEVO" ? true :
+                            (Model.ACCION == "UPDATE" ? false :
+                            (Model.ACCION == "DELETE" ? false :
+                            (Model.ACCION == "VER" ? false : false))));
+
+    var STYLE_BACKGROUND_NODEIT = "background: #7CB8B0"; //BBD8D6  #9FBCB9
+    var COLOR_BORDER_DEFAULT = "#b5b8c8";
+
+    var STYLE_BORDER_DEF_VALID01 =
+        (Model.AplicacionCodigo != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+    var STYLE_BORDER_DEF_VALID02 =
+            (Model.CodigoTabla != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+
+}
+
+<script>
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 'A')
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == 'I')
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+
+    var template = 'color:{0};';
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_RED01 = "#990000";
+
+    var COLOR_BORDER_ERROR = "red";
+    var COLOR_BORDER_DEF = "#b5b8c8";
+    var COLOR_BACKGROUND_NOEDIT = "#9FBCB9";
+
+
+    var change = function (value, meta) {
+        return value;
+
+    };
+    var validarCampo = function (componente) {
+        if (componente.getValue() != null) {
+            if (componente.getValue().trim() == 0) {
+                componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+
+            } else {
+                componente.setFieldStyle("border-color: " + COLOR_BORDER_DEF);
+            }
+        } else {
+            componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+
+        }
+    };
+
+
+    function cerrarWindow() {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Se registró correctamente el usuario.',
+                accion: null
+            }
+        });
+    }
+
+
+
+    var onSuccessDet = function (data) {
+        accionMensajes(data);
+    };
+
+    var onFailureDet = function (modo) {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Un error en el evento ',
+                titulo: "Error",
+                tipo: 'ERROR'
+            }
+        });
+    };
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length>0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+        } else {
+            App.taAlerts.setVisible(false);
+        }
+
+    };
+
+    var getInvalidFields = function (form) {
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+        });
+        return invalidFields;
+    };
+
+    var beforeSave = function (form) {
+        var FieldsInvalidos = getInvalidFields(form);
+        if (!form.getForm().isValid()) {
+            if (FieldsInvalidos.length > 0) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("addRecursosValidacion"))',
+                    params: {
+                        data: FieldsInvalidos,
+                        indica: 'VALIDAR',
+                    },
+                    success: function (result) {
+                        accionMensajes(result.data);
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("addRecursosValidacion"))',
+                            params: {
+                                data: FieldsInvalidos,
+                                indica: 'RESTART',
+                            }
+                        });
+                    }
+                });
+
+            }
+        }
+    };
+</script>
+
+@(Html.X().Window()
+    .Width(550)
+    .Height(350)
+    .Maximizable(true)
+    .Modal(true)
+
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowDetalleMiscelaneo")
+    .Title("Registro de Detalle Miscelaneo:" + modoDesc)
+    .Padding(4)
+    .Items(
+                Html.X().FormPanel()
+                        .ID("FormPanel11")
+                             .Frame(false)
+                             .Border(false)
+                            .AutoScroll(true)
+                            .Layout(LayoutType.VBox)
+                            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                    .Items(
+                        Html.X().FormPanel()
+                             .Frame(false)
+                             .Border(false)
+                            .Layout(LayoutType.HBox)
+                            .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+
+                            .Items(
+                                    Html.X().FormPanel()
+                                    .Layout(LayoutType.Form)
+                                    .Width(750)
+                                    .FieldDefaults(d =>
+                                    {
+                                        d.LabelWidth = 100;
+                                    })
+                                    .BodyPadding(10)
+                                    .Frame(false)
+                                    .Border(false)
+                                    .Items(
+                                    
+                                           Html.X().Container().Layout(LayoutType.HBox)
+                                           .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                               .Items(
+                                                             X.TextFieldFor(m => m.AplicacionCodigo).ID("Ac").LabelWidth(150)
+                                                .Width(300)
+                                                .FieldLabel("Aplicación").ReadOnly(true)
+                                               ),
+                                               
+                                   Html.X().Container().Layout(LayoutType.HBox)
+                                   .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                       .Items(
+
+                                                    X.TextFieldFor(m => m.CodigoTabla).ID("Ct").Width(300).LabelWidth(150)
+                                            .FieldLabel("Código Tabla").ReadOnly(true)
+                                             ),
+                                   Html.X().Container().Layout(LayoutType.HBox)
+                                   .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                       .Items(
+                                                        X.TextFieldFor(m => m.Compania).ID("Co").Width(300).LabelWidth(150)
+                                            .FieldLabel("Compañia").ReadOnly(true)
+                                            ),
+
+                                           Html.X().Container().Layout(LayoutType.HBox)
+                                           .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                           .Items(
+                                                         X.TextFieldFor(m => m.CodigoElemento).Width(300).LabelWidth(150)
+                                                          .FieldLabel("Código Elemento").ReadOnly(indicaModoLecturaDos)),
+                                                      
+                                               Html.X().Container().Layout(LayoutType.HBox)
+                                               .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                               .Items(
+                                                             X.TextFieldFor(m => m.ValorCodigo1).Width(300).LabelWidth(150)
+                                                      .FieldLabel("Valor Elemento").ReadOnly(indicaModoLectura)),
+                                                  
+                                   Html.X().Container().Layout(LayoutType.HBox)
+                                   .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                   .Items(
+                                                 X.TextFieldFor(m => m.DescripcionLocal).Width(300).ID("Dl").LabelWidth(150)
+                                          .FieldLabel("Descripción Local").ReadOnly(indicaModoLectura)),
+
+                                   Html.X().Container().Layout(LayoutType.HBox)
+                                   .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                   .Items(
+                                                    X.TextFieldFor(m => m.DescripcionExtranjera).Width(300).ID("Dex").LabelWidth(150)
+                                        .FieldLabel("Descripción Extranjera").ReadOnly(indicaModoLectura)),
+
+
+                                   Html.X().Container().Layout(LayoutType.HBox)
+                                   .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                       .Items(
+                                                        X.ComboBoxFor(m => m.Estado).Width(300).LabelWidth(150)
+                                                      .Editable(false)
+                                                      .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico
+                                                          .GetComboGenericoTxt("ESTADOVAR").Select(d => new ListItem(d.Name, d.Codigo)))
+                                                      .FieldLabel("Estado").Value("A")
+                                                          .SimpleSubmit(true).ReadOnly(indicaModoLectura)   
+                                       .ID("EST")),
+
+                                                        Html.X().Container().Layout(LayoutType.HBox)
+                                                        .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+
+                                                        .Items(
+
+                                                                        X.TextFieldFor(m => m.UltimoUsuario).ID("Usu").LabelWidth(150)
+                                                                .FieldLabel("Modificación").ReadOnly(true),
+                                                                    X.DateFieldFor(m => m.UltimaFechaModif).ID("dfFechaModifDetalle")
+                                                                        .Format("dd/MM/yyyy")
+
+                                                                        .ReadOnly(true).HideLabel(true).Width(80)
+                                                                ,
+                                                                        X.TimeFieldFor(m => m.UltimaFechaModif).ID("dfHoraModifDetalle")
+                                                                .Width(80).Format("H:mm:ss").ReadOnly(true)
+                                                            .FieldLabel("")
+                                                        )
+
+
+                                    )
+
+
+                                ),
+
+                                X.TextArea().ID("taAlertsDos")
+                                    .Border(false)
+                                    .StyleSpec("background:white;border:1px solid gray;")
+                                    .FieldStyle("color: red")
+                                    .Hidden(true)
+                                    .ReadOnly(true)
+                         )
+                         .TopBar(
+                             X.Toolbar()
+                             .Height(30)
+                             .Items(
+                                    X.ToolbarFill(),
+                                        X.Button()
+                                            .Hidden((Model.ACCION == "VER" ? true : false))
+                                            .ID("btnSaveDet")
+                                                .Text((Model.ACCION == "DELETE" ? "Eliminar" : "Guardar"))
+                                                .Icon((Model.ACCION == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave))
+                                     .DirectEvents(de =>
+                                      {
+                                          de.Click.Url = Url.Action("save_MiscelaneoDet");
+                                          de.Click.EventMask.ShowMask = true;
+                                          de.Click.Before = "App.btnSaveDet.setDisabled(true); " +
+                                                            "beforeSave(App.FormPanel11); return App.FormPanel11.getForm().isValid(); ";
+                                          de.Click.After = "App.btnSaveDet.setDisabled(false); ";
+                                          de.Click.ExtraParams.Add(new Parameter("MODO", Model.ACCION, ParameterMode.Value));
+                                          de.Click.ExtraParams.Add(new Parameter("idWindow", "WindowDetalleMiscelaneo", ParameterMode.Value));
+                                          de.Click.Success = "onSuccessDet(result.data);";
+                                          de.Click.Failure = "onFailureDet('" + Model.ACCION + "');";
+
+                                      }),
+                                    X.Button()
+                                                .Text((Model.ACCION == "VER" ? "Aceptar" : "Cancelar"))
+                                                .Icon((Model.ACCION == "VER" ? Icon.Accept : Icon.Cancel))
+                                     .DirectEvents(de =>
+                                      {
+                                          de.Click.Url = Url.Action("cerrarWindow");
+                                          de.Click.ExtraParams.Add(new Parameter(
+                                                "id", "WindowDetalleMiscelaneo", ParameterMode.Value));
+                                      })
+                                      ,
+                                      X.ToolbarSpacer(20)
+                                 )
+                                )
+    )
+
+                .DirectEvents(de =>
+                    {
+
+                        de.Render.Url = Url.Action("postWindowMisc");
+                        de.Render.ExtraParams.Add(new Parameter("id", "" + Model.AplicacionCodigo, ParameterMode.Value));
+                    })
+
+    .CloseAction(CloseAction.Destroy)
+
+)

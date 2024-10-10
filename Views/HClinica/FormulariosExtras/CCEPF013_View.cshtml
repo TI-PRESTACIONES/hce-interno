@@ -1,0 +1,1868 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_HC_AntecedentesPersonalesIAdul_FE
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+    var indicaVisiblePrint = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_VISIBLE_IMPRESION;
+    var visibleImpresion = (indicaVisiblePrint == 2/* && Model.Accion == "UPDATE"*/ ? true : false);
+    var isVista = (Model.Accion == "VISTA" ? true : false);
+    var isNuevo = (Model.Accion == "NUEVO" ? true : false);
+    //var visibleImpresion = (Model.Accion == "UPDATE" ? true : false);
+
+    
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true : (Model.Accion == "UPDATE" ? true : (Model.Accion == "DELETE" ? false : (Model.Accion == "VISTA" ? false : false))));
+    var indicaTieneVacuna = (Model.Accion == "NUEVO" ? false : true);
+
+    var DPT_NR = (Model.DPT_1era_flag == "S" || Model.DPT_2da_flag == "S" || Model.DPT_3era_flag == "S" ? true : false);
+    var SRP_NR = (Model.SRP_1era_flag == "S" ? true : false);
+    var VARICELA_NR = (Model.VARICELA_1era_flag == "S" ? true : false);
+    var HEPATITIS_B_NR = (Model.HEPATITISB_1era_flag == "S" || Model.HEPATITISB_2da_flag == "S" || Model.HEPATITISB_3era_flag == "S" || Model.HEPATITISB_1erRef_flag == "S" ? true : false);
+    var HEPATITIS_A_NR = (Model.HEPATITISA_1era_flag == "S" || Model.HEPATITISA_2da_flag == "S" ? true : false);
+    var NEUMOCO_NR = (Model.NEUMOCOCO_1era_flag == "S" || Model.NEUMOCOCO_2da_flag == "S" || Model.NEUMOCOCO_3era_flag == "S" ? true : false);
+    var ANTITETANICA_NR = (Model.Antitetanica_1era_flag == "S" || Model.Antitetanica_2da_flag == "S" || Model.Antitetanica_3era_flag == "S" ? true : false);
+    var PAPILOMA_NR = (Model.Papiloma_1era_flag == "S" || Model.Papiloma_2da_flag == "S" || Model.Papiloma_3era_flag == "S" ? true : false);
+    var COLOER_IND_OBLIGA = AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("COL_BCOBLI");
+    var MENS_NUMERO = "No se permite un valor negativo.";
+    var PAR_FORMATO02 = "999";
+    var COLOR_BLUE01 = "#284A89";
+    var DESC_ADD = "Inmunizaciones";
+
+    var NoRecuerda = (int)Session["Check13"];
+    var NoRecuerda2 = (int)Session["Check132"];
+
+    var marcar = Model.Estado;
+
+}
+@section cabecera
+{
+    <link rel="stylesheet" href="@Url.Content("~/resources/css/main.css")" />
+    <style>
+        html body {
+            padding: 0px;
+            background: none;
+            background: none;
+            background: none;
+            background-attachment: fixed;
+            background-position: center;
+            font-family: tahoma,verdana,sans-serif;
+            background-color: #ffffff;
+        }
+    </style>
+
+    <script>
+        var indicaCambios = false;
+        function setIndicaCambios(value) {
+            indicaCambios = value;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("setIndicaCambiosFormulario"))',
+                params: {
+                    indica: (value ? 1 : 0)
+                }
+            });
+
+            var val = '@visibleImpresion';
+            var vis = '@isVista';
+
+            if (vis == 'False') {
+                if (val == 'True') {
+
+                    if (value == true) {
+                        App.btnImpresion.setDisabled(true);
+                        App.btnImpresionHC.setDisabled(true);
+                        parent.App.btnGuardarFirma.setDisabled(true);
+                    } else {
+                        App.btnImpresion.setDisabled(false);
+                        App.btnImpresionHC.setDisabled(false);
+                        parent.App.btnGuardarFirma.setDisabled(false);
+                    }
+                }
+            }
+
+        };
+
+      function eventoRenderForm() {
+            var kk = 195;
+            var scrH = screen.height;
+            var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+            var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+
+            if (southH == 0) {
+                southH = 30;
+            } else if (parent.App.PanelMainSouth.collapsed) {
+                southH = 30;
+            }
+            var dimCentral = (scrH - (northH + southH) - kk);
+            App.formactual.setHeight(545);
+
+            var v = '@isNuevo';
+            if (v.toUpperCase() == 'TRUE') {
+                App.btnImpresion.setVisible(false);
+                App.btnImpresionHC.setVisible(false);
+            }
+        }
+
+   
+    var count = 0; // a counter for new records
+
+    function EditableNR(value, parent) {
+
+        if (parent == "Chb4") {
+            if ('@(DPT_NR)'.toLowerCase() == "true") { value.setDisabled(true); }
+            else { value.setDisabled(false); }
+        }
+        else if (parent == "Chb6") {
+            if ('@(SRP_NR)'.toLowerCase() == "true") { value.setDisabled(true); }
+            else { value.setDisabled(false); }
+        }
+        else if (parent == "Chb8") {
+            if ('@(VARICELA_NR)'.toLowerCase() == "true") { value.setDisabled(true); }
+            else { value.setDisabled(false); }
+        }
+        else if (parent == "Chb13") {
+            if ('@(HEPATITIS_B_NR)'.toLowerCase() == "false") { value.setDisabled(false); }
+            else { value.setDisabled(true); }
+        }
+        else if (parent == "Chb16") {
+            if ('@(HEPATITIS_A_NR)'.toLowerCase() == "false") { value.setDisabled(false); }
+            else { value.setDisabled(true); }
+        }
+        else if (parent == "Chb20") {
+            if ('@(NEUMOCO_NR)'.toLowerCase() == "false") { value.setDisabled(false); }
+            else { value.setDisabled(true); }
+        }
+        else if (parent == "Chb24") {
+            if ('@(ANTITETANICA_NR)'.toLowerCase() == "false") { value.setDisabled(false); }
+            else { value.setDisabled(true); }
+        }
+        else if (parent == "Chb28") {
+            if ('@(PAPILOMA_NR)'.toLowerCase() == "false") { value.setDisabled(false); }
+            else { value.setDisabled(true); }
+        }
+    };
+
+    var eventoKey = function (tf, e) {
+        if (e.getKey() == '110' || e.getKey() == '190' || e.getKey() == '100') {
+            var str = tf.getRawValue().replace('.', '');
+            tf.setValue(str);
+        } else if (e.getKey() == '109' || e.getKey() == '189') {
+            var str = tf.getRawValue().replace('-', '');
+            tf.setValue(str);
+        }
+    };
+    var eventoOnEditar = function (btn) {
+        App.cmdGuardar.setDisabled(false);
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+
+    };
+
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+            App.conthbIndicaError.setVisible(true);
+            App.taAlerts.focus();
+        } else {
+            App.taAlerts.setVisible(false);
+            App.conthbIndicaError.setVisible(false);
+        }
+
+    };
+
+    var getInvalidFields = function (form) {
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+        });
+        return invalidFields;
+    };
+
+    var beforeSave = function (form) {
+        App.taAlerts.setVisible(false);
+        App.taAlerts.setValue(null);
+        App.conthbIndicaError.setVisible(false);
+        var FieldsInvalidos = getInvalidFields(form);
+        if (FieldsInvalidos.length > 0) {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("addRecursosValidacion"))',
+                params: {
+                    data: FieldsInvalidos,
+                    indica: 'VALIDAR',
+                },
+                success: function (result) { accionMensajes(result.data); }
+            });
+        }
+    };
+
+    var onSuccess = function (data) {
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+        App.formactual.setDisabled(true);
+        var reload = true;
+        if (data != null) {
+            if (data.length > 0) {
+                reload = false
+                App.cmdGuardar.setDisabled(false);
+                App.formactual.setDisabled(false);
+                if (data[0].TIPOMSG == 'EXCEPTION') {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: data[0].TITULO,
+                            message: data[0].DESCRIPCION,
+                            tipo: 'ERROR'
+                        }
+                    });
+                } else {
+                    accionMensajes(data);
+                }
+            }
+        }
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+        }
+    };
+
+    var onFailure = function (data) {
+        App.cmdGuardar.setDisabled(false);
+    };
+
+
+    function eventoCancelar(form) {
+        //form.getForm().reset();
+        //App.taAlerts.setVisible(false);
+        //App.conthbIndicaError.setVisible(false);
+        //setIndicaCambios(false);
+        //App.StoreAtencion.reload();
+        App.bar.setDisabled(true);
+        var reload = true;
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+            // beforeSave(form);
+        }
+    };
+
+</script>
+    <script>
+        var inicial = 0;
+        var hhValidation = function (h) {
+            str = h.value;
+
+            tempo = "'";
+            str = str.replace('javascript:myFunction(' + tempo, '');
+            str = str.replace('%20', ' ');
+            str = str.replace('%C3%B3', 'ó');
+            str = str.replace('%C3%A1', 'á');
+            str = str.replace('%C3%A9', 'é');
+            str = str.replace('%C3%AD', 'í');
+            str = str.replace('%C3%BA', 'ú');
+            str = str.replace('%C3%B1', 'ñ');
+
+            str = str.replace('%C3%8D', 'Í');
+            str = str.replace('%C3%93', 'Ó');
+            str = str.replace('%C3%81', 'Á');
+            str = str.replace('%C3%91', 'Ñ');
+            str = str.replace('%C3%9A', 'Ú');
+            str = str.replace(tempo + ')', '');
+            h.setValue(str);
+
+        }
+        var mmValidation = function (m) {
+            if (m.getValue() > 59) {
+                m.setValue(59);
+            }
+
+        };
+
+        function eventoVisorReporte(param1) {
+            if(param1=='HC'){
+                window.location.href = '@Url.Action("HCEReportesView_total", "HClinica")';
+            } else {
+                window.location.href = '@Url.Action("HCEReportesView", "HClinica")';
+            }
+        }
+
+
+
+        function validaDuplicado(valor1, valor2) {
+            var estados = false;
+            App.StoreAtencion.each(function (r) {
+                if (valor2 == r.get('OtrasVacunas')) { estados = true; }
+            });
+            return estados;
+        };
+
+        function trim(str) {
+            return str.replace(/^\s+|\s+$/g, "");
+        }
+
+
+
+
+        function deleteActual(record) {
+            var store = App.GridPanelInmunizacion.store;
+            store.remove(record);
+            setIndicaCambios(true);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("CCEPF013add_DataDeleteInmunizacionesAdulto"))',
+                params: {
+                    MODO: 'DELETEDETALLE',
+                    codigo: '',
+                    secuencia: record.data.Secuencia,
+                    accion: record.data.Accion
+                }
+            });
+        };
+
+        function EnviarData(grid) {
+            //Jordan Mateo 20190403
+            if (App.IDValorOpcional.getValue().length > 300) {
+                App.IDValorOpcional.setActiveError('El campo Indicaciones solo admite 300 caracteres.');
+                App.taAlerts.setValue('*El campo Indicaciones solo admite 300 caracteres.');
+                App.taAlerts.setVisible(true);
+                return false;
+            }
+            else {
+                App.taAlerts.setValue('');
+                App.taAlerts.setVisible(false);
+            }
+            // ---   
+            if (true) {
+
+                App.taAlerts.setVisible(false);
+                App.taAlerts.setValue(null);
+                App.conthbIndicaError.setVisible(false);
+                source = App.GridPanelInmunizacion;
+                var store = App.StoreAtencion;
+                var status = 0;
+                var i = 0;
+                var valores = "";
+                var ArrayList0 = new Array();
+                var records = App.GridPanelInmunizacion.getSelectionModel().getSelection();
+                var invalidFields = new Array();
+                var fila = 0;
+
+              /*  var hh = App.Estado.getValue();
+
+
+                var h2 = App.INFLUENZA.getValue();
+
+                if (h1 == true || h2 != null) {
+                    App.Estado.setValue(0);
+                }
+                if (h2 == null & h1 == false) {
+                    App.Estado.setValue(1);
+                }
+                */
+                /*
+                var h1 = App.ChkNoRecuerda.getValue();
+                if (h1 != true) {
+                    App.Estado.setValue(0);
+                }*/
+
+                App.StoreAtencion.each(function (r) {
+
+                    fila = fila + 1;
+                    ///VALIDACIÓN
+                    setValuesGridForm(r, null);
+                    //invalidFields = getInvalidFieldsGrid(App.formactual, invalidFields, fila);
+                    var MA_MiscelaneosDetalle = {
+                        CodigoElemento: r.get('Secuencia'),
+                        ValorCodigo1: r.get('OtrasVacunas'),
+                        ACCION: (r.get('Accion') == 'NUEVO' ? 'DETALLE' : 'UPDATEDETALLE')
+
+                    };
+                    ArrayList0.push(MA_MiscelaneosDetalle);
+                    i = i + 1;
+                });
+                if (invalidFields.length > 0) {
+
+                    addRecursosValidacion(invalidFields);
+                    App.cmdGuardar.setDisabled(false);
+                } else {
+
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("CCEPF013_Save_AntecedentesPersonalesIAdul"))',
+                        params: {
+                            selectionArray1: ArrayList0,
+                            text: '0'
+                            , estado: App.Estado.getValue()
+                        }
+                    });
+                }
+            } else {
+                App.cmdGuardar.setDisabled(false);
+            }
+
+        }
+
+        var getInvalidFieldsGrid = function (form, invalidFields, fila) {
+            var fields = App.formactual.getForm().getFields();
+            fields.filterBy(function (field) {
+                if (!field.isValid()) {
+                    var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                        NombreCampo: field.name,
+                        IdEvento: (field.isValid() ? 1 : 0),
+                        ValorTexto: 'Fila N° ' + fila + '-' + field.name + ': ' + field.getErrors()
+                    };
+                    invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+                    field.reset();
+                }
+            });
+            return invalidFields;
+        };
+
+        var addRecursosValidacion = function (FieldsInvalidos) {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("addRecursosValidacion"))',
+                params: {
+                    data: FieldsInvalidos,
+                    indica: 'VALIDAR',
+                },
+                success: function (result) { accionMensajes(result.data); }
+            });
+        };
+
+
+        var setValuesGridForm = function (r, valor) {
+            ////ESTE METODO  CAMBIA DE ACUERDO A CADA FORMULARIO:
+            var ValorCodigo1 = r.get('ValorCodigo1');
+            var CodigoElemento = r.get('CodigoElemento');
+
+
+            if (ValorCodigo1 == null || ValorCodigo1 == '') {
+
+            }
+
+        };
+
+        var countOtras = 0; // a counter for new records de Otras
+        function addRecord(grid, grupo, IdUnidad, componenteAdd) {
+
+            if ((componenteAdd.getValue() != null) && (componenteAdd.getValue() != '')) {
+
+                var valorSelec = componenteAdd.getValue();
+                if (componenteAdd.getValue().length > 100) {
+                    Ext.Msg.show({
+                        title: "Advertencia",
+                        msg: "Solo se admiten 100 Caracteres.",
+                        icon: Ext.Msg.WARNING,
+                        minWidth: 200,
+                        buttons: Ext.Msg.OK
+                    });
+                    return;
+                }
+                if (validaDuplicado(grupo, valorSelec.trim())) {
+                    Ext.Msg.show({
+                        title: "Advertencia",
+                        msg: "Ya existe el Registro de Otras Inmunización",
+                        icon: Ext.Msg.WARNING,
+                        minWidth: 200,
+                        buttons: Ext.Msg.OK
+                    });
+                } else {
+
+                    grid.store.insert(0,
+                        {
+
+                            UnidadReplicacion: IdUnidad,
+                            Secuencia: countOtras++,
+                            OtrasVacunas: valorSelec.trim(),
+                            Accion: 'NUEVO'
+                        });
+
+
+                }
+            } else {
+                Ext.Msg.show({
+                    title: "Advertencia",
+                    msg: "Debe Ingresar Otra Inmunización para añadirlo.",
+                    icon: Ext.Msg.INFO,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+            }
+
+            App.cmbTipAt.setValue('');
+        };
+
+
+
+        var eventoRadio_old = function (rd1, pregunta, valor) {
+
+            var rdAll1 = rd1.getValue();
+
+            if (rdAll1) {
+
+                if (valor == 1) {
+                    App.Chb1.setDisabled(false);
+                    App.Chb2.setDisabled(false);
+                    App.Chb3.setDisabled(false);
+                    App.Chb4.setDisabled(false);
+                    App.Chb5.setDisabled(false);
+                    App.Chb6.setDisabled(false);
+                    App.Chb7.setDisabled(false);
+                    App.Chb8.setDisabled(false);
+                    App.Chb9.setDisabled(false);
+                    App.Chb10.setDisabled(false);
+                    App.Chb11.setDisabled(false);
+                    App.Chb12.setDisabled(false);
+                    App.Chb13.setDisabled(false);
+                    App.Chb14.setDisabled(false);
+                    App.Chb15.setDisabled(false);
+                    App.Chb16.setDisabled(false);
+                    App.Chb17.setDisabled(false);
+                    App.Chb18.setDisabled(false);
+                    App.Chb19.setDisabled(false);
+                    App.Chb20.setDisabled(false);
+                    App.Chb21.setDisabled(false);
+                    App.Chb22.setDisabled(false);
+                    App.Chb23.setDisabled(false);
+                    App.Chb24.setDisabled(false);
+                    App.Chb25.setDisabled(false);
+                    App.Chb26.setDisabled(false);
+                    App.Chb27.setDisabled(false);
+                    App.Chb28.setDisabled(false);
+
+                }
+
+                if (valor == 0) {
+                    App.Chb1.setDisabled(true);
+                    App.Chb2.setDisabled(true);
+                    App.Chb3.setDisabled(true);
+                    App.Chb4.setDisabled(true);
+                    App.Chb5.setDisabled(true);
+                    App.Chb6.setDisabled(true);
+                    App.Chb7.setDisabled(true);
+                    App.Chb8.setDisabled(true);
+                    App.Chb9.setDisabled(true);
+                    App.Chb10.setDisabled(true);
+                    App.Chb11.setDisabled(true);
+                    App.Chb12.setDisabled(true);
+                    App.Chb13.setDisabled(true);
+                    App.Chb14.setDisabled(true);
+                    App.Chb15.setDisabled(true);
+                    App.Chb16.setDisabled(true);
+                    App.Chb17.setDisabled(true);
+                    App.Chb18.setDisabled(true);
+                    App.Chb19.setDisabled(true);
+                    App.Chb20.setDisabled(true);
+                    App.Chb21.setDisabled(true);
+                    App.Chb22.setDisabled(true);
+                    App.Chb23.setDisabled(true);
+                    App.Chb24.setDisabled(true);
+                    App.Chb25.setDisabled(true);
+                    App.Chb26.setDisabled(true);
+                    App.Chb27.setDisabled(true);
+                    App.Chb28.setDisabled(true);
+
+                }
+
+
+
+
+            } else {
+
+
+                if (valor == 1) {
+                    App.Chb1.setDisabled(true);
+                    App.Chb2.setDisabled(true);
+                    App.Chb3.setDisabled(true);
+                    App.Chb4.setDisabled(true);
+                    App.Chb5.setDisabled(true);
+                    App.Chb6.setDisabled(true);
+                    App.Chb7.setDisabled(true);
+                    App.Chb8.setDisabled(true);
+                    App.Chb9.setDisabled(true);
+                    App.Chb10.setDisabled(true);
+                    App.Chb11.setDisabled(true);
+                    App.Chb12.setDisabled(true);
+                    App.Chb13.setDisabled(true);
+                    App.Chb14.setDisabled(true);
+                    App.Chb15.setDisabled(true);
+                    App.Chb16.setDisabled(true);
+                    App.Chb17.setDisabled(true);
+                    App.Chb18.setDisabled(true);
+                    App.Chb19.setDisabled(true);
+                    App.Chb20.setDisabled(true);
+                    App.Chb21.setDisabled(true);
+                    App.Chb22.setDisabled(true);
+                    App.Chb23.setDisabled(true);
+                    App.Chb24.setDisabled(true);
+                    App.Chb25.setDisabled(true);
+                    App.Chb26.setDisabled(true);
+                    App.Chb27.setDisabled(true);
+                    App.Chb28.setDisabled(true);
+
+                }
+
+                if (valor == 0) {
+
+
+                    App.Chb1.setDisabled(false);
+                    App.Chb2.setDisabled(false);
+                    App.Chb3.setDisabled(false);
+                    App.Chb4.setDisabled(false);
+                    App.Chb5.setDisabled(false);
+                    App.Chb6.setDisabled(false);
+                    App.Chb7.setDisabled(false);
+                    App.Chb8.setDisabled(false);
+                    App.Chb9.setDisabled(false);
+                    App.Chb10.setDisabled(false);
+                    App.Chb11.setDisabled(false);
+                    App.Chb12.setDisabled(false);
+                    App.Chb13.setDisabled(false);
+                    App.Chb14.setDisabled(false);
+                    App.Chb15.setDisabled(false);
+                    App.Chb16.setDisabled(false);
+                    App.Chb17.setDisabled(false);
+                    App.Chb18.setDisabled(false);
+                    App.Chb19.setDisabled(false);
+                    App.Chb20.setDisabled(false);
+                    App.Chb21.setDisabled(false);
+                    App.Chb22.setDisabled(false);
+                    App.Chb23.setDisabled(false);
+                    App.Chb24.setDisabled(false);
+                    App.Chb25.setDisabled(false);
+                    App.Chb26.setDisabled(false);
+                    App.Chb27.setDisabled(false);
+                    App.Chb28.setDisabled(false);
+
+                }
+
+            }
+
+        };
+
+        var eventoCheck = function (ch1, pregunta) {
+            var varCheckValue = ch1.getValue();
+
+            //DTP
+            var V1 = App.IdChek1.getValue();
+            var V2 = App.IdChek2.getValue();
+            var V3 = App.IdChek3.getValue();
+
+            ////HEPATITIS B
+            var V9 =  App.IdChek9.getValue();
+            var V10 = App.IdChek10.getValue();
+            var V11 = App.IdChek11.getValue();
+            var V12 = App.IdChek12.getValue();
+
+            ////HEPATITIS A
+            var V14 = App.IdChek14.getValue();
+            var V15 = App.IdChek15.getValue();
+
+            //NEUMOCO
+            var V17 = App.IdChek17.getValue();
+            var V18 = App.IdChek18.getValue();
+            var V19 = App.IdChek19.getValue();
+
+            //ANTITETÁNICA
+            var V21 = App.IdChek21.getValue();
+            var V22 = App.IdChek22.getValue();
+            var V23 = App.IdChek23.getValue();
+
+            ////PAPILOMA
+            var V25 = App.IdChek25.getValue();
+            var V26 = App.IdChek26.getValue();
+            var V27 = App.IdChek27.getValue();
+
+            if (V1 == '') { App.IdChek1.setValue('N'); } else { V1 = App.IdChek1.getValue(); }
+            if (V2 == '') { App.IdChek2.setValue('N'); } else { V2 = App.IdChek2.getValue(); }
+            if (V3 == '') { App.IdChek3.setValue('N'); } else { V3 = App.IdChek3.getValue(); }
+
+            if (V9 == '') { App.IdChek9.setValue('N'); } else { V9 = App.IdChek9.getValue(); }
+            if (V10 == '') { App.IdChek10.setValue('N'); } else { V10 = App.IdChek10.getValue(); }
+            if (V11 == '') { App.IdChek11.setValue('N'); } else { V11 = App.IdChek11.getValue(); }
+            if (V12 == '') { App.IdChek12.setValue('N'); } else { V12 = App.IdChek12.getValue(); }
+
+            if (V14 == '') { App.IdChek14.setValue('N'); } else { V14 = App.IdChek14.getValue(); }
+            if (V15 == '') { App.IdChek15.setValue('N'); } else { V15 = App.IdChek15.getValue(); }
+
+            if (V17 == '') { App.IdChek17.setValue('N'); } else { V17 = App.IdChek17.getValue(); }
+            if (V18 == '') { App.IdChek18.setValue('N'); } else { V18 = App.IdChek18.getValue(); }
+            if (V19 == '') { App.IdChek19.setValue('N'); } else { V19 = App.IdChek19.getValue(); }
+
+            if (V21 == '') { App.IdChek21.setValue('N'); } else { V21 = App.IdChek21.getValue(); }
+            if (V22 == '') { App.IdChek22.setValue('N'); } else { V22 = App.IdChek22.getValue(); }
+            if (V23 == '') { App.IdChek23.setValue('N'); } else { V23 = App.IdChek23.getValue(); }
+
+            if (V25 == '') { App.IdChek25.setValue('N'); } else { V25 = App.IdChek25.getValue(); }
+            if (V26 == '') { App.IdChek26.setValue('N'); } else { V26 = App.IdChek26.getValue(); }
+            if (V27 == '') { App.IdChek27.setValue('N'); } else { V27 = App.IdChek27.getValue(); }
+
+            if (varCheckValue) {
+
+                if (pregunta == 'C1') { App.Chb4.setValue(null); App.IdChek1.setValue('S'); App.Chb4.setDisabled(true); }
+                if (pregunta == 'C2') {
+                    App.Chb1.items.each(function (r) {
+                        r.setValue(true);
+                    });
+                    App.Chb4.setValue(null); App.IdChek2.setValue('S'); App.Chb4.setDisabled(true);
+                }
+                if (pregunta == 'C3') {
+                    App.Chb2.items.each(function (r) {
+                        r.setValue(true);
+                    });
+                    App.Chb4.setValue(null); App.IdChek3.setValue('S'); App.Chb4.setDisabled(true);
+                }
+                if (pregunta == 'C4') {
+                    App.IdChek1.setValue('N');
+                    App.Chb1.setValue(null);
+                    App.Chb1.setDisabled(true);
+                    App.IdChek2.setValue('N');
+                    App.Chb2.setValue(null);
+                    App.Chb2.setDisabled(true);
+                    App.IdChek3.setValue('N');
+                    App.Chb3.setValue(null);
+                    App.Chb3.setDisabled(true);
+                }
+                if (pregunta == 'C5') { App.Chb6.setValue(null); App.Chb6.setDisabled(true); }
+                if (pregunta == 'C6') { App.Chb5.setValue(null); App.Chb5.setDisabled(true); }
+
+                if (pregunta == 'C7') { App.Chb8.setValue(null); App.Chb8.setDisabled(true); }
+                if (pregunta == 'C8') { App.Chb7.setValue(null); App.Chb7.setDisabled(true); }
+
+                if (pregunta == 'C9') { App.Chb13.setValue(null); App.IdChek9.setValue('S'); App.Chb13.setDisabled(true); }
+                if (pregunta == 'C10') {
+                    App.Chb9.items.each(function (r) {
+                        r.setValue(true);
+                    });
+                    App.Chb13.setValue(null); App.IdChek10.setValue('S'); App.Chb13.setDisabled(true);
+                }
+                if (pregunta == 'C11') {
+                    App.Chb10.items.each(function (r) {
+                        r.setValue(true);
+                    });
+                    App.Chb13.setValue(null); App.IdChek11.setValue('S'); App.Chb13.setDisabled(true);
+                }
+                if (pregunta == 'C12') {
+                    App.Chb11.items.each(function (r) {
+                        r.setValue(true);
+                    });
+                    App.Chb13.setValue(null); App.IdChek12.setValue('S'); App.Chb13.setDisabled(true);
+                }
+                if (pregunta == 'C13') {
+                    App.IdChek9.setValue('N');
+                    App.Chb9.setValue(null);
+                    App.Chb9.setDisabled(true);
+                    App.IdChek10.setValue('N');
+                    App.Chb10.setValue(null);
+                    App.Chb10.setDisabled(true);
+                    App.IdChek11.setValue('N');
+                    App.Chb11.setValue(null);
+                    App.Chb11.setDisabled(true);
+                    App.IdChek12.setValue('N');
+                    App.Chb12.setValue(null);
+                    App.Chb12.setDisabled(true);
+                }
+                if (pregunta == 'C14') { App.Chb16.setValue(null); App.IdChek14.setValue('S'); App.Chb16.setDisabled(true); }
+                if (pregunta == 'C15') {
+                    App.Chb14.items.each(function (r) {
+                        r.setValue(true);
+                    });
+                    App.Chb16.setValue(null); App.IdChek15.setValue('S'); App.Chb16.setDisabled(true);
+                }
+                if (pregunta == 'C16') {
+                    App.IdChek14.setValue('N');
+                    App.Chb14.setValue(null);
+                    App.Chb14.setDisabled(true);
+                    App.IdChek15.setValue('N');
+                    App.Chb15.setValue(null);
+                    App.Chb15.setDisabled(true);
+                }
+                if (pregunta == 'C17') { App.Chb20.setValue(null); App.IdChek17.setValue('S'); App.Chb20.setDisabled(true); }
+                if (pregunta == 'C18') {
+                    App.Chb17.items.each(function (r) {
+                        r.setValue(true);
+                    });
+                    App.Chb20.setValue(null); App.IdChek18.setValue('S'); App.Chb20.setDisabled(true);
+                }
+                if (pregunta == 'C19') {
+                    App.Chb18.items.each(function (r) {
+                        r.setValue(true);
+                    });
+                    App.Chb20.setValue(null); App.IdChek19.setValue('S'); App.Chb20.setDisabled(true);
+                }
+                if (pregunta == 'C20') {
+                    App.Chb17.setValue(null);
+                    App.Chb18.setValue(null);
+                    App.Chb19.setValue(null);
+                    App.Chb17.setDisabled(true);
+                    App.Chb18.setDisabled(true);
+                    App.Chb19.setDisabled(true);
+                    App.IdChek17.setValue('N');
+                    App.IdChek18.setValue('N');
+                    App.IdChek19.setValue('N');
+                }
+                if (pregunta == 'C21') { App.Chb24.setValue(null); App.IdChek21.setValue('S'); App.Chb24.setDisabled(true); }
+                if (pregunta == 'C22') {
+                    App.Chb21.items.each(function (r) {
+                        r.setValue(true);
+                    });
+                    App.Chb24.setValue(null); App.IdChek22.setValue('S'); App.Chb24.setDisabled(true);
+                }
+                if (pregunta == 'C23') {
+                    App.Chb22.items.each(function (r) {
+                        r.setValue(true);
+                    });
+                    App.Chb24.setValue(null); App.IdChek23.setValue('S'); App.Chb24.setDisabled(true);
+                }
+                if (pregunta == 'C24') {
+                    App.IdChek21.setValue('N');
+                    App.Chb21.setValue(null);
+                    App.Chb21.setDisabled(true);
+                    App.IdChek22.setValue('N');
+                    App.Chb22.setValue(null);
+                    App.Chb22.setDisabled(true);
+                    App.IdChek23.setValue('N');
+                    App.Chb23.setValue(null);
+                    App.Chb23.setDisabled(true);
+                }
+                if (pregunta == 'C25') { App.Chb28.setValue(null); App.IdChek25.setValue('S'); App.Chb28.setDisabled(true); }
+                if (pregunta == 'C26') {
+                    App.Chb25.items.each(function (r) {
+                        r.setValue(true);
+                    });
+                    App.Chb28.setValue(null); App.IdChek26.setValue('S'); App.Chb28.setDisabled(true);
+                }
+                if (pregunta == 'C27') {
+                    App.Chb26.items.each(function (r) {
+                        r.setValue(true);
+                    });
+                    App.Chb28.setValue(null); App.IdChek27.setValue('S'); App.Chb28.setDisabled(true);
+                }
+                if (pregunta == 'C28') {
+
+                    App.Chb25.setValue(null);
+                    App.Chb26.setValue(null);
+                    App.Chb27.setValue(null);
+                    App.Chb25.setDisabled(true);
+                    App.Chb26.setDisabled(true);
+                    App.Chb27.setDisabled(true);
+                    App.IdChek25.setValue('N');
+                    App.IdChek26.setValue('N');
+                    App.IdChek27.setValue('N');
+                }
+             }
+            else {
+
+                if (pregunta == 'C1') {
+                    App.IdChek1.setValue('N'); var V1_ = App.IdChek1.getValue();
+                    if (V1_ == 'N' && V2 == 'N' && V3 == 'N') {
+                        App.Chb4.setDisabled(false);
+                    }
+                    else {
+                        App.Chb4.setDisabled(true);
+                    }
+
+                }
+                else if (pregunta == 'C2') {
+
+                    App.IdChek2.setValue('N'); var V2_ = App.IdChek2.getValue();
+                    if (V1 == 'N' && V2_ == 'N' && V3 == 'N') {
+                        App.Chb4.setDisabled(false);
+                    }
+                    else {
+                        App.Chb4.setDisabled(true);
+                    }
+
+                }
+                else if (pregunta == 'C3') {
+
+                    App.IdChek3.setValue('N'); var V3_ = App.IdChek3.getValue();
+                    if (V1 == 'N' && V2 == 'N' && V3_ == 'N') {
+                        App.Chb4.setDisabled(false);
+                    }
+                    else {
+                        App.Chb4.setDisabled(true);
+                    }
+
+                }
+
+                else if (pregunta == 'C4') {
+                    App.Chb1.setDisabled(false);
+                    App.Chb2.setDisabled(false);
+                    App.Chb3.setDisabled(false);
+                }
+
+                if (pregunta == 'C5') { App.Chb6.setDisabled(false); }
+                if (pregunta == 'C6') { App.Chb5.setDisabled(false); }
+
+                if (pregunta == 'C7') { App.Chb8.setDisabled(false); }
+                if (pregunta == 'C8') { App.Chb7.setDisabled(false); }
+
+                else if (pregunta == 'C9') {
+
+                    App.IdChek9.setValue('N'); var V9_ = App.IdChek9.getValue();
+                    if (V9_ == 'N' && V10 == 'N' && V11 == 'N' && V12 == 'N') {
+                        App.Chb13.setDisabled(false);
+                    }
+                    else {
+                        App.Chb13.setDisabled(true);
+                    }
+                }
+
+                else if (pregunta == 'C10') {
+
+                    App.IdChek10.setValue('N'); var V10_ = App.IdChek10.getValue();
+                    if (V9 == 'N' && V10_ == 'N' && V11 == 'N' && V12 == 'N') {
+                        App.Chb13.setDisabled(false);
+                    }
+                    else {
+                        App.Chb13.setDisabled(true);
+                    }
+                }
+
+                else if (pregunta == 'C11') {
+
+                    App.IdChek11.setValue('N'); var V11_ = App.IdChek11.getValue();
+                    if (V9 == 'N' && V10 == 'N' && V11_ == 'N' && V12 == 'N') {
+                        App.Chb13.setDisabled(false);
+                    }
+                    else {
+                        App.Chb13.setDisabled(true);
+                    }
+
+                }
+
+                else if (pregunta == 'C12') {
+
+                    App.IdChek12.setValue('N'); var V12_ = App.IdChek12.getValue();
+                    if (V9 == 'N' && V10 == 'N' && V11 == 'N' && V12_ == 'N') {
+                        App.Chb13.setDisabled(false);
+                    }
+                    else {
+                        App.Chb13.setDisabled(true);
+                    }
+
+                }
+
+                else if (pregunta == 'C13') {
+                    App.Chb9.setDisabled(false);
+                    App.Chb10.setDisabled(false);
+                    App.Chb11.setDisabled(false);
+                    App.Chb12.setDisabled(false);
+                }
+
+                else if (pregunta == 'C14') {
+
+                    App.IdChek14.setValue('N'); var V14_ = App.IdChek14.getValue();
+                    if (V14_ == 'N' && V15 == 'N') {
+                        App.Chb16.setDisabled(false);
+                    }
+                    else {
+                        App.Chb16.setDisabled(true);
+                    }
+
+                }
+
+                if (pregunta == 'C15') {
+
+                    App.IdChek15.setValue('N'); var V15_ = App.IdChek15.getValue();
+                    if (V14 == 'N' && V15_ == 'N') {
+                        App.Chb16.setDisabled(false);
+                    }
+                    else {
+                        App.Chb16.setDisabled(true);
+                    }
+
+                }
+
+                else if (pregunta == 'C16') {
+                    App.Chb14.setDisabled(false);
+                    App.Chb15.setDisabled(false);
+                }
+
+                else if (pregunta == 'C17') {
+
+                    App.IdChek17.setValue('N'); var V17_= App.IdChek17.getValue();
+                    if (V17_ == 'N' && V18 == 'N' && V19 == 'N') {
+                        App.Chb20.setDisabled(false);
+                    }
+                    else {
+                        App.Chb20.setDisabled(true);
+                    }
+                }
+
+                else if (pregunta == 'C18') {
+
+                    App.IdChek18.setValue('N'); var V18_ = App.IdChek18.getValue();
+                    if (V17 == 'N' && V18_ == 'N' && V19 == 'N') {
+                        App.Chb20.setDisabled(false);
+                    }
+                    else {
+                        App.Chb20.setDisabled(true);
+                    }
+                }
+
+                else if (pregunta == 'C19') {
+
+                    App.IdChek19.setValue('N'); var V19_ = App.IdChek19.getValue();
+                    if (V17 == 'N' && V18 == 'N' && V19_ == 'N') {
+                        App.Chb20.setDisabled(false);
+                    }
+                    else {
+                        App.Chb20.setDisabled(true);
+                    }
+                }
+
+                else if (pregunta == 'C20') {
+                    App.Chb17.setDisabled(false);
+                    App.Chb18.setDisabled(false);
+                    App.Chb19.setDisabled(false);
+
+                }
+
+
+                if (pregunta == 'C21') {
+
+                    App.IdChek21.setValue('N'); var V21_ = App.IdChek21.getValue();
+                    if (V21_ == 'N' && V22 == 'N' && V23 == 'N') {
+                        App.Chb24.setDisabled(false);
+                    }
+                    else {
+                        App.Chb24.setDisabled(true);
+                    }
+                }
+
+                if (pregunta == 'C22') {
+
+                    App.IdChek22.setValue('N'); var V22_ = App.IdChek22.getValue();
+                    if (V21 == 'N' && V22_ == 'N' && V23 == 'N') {
+                        App.Chb24.setDisabled(false);
+                    }
+                    else {
+                        App.Chb24.setDisabled(true);
+                    }
+                }
+
+                if (pregunta == 'C23') {
+
+                    App.IdChek23.setValue('N'); var V23_ = App.IdChek23.getValue();
+                    if (V21 == 'N' && V22 == 'N' && V23_ == 'N') {
+                        App.Chb24.setDisabled(false);
+                    }
+                    else {
+                        App.Chb24.setDisabled(true);
+                    }
+
+                }
+
+                if (pregunta == 'C24') {
+                    App.Chb21.setDisabled(false);
+                    App.Chb22.setDisabled(false);
+                    App.Chb23.setDisabled(false);
+                    App.Chb24.setDisabled(false);
+                }
+
+                else if (pregunta == 'C25') {
+                    App.IdChek25.setValue('N'); var V25_ = App.IdChek25.getValue();
+                    if (V25_ == 'N' && V26 == 'N' && V27 == 'N') {
+                        App.Chb28.setDisabled(false);
+                    }
+                    else {
+                        App.Chb28.setDisabled(true);
+                    }
+                }
+
+                else if (pregunta == 'C26') {
+
+                    App.IdChek26.setValue('N'); var V26_ = App.IdChek26.getValue();
+                    if (V25 == 'N' && V26_ == 'N' && V27 == 'N') {
+                        App.Chb28.setDisabled(false);
+                    }
+                    else {
+                        App.Chb28.setDisabled(true);
+                    }
+                }
+
+                else if (pregunta == 'C27') {
+
+                    App.IdChek27.setValue('N'); var V27_ = App.IdChek27.getValue();
+                    if (V25 == 'N' && V26 == 'N' && V27_ == 'N') {
+                        App.Chb28.setDisabled(false);
+                    }
+                    else {
+                        App.Chb28.setDisabled(true);
+                    }
+                }
+
+                else if (pregunta == 'C28') {
+
+                    App.Chb25.setDisabled(false);
+                    App.Chb26.setDisabled(false);
+                    App.Chb27.setDisabled(false);
+
+                }
+
+            }
+
+        };
+
+        var eventoRadio = function (rd, pregunta, valor) {
+
+            var rdAll1 = rd.getValue();
+            var FieldSet1 = App.fsVacuna;
+            var FieldSet2 = App.fsOtras;
+
+
+
+            if (rdAll1) {
+
+                if (pregunta == 'P1') {
+
+                    if (valor == 1) {
+                        FieldSet1.setVisible(true);
+                        FieldSet2.setVisible(true);
+                        App.IdFlag.setValue('S');
+                        var store = App.GridPanelInmunizacion.store;
+                        store.reload();
+                    }
+                    if (valor == 0) {
+
+                        FieldSet1.setVisible(false);
+                        FieldSet2.setVisible(false);
+                        App.IdFlag.setValue('N');
+                    }
+
+
+                }
+
+            } else {
+
+                if (pregunta == 'P1') {
+
+
+                    if (valor == 1) {
+
+                        FieldSet1.setVisible(false);
+                        FieldSet2.setVisible(false);
+                    }
+                    if (valor == 0) {
+
+                    }
+
+
+
+                }
+
+
+            }
+        };
+
+        function textoinfluenza(e) {
+            /*Capturar tecla pulsada*/
+            if (window.event) keyCode = window.event.keyCode;
+            App.btnImpresion.setVisible(false);
+            App.btnImpresionHC.setVisible(false);
+
+        }
+
+        var keyCode
+        function ReplaceCaracterEspec(e) {
+
+            /*Capturar tecla pulsada*/
+            if (window.event) keyCode = window.event.keyCode;
+            else if (e) keyCode = e.which;
+            var prueba = keyCode;
+            // alert(keyCode);
+            //
+            if (prueba == 60) {
+                var textactual = e.getValue();
+                e.value = e.setValue(textactual + " ");
+            }
+            var texto = e.getValue();
+            var vacio = "";
+            var cadena = vacio + e.getValue();
+            var recortado = cadena.substr(-1, 1);
+            // alert(recortado + ' antes');
+            if (recortado == "<" || recortado == ">") {
+                //  alert(recortado + ' despues');
+                e.value = e.setValue(texto + " ");
+            }
+        }
+
+        var eventoCheck2 = function (value) {
+            if (value.checked) {
+                /*  App.INFLUENZA.setValue(null);*/
+                App.Estado.setValue(1);
+                App.INFLUENZA.setDisabled(true);
+            }
+            else {
+                /*App.INFLUENZA.setValue(Date.now);*/
+                App.Estado.setValue(0);
+                App.INFLUENZA.setDisabled(false);
+            }
+            if (inicial == 0) {
+               /* alert('13:cambio');*/
+                setIndicaCambios(false);
+               /* inicial = 1;*/
+            }
+        }
+
+        var eventoOlvido = function (value) {
+            var ff = '@NoRecuerda';
+            var ff2 = '@NoRecuerda2';
+            var vis = '@isNuevo';
+
+            var marc = '@marcar';
+
+           /* var not = App.Estado.getValue();
+
+            if (ff == '1' & vis != 'True') {
+
+                if (not != 1) {
+
+                    value.setValue(true);
+                    value.checked = true;
+                    setIndicaCambios(false);
+
+                }
+
+            }
+            if (ff2 == '1') {
+                value.setValue(true);
+                value.checked = true;
+            }*/
+            if (marc == '1') {
+                value.setValue(true);
+                value.checked = true;
+                setIndicaCambios(false);
+                inicial = 0;
+            }
+
+        }
+        function eventoCambio(value) {
+            /*alert('cambio')*/
+            //setTimeout(3000);
+            if (inicial == 0) {
+                inicial = 1;
+            } else {
+                setIndicaCambios(true);
+            }
+        };
+
+        var eventoRadioInfluenza = function (rd1, pregunta, valor) {
+            var getValueVar = rd1.getValue();
+
+            if (getValueVar) {
+                if (pregunta == 'R1') {
+                    if (valor == 'S') {
+                        App.IDValorOpcional.setDisabled(false);
+                        //App.listTD1.setDisabled(false);
+
+
+                    } else {
+                        App.IDValorOpcional.setDisabled(true);
+                        //    App.listTD1.setDisabled(true);
+                        App.IDValorOpcional.setValue("");
+                    };
+                }
+
+
+
+
+
+            }
+
+        };
+
+        function Editable(value, parent) {
+
+            if (parent == "Chb4" && '@(Model.DPT_NoRecuerda_flag)' == "S") { value.setDisabled(true); }
+            else if (parent == "Chb6" && '@(Model.SRP_NoRecuerda_flag)' == "S") { value.setDisabled(true); }
+            else if (parent == "Chb8" && '@(Model.VARICELA_NoRecuerda_flag)' == "S") { value.setDisabled(true); }
+            else if (parent == "Chb13" && '@(Model.HEPATITISB_NoRecuerda_flag)' == "S") { value.setDisabled(true); }
+            else if (parent == "Chb16" && '@(Model.HEPATITISA_NoRecuerda_flag)' == "S") { value.setDisabled(true); }
+            else if (parent == "Chb20" && '@(Model.NEUMOCOCO_NoRecuerda_flag)' == "S") { value.setDisabled(true); }
+            else if (parent == "Chb24" && '@(Model.Antitetanica_NoRecuerda_flag)' == "S") { value.setDisabled(true); }
+            else if (parent == "Chb28" && '@(Model.Papiloma_NoRecuerda_flag)' == "S") { value.setDisabled(true); }
+        };
+    </script>
+}
+
+
+@section cuerpo
+{
+    @(
+ Html.X().Viewport().ID("ViewportXD")
+        .Layout(LayoutType.VBox)
+        .LayoutConfig(
+            new VBoxLayoutConfig { Align = VBoxAlign.Stretch }
+        )
+        .Listeners(l =>
+        {
+            l.AfterLayout.BroadcastOnBus = "App.resize";
+            l.AfterLayout.Single = true;
+        })
+        .Items(regions =>
+        {
+
+            regions.Add(Html.X().FormPanel()
+                .ItemID("center")
+                .DefaultAnchor("100%")
+                .Height(450)
+                .Collapsible(true)
+                .AutoScroll(true)
+                .Header(false)
+                .Border(true)
+                .ID("formactual")
+                .Listeners(l =>
+                {
+                    l.Render.Handler = "eventoRenderForm(); ";
+                    //l.AfterRender.Handler = "setIndicaCambios(false);";
+                    /* l.AfterLayout.Handler = "setIndicaCambios(false);";*/
+                })
+               .Items(
+
+                     X.Label().Hidden(false)
+                            .Border(false)
+                            .PaddingSpec("15")
+                            .Html("<b><font  size='4.5em'; color='black'>Inmunizaciones</font></b>"),
+                     X.Container().Layout(LayoutType.HBox)
+                                  .MarginSpec("05 05 05 00")
+                                  .Items(
+                                  X.Label().Hidden(false)
+                                           .Border(false)
+                                           .PaddingSpec("15")
+                                           .Html("<b><font  size='2.5em'; color='black'>VACUNAS EN EL ADULTO</font></b>"),
+                                 X.RadioGroupFor(m => m.VacunaNinioFlag, new List<Radio.Config> {
+                                                                        new Radio.Config{BoxLabel = "Si", InputValue = "S",
+                                                                                        Checked=(Model.VacunaNinioFlag=="S"?true:false),
+                                                                                        ReadOnly =indicaModoLectura,
+                                                                                        Handler="eventoRadio(this, 'P1', 1);"},
+                                                                        new Radio.Config{BoxLabel = "No" , InputValue = "N"
+                                                                                    ,  Checked=(Model.VacunaNinioFlag=="N"?true:false)
+                                                                                    ,  Disabled =indicaTieneVacuna
+                                                                                    ,  ReadOnly =indicaModoLectura
+                                                                                    ,  Handler="eventoRadio(this, 'P1', 0);"}
+                                                })
+                                                .Width(350)
+                //.ID("IdTiene")
+                                                .Vertical(false)
+                                                .PaddingSpec("15")
+                                                .LabelWidth(180)
+                                                .Width(450)
+                                                .FieldLabel("")
+                                                .Defaults(d =>
+                                                        {
+                                                            d.Add(new Parameter("LabelWidth", "220"));
+                                                            d.Add(new Parameter("DefaultAnchor", "50%"));
+                                                        })
+                                                .AnchorVertical("100%")
+
+                                   )
+                , X.TextFieldFor(m => m.VacunaNinioFlag).ID("IdFlag")
+                                                       .Hidden(true)
+
+                , X.FieldSet().ID("fsVacuna")
+                            .Collapsible(true)
+                            .ColumnWidth(0.4).Title("VACUNAS EN EL ADULTO")
+                            .Layout(LayoutType.VBox)
+                            .MarginSpec("05 05 0 05")
+                            .Height(350)
+                            .Defaults(d =>
+                                {
+                                    d.Add(new Parameter("LabelWidth", "150"));
+                                    d.Add(new Parameter("DefaultAnchor", "100%"));
+                                    d.Add(new Parameter("LabelAlign", "Left"));
+                                })
+                            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                            .Items(
+
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "150")); })
+                                .Items(
+                                    X.Component().Width(210),
+                                    X.Label().Hidden(false).Border(false).Html("<b><font  size='2.5em'; color='black'>1era</font></b>"),
+                                    X.Component().Width(80),
+                                    X.Label().Hidden(false).Border(false).Html("<b><font  size='2.5em'; color='black'>2da</font></b>"),
+                                    X.Component().Width(80),
+                                    X.Label().Hidden(false).Border(false).Html("<b><font  size='2.5em'; color='black'>3era</font></b>"),
+                                    X.Component().Width(80),
+                                    X.Label().Hidden(false).Border(false).Html("<b><font  size='2.5em'; color='black'>1erRef</font></b>"),
+                                    X.Component().Width(80),
+                                    X.Label().Hidden(false).Border(false).Html("<b><font  size='2.5em'; color='black'>No recuerda</font></b>")
+                                  )
+
+                      , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "150")); })
+                                .Items(
+                                            X.TextFieldFor(m => m.DPT_1era_flag).ReadOnly(true).ID("IdChek1").Hidden(true)
+                                            , X.TextFieldFor(m => m.DPT_2da_flag).ReadOnly(true).ID("IdChek2").Hidden(true)
+                                            , X.TextFieldFor(m => m.DPT_3era_flag).ReadOnly(true).ID("IdChek3").Hidden(true)
+                                            , X.TextFieldFor(m => m.HEPATITISB_1era_flag).ReadOnly(true).ID("IdChek9").Hidden(true)
+                                            , X.TextFieldFor(m => m.HEPATITISB_2da_flag).ReadOnly(true).ID("IdChek10").Hidden(true)
+                                            , X.TextFieldFor(m => m.HEPATITISB_3era_flag).ReadOnly(true).ID("IdChek11").Hidden(true)
+                                            , X.TextFieldFor(m => m.HEPATITISB_1erRef_flag).ReadOnly(true).ID("IdChek12").Hidden(true)
+                                            , X.TextFieldFor(m => m.HEPATITISA_1era_flag).ReadOnly(true).ID("IdChek14").Hidden(true)
+                                            , X.TextFieldFor(m => m.HEPATITISA_2da_flag).ReadOnly(true).ID("IdChek15").Hidden(true)
+                                            , X.TextFieldFor(m => m.NEUMOCOCO_1era_flag).ReadOnly(true).ID("IdChek17").Hidden(true)
+                                            , X.TextFieldFor(m => m.NEUMOCOCO_2da_flag).ReadOnly(true).ID("IdChek18").Hidden(true)
+                                            , X.TextFieldFor(m => m.NEUMOCOCO_3era_flag).ReadOnly(true).ID("IdChek19").Hidden(true)
+                                            , X.TextFieldFor(m => m.Antitetanica_1era_flag).ReadOnly(true).ID("IdChek21").Hidden(true)
+                                            , X.TextFieldFor(m => m.Antitetanica_2da_flag).ReadOnly(true).ID("IdChek22").Hidden(true)
+                                            , X.TextFieldFor(m => m.Antitetanica_3era_flag).ReadOnly(true).ID("IdChek23").Hidden(true)
+                                            , X.TextFieldFor(m => m.Papiloma_1era_flag).ReadOnly(true).ID("IdChek25").Hidden(true)
+                                            , X.TextFieldFor(m => m.Papiloma_2da_flag).ReadOnly(true).ID("IdChek26").Hidden(true)
+                                            , X.TextFieldFor(m => m.Papiloma_3era_flag).ReadOnly(true).ID("IdChek27").Hidden(true)
+                                            ,
+
+
+                                    X.Label().Hidden(false).Border(false).Html("<font  size='2.5em'; color='black'>DTP</font>"),
+                                    X.Component().Width(178),
+                                    X.CheckboxGroupFor(m => m.DPT_1era_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.DPT_1era_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C1');"}
+                                    }).ID("Chb1").Listeners(l => { l.AfterRender.Handler = "Editable(this,'Chb4');"; })
+                                    ,
+                                   X.Component().Width(100),
+                                   X.CheckboxGroupFor(m => m.DPT_2da_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.DPT_2da_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C2');"}
+                                    }).ID("Chb2").Listeners(l => { l.AfterRender.Handler = "Editable(this,'Chb4');"; }),
+                                   X.Component().Width(100),
+                                   X.CheckboxGroupFor(m => m.DPT_3era_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.DPT_3era_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C3');"}
+                                    }).ID("Chb3").Listeners(l => { l.AfterRender.Handler = "Editable(this,'Chb4');"; }),
+                                   X.Component().Width(202),
+                                   X.CheckboxGroupFor(m => m.DPT_NoRecuerda_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.DPT_NoRecuerda_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C4');"/*, Disabled = DPT_NR*/}
+                                    }).ID("Chb4").Listeners(l => { l.AfterRender.Handler = "EditableNR(this,'Chb4');"; })
+
+                                  ))
+                      , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "150")); })
+                                .Items(
+
+                                    X.Label().Hidden(false).Border(false).Html("<font  size='2.5em'; color='black'>SRP</font>"),
+                                    X.Component().Width(180),
+                                    X.CheckboxGroupFor(m => m.SRP_1era_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.SRP_1era_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C5');"}
+                                    }).ID("Chb5").Listeners(l => { l.AfterRender.Handler = "Editable(this,'Chb6');"; })
+                                    ,
+                                   X.Component().Width(428),
+                                   X.CheckboxGroupFor(m => m.SRP_NoRecuerda_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.SRP_NoRecuerda_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C6');"/*, Disabled = SRP_NR*/}
+                                     }).ID("Chb6").Listeners(l => { l.AfterRender.Handler = "EditableNR(this,'Chb6');"; })
+                                  ))
+                      , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "150")); })
+                                .Items(
+
+                                    X.Label().Hidden(false).Border(false).Html("<font  size='2.5em'; color='black'>Varicela</font>"),
+                                    X.Component().Width(156),
+                                    X.CheckboxGroupFor(m => m.VARICELA_1era_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.VARICELA_1era_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C7');"}
+                                    }).ID("Chb7").Listeners(l => { l.AfterRender.Handler = "Editable(this,'Chb8');"; })
+                                    ,
+                                   X.Component().Width(428),
+                                   X.CheckboxGroupFor(m => m.VARICELA_NoRecuerda_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.VARICELA_NoRecuerda_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C8');"/*, Disabled = VARICELA_NR*/}
+                                    }).ID("Chb8").Listeners(l => { l.AfterRender.Handler = "EditableNR(this,'Chb8');"; })
+
+                                  ))
+                      , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "150")); })
+                                .Items(
+
+                                    X.Label().Hidden(false).Border(false).Html("<font  size='2.5em'; color='black'>Hepatitis B</font>"),
+                                    X.Component().Width(140),
+                                    X.CheckboxGroupFor(m => m.HEPATITISB_1era_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.HEPATITISB_1era_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C9');"}
+                                    }).ID("Chb9").Listeners(l => { l.AfterRender.Handler = "Editable(this,'Chb13');"; })
+                                    ,
+                                   X.Component().Width(100),
+                                   X.CheckboxGroupFor(m => m.HEPATITISB_2da_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.HEPATITISB_2da_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C10');"}
+                                    }).ID("Chb10").Listeners(l => { l.AfterRender.Handler = "Editable(this,'Chb13');"; }),
+                                    X.Component().Width(100),
+                                    X.CheckboxGroupFor(m => m.HEPATITISB_3era_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.HEPATITISB_3era_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C11');"}
+                                    }).ID("Chb11").Listeners(l => { l.AfterRender.Handler = "Editable(this,'Chb13');"; })
+                                    ,
+                                   X.Component().Width(100),
+                                   X.CheckboxGroupFor(m => m.HEPATITISB_1erRef_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.HEPATITISB_1erRef_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C12');"}
+                                    }).ID("Chb12").Listeners(l => { l.AfterRender.Handler = "Editable(this,'Chb13');"; }),
+                                    X.Component().Width(88),
+                                    X.CheckboxGroupFor(m => m.HEPATITISB_NoRecuerda_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.HEPATITISB_NoRecuerda_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C13');"/*, Disabled = HEPATITIS_B_NR*/}
+                                    }).ID("Chb13").Listeners(l => { l.AfterRender.Handler = "EditableNR(this,'Chb13');"; })
+
+
+                                  ))
+                      , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "150")); })
+                                .Items(
+
+                                    X.Label().Hidden(false).Border(false).Html("<font  size='2.5em'; color='black'>Hepatitis A</font>"),
+                                    X.Component().Width(140),
+                                    X.CheckboxGroupFor(m => m.HEPATITISA_1era_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.HEPATITISA_1era_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C14');"}
+                                    }).ID("Chb14").Listeners(l => { l.AfterRender.Handler = "Editable(this,'Chb16');"; })
+                                    ,
+                                   X.Component().Width(100),
+                                   X.CheckboxGroupFor(m => m.HEPATITISA_2da_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.HEPATITISA_2da_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C15');"}
+                                    }).ID("Chb15").Listeners(l => { l.AfterRender.Handler = "Editable(this,'Chb16');"; }),
+                                    X.Component().Width(315),
+                                    X.CheckboxGroupFor(m => m.HEPATITISA_NoRecuerda_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.HEPATITISA_NoRecuerda_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C16');"/*, Disabled = HEPATITIS_A_NR*/}
+                                    }).ID("Chb16").Listeners(l => { l.AfterRender.Handler = "EditableNR(this,'Chb16');"; })
+
+
+                                  ))
+                      , X.FieldSet().Border(true)
+                                         .Items(
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "150")); })
+                                .Items(
+                                    X.Label().Hidden(false).Border(false).Html("<font  size='2.5em'; color='black'>Neumococo</font>"),
+                                    X.Component().Width(135),
+                                    X.CheckboxGroupFor(m => m.NEUMOCOCO_1era_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.NEUMOCOCO_1era_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C17');"}
+                                    }).ID("Chb17").Listeners(l => { l.AfterRender.Handler = "Editable(this,'Chb20');"; })
+                                    ,
+                                   X.Component().Width(100),
+                                   X.CheckboxGroupFor(m => m.NEUMOCOCO_2da_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.NEUMOCOCO_2da_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C18');"}
+                                    }).ID("Chb18").Listeners(l => { l.AfterRender.Handler = "Editable(this,'Chb20');"; }),
+                                    X.Component().Width(100),
+                                    X.CheckboxGroupFor(m => m.NEUMOCOCO_3era_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.NEUMOCOCO_3era_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C19');"}
+                                    }).ID("Chb19").Listeners(l => { l.AfterRender.Handler = "Editable(this,'Chb20');"; })
+                                    ,
+                                   X.Component().Width(200),
+                                   X.CheckboxGroupFor(m => m.NEUMOCOCO_NoRecuerda_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.NEUMOCOCO_NoRecuerda_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this,'C20');"/*, Disabled = NEUMOCO_NR*/}
+                                    }).ID("Chb20").Listeners(l => { l.AfterRender.Handler = "EditableNR(this,'Chb20');"; })
+                                  ))
+                         , X.FieldSet().Border(true)
+                                            .Items(
+
+
+                               X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "150")); })
+                                .Items(
+
+                                    X.Label().Hidden(false).Border(false).Html("<font  size='2.5em'; color='black'>Antitetánica</font>"),
+                                    X.Component().Width(135),
+                                    X.CheckboxGroupFor(m => m.Antitetanica_1era_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.Antitetanica_1era_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C21');"}
+                                    }).ID("Chb21").Listeners(l => { l.AfterRender.Handler = "Editable(this,'Chb24');"; })
+                                    ,
+                                   X.Component().Width(100),
+                                   X.CheckboxGroupFor(m => m.Antitetanica_2da_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.Antitetanica_2da_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C22');"}
+                                    }).ID("Chb22").Listeners(l => { l.AfterRender.Handler = "Editable(this,'Chb24');"; }),
+                                    X.Component().Width(100),
+                                    X.CheckboxGroupFor(m => m.Antitetanica_3era_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.Antitetanica_3era_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C23');"}
+                                    }).ID("Chb23").Listeners(l => { l.AfterRender.Handler = "Editable(this,'Chb24');"; })
+                                    ,
+                                   X.Component().Width(200),
+                                   X.CheckboxGroupFor(m => m.Antitetanica_NoRecuerda_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.Antitetanica_NoRecuerda_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C24');"/*, Disabled = ANTITETANICA_NR*/}
+                                    }).ID("Chb24").Listeners(l => { l.AfterRender.Handler = "EditableNR(this,'Chb24');"; })
+
+                                  ))
+                            , X.FieldSet().Border(true)
+                            .Items(
+                              X.Container().Layout(LayoutType.HBox).MarginSpec("00 00 00 00")
+                                .Defaults(d => { d.Add(new Parameter("LabelWidth", "150")); })
+                                .Items(
+
+                                    X.Label().Hidden(false).Border(false).Html("<font  size='2.5em'; color='black'>Papiloma Virus (PVH)</font>"),
+                                    X.Component().Width(80),
+                                    X.CheckboxGroupFor(m => m.Papiloma_1era_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.Papiloma_1era_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C25');"}
+                                    }).ID("Chb25").Listeners(l => { l.AfterRender.Handler = "Editable(this,'Chb28');"; })
+                                    ,
+                                   X.Component().Width(100),
+                                   X.CheckboxGroupFor(m => m.Papiloma_2da_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.Papiloma_2da_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C26');"}
+                                    }).ID("Chb26").Listeners(l => { l.AfterRender.Handler = "Editable(this,'Chb28');"; }),
+
+                                   X.Component().Width(100),
+                                   X.CheckboxGroupFor(m => m.Papiloma_3era_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.Papiloma_3era_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C27');"}
+                                    }).ID("Chb27").Listeners(l => { l.AfterRender.Handler = "Editable(this,'Chb28');"; }),
+                                   X.Component().Width(200),
+                                   X.CheckboxGroupFor(m => m.Papiloma_NoRecuerda_flag, new List<Checkbox.Config> {
+                                        new Checkbox.Config{BoxLabel = "", InputValue="S", Checked=(Model.Papiloma_NoRecuerda_flag=="S"?true:false), ReadOnly=indicaModoLectura, Handler="eventoCheck(this, 'C28');"/*, Disabled = PAPILOMA_NR*/}
+                                    }).ID("Chb28").Listeners(l => { l.AfterRender.Handler = "EditableNR(this,'Chb28');"; })
+                                  ))
+
+
+
+
+                         , X.Container().Layout(LayoutType.HBox).MarginSpec("05 05 05 00")
+                                    .Defaults(d => { d.Add(new Parameter("LabelWidth", "330")); })
+                                    .Items(
+                                        X.Label().Hidden(false).Border(false).Html("<font  size='2.5em'; color='black'>INFLUENZA(última fecha)</font>"),
+                                        X.Component().Width(100),
+                                         X.RadioGroupFor(m => m.INFLUENZA_flag_Recuerda, new List<Radio.Config> {
+                                                new Radio.Config{BoxLabel = "Si"
+                                                                    ,Width=60
+                                                                  ,  InputValue = "S"
+                                                                  ,  Checked=(Model.INFLUENZA_flag_Recuerda=="S" ? true:false)
+                                                                  ,  ReadOnly =indicaModoLectura
+                                                                  ,  Handler="eventoRadioInfluenza(this, 'R1', 'S');"
+                                                                  },
+                                                new Radio.Config{BoxLabel = "No"
+                                                                    ,Width=60
+                                                                  , InputValue = "N"
+                                                                  , Checked=(Model.INFLUENZA_flag_Recuerda=="N" ? true:false)
+                                                                  , ReadOnly =indicaModoLectura
+                                                                  , Handler="eventoRadioInfluenza(this, 'R1', 'N');"
+                                                                    },
+                                                new Radio.Config{BoxLabel = "No Recuerda"
+                                                                    ,Width=100
+                                                                  , InputValue = "R"
+                                                                  , Checked=(Model.INFLUENZA_flag_Recuerda=="R" ? true:false)
+                                                                  , ReadOnly =indicaModoLectura
+                                                                  , Handler="eventoRadioInfluenza(this, 'R1', 'X');"
+                                                                }
+
+                                        }),
+
+                                        X.DateFieldFor(m => m.INFLUENZA).Format("MM/yyyy").Width(200).ReadOnly(indicaModoLectura).PickerAlign("br-tr")
+                                        .FieldLabel("").Hidden(true)
+                /* .Value(Model.Accion == "NUEVO" ? DateTime.Now : Model.INFLUENZA)*/
+                                        , X.TextFieldFor(m => m.Estado).Hidden(true)
+                                        , X.Component().Width(40)
+                                        , X.TextFieldFor(m => m.ValorOpcional)
+                                        .Hidden(false).ReadOnly(indicaModoLectura).MaxLength(300)
+                                        .EnableKeyEvents(true)
+                                        .Listeners(l =>
+                                        {
+                                            l.KeyPress.Handler = "textoinfluenza(this)";
+                                            l.KeyDown.Handler = "setIndicaCambios(true)"; 
+                                        })
+                                        .FieldLabel("").Flex(1).ID("IDValorOpcional")
+                                        .Disabled(Model.INFLUENZA_flag_Recuerda == "S" ? false : true)
+                                    )
+
+                            ),
+
+                          X.FieldSet().ID("fsOtras")
+                           .Collapsible(true)
+                           .ColumnWidth(0.4)
+                           .AutoScroll(true)
+                           .Height(200)
+                           .Title("OTRAS")
+                            .Layout(LayoutType.VBox)
+                            .MarginSpec("05 05 0 05")
+                            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                            .Items(
+                            X.FieldSet()
+                                .Title("AGREGAR OTRAS INMUNIZACIONES:")
+                                .Items
+                                (
+
+                                Html.X().Container().Layout(LayoutType.HBox).Defaults(d => { d.Add(new Parameter("LabelWidth", "90")); })
+                                    .Items(
+                                        X.TextField().ID("cmbTipAt").Disabled(false).Name("buscarCod").ReadOnly(indicaModoLectura).MaxLength(100)
+                                         .FieldLabel("Otra inmunización").PaddingSpec("3").InputWidth(250).LabelWidth(180)
+                                         .FieldLabel("Otra inmunización").PaddingSpec("3").InputWidth(250).LabelWidth(180)
+                                         .EnableKeyEvents(true)
+                                         .Listeners(l => { l.KeyPress.Handler = "ReplaceCaracterEspec(this)"; })
+                                         ,
+                                        X.Component().Width(20).PaddingSpec("3"),
+                                        X.Button().Text("Agregar").Icon(Icon.Add).PaddingSpec("3").Hidden(indicaModoLectura)
+                               .Handler("addRecord(App.GridPanelInmunizacion, 'IdOtrasVacunas',  '" + Model.UnidadReplicacion + "', App.cmbTipAt );")
+                                   )),
+
+
+                      // grilla
+                       X.GridPanel().Flex(1)
+                        .ID("GridPanelInmunizacion")
+                        .Border(false)
+                        .Store(
+                            Html.X().Store().ID("StoreAtencion").Model(
+                            Html.X().Model().IDProperty("IdOtrasVacunas").Fields(
+                                    Html.X().ModelField().Name("UnidadReplicacion"),
+                                    Html.X().ModelField().Name("IdEpisodioAtencion"),
+                                    Html.X().ModelField().Name("IdPaciente"),
+                                    Html.X().ModelField().Name("IdepisodioClinico"),
+                                    Html.X().ModelField().Name("Secuencia"),
+                                    Html.X().ModelField().Name("OtrasVacunas"),
+                                    Html.X().ModelField().Name("IdUsuarioCreacion"),
+                                    Html.X().ModelField().Name("IdFechaCreacion"),
+                                    Html.X().ModelField().Name("IdUsuarioModificacion"),
+                                    Html.X().ModelField().Name("IdFechaModificacion"),
+                                    Html.X().ModelField().Name("Accion"),
+                                    Html.X().ModelField().Name("Version"))
+                        )
+                        .Proxy(proxy => proxy.Add(
+                        Html.X().AjaxProxy().Url("CCEPF013_getGrillaInmunizacionesAdulto").Reader(reader => reader.Add(
+                                Html.X().JsonReader().Root("data").TotalProperty("total").IDProperty("IdOtrasVacunas")))))
+                //.Parameters(ps => ps.Add(new
+                //   {
+                //       agente = Model.IdUnidadServicio,
+                //       tipoagente = Model.IdUnidadServicioPadre,
+                //       codagente = Model.CodigoUnidadServicio
+                //   }))
+                         .AutoLoad(true)
+                            )
+                    .ColumnModel(
+                            Html.X().ComponentColumn().Editor(true).DataIndex("UnidadReplicacion").Text("Unidad Replicacion").Width(110).Hidden(true)
+                                    .Component(Html.X().TextField().ReadOnly(true)),
+                            Html.X().ComponentColumn().Editor(true).DataIndex("IdEpisodioAtencion").Text("Episodio Atencion").Width(100).Hidden(true)
+                                    .Component(Html.X().NumberField().ReadOnly(true)),
+                            Html.X().ComponentColumn().Editor(true).DataIndex("IdPaciente").Text("Paciente ").Width(100).Hidden(true)
+                                    .Component(Html.X().NumberField().ReadOnly(true)),
+                            Html.X().ComponentColumn().Editor(true).DataIndex("Secuencia").Text("Secuencia ").Width(100).Hidden(true)
+                                    .Component(Html.X().NumberField().ReadOnly(true)),
+                            Html.X().ComponentColumn().Editor(true).DataIndex("OtrasVacunas").Text("Otras Vacunas").Width(250).Hidden(false).Flex(1)
+                                    .Component(Html.X().TextField().ReadOnly(true)),
+
+                            Html.X().CommandColumn().Width(80)
+                                                    .Text("Acción")
+                                                    .Commands(
+                                                        Html.X().GridCommand()
+                                                        .CommandName("Delete").Disabled(indicaModoLectura)
+                                                        .Icon(Icon.Delete).Text("")
+                                                        )
+                                                    .Listeners(ls => ls.Command.Handler = "deleteActual(record);"),
+                            Html.X().ComponentColumn().Editor(true)
+                                                      .DataIndex("Accion")
+                                                      .Text("ACCION")
+                                                      .Hidden(true)
+                                                      .Component(
+                                                      Html.X().TextField().ReadOnly(true))
+                                                            )
+                      .SelectionModel(
+                                Html.X().RowSelectionModel().Mode(SelectionMode.Multi))
+                      .Plugins(
+                                Html.X().CellEditing())
+                      .TopBar(
+                                Html.X().Toolbar().Hidden(indicaModoLectura)
+                                    .Items(
+                                            Html.X().ToolbarSeparator()
+                                        , Html.X().Label()
+                                                .Html("<b><font color='" + COLOR_BLUE01 + "'> Otras  " + DESC_ADD + "</font></b>")
+                                        , X.ToolbarFill()
+
+                                    )
+                                )
+                         )
+
+                    // fin grilla
+
+
+
+
+                        //ADD PARA MSGS
+                        ,
+
+                       
+                        X.TextFieldFor(m => m.FechaCreacion).Hidden(true),
+                        X.TextFieldFor(m => m.UsuarioCreacion).Hidden(true),
+
+                        X.TextArea().ID("taAlerts")
+                        .Border(false)
+                        .StyleSpec("background:white;border:1px solid gray;")
+                        .FieldStyle("color: red")
+                        .Hidden(true)
+                        .ReadOnly(true)
+                // fin add
+                     )
+
+                    .TopBar(X.Toolbar().ID("bar").Items(
+                            X.ToolbarSpacer(20),
+                            X.TextField().Width(15).FieldStyle("border-color: " + COLOER_IND_OBLIGA).ReadOnly(true).Hidden(indicaModoLectura),
+                            X.Label().Html("<b><font color='" + COLOER_IND_OBLIGA + "'>Campos Obligatorios</font></b>").Hidden(indicaModoLectura),
+
+                            X.ToolbarSpacer(20),
+                            Html.X().Container().Layout(LayoutType.HBox)
+                            .ID("conthbIndicaError").Hidden(true).Items(
+                                X.Label().Html("<font  size='1.9em'; color='red'>(</font>"),
+                                X.Label().Html("<font  size='3.9em'; color='red'><b>&#161;</b></font>"),
+                                X.Label().Html("<font  size='1.9em'; color='red'>) Verificar los errores presentados</font>")
+                            ),
+
+                            X.ToolbarFill(),
+
+                            X.Button()
+                            .Text("Imprimir")
+                            .Icon(Icon.Report)
+                            .Hidden(!visibleImpresion)
+                            .ID("btnImpresion")
+                            .Handler("eventoVisorReporte('');"),
+
+                            X.Button()
+                            .Text("Imprimir Todos")
+                            .Icon(Icon.ReportGo)
+                            .Hidden(!visibleImpresion)
+                            .ID("btnImpresionHC")
+                            .Handler("eventoVisorReporte('HC');"),
+
+                            X.ToolbarSpacer().Width(40),
+
+                            X.Button()
+                            .Text("Guardar").Icon(Icon.Disk)
+                            .ID("cmdGuardar").Hidden(indicaModoLectura)
+                            .CausesValidation(false)
+                            .DirectEvents(de =>
+                            {
+                                de.Click.Url = Url.Action("CCEPF013_Save_AntecedentesPersonalesIAdul");
+                                de.Click.EventMask.ShowMask = true;
+                                de.Click.Before = "return EnviarData(this.up('grid'));";
+                                //de.Click.Before = "beforeSave(App.formactual); return App.formactual.getForm().isValid();";
+                                de.Click.Success = "onSuccess(result.data);";
+                                de.Click.Failure = "onFailure();";
+                            }),
+
+                            X.Button()
+                                .Text("Cancelar")
+                                .ID("btnCancel").Hidden(indicaModoLectura)
+                                .Icon(Icon.Cancel)
+                                .Handler("eventoCancelar(this.up('form'));"),
+
+                            X.Button()
+                                .Text("Editar")
+                                .ID("btnOnEdit")
+                                .Icon(Icon.ApplicationFormEdit)
+                                .Hidden(true)
+                                .Handler("eventoOnEditar(App.btnOnEdit);")
+
+                        ))
+                        .Listeners(l => l.FieldChange
+                            .Handler = "eventoCambio(true);"
+
+                        )
+                );
+        }
+        )
+
+
+
+    )
+
+}
+

@@ -1,0 +1,454 @@
+﻿@model SoluccionSalud.Entidades.Entidades.VW_PERSONAPACIENTE
+@{
+
+    var PARAM_COLOROBLIGA_FORM = AppSaludMVC.Controllers.UTILES_MENSAJES.loadParametro_Formulario("COL_BCOBLI", "TEXTO", true); ;
+
+}
+<script>
+    function eventoResize() {
+
+        //alert("aa");
+        if (parent.App.PanelA != null) {
+            if (parent.App.PanelA.getBody().App.formactual != null) {
+                var kk = 160;
+                var scrH = screen.height;
+                var northH = (App.PanelMainNorth != null ? (App.PanelMainNorth.height != null ? App.PanelMainNorth.height : 20) : 20);
+                if (!App.PanelMainSouth.collapsed) {
+                    var southH = (App.PanelMainSouth != null ? (App.PanelMainSouth.height != null ? App.PanelMainSouth.height : 20) : 20);
+                    if (southH == 0) {
+                        southH = 30;
+                    }
+                } else {
+                    southH = 30;
+                }
+                var dimCentral = (scrH - (northH + southH) - kk);
+                parent.App.PanelA.getBody().App.formactual.setHeight(dimCentral);
+            }
+        }
+    }
+
+    function eventoCollapseNorth() {
+        if (parent.App.PanelA != null) {
+            if (parent.App.PanelA.getBody().App.formactual != null) {
+                var kk = 140;
+                var scrH = screen.height;
+                var northH = 20;
+                if (!App.PanelMainSouth.collapsed) {
+                    var southH = (App.PanelMainSouth != null ? (App.PanelMainSouth.height != null ? App.PanelMainSouth.height : 20) : 20);
+                    if (southH == 0) {
+                        southH = 30;
+                    }
+                } else {
+                    southH = 30;
+                }
+                var dimCentral = (scrH - (northH + southH) - kk);
+                parent.App.PanelA.getBody().App.formactual.setHeight(dimCentral);
+            }
+        }
+    }
+    function eventoCollapseSouth() {
+        if (parent.App.PanelA != null) {
+            if (parent.App.PanelA.getBody().App.formactual != null) {
+                var kk = 140;
+                var scrH = screen.height;
+                var northH = (App.PanelMainNorth != null ? (App.PanelMainNorth.height != null ? App.PanelMainNorth.height : 20) : 20);
+                var southH = 30;
+                var dimCentral = (scrH - (northH + southH) - kk);
+                parent.App.PanelA.getBody().App.formactual.setHeight(dimCentral);
+            }
+        }
+    }
+
+    function EventoSalirSys() {
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("eventoSalirSistema"))',
+            params: {
+                indicador: 'SALIR'
+            }
+        });
+    };
+
+    function eventoAbout() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("eventoAbout"))',
+            params: {
+                indicador: 'VER'
+            }
+        });
+    };
+
+    var mostrarMsgNotifyGeneral = function (tituloPar, mensajePar, tipoPar) {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeNotifyPosi"))',
+            params: {
+                titulo: tituloPar,
+                message: mensajePar,
+                tipo: tipoPar
+            }
+        });
+    }
+
+</script>
+
+@(
+ Html.X().Viewport()
+.Layout(LayoutType.Border)
+.ID("ViewportMainForm")
+
+ .Items(p =>
+ {
+     p.Add(
+         Html.X().Panel()
+         //.Title("North")
+         .ID("PanelMainNorth2")
+         .Height(32)
+         .Region(Region.North)
+         //.Header(false)
+         //.Collapsible(true)
+         // .Collapsed(true)
+         //.Split(true)
+         .AutoScroll(true)
+         .Border(true)
+         .Resizable(false)
+         .Listeners(l =>
+         {
+             //  l.Resize.Handler = " eventoResize(); ";
+             //  l.Expand.Handler = " eventoResize();";
+             // l.Collapse.Handler = " eventoCollapseNorth(); ";
+         }
+         )
+         //.CollapseMode(CollapseMode.Mini)
+         .Margins("0 0 0 0")
+         .TopBar(
+                Html.X().Toolbar()
+                .Height(30)
+                .Border(false)
+                .Items(
+                    items =>
+                    {
+                        items.Add(new ToolbarSpacer { Width = 10 });
+                        items.Add(new Image
+                        {
+                            ImageUrl = "~/resources/images/logohce.png",
+                            Width = 67,
+                            Align = System.Web.UI.WebControls.ImageAlign.Middle,
+                            Height = 28
+                        });
+                        items.Add(new ToolbarSpacer { Width = 20 });
+                        items.Add(new Label
+                        {
+                            //Width = 400,
+                            //Html = "<span style='color:#284A89;'><b> Establecimiento: " + (Model != null ? Model.DireccionReferencia : "nulo") + "</b></span>"
+                        });
+                        items.Add(new ToolbarSpacer { Width = 20 });
+                        items.Add(new Label
+                        {
+                            //Width = 110,
+                            //OBS: HARCCODE??
+                            //Html = "<span style='color:#284A89;'><b> Periodo: " + (Model != null ? Model.CentroCostos : "nulo") + " </b></span>"
+
+                        });
+                        items.Add(new ToolbarSpacer { Width = 20 });
+                        items.Add(new Label
+                        {
+                            //Width = 250,
+                            //OBS: HARCCODE??
+                            //Html = "<span style='color:#284A89;'><b> Base de Datos: " + (Model != null ? Model.DescripcionHistoria : "nulo") + " </b></span>"
+
+                        });
+
+                        items.Add(new ToolbarFill());
+                        items.Add(new Label
+                        {
+                            //Width = 300,
+                            Html = "<span style='color:#284A89;'><b> " + Model.CodigoBeneficio + ": " +
+                                    (Model != null ? Model.NombreCompleto : "") + " - " +
+                                    (Model != null ? "(" + Model.Persona + ")" : "")
+                                    + " </b></span>"
+                        });
+                        items.Add(new ToolbarSeparator());
+                        items.Add(new Button
+                        {
+                            Icon = Icon.UserHome,
+                            Html = "<span style='color:#284A89;'><b> Mi Sesión </b></span>",
+                            Margins = "0 0 0 0",
+                            Width = 120,
+                            /*Listeners =
+                                {
+                                    Click =
+                                    {
+                                        Handler = "Ext.Msg.alert('TEST tool');"
+                                    }
+                                },*/
+                            Menu =
+                            {
+                                new Menu{
+                                    Items = {
+                                        new MenuItem { Text =  "Configuración", Icon = Icon.Cog },
+                                        new MenuItem {
+                                            Text =  "Acerca de...",
+                                            Icon = Icon.Information ,
+                                            Handler = "eventoAbout();"
+
+                                        },
+                                        new MenuItem {
+                                            Text =  "Salir",
+                                            Icon = Icon.DoorOut ,
+                                            Handler = "EventoSalirSys();"
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+
+
+                )
+         )
+         .Items(
+            //   Html.X().Container()
+            //   .ID("North1")
+            ////.AutoScroll(true)
+            ////.StyleSpec("border:solid 1px black; height:150px; width:300px;")
+            //   .Loader(Html.X().ComponentLoader()
+            //       .Url(Url.Action("PanelNorth"))
+            //       .Mode(LoadMode.Script)
+            //       .Params(new { containerId = "North1" })
+
+            //      )
+            )
+         );
+
+
+
+
+
+     p.Add(
+         Html.X().Panel()
+         .Title("DEVOLUCION DE MEDICAMENTOS")
+         .ID("PanelMainNorth")
+         .Height(30)
+         .Region(Region.North)
+         //.Header(false)
+         .Collapsible(false)
+         .Collapsed(false)
+         .Split(false)
+         .AutoScroll(false)
+         .Border(true)
+         .Resizable(false).Expand(false)
+         //.Listeners(l =>
+         //{
+         //    l.Resize.Handler = " eventoResize(); ";
+         //    l.Expand.Handler = " eventoResize();";
+         //    l.Collapse.Handler = " eventoCollapseNorth(); ";
+         //}
+         //)
+         //.CollapseMode(CollapseMode.Mini)
+         .Margins("0 0 0 0")
+         /*.TopBar(
+                Html.X().Toolbar()
+                .Height(30)
+                .Border(false)
+                .Items(
+                    items =>
+                    {
+                        items.Add(new ToolbarSpacer { Width = 10 });
+                        items.Add(new Image
+                        {
+                            ImageUrl = "~/resources/images/logohce.png",
+                            Width = 67,
+                            Align = System.Web.UI.WebControls.ImageAlign.Middle,
+                            Height = 28
+                        });
+                        items.Add(new ToolbarSpacer { Width = 20 });
+                        items.Add(new Label
+                        {
+                            //Width = 400,
+                            Html = "<span style='color:#284A89;'><b> Establecimiento: " + (Model != null ? Model.DireccionReferencia : "nulo") + "</b></span>"
+                        });
+                        items.Add(new ToolbarSpacer { Width = 20 });
+                        items.Add(new Label
+                        {
+                            //Width = 110,
+                            //OBS: HARCCODE??
+                            Html = "<span style='color:#284A89;'><b> Periodo: " + (Model != null ? Model.CentroCostos : "nulo") + " </b></span>"
+
+                        });
+                        items.Add(new ToolbarSpacer { Width = 20 });
+                        items.Add(new Label
+                        {
+                            //Width = 250,
+                            //OBS: HARCCODE??
+                            Html = "<span style='color:#284A89;'><b> Base de Datos: " + (Model != null ? Model.DescripcionHistoria : "nulo") + " </b></span>"
+
+                        });
+
+                        items.Add(new ToolbarFill());
+                        items.Add(new Label
+                        {
+                            //Width = 300,
+                            Html = "<span style='color:#284A89;'><b> " + Model.CodigoBeneficio + ": " +
+                                    (Model != null ? Model.NombreCompleto : "") + " - " +
+                                    (Model != null ? "(" + Model.Persona + ")" : "")
+                                    + " </b></span>"
+                        });
+                        items.Add(new ToolbarSeparator());
+                        items.Add(new Button
+                        {
+                            Icon = Icon.UserHome,
+                            Html = "<span style='color:#284A89;'><b> Mi Sesión </b></span>",
+                            Margins = "0 0 0 0",
+                            Width = 120,
+                            /*Listeners =
+                                {
+                                    Click =
+                                    {
+                                        Handler = "Ext.Msg.alert('TEST tool');"
+                                    }
+                                },*
+                            Menu =
+                            {
+                                new Menu{
+                                    Items = {
+                                        new MenuItem { Text =  "Configuración", Icon = Icon.Cog },
+                                        new MenuItem {
+                                            Text =  "Acerca de...",
+                                            Icon = Icon.Information ,
+                                            Handler = "eventoAbout();"
+
+                                        },
+                                        new MenuItem {
+                                            Text =  "Salir",
+                                            Icon = Icon.DoorOut ,
+                                            Handler = "EventoSalirSys();"
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+
+
+                )
+         )*/
+         .Items(
+            //   Html.X().Container()
+            //   .ID("North1")
+            ////.AutoScroll(true)
+            ////.StyleSpec("border:solid 1px black; height:150px; width:300px;")
+            //   .Loader(Html.X().ComponentLoader()
+            //       .Url(Url.Action("PanelNorth"))
+            //       .Mode(LoadMode.Script)
+            //       .Params(new { containerId = "North1" })
+
+            //      )
+            )
+         );
+
+     p.Add(Html.X().Panel().Title("Center")
+         .ID("PanelMainCenter")
+          .Layout(LayoutType.Anchor)
+         // .Layout(Ext.Net.LayoutType.Fit)
+         //.Height(100)
+         .Region(Region.Center)
+         .Header(false)
+         .Collapsible(true)
+         .Split(true)
+         .Resizable(false)
+         .CollapseMode(CollapseMode.Mini)
+         //.Margins("0 5 5 5")
+         .Border(false)
+         .Items(items =>
+         {
+             items.Add(new TextField
+             {
+                 ID = "txtPARAMETRO01",
+                 Value = PARAM_COLOROBLIGA_FORM,
+                 Hidden = true
+
+             });
+             items.Add(new Panel
+             {
+                 ID = "Center1",
+                 Region = Region.Center,
+                 Border = false,
+                 //BodyPadding = 10,
+                 Header = false
+             });
+         }));
+
+     p.Add(Html.X().Panel()
+         .Title("Árbol de Macroprocesos")
+         .ID("WestMain")
+         .Width(100)
+         .Region(Region.West)
+         .Layout(LayoutType.Fit)
+        .Width(320)
+
+        //.Header(false)
+        .Collapsible(true)
+        .Split(true)
+        //.CollapseMode(CollapseMode.Mini)
+        .Margins("0 0 0 0")
+        .Border(false)
+
+        .Items(items =>
+        {
+            items.Add(new Panel
+            {
+                ID = "West1",
+                //  Title = "Procesos",
+                Width = 240,
+                //Header=false,
+                Border = true,
+                Layout = "Fit",
+                Region = Region.West,
+                Loader = Html.X().ComponentLoader()
+                    .Url(Url.Action("PanelWest9"))
+                    .Mode(LoadMode.Script)
+                    .Params(new { containerId = "West1" })
+            });
+
+        })
+
+        );
+
+
+     p.Add(Html.X().Panel()
+        .Title("Bienes y Recursos")
+        .Region(Region.East)
+        .Layout(LayoutType.Card)
+        .Width(320)
+        //.Header(false)
+        .Collapsible(true)
+        .Collapsed(true)
+        //.Hidden(true)
+        .Split(true)
+        .ID("East1")
+        //.CollapseMode(CollapseMode.Mini)
+        .Margins("0 0 0 0")
+        .Border(false)
+        .AutoScroll(true)
+        //.Loader(Html.X().ComponentLoader()
+        //            .Url(Url.Action("PanelEast"))
+        //            .Mode(LoadMode.Script)
+        //            .Params(new { containerId = "East1" })
+        // )
+        .Items(items =>
+        {
+            //items.Add(new Panel
+            //{
+            //    Title = "East1",
+            //    HideMode = HideMode.Offsets,
+            //    Icon = Icon.Application,
+            //    Region = Region.East,
+            //    Loader = Html.X().ComponentLoader()
+            //        .Url(Url.Action("PanelEast"))
+            //        .Mode(LoadMode.Script)
+            //        .Params(new { containerId = "East1" })
+
+            //});
+        })
+        );
+ }))

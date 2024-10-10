@@ -1,0 +1,214 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.PERSONAMAST
+
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+}
+
+@section cabecera
+{
+
+    <script>
+
+        var redirect = function () {
+            window.location.href = ' @Url.Action("Index", "HClinica") ';
+        }
+
+        var Valores;
+        var template = '<span style="color:{0};">{1}</span>';
+
+        var change = function (value) {
+            return Ext.String.format(template, (value > 0) ? "green" : "red", value);
+        };
+
+        var pctChange = function (value) {
+            return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+        };
+
+        var onSuccess = function (grid, data) {
+            grid.show();
+            grid.getStore().loadData(data);
+        };
+
+        function deleteSelected(grid) {
+            var store = grid.store,
+                records = grid.selModel.getSelection();
+
+            store.remove(records);
+            store.load(true);
+        }
+
+
+    </script>
+     
+}
+
+@section cuerpo
+{
+    @(Html.X().Panel()
+        .Layout(LayoutType.VBox)
+        .Items(regions =>
+        {
+            regions.Add(Html.X().Panel()
+                    .ItemID("north")
+                    .Height(50)
+                    .Header(false)
+                    .Border(false)
+                    .Layout(LayoutType.Card)
+                    .Items(
+                        Html.X().Container()
+                                .Layout(LayoutType.HBox)
+                                .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Middle })
+                                .Items(items =>
+                                {
+                                    items.Add(new Container
+                                    {
+                                        LayoutConfig = {
+                                                new HBoxLayoutConfig {Align = HBoxAlign.Top, Pack = BoxPack.Start}},
+                                        Width = 600,
+                                        Height = 100,
+                                        Margins = "5 5 5 5",
+                                        Items = {
+                                                Html.X().ComboBox()
+                                                    .ID("idTipoServicio")
+                                                    .Editable(false)
+                                                    .QueryMode(DataLoadMode.Local)
+                                                    .TriggerAction(TriggerAction.All)
+                                                    .EmptyText("Select a country")
+                                                    .Value("DE")
+                                                    .Listeners(ls =>
+                                                        ls.Select.Handler = "App.ComboBoxCity.clearValue(); App.ComboBoxCity.getStore().load()"
+                                                    )
+                                                    .Items(
+                                                        new ListItem("Codigo", "CO"),
+                                                        new ListItem("Descripción", "DE")),
+                                         Html.X().TextField()
+                                            .ID("txtSearch")
+                                            .Margins("0 10 0 0")
+                                            .EmptyText("Search...")
+                                            .Width(250),
+                                  
+                                         Html.X().Button()
+                                            .Text("Buscar")
+                                            .Icon(Icon.Find)
+                                            .DirectEvents(directEvents =>
+                                                        {
+                                                            directEvents.Click.IsUpload = true;
+                                                            directEvents.Click.Url = Url.Action("../gestion/GrillaListadoPacientes");
+                                                            directEvents.Click.Success = "onSuccess(App.GridPanel1, result.data);";
+                                                            directEvents.Click.EventMask.ShowMask = true;
+                                                            directEvents.Click.EventMask.Msg = "Loading...";
+                                                            //directEvents.Click.ExtraParams.Add(new
+                                                            //                           {
+                                                            //                                start = 1,
+                                                            //                                limit = 4
+                                                            //                            });
+                                                             directEvents.Click.ExtraParams.Add(new
+                                                                                            {
+                                                                                                start =1,
+                                                                                                limit = 5,
+                                                                                                descript = JRawValue.From("App.txtSearch.getValue()"),
+                                                                                            });
+
+
+                                                        }),
+                                             Html.X().Container().Flex(1),
+                                             Html.X().Button()
+                                                    .Text("Historia Clinica")
+                                                    .Icon(Icon.ApplicationEdit)
+                                                   // .Handler("App.PanelNorth.Collapsible(this);")
+                                                    .DirectEvents(directEvents =>
+                                                                {
+                                                                    //directEvents.Click.IsUpload = true;
+                                                                    directEvents.Click.Url = Url.Action("GetSelectPaciente");
+                                                                    //directEvents.Click.Success = "onSuccess(App.GridPanel1, result.data);";
+                                                                    directEvents.Click.EventMask.ShowMask = true;
+                                                                    directEvents.Click.EventMask.Msg = "Loading...";
+                                                                    directEvents.Click.ExtraParams.Add(new
+                                                                            {
+                                                                                Name = "selection",
+                                                                               // valor = "App.GridPanel1.getSelectionModel().getSelected()",
+                                                                                // selection =  JRawValue.From("this.getView().getSelectionModel().getSelection()[0]"),
+                                                                              selection = new JRawValue("App.GridPanel1.getSelectionSubmit().getSelectionModelField().getValue()"),
+                                                                               // Value = new JRawValue("this.getView().getSelectionModel().getSelection()[0]"),
+                                                                                //grid.getView().getSelectionModel().getSelection()[0]
+                                                                                Mode = ParameterMode.Raw
+                                                                            });
+                                                                    directEvents.Click.EventMask.Target = MaskTarget.Parent;
+                                                                    directEvents.Click.EventMask.CustomTarget = "Window1";
+                                                                    directEvents.Click.Before = "this.disable()";
+                                                                })
+
+
+                                                    }
+                                    }
+                                            );
+                                })
+                        )
+                );
+            regions.Add(Html.X().Panel()
+                .ItemID("center")
+               .Height(600)
+               .Header(false)
+               .Border(false)
+               .Items(
+                        Html.X().GridPanel()
+                                        .Title("Listado de Pacientes")
+                                         .Scroll(ScrollMode.Both)
+                                         .AutoScroll(true)
+                                        .Layout(LayoutType.Anchor)
+                                        .Anchor("100% 100%")
+                                        .Height(500)
+                                        .ID("GridPanel1")
+                                        .Frame(true)
+                                        .Margins("0 0 2 2")
+                                        .Border(false)
+                                       .Store(store => store.Add(Html.X().Store()
+                                       .AutoLoad(true)
+                                       .RemoteSort(false)
+                                       .IsPagingStore(true)
+                                       .RemotePaging(true)
+                                       .PageSize(5)
+                                       .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                           .Url("../Gestion/GrillaListadoPacientes")
+                                                           .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                                                                  .Root("data")
+                                                                                                  .TotalProperty("total")
+                                                                                                  .IDProperty("PERSONA")))))
+                                      .Model(model => model.Add(Html.X().Model()
+                                                       .Fields(fields =>
+                                       {
+
+                                           fields.Add(Html.X().ModelField().Name("PERSONA"));
+                                           fields.Add(Html.X().ModelField().Name("NOMBRECOMPLETO"));
+                                           fields.Add(Html.X().ModelField().Name("TIPODOCUMENTO"));
+                                           fields.Add(Html.X().ModelField().Name("DOCUMENTO"));
+                                           fields.Add(Html.X().ModelField().Name("ESTADO"));
+
+                                       })))))
+
+
+                                       .ColumnModel(columnModel =>
+                                       {
+                                           columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("PERSONA").Flex(1).Hidden(true));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Apellidos y Nombre").DataIndex("NOMBRECOMPLETO").Width(280));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Tipo").DataIndex("TIPODOCUMENTO").Width(100));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Documento").DataIndex("DOCUMENTO").Width(150));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("ESTADO").Width(100));
+
+                                       })
+
+                                       .BottomBar(bar => bar.Add(Html.X().PagingToolbar()
+                                                                         .DisplayInfo(true)
+                                                                         .DisplayMsg("Displaying customers {0} - {1} of {2}")))
+                                       .View(view => view.Add(Html.X().GridView()))
+                                       .Border(false)
+                    )
+                );
+        })
+    )
+
+
+
+}

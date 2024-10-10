@@ -1,0 +1,300 @@
+﻿@model SoluccionSalud.Entidades.Entidades.VW_PERSONAPACIENTE
+@{
+    var X = Html.X();
+
+    var tipotrabajordesc = Model.TipoTrabajador + ": " +
+                                   (Model != null ? Model.NombreCompleto : "") + " - " +
+                                   (Model != null ? "(" + Model.Persona + ")" : "")
+                                   ;
+    var usuariodesc =
+       (Model != null ? "" + Model.USUARIO : "");
+
+
+}
+
+
+<html lang="en" class="javatmp-default-admin-layout">
+<head>
+    <title></title>
+    <meta name="description" content="Bootstrap Template by javatmp.com">
+    <meta name="keywords" content="Bootstrap admin and dashboard template built using HTML 5 , CSS 3 , jQuery , Bootstrap 4 and Java">
+
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link href="~/resources/plantilla/dist/css/javatmp-plugins-all.min.css" rel="stylesheet" type="text/css" />
+    <link href='~/resources/plantilla/dist/css/javatmp-plugins-print-all.min.css' rel='stylesheet' media='print' />
+    <link id="themeStyleSheet" href="~/resources/plantilla/dist/css/javatmp-schooly.min.css" rel="stylesheet" type="text/css" />
+    <link href="~/resources/plantilla/dist/css/font-family-en.min.css" rel="stylesheet" type="text/css" />
+
+
+    <script src="~/resources/plantilla/dist/js/javatmp-plugins-all.min.js" type="text/javascript"></script>
+    <script src="~/resources/plantilla/dist/js/javatmp-plugins-all-locale-en.min.js" type="text/javascript"></script>
+    <script src="~/resources/plantilla/dist/js/javatmp.min.js" type="text/javascript"></script>
+
+
+    <script>
+
+
+        function EventoSalirSyss() {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("eventoSalirSistemas"))',
+                params: {
+                    indicador: 'SALIR'
+                }
+            });
+        };
+
+        function eventoPassword() {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("eventoPassword"))',
+                params: {
+                    indicador: 'VER'
+                }
+            });
+        };
+
+
+        function eventoAbout() {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("eventoAbout"))',
+                params: {
+                    indicador: 'VER'
+                }
+            });
+        };
+
+        function eventoBandejaDispensacion(codigo , fechacreacion) {
+
+            console.log(codigo);
+            console.log(fechacreacion);
+
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("eventoDispensacion"))',
+                params: {
+                    codigoOA: codigo,
+                    fechacreacion: fechacreacion
+                }
+            });
+        };
+
+
+
+
+
+    </script>
+
+
+
+
+
+
+
+    <style type="text/css">
+        /*body {
+                            background-color: #DEE1E3;
+                            background-image: linear-gradient(rgba(0,0,0,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.05) 1px,transparent 1px),linear-gradient(rgba(0,0,0,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.035) 1px,transparent 1px);
+                            background-size: 96px 96px,96px 96px,24px 24px,24px 24px;
+                            background-position: -1px -1px;
+                            min-width: 0;
+                            background-attachment: fixed;
+                            background-position: center;
+                        }*/
+        .main-javatmp-navbar {
+            background-color: #d7e4f2;
+            /*   border-color: red;
+            border:red;*/
+            background-image: url('/resources/images/titlebar-badge-bg -large.png');
+            background-size: 96px 96px,96px 96px,24px 24px,24px 24px;
+            height: 70px;
+        }
+    </style>
+</head>
+<body class="sidebar-active">
+
+
+
+    @*<div id="oneTimeOverlay" style="position: fixed;width: 100%;height: 100%;top: 0px;left: 0;right: 0;bottom: 0;background-color: rgba(255,255,255,1);z-index: 1000000;cursor: wait;">Loading ...</div>*@
+
+    <nav class="main-javatmp-navbar navbar fixed-top my-0 py-0 flex-nowrap">
+        <a class="text-center navbar-brand mr-auto d-none d-md-flex align-items-stretch" href="index.html">
+
+            <img src="/resources/images/logohce.png" height="90" alt="Porto Admin" />
+        </a>
+
+        <ul class="main-navbar-menu nav ml-auto align-self-stretch flex-nowrap">
+
+
+            @*<li class="nav-item dropdown mega-on-sm d-flex align-items-stretch show">
+                <a class="nav-link dropdown-toggle d-flex align-items-center " data-toggle="dropdown" href="#" aria-expanded="true">
+                    <i class="far fa-envelope fa-lg faa-shake animated mr-1"></i>
+                    <span class="badge badge-pill badge-light d-none d-md-inline">99+</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-extender show">
+                    <div class="dropdown-menu-header clearfix">
+                        <i class="fa fa-lg fa-fw fa-envelope"></i>5 Messages
+                        <a actiontype="ajax-model" href="pages/custom-pages/inbox/ajax/ajax-compose-message.html" data-actionable-options="{&quot;size&quot;:&quot;modal-lg&quot;, &quot;title&quot;: &quot;Loading Compose Message ..&quot;}" class="float-right small">
+                            Create New Message
+                        </a>
+                    </div>
+                    <div class="dropdown-menu-content scroll-content mCustomScrollbar _mCS_1">
+                        <div id="mCSB_1" class="mCustomScrollBox mCS-javatmp mCSB_vertical mCSB_inside" style="max-height: none;" tabindex="0">
+                            <div id="mCSB_1_container" class="mCSB_container" style="position: relative; top: 0px; left: 0px;" dir="ltr">
+                                <div class="list-group list-group-flush">
+                                    <a actiontype="ajax-model" href="pages/custom-pages/inbox/ajax/ajax-view-message.html" data-actionable-options="{&quot;size&quot;:&quot;modal-lg&quot;}" class="list-group-item list-group-item-action">
+                                        <div>
+                                            <strong>John Smith</strong>
+                                            <span class="float-right text-muted">
+                                                <em>Yesterday</em>
+                                            </span>
+                                        </div>
+                                        <div>Lorem ipsum dolor sit amet adipis dolor sit elit ipsum dolor sit elit ...</div>
+                                    </a>
+                                    <a actiontype="ajax-model" href="pages/custom-pages/inbox/ajax/ajax-view-message.html" data-actionable-options="{&quot;size&quot;:&quot;modal-lg&quot;}" class="list-group-item list-group-item-action">
+                                        <div>
+                                            <strong>John Smith</strong>
+                                            <span class="float-right text-muted">
+                                                <em>Yesterday</em>
+                                            </span>
+                                        </div>
+                                        <div>Lorem ipsum dolor sit amet adipis dolor sit elit ipsum dolor sit elit ...</div>
+                                    </a>
+                                    <a actiontype="ajax-model" href="pages/custom-pages/inbox/ajax/ajax-view-message.html" data-actionable-options="{&quot;size&quot;:&quot;modal-lg&quot;}" class="list-group-item list-group-item-action">
+                                        <div>
+                                            <strong>John Smith</strong>
+                                            <span class="float-right text-muted">
+                                                <em>Yesterday</em>
+                                            </span>
+                                        </div>
+                                        <div>Lorem ipsum dolor sit amet adipis dolor sit elit ipsum dolor sit elit ...</div>
+                                    </a>
+                                    <a actiontype="ajax-model" href="pages/custom-pages/inbox/ajax/ajax-view-message.html" data-actionable-options="{&quot;size&quot;:&quot;modal-lg&quot;}" class="list-group-item list-group-item-action">
+                                        <div>
+                                            <strong>John Smith</strong>
+                                            <span class="float-right text-muted">
+                                                <em>Yesterday</em>
+                                            </span>
+                                        </div>
+                                        <div>Lorem ipsum dolor sit amet adipis dolor sit elit ipsum dolor sit elit ...</div>
+                                    </a>
+                                    <a actiontype="ajax-model" href="pages/custom-pages/inbox/ajax/ajax-view-message.html" data-actionable-options="{&quot;size&quot;:&quot;modal-lg&quot;}" class="list-group-item list-group-item-action">
+                                        <div>
+                                            <strong>John Smith</strong>
+                                            <span class="float-right text-muted">
+                                                <em>Yesterday</em>
+                                            </span>
+                                        </div>
+                                        <div>Lorem ipsum dolor sit amet adipis dolor sit elit ipsum dolor sit elit ...</div>
+                                    </a>
+                                </div>
+                            </div><div id="mCSB_1_scrollbar_vertical" class="mCSB_scrollTools mCSB_1_scrollbar mCS-javatmp mCSB_scrollTools_vertical" style="display: block;"><div class="mCSB_draggerContainer"><div id="mCSB_1_dragger_vertical" class="mCSB_dragger" style="position: absolute; min-height: 50px; top: 0px; display: block; height: 208px; max-height: 276px;"><div class="mCSB_dragger_bar" style="line-height: 50px;"></div></div><div class="mCSB_draggerRail"></div></div></div>
+                        </div>
+                    </div>
+                    <div class="dropdown-menu-footer">
+                        <a actiontype="ajax-model" href="pages/custom-pages/inbox/ajax/ajax-inbox-messages.html" data-actionable-options="{&quot;size&quot;:&quot;modal-lg&quot;}" class="" alt="Read All Messages">
+                            <strong>Read All Messages</strong>
+                        </a>
+                    </div>
+                </div>
+            </li>*@
+
+
+            <li class="nav-item dropdown mega-on-sm d-flex align-items-stretch">
+                <a class="nav-link dropdown-toggle d-flex align-items-center " data-toggle="dropdown" href="#">
+
+                    <i class="far fa-bell fa-lg faa-ring animated mr-1"></i>
+                    <span class="badge badge-pill badge-light d-none d-md-inline">  @Model.lstNotificacion.Count() </span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-extender">
+                    <div class="dropdown-menu-header clearfix">
+                        <i class="fa fa-lg fa-fw fa-envelope"></i>@Model.lstNotificacion.Count() Mensajes
+
+                    </div>
+                    <div class="dropdown-menu-content" style="width: 100%; height: 400px; overflow: scroll;">
+                        @*<div class="dropdown-menu-content scroll-content">*@
+                        <div class="list-group list-group-flush">
+
+                            @foreach (var item in Model.lstNotificacion)
+{
+    <a onclick="eventoBandejaDispensacion('@item.codigoauxiliar1', '@item.FechaCreacion')"
+       data-actionable-options='{"size":"modal-lg"}'
+       class="list-group-item list-group-item-action">
+        <div>
+            <strong><i class="far fa-envelope fa-lg faa-shake animated mr-1"></i>@item.UsuarioModificacion</strong>
+            <strong>Codigo OA @item.codigoauxiliar1</strong>
+            <br />
+            <strong>F. Creación: @item.FechaCreacion</strong>
+            <br />
+            <strong>Documento: @item.NumeroDocumento </strong>
+            <br />
+            <span class="float-right text-muted">
+                <em>@item.Cantidad</em>
+            </span>
+        </div>
+    </a>
+
+}
+                        </div>
+                    </div>
+                    <div class="dropdown-menu-footer">
+                        <a actiontype="ajax-model"
+                           href="pages/custom-pages/inbox/ajax/ajax-inbox-messages.html"
+                           data-actionable-options='{"size":"modal-lg"}'
+                           class="" alt="Read All Messages">
+                            <strong>Read All Messages</strong>
+                        </a>
+                    </div>
+                </div>
+
+            </li>
+
+
+            <li class="nav-item dropdown">
+                <br />
+                <span style="color: #284A89; font-weight: bold;" class="d-none d-md-inline">
+                    @tipotrabajordesc
+                </span>
+            </li>
+
+
+            <li class="nav-item dropdown">
+                <a class="line-height-1 d-flex align-items-center h-100 text-left nav-link dropdown-toggle" data-toggle="dropdown" href="#">
+                    <img class="logo-image rounded-circle mr-1" src="~/resources/images/undraw_profile.svg" alt="" />
+                    <span style="color: #284A89; font-weight: bold;" class="d-none d-md-inline">
+                        <small style="color: #284A89; font-weight: bold;" class="d-flex">Bienvenido,</small>
+                        @usuariodesc
+                    </span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-right">
+                    <li>
+                        <a class="dropdown-item" href="#" onclick="eventoPassword();"><i class="fa fa-lg fa-fw fa-user"></i>Cambiar Clave</a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" onclick="eventoAbout();"><i class="fa fa-lg fa-fw fa-cog"></i>Acerca de...</a>
+                    </li>
+                    <li class="dropdown-divider"></li>
+                    <li>
+                        <a class="dropdown-item" onclick="EventoSalirSyss();">
+                            <i class="fa fa-lg fa-fw fa-sign-out-alt"></i>
+                            Salir
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+
+
+        </ul>
+
+
+
+
+        <button class="navbar-toggler sidebar-toggler-button my-1 ml-1 align-self-center" type="button">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </nav>
+
+
+</body>
+</html>

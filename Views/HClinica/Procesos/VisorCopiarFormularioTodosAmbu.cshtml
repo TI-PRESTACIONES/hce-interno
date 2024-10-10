@@ -1,0 +1,416 @@
+﻿@model SoluccionSalud.Entidades.Entidades.V_EpisodioAtenciones
+
+
+@{
+    var X = Html.X();
+    var COLOR_BLUE01_temp = "#284A89";
+    var COLOR_RED01_temp = "#990000";
+    var COLOR_GREEN01_temp = "#177506";
+    var COLOR_YELLOW02_temp = "#D9A407";
+    var urlActivo = "";
+    urlActivo = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.PacienteDatos1;
+
+    var idOpcion = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.IDOPCION_ACTUAL;
+    var codigoFormatoActual = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.CONCEPTO;
+    var descOpcion = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.CONCEPTODESCRIPCION;
+
+    var idWindow = "windowCopiarForm";
+
+    /** FORMATOS CONFIGURADOS PARA LA COPIA*/
+    var FORM_ANAMNESIS_EA_F1 = AppSaludMVC.Controllers.UTILES_MENSAJES.FORM_ANAMNESIS_EA_F1;
+    var FORM_MEDICAMENTOS_F1 = AppSaludMVC.Controllers.UTILES_MENSAJES.FORM_MEDICAMENTOS_F1;
+    var FORM_DIETAS_MNUT_F1 = AppSaludMVC.Controllers.UTILES_MENSAJES.FORM_DIETAS_MNUT_F1;
+    var FORM_DIAGNOSTICO_F1 = AppSaludMVC.Controllers.UTILES_MENSAJES.FORM_DIAGNOSTICO_F1;
+    var FORM_EVOL_OBJETIVA_F1 = AppSaludMVC.Controllers.UTILES_MENSAJES.FORM_EVOL_OBJETIVA_F1;
+
+}
+
+<style type="text/css">
+    /*<![CDATA[*/
+    #img_uno {
+        width: auto;
+        height: 100%;
+        align-self: center;
+        -webkit-user-select: none;
+        cursor: zoom-in;
+    }
+
+    #img_dos {
+        -webkit-user-select: none;
+        cursor: zoom-out;
+    }
+
+    .logo {
+        border: solid 3px #000;
+    }
+    /*]]>*/
+</style>
+
+<script>
+
+    var actualPrev_X = null;
+    var actualPrev_Y = null;
+    var actualPrev_H = null;
+    var actualPrev_W = null;
+
+    var panelActual = null;
+    var pathImage = "resources/IndexImagen/";
+
+    var sistemas = function (record) {
+
+        var desc = record.data.text;
+        var vector = record.data.id.split('|');
+        var showURL = "";
+        var tipo = 0;
+        if (vector.length > 3) {
+            tipo = vector[0];
+            showURL = vector[3];
+        }
+        if (tipo > 1) {
+            var cont = App.centerPanels;
+            cont.setTitle('Selección actual: ' + desc);
+            imagendiv(showURL);
+        } else {
+        }
+    };
+
+    var formSelecc = null;
+
+    var loadContenidoCopy = function (record) {
+        if (record != null) {
+            var formSelecc = record.data.Accion;
+            if (formSelecc != null) {
+                /*    var cont = App.centerPanelsCopy;
+                    cont.setTitle('Selección actual: ');
+                    var contX = cont.getLoader();
+                    cont.getLoader().url = 'HClinica/' + formSelecc + '_View';
+                    contX.load({
+                        params: {
+                        }
+                    });  */
+            }
+
+        }
+    };
+
+    function imagendiv(showURL) {
+        var imagen = document.createElement('img');
+        /* agregamos propiedades al elemento
+        */
+        imagen.src = showURL;
+        imagen.id = 'img_uno';
+        imagen.className = 'logo';
+        imagen.title = 'titulo de la imagen';
+        imagen.alt = 'texto alternativo';
+        imagen.onclick = function () {
+            if (this.id == 'img_uno') {
+                this.id = 'img_dos';
+            } else {
+                this.id = 'img_uno';
+            }
+        };
+        /* definimos el elemento donde insertamos la imagen
+        */
+        var div = document.getElementById("centerPanels-body");
+        div.innerHTML = "";
+        div.style.overflow = "scroll";
+        /* agregamos la imagen
+        */
+        div.appendChild(imagen);
+    }
+
+    var eventoExpandir = function (window, contraer) {
+        if (contraer) {
+            if (actualPrev_X != null && actualPrev_Y != null && actualPrev_H != null && actualPrev_W != null) {
+                window.setHeight(actualPrev_H);
+                window.setWidth(actualPrev_W);
+                window.setX(actualPrev_X);
+                window.setY(actualPrev_Y);
+                App.btnContract.setVisible(false);
+                App.btnExpand.setVisible(true);
+            }
+        } else {
+            actualPrev_H = window.getHeight();
+            actualPrev_W = window.getWidth();
+            actualPrev_X = window.getX();
+            actualPrev_Y = window.getY();
+            var KK = 30;
+            var h = screen.height;
+            var w = screen.width;
+            window.setHeight(h - KK - 100);
+            window.setWidth(w);
+            window.setX(0);
+            window.setY(KK);
+            App.btnContract.setVisible(true);
+            App.btnExpand.setVisible(false);
+        }
+
+    };
+
+
+
+    var eventoCheckFiltro_VisorCopiar = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+    var eventoCheckFiltroCompuesto_VisorCopiar = function (check, componente1, componente2, componente3, btn) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente1.setDisabled(true);
+            componente1.setValue(null);
+            componente2.setDisabled(true);
+            componente2.setValue(null);
+            componente3.setDisabled(true);
+            componente3.setValue(null);
+            btn.setDisabled(true);
+        } else {
+            componente1.setDisabled(false);
+            componente2.setDisabled(false);
+            componente3.setDisabled(false);
+            btn.setDisabled(false);
+        }
+    };
+
+    function seleccionadorMedico() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorMedico"))',
+            params: {
+                AccionSeleccion: 'getSeleccionMedicoEsp_DocHC',
+                AccionListado: 'LISTARPAG'
+            }
+        });
+    };
+
+    var varTipoBuscar_VisorCopiar = "LOAD";
+    var selecRecordActual_VisorCopiar = null;
+
+    var accionBuscarFiltro_VisorCopiar = function (tipo) {
+        varTipoBuscar_VisorCopiar = tipo;
+        App.GridPanelCopiaForm.getStore().reload();
+        varTipoBuscar_VisorCopiar = 'LOAD';
+    };
+
+    var SelectClik_VisorCopiar = function (record) {
+        selecRecordActual_VisorCopiar = record;
+        /*alert(record);*/
+        if (selecRecordActual_VisorCopiar != null) {
+            var idEpiAtencion = selecRecordActual_VisorCopiar.data.Episodio_Atencion; /*selecRecordActual_VisorCopiar.data.IdEpisodioAtencion;*/
+            var idEpiClinico = selecRecordActual_VisorCopiar.data.EpisodioClinico;
+            var UnidadReplicacion = selecRecordActual_VisorCopiar.data.UnidadReplicacion;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("eventoRegistroHistoricoFormulario"))',
+                params: {
+                    formato: '@(codigoFormatoActual)',
+                    accion: "COPIAR",
+                    idEpiAtencionCopy: idEpiAtencion,
+                    idEpiClinicoCopy: idEpiClinico,
+                    UnidadReplicacionCopy: UnidadReplicacion
+                }
+                , success: function (result) {
+                    loadContenidoCopy(selecRecordActual_VisorCopiar);
+
+                }
+            });
+        }
+
+    };
+
+
+    function eventoCopiarFormulario(parOpcion, window) {
+        var records = App.GridPanelCopiaForm.getSelectionModel().getSelection();
+        if (selecRecordActual_VisorCopiar != null || records != null) {
+            var idEpiAtencion;
+            var idEpiClinico;
+            var UnidadReplicacio;
+
+            if (selecRecordActual_VisorCopiar != null) {
+                /* idEpiAtencion = selecRecordActual_VisorCopiar.data.IdEpisodioAtencion;*/
+                idEpiAtencion = selecRecordActual_VisorCopiar.data.Episodio_Atencion;
+                idEpiClinico = selecRecordActual_VisorCopiar.data.EpisodioClinico;
+                UnidadReplicacion = selecRecordActual_VisorCopiar.data.UnidadReplicacion;
+            }
+            else {
+
+                for (var i = 0; i < records.length; i++) {
+                    SelectClik_VisorCopiar(records[i]);
+                }
+
+                /*idEpiAtencion = selecRecordActual_VisorCopiar.data.IdEpisodioAtencion;*/
+                idEpiAtencion = selecRecordActual_VisorCopiar.data.Episodio_Atencion;
+                idEpiClinico = selecRecordActual_VisorCopiar.data.EpisodioClinico;
+                UnidadReplicacion = selecRecordActual_VisorCopiar.data.UnidadReplicacion;
+
+                /* idEpiAtencion = records[0].get('IdEpisodioAtencion');
+                 idEpiClinico = records[0].get('EpisodioClinico');
+                 UnidadReplicacion = records[0].get('UnidadReplicacion');*/
+            }
+
+            var ArrayList0 = new Array();
+
+            for (var i = 0; i < records.length; i++) {
+                var V_EpisodioAtenciones = {
+                    UnidadReplicacion: records[i].get('UnidadReplicacion'),
+                    IdPaciente: records[i].get('IdPaciente'),
+                    EpisodioClinico: records[i].get('EpisodioClinico'),
+                    IdEpisodioAtencion: records[i].get('Episodio_Atencion'),
+                    /*IdEpisodioAtencion: records[i].get('IdEpisodioAtencion'),*/
+                    Id001: records[i].get('Id001'),
+                    Id002: records[i].get('Id002'),
+                    Codigo001: records[i].get('Codigo001'),
+                    Codigo002: records[i].get('Codigo002'),
+                    Codigo003: records[i].get('Codigo003'),
+                    Codigo004: records[i].get('Codigo004'),
+                    CodAlmacen: records[i].get('UnidadReplicacionEC'),
+                    Descripcion001: records[i].get('Descripcion001'),
+                    Descripcion002: records[i].get('Descripcion002'),
+                    Descripcion003: records[i].get('Descripcion003'),
+                    Descripcion004: records[i].get('Descripcion004'),
+
+                    Accion: records[i].get('Accion')
+
+                };
+                ArrayList0.push(V_EpisodioAtenciones);
+            }
+
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("eventoRegistroHistoricoFormulario"))',
+                params: {
+                    formato: '@(codigoFormatoActual)',
+                    idWindow: '@(idWindow)',
+                    accion: "PEGAR",
+                    idEpiAtencionCopy: idEpiAtencion,
+                    idEpiClinicoCopy: idEpiClinico,
+                    UnidadReplicacionCopy: UnidadReplicacion,
+                    data: ArrayList0
+                }
+                , success: function (result) {
+
+                    if (result.data != null) {
+
+
+                    }
+                }
+            });
+
+
+
+        } else {
+
+        }
+
+    };
+
+    function eventoRefrescar() {
+        var vista = 'Procesos/VisorCopiarFormularioTodosAmbu';
+        var container = 'Center1';
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("ReLoadVisorCopiado"))',
+            params: {
+                Accion: 'VER',
+                nombrePaciente: 0,
+                Form: vista,
+                FormContainer: container
+
+            }
+        });
+    }
+
+
+
+
+
+
+</script>
+
+
+@(Html.X().Window()
+    .Width(1100)
+    .Height(550)
+        //.X(0)
+        //.Y(0)
+    .Maximizable(true)
+    .Closable(false)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Resizable(false)
+    .Constrain(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+     .ID("" + idWindow)
+           .Title("Copiar Formatos : Anamnesis, Receta, Diagnóstico")
+    .Padding(4)
+
+    //INICIO
+    .Items(
+        X.Panel()
+        .Border(false)
+        .Layout(LayoutType.VBox)
+        .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+        .TopBar(
+                X.Toolbar()
+                .Height(30)
+                .Items(
+
+                    X.Button()
+                        .Text("Salir")
+                        .Icon(Icon.Cancel)
+                        .Handler("eventoRefrescar();")
+                          .DirectEvents(de =>
+                          {  //Model.ACCION : Posee el MODO ACTUAL
+                              de.Click.Url = Url.Action("cerrarWindow");
+                              //de.Click.EventMask.ShowMask = true;
+                              de.Click.ExtraParams.Add(new Parameter(
+                                    "id", "" + idWindow, ParameterMode.Value));
+                          })
+
+
+
+
+
+
+
+
+                    )
+        )
+        .Items(
+
+
+              X.Panel()
+        .Border(false)
+        .Height(500)
+        .Layout(LayoutType.VBox)
+
+                    .Loader(
+                        Html.X().ComponentLoader()
+                        .Listeners(l =>
+                        {
+                            //EVENTO JAVA SCRIPT
+                            l.Load.Handler = "loadReporte(record);";
+                        })
+                        .ID("compLoaderReporte")
+                        .AutoLoad(true)
+                            .Url("VisorCopiado/Index")
+                                 .Mode(LoadMode.Frame)
+                .LoadMask(lm => lm.ShowMask = true)
+
+                        .Mode(LoadMode.Frame)
+                        .ReloadOnEvent(false)
+                        .DisableCaching(true)
+                    )
+        .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+
+    )//FIN
+    .CloseAction(CloseAction.Destroy)
+
+
+    )
+
+)

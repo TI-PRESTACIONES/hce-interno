@@ -1,0 +1,210 @@
+﻿    @model SoluccionSalud.Entidades.Entidades.SS_HC_EpisodioAtenciones
+@{
+    ViewBag.Title = "Partial Content";
+    Layout = "";
+    var X = Html.X();
+
+    var PAR_CODTRABAJADORMEDICO = "" + (AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("CODTRABMED") != null ?
+        AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("CODTRABMED") : "08");
+
+    var CODIGO_TRANSACT_HCE = Model.DescansoMedico;
+
+    var CODIGO_OA = Model.CodigoOA;
+
+    var IDPACIENTE = Model.IdPaciente;
+    var NOMBREPAC = Model.ObservacionFirma;
+
+    var indicaEPiClinicoAsignado = (Model.FlagFirma != null ? true : false);
+    var indicaEsMedico = (Model.TipoTrabajador == PAR_CODTRABAJADORMEDICO ? true : false);
+   var indicaSoloLectura = (Model.ESTADOFORMULARIO == "VISTA" ? true : false);
+
+    var indicaEpiClinicoVisible = indicaEsMedico && !indicaEPiClinicoAsignado && !indicaSoloLectura;
+    var indicaContinuarEpiClinicoVisible = indicaEsMedico && !indicaEPiClinicoAsignado
+        && (Model.IdTipoInterConsulta > 0) && !indicaSoloLectura;
+
+    var indicaVisibleCopy = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_VISIBLE_COPY;
+
+    var indicaVisibleHistorialComp = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_FORM_COMPARTIDO;
+
+    var indicaVisiblePrint = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.ESTADOFORMULARIO_ACCION;
+
+    var visibleImpresionGen = (indicaVisiblePrint == "VISTA" ? true : false);
+
+    //var Episodio = AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("CODTRABMED");
+}
+<script>
+
+   
+    function preReloadFormato() {
+        window.setTimeout("reloadFormato();", 2000);
+    }
+    function celdaActiva() {
+
+        var valor = App.txtCelda.getValue();
+        writeCookie("10", valor, 1);
+
+
+    }
+
+    function writeCookie(name, value, days) {
+        var date, expires;
+        if (days) {
+            date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            expires = "; expires=" + date.toGMTString();
+        } else {
+            expires = "";
+        }
+        document.cookie = name + "=" + value + expires + "; path=/";
+    }
+    function getElementsById(elementID) {
+        var elementCollection = new Array();
+        var allElements = document.getElementsByTagName("*");
+        for (i = 0; i < allElements.length; i++) {
+            if (allElements[i].id == elementID)
+                alert(allElements[i].id);
+            elementCollection.push(allElements[i]);
+
+        }
+        return elementCollection;
+    }
+
+    function reloadFormato() {
+        if (App.txtRecargarX.getValue() == 'RELOAD') {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("reloadFormatos"))',
+                params: {
+                    indica: ''
+                }
+            });
+            App.txtRecargarX.setValue(null);
+        }
+    }
+
+    function preReloadNorth() {
+        window.setTimeout("reloadPanelNorth();", 2000);
+    }
+
+    function reloadPanelNorth() {
+        if (App.txtRecargarNorth.getValue() == 'RECARGA') {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("reloadPanelNorthC"))',
+                params: {
+                    indica: ''
+                }
+            });
+            App.txtRecargarNorth.setValue(null);
+        }
+    }
+
+   
+</script>
+@(
+
+
+        //X.TabPanel()
+ X.Panel()
+    .Border(false)
+        //.Region(Region.Center)
+    .ID("TabPanelFormBita")
+    .TopBar(
+                X.Toolbar().Hidden(indicaSoloLectura)
+                    .StyleSpec("padding-bottom:0px;")
+                    .Items(
+                        X.TabStrip()
+                            .Items(t =>
+                            {
+                                t.Add(X.Tab().ActionItemID("PanelSuperiors").Text(Model.Version));
+                                //t.Add(X.Tab().ActionItemID("pnlData").Text("Data"));
+                            })
+        
+                                            ,
+
+                            X.TextField()
+                                .ID("txtCelda")
+                                    .Hidden(true)
+                                    .Listeners(l =>
+                                    {
+                                        l.Change.Handler = "celdaActiva();";
+                                    })
+                                    ,
+                            X.TextField()
+                                .ID("txtRecargarX")
+                                .Hidden(true)
+                                .Listeners(l =>
+                                {
+                                    l.Change.Handler = "preReloadFormato();";
+                                })
+                                ,
+                            X.TextField()
+                                .ID("txtEventoBienes").Hidden(true)
+                                .Listeners(l =>
+                                {
+                                    l.Change.Handler = "eventoBienesServicios(this);";
+                                })
+                                ,
+                        X.TextField().ID("txtRecargarNorth").Hidden(true).Listeners(l => { l.Change.Handler = "preReloadNorth();"; }),
+                        X.ToolbarSeparator(),
+       
+                               X.ToolbarSeparator(),
+                               X.Label()
+                                 .ID("idNroAtencion")
+                                .Text("")
+
+                    )
+    )
+    .Items(
+    X.Panel()
+        //  .LayoutConfig(new VBoxLayoutConfig() { Align = VBoxAlign.Center, Pack = BoxPack.Center })
+        .ID("PanelAs")
+         .Height(800)
+        //   .StyleSpec("height:100%;")
+        //.Title(Model.DESCRIPCION)
+         .Header(false)
+        .Layout(LayoutType.Fit)
+        //.Layout(Ext.Net.LayoutType.Fit)
+        .Region(Region.Center)
+        //.Margins("2 2 2 2")
+        .Border(false)
+        .Loader(
+            Html.X().ComponentLoader()
+                        .AutoLoad(true)
+                            .Url(Url.Action(Model.Accion))
+                        .ID("iframes")
+                        .Mode(LoadMode.Frame)
+
+            )
+
+        )
+
+        /*.Listeners(l =>
+               {
+                   l.Render.Handler = "eventoResizeCenter();";
+               })
+        .Listeners(l =>
+               {
+                   l.TabChange.Fn = "addToken";
+               })*/
+    .Plugins(plugins => plugins.Add(new TabCloseMenu()))
+
+)
+
+
+@*@(   X.Panel()
+        //  .LayoutConfig(new VBoxLayoutConfig() { Align = VBoxAlign.Center, Pack = BoxPack.Center })
+       .ID("PanelBs")
+         .Height(1)
+         .Border(false)
+        //.Title(Model.DESCRIPCION)
+        .Layout(LayoutType.Fit)
+        .Layout(Ext.Net.LayoutType.Fit)
+        .Region(Region.East)
+        //.Margins("2 2 2 2")
+        //.Border(false)
+         .Loader(Html.X().ComponentLoader()
+                            .Url(Url.Action("PanelEast"))
+                            .Mode(LoadMode.Script)
+                            .Params(new { containerId = "East1" })
+             )
+
+)*@

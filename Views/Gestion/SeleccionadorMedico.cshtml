@@ -1,0 +1,194 @@
+﻿@model SoluccionSalud.Entidades.Entidades.VW_PERSONAPACIENTE
+
+@{
+    var X = Html.X();
+}
+
+<script>
+    var seleccionActual =null;
+    function setSeleccionMed(param1) {
+        seleccionActual = param1;
+    }
+
+    var onSuccess = function (grid, data) {
+        grid.show();
+        grid.getStore().loadData(data);
+    };
+
+    var onFailure = function (modo) {
+        Ext.Msg.notify("EVENTO: FAILURE", "MODEL::" + modo);
+    };
+
+    function enviarSeleccionMed(grid) {
+        if (seleccionActual != null) {
+            var status = seleccionActual.IDHORARIO;
+            var statusCmp = seleccionActual.CMP;
+            var statusNom = seleccionActual.NOMBRECOMPLETO;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action(Model.ACCION))',
+                params: {
+                    MODO: 'get',
+                    persona: status,
+                    cmp: statusCmp,
+                    nombre: statusNom,
+                    idWindow: "WindowSelecMed"
+                }
+            });
+        } else {
+            Ext.Msg.alert('Debe Seleccionar un elemento.');
+        }
+
+    }
+
+    function enviarSeleccionDirectMed(param1) {
+        var status = param1.IDHORARIO;
+        var statusCmp = param1.CMP;
+        var statusNom = param1.NOMBRECOMPLETO;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action(Model.ACCION))',
+            params: {
+                MODO: 'get',
+                persona: status,
+                cmp: statusCmp,
+                nombre: statusNom,
+                idWindow: "WindowSelecMed"
+            }
+        });
+    }
+
+    var varTipoBuscar = "LOAD";
+    var accionBuscarFiltroMed = function (tipo) {
+        varTipoBuscar = tipo;
+        App.GridPanel2.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == "A")
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == "I")
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+
+    var eventoCheckFiltroMed = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+</script>
+
+@(Html.X().Window()
+    .Width(520)
+    .Height(400)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowSelecMed")
+    .Title("Seleccionar Médico")
+    .Padding(4)
+    .Y(50)
+    .TopBar(
+        X.Toolbar().Height(30)
+        .Items(
+            X.Button().Border(true).Text("Buscar").Icon(Icon.Find).Handler("accionBuscarFiltroMed('FILTRO');"),
+            X.ToolbarFill(),
+            X.Button().Text("Aceptar").Icon(Icon.Accept).Handler("enviarSeleccionMed(App.GridPanel2.getSelectionSubmit().getSelectionModelField().getValue());"),
+            X.Button().Text("Cancelar").Icon(Icon.Cancel).DirectEvents(de =>
+            {
+                de.Click.Url = Url.Action("cerrarWindow");
+                de.Click.ExtraParams.Add(new Parameter("id", "WindowSelecMed", ParameterMode.Value));
+            })
+                )
+            )
+        .Items(
+            X.GridPanel().Border(false).Scroll(ScrollMode.Both).AutoScroll(true).ID("GridPanel2").Margins("0 0 0 0")
+            .TopBar(
+            X.Toolbar()
+            .Items(
+                X.FieldSet().Title("Filtros").MarginSpec("5 5 5 10").Defaults(d => { d.Add(new Parameter("LabelWidth", "40")); }).Width(480)
+                .Items(
+                Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                .Items(
+                    X.Checkbox().LabelWidth(42).FieldLabel("CMP").ID("chHCmp").Listeners(l => l.Change.Handler = "eventoCheckFiltroMed(App.chHCmp,App.tfBuscarCmp);").Checked(true),
+                    X.TextField().ID("tfBuscarCmp").Disabled(true).Name("buscarCmp").FieldLabel(""),
+                    X.Checkbox().LabelWidth(80).FieldLabel("Nombre Médico").ID("chHNMe").Listeners(l => l.Change.Handler = "eventoCheckFiltroMed(App.chHNMe,App.tfBuscarNMe);").Checked(true).MarginSpec("0 0 0 5"),
+                    X.TextField().ID("tfBuscarNMe").Disabled(true).Name("buscarNMe").FieldLabel("")
+                    ),
+
+                Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                .Items(
+                    X.Checkbox().LabelWidth(42).FieldLabel("R.N.E").ID("chHRne").Listeners(l => l.Change.Handler = "eventoCheckFiltroMed(App.chHRne,App.tfBuscarRne);").Checked(true),
+                    X.TextField().ID("tfBuscarRne").Disabled(true).Name("buscarRne").FieldLabel(""),
+                    X.Checkbox().LabelWidth(80).FieldLabel("Especialidad").ID("chHEsp").Listeners(l => l.Change.Handler = "eventoCheckFiltroMed(App.chHEsp,App.cmbBuscarEsp);").Checked(true).MarginSpec("0 0 0 5"),
+                    X.ComboBox().ID("cmbBuscarEsp").Disabled(true).Name("buscarEsp").Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("ESPECIALI")
+                    .Select(d => new ListItem(d.Name, d.ID))).FieldLabel("").Editable(true).SimpleSubmit(true)),
+
+                Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                .Items(
+                    X.Checkbox().LabelWidth(42).FieldLabel("Estado").ID("chHEst").Listeners(l => l.Change.Handler = "eventoCheckFiltroMed(App.chHEst,App.cmbBuscarEst);").Checked(true).Hidden(true),
+                    X.ComboBox().ID("cmbBuscarEst").Disabled(true).Name("buscarEst").Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenericoTxt("ESTADOVAR")
+                    .Select(d => new ListItem(d.Name, d.Codigo))).FieldLabel("").Editable(false).SimpleSubmit(true).Hidden(true))
+                    ),
+                X.ToolbarFill()
+                )
+            )
+        /**CONFIGURAR EL STORE**/
+            .Store(store => store.Add(
+                Html.X().Store().ID("Store2").AutoLoad(true).RemoteSort(false).IsPagingStore(true).RemotePaging(true).PageSize(20)
+                /**CAMBIAR DE ACUERDO A ALGÚN UN CRITERIO**/
+                .Proxy(proxy => proxy.Add(
+                        Html.X().AjaxProxy().Url("getGrillaEspecialidadMedico").Reader(reader => reader.Add(
+                            Html.X().JsonReader().Root("data").TotalProperty("total").IDProperty("PERSONA"))))
+                        )
+                        .Parameters(ps => ps.Add(new
+                        {
+                            cmp = JRawValue.From("App.tfBuscarCmp.getValue()"),
+                            nombrecompleto = JRawValue.From("App.tfBuscarNMe.getValue()"),
+                            nroregespecialidad = JRawValue.From("App.tfBuscarRne.getValue()"),
+                            idespecialidad = JRawValue.From("App.cmbBuscarEsp.getValue()"),
+                            estado = JRawValue.From("App.cmbBuscarEst.getValue()"),
+                            tipoBuscar = JRawValue.From("varTipoBuscar")
+                        }))
+                            .Model(model => model.Add(
+                                Html.X().Model().Fields(fields =>
+                                {
+                                    fields.Add(Html.X().ModelField().Name("CMP"));
+                                    fields.Add(Html.X().ModelField().Name("NUMEROREGISTROESPECIALIDAD"));
+                                    fields.Add(Html.X().ModelField().Name("NOMBRECOMPLETO"));
+                                    fields.Add(Html.X().ModelField().Name("NOMBRE"));
+                                    fields.Add(Html.X().ModelField().Name("PERSONA"));
+                                    fields.Add(Html.X().ModelField().Name("ESTADO"));
+                                    fields.Add(Html.X().ModelField().Name("IDHORARIO"));
+                                }))
+                                    )
+                                    )
+                    )
+        /**CONFIGURAR LAS COLUMNAS**/
+                    .ColumnModel(columnModel =>
+                    {
+                        columnModel.Columns.Add(Html.X().Column().Text("CMP").DataIndex("CMP").Width(70));
+                        columnModel.Columns.Add(Html.X().Column().Text("R.N.E").DataIndex("NUMEROREGISTROESPECIALIDAD").Width(70));
+                        columnModel.Columns.Add(Html.X().Column().Text("Nombre Médico").DataIndex("NOMBRECOMPLETO").Width(250));
+                        columnModel.Columns.Add(Html.X().Column().Text("Especialidad").DataIndex("NOMBRE").Width(100));
+                        columnModel.Columns.Add(Html.X().Column().Text("Médico").DataIndex("IDHORARIO").Width(60));
+                        columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("PERSONA").Width(60).Hidden(true));
+                        columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("ESTADO").Width(60).Renderer("changeEstado").Hidden(true));
+                    })
+                    .View(Html.X().GridView().TrackOver(false)).Border(false)
+                    .Listeners(l => l.CellDblClick.Handler = "enviarSeleccionDirectMed(record.data);")
+                    .Listeners(l => l.CellClick.Handler = "setSeleccionMed(record.data);").BottomBar(bar => bar.Add(Html.X().PagingToolbar()))
+                )
+                .CloseAction(CloseAction.Destroy)
+)
+@(
+ X.KeyNav().Target("WindowSelecMed").Enter(a => a.Handler = "accionBuscarFiltroMed('FILTRO');")
+)

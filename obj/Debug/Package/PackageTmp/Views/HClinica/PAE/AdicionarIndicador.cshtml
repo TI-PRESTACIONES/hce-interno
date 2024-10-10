@@ -1,0 +1,236 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_HC_NOCIndicador
+@using Region = Ext.Net.Region
+@using System.Web.Mvc;
+
+@{
+    var X = Html.X();
+    var COLOR_BLUE01_temp = "#284A89";
+    var COLOR_RED01_temp = "#848484";
+    var idWindow = "WindowIndicador";
+}
+@section JavaScript
+{
+    <script type="text/javascript" src="@Url.Content("~/Content/ADD_FACTOR.js")"></script>
+}
+
+@(Html.X().Window().Width(650).Height(400).
+Maximizable(true).Modal(true).OnEsc("false").Y(50)
+.AutoScroll(true).Layout(LayoutType.Fit)
+.CloseAction(CloseAction.Destroy).Icon(Icon.ApplicationForm)
+        .ID(idWindow).Title("Indicadores PAE").Padding(4).TopBar(
+X.Toolbar().Height(30)
+    .Items(
+        X.ToolbarSpacer(),
+        /* X.Label().Html("<b><span style='color:" + COLOR_BLUE01_temp + ";'>" + "PACIENTE" + ":   </span> </b>"),
+             X.ToolbarSpacer(),
+                  X.ToolbarSpacer(),
+                       X.ToolbarSpacer(),
+         X.Label().Html("<b><span style='color:" + COLOR_RED01_temp + ";'>" + "HC" + ":</span> </b>"),*/
+                 X.ToolbarSpacer(), X.Button().ID("btnBuscar")
+                        .Text("Buscar")
+                        .Icon(Icon.Find)
+                        .Handler("accionBuscarFiltroX('FILTRO');"),
+                     X.ToolbarSpacer(),
+                          X.ToolbarSpacer(),
+                          X.ToolbarFill(),
+
+     X.Button()
+                            .Text("Agregar")
+                            .Icon(Icon.PageWhiteCopy)
+                                            .Handler("eventoAgregarFormularioX(App." + idWindow + "," + Model.Version + "," + Model.IdNoc + ");")
+                        ,
+        X.Button().Text("Cancelar").Icon(Icon.Cancel).DirectEvents(de =>
+        {
+            de.Click.Url = Url.Action("cerrarWindow");
+            de.Click.ExtraParams.Add(new Parameter("id", idWindow, ParameterMode.Value));
+        }),
+        X.ToolbarSpacer(20))
+
+        )
+        .Items(
+            X.Panel()
+            .Border(false).Width(650)
+            .Layout(LayoutType.VBox)
+            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+            .Items(
+                X.Panel()
+                .Header(false).Border(false).Flex(1)
+                    .Layout(LayoutType.Border).TopBar(
+                                X.Toolbar()
+
+                                     .Items(X.Panel()
+                                .Layout(LayoutType.HBox)
+                                .BodyPadding(5)
+                                .Width(650)
+                                .Border(false)
+                                .MarginSpec("1 20 1 1")
+                                    .Items(
+                        X.FieldSet().Collapsible(true).DefaultAnchor("100%")
+                .Title("Filtros de Búsqueda").MarginSpec("0 05 05 05")//BOTT LEFT TOP RIGHT
+                .Items(
+
+
+                    Html.X().Container().Layout(LayoutType.HBox).MarginSpec("0 00 05 00")//BOTT LEFT TOP RIGHT
+                    .Defaults(d =>
+                    {
+                        d.Add(new Parameter("LabelWidth", "90"));
+                    })
+                    .Items(
+                        X.Checkbox()
+                            .FieldLabel("Código")
+                             .ID("chkCod")
+                                 .Listeners(l => l.Change.Handler = "eventoCheckFiltro(this,App.txtCodigo);")
+                            .Checked(true),
+                            X.TextField()
+                            .Width(120)
+                                    .ID("txtCodigo")
+                            .Disabled(true)
+                            , X.Component().Width(5),
+                        X.Checkbox()
+                        .FieldLabel("Descripcion")
+                         .ID("AgregarForm_chkDesc")
+                         .Listeners(l => l.Change.Handler = "eventoCheckFiltro(this,App.AgregarForm_txtDesc);")
+                        .Checked(true),
+                        X.TextField()
+                        .Width(220)
+                                .ID("AgregarForm_txtDesc")
+                        .Disabled(true)
+        /* ,
+
+         Html.X().Container().Layout(LayoutType.HBox)
+           .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+           .Items(
+               X.Checkbox()
+               .FieldLabel("Estado")
+                    .ID("chHEst").Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chHEst,App.tfBuscarEst);")
+                 .Checked(true),
+                   X.ComboBox()
+                    .ID("tfBuscarEst").Disabled(true)
+                          .Name("cmbBuscarEst")
+                      .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("ESTADOINT").Select(d => new ListItem(d.Name, d.ID)))
+                      .FieldLabel("").SimpleSubmit(true)
+
+            )*/
+
+
+                    ),
+                     Html.X().Container().Layout(LayoutType.HBox).MarginSpec("0 00 05 00")//BOTT LEFT TOP RIGHT
+                    .Defaults(d =>
+                    {
+                        d.Add(new Parameter("LabelWidth", "90"));
+                    })
+                    .Items(
+                        X.Checkbox()
+                                .FieldLabel("Mostrar Todos")
+                                 .ID("chkAll")
+                    )
+                   )
+                )
+                             )
+
+                            )
+                .Items(
+
+
+
+                        Html.X().Panel()
+                            .Layout(LayoutType.Fit)
+                        .Region(Region.Center)
+                        .ID("centerPanels")
+        /*.Height(600)*/
+                        .Title("IndicadorPAE")
+        /* .AutoDoLayout(true)*/
+                             .Items(
+                       X.GridPanel()
+                           .Layout(LayoutType.Fit)
+        /* .AllowDeselect(true)*/
+                            .Border(false)
+                            .Scroll(ScrollMode.Both)
+                            .AutoScroll(true)
+                                .Anchor("100% 100%")
+                            .ID("GridPanelVerIndicador")
+                            .Height(300)
+        //.Margins("0 0 0 0")
+        ///CONFIGURAR EL STORE
+                            .Store(store => store.Add(
+                                     Html.X().Store()
+                                         .ID("StoreVerIndicador")
+                                         .AutoLoad(true)
+                                         .RemoteSort(false)
+                                         .IsPagingStore(true)
+                                         .RemotePaging(true)
+                                         .PageSize(5)////CAMBIAR DE ACUERDO A ALGÚN UN CRITERIO
+                                         .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                               .Url("getGrillaIndicadorPae")
+                                                .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                .Root("data")
+                                                .TotalProperty("total")
+                                                                                 .IDProperty("nivel"))))
+                                          )
+
+                                                 .Parameters(ps =>
+                                                        ps.Add(new
+                                                        {
+                                                            // start = 0,
+                                                            //  limit = 5,
+                                                            IdNoc = Model.IdNoc,
+
+                                                            //Usuario = JRawValue.From("App.tfIdUsuario.getValue()"),
+                                                            //FechaUno1 = JRawValue.From("App.FechaUno1.getValue()"),
+                                                            descripcion = JRawValue.From("App.AgregarForm_txtDesc.getValue()"),
+                                                            codigo = JRawValue.From("App.txtCodigo.getValue()"),
+                                                            tipo = JRawValue.From("App.chkAll.getValue()"),
+
+                                                            tipoBuscar = JRawValue.From("varTipoBuscar")
+                                                        })
+                                                 )
+                                        .Model(model => model.Add(Html.X().Model()
+                                                 .Fields(fields =>
+                                                 {
+                                                     fields.Add(Html.X().ModelField().Name("IdNIN"));
+                                                     fields.Add(Html.X().ModelField().Name("IdIndicadorPAE"));
+                                                    
+                                                     fields.Add(Html.X().ModelField().Name("Descripcion"));
+                                                     fields.Add(Html.X().ModelField().Name("Estado"));
+                                                     fields.Add(Html.X().ModelField().Name("IdNoc"));
+                                                 }))
+                                                )
+                                              )
+                                   )
+
+                                ///CONFIGURAR LAS COLUMNAS
+                                .ColumnModel(columnModel =>
+                                {
+                                    columnModel.Columns.Add(Html.X().Column().Text("IdNIN").DataIndex("IdNIN").Width(100).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("IdIndicadorPAE").DataIndex("IdIndicadorPAE").Width(200).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Descripcion").DataIndex("Descripcion").Width(250).Hidden(false));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(150)
+                                    .Renderer("changeEstado"));
+                                    columnModel.Columns.Add(Html.X().Column().Text("IdNoc").DataIndex("IdNoc").Width(100).Hidden(false));
+
+                                    ;
+
+
+                                })
+                                 .View(Html.X().GridView().TrackOver(false))
+                                 .Border(false)
+                               .Listeners(l => l.CellClick.Handler = "setSeleccion(record.data);")
+                                               .Listeners(l => l.CellDblClick.Handler = "eventoVerSelected(record.data.IdNoc);")
+
+                                         .SelectionModel(
+                                        X.CheckboxSelectionModel()
+                                            .Mode(SelectionMode.Multi)
+
+                                        )
+                                .BottomBar(bar => bar.Add(
+                                    Html.X().PagingToolbar()
+                                ))
+
+                    )
+                )
+            )
+                  .Listeners(l => l.Render.Handler = "eventoCargarMain2();")
+        ).CloseAction(CloseAction.Destroy)
+)
+
+

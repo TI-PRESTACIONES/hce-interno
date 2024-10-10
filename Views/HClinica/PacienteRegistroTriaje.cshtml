@@ -1,0 +1,287 @@
+﻿@model SoluccionSalud.Entidades.Entidades.VW_PERSONAPACIENTE
+
+@{
+    var X = Html.X();
+    var funcionX = "alert('XXXXXXXXX');";
+    var modoDesc =
+        (Model.ACCION == "NUEVO" ? "Nuevo" :
+        (Model.ACCION == "UPDATE" ? "Modificar" :
+        (Model.ACCION == "DELETE" ? "Eliminar" :
+        (Model.ACCION == "VER" ? "Ver" : "--"))));
+
+    var indicaModoLectura =
+        !(Model.ACCION == "NUEVO" ? true :
+        (Model.ACCION == "UPDATE" ? true :
+        (Model.ACCION == "DELETE" ? false :
+        (Model.ACCION == "VER" ? false : false))));
+
+    var indicaModoLecturaKey =
+        !(Model.ACCION == "NUEVO" ? true :
+        (Model.ACCION == "UPDATE" ? false :
+        (Model.ACCION == "DELETE" ? false :
+        (Model.ACCION == "VER" ? false : false))));
+}
+
+<script>
+    var template = 'color:{0};';
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_RED01 = "#990000";
+
+    var COLOR_BORDER_ERROR = "red";
+    var COLOR_BORDER_DEF = "#b5b8c8";
+    var COLOR_BACKGROUND_NOEDIT = "#9FBCB9";
+
+
+    var change = function (value, meta) {
+        return value;
+
+    };
+
+    var validarCampo = function (componente) {
+        if (componente.getValue() != null) {
+            if (componente.getValue().trim() == 0) {
+                componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+
+            } else {
+                componente.setFieldStyle("border-color: " + COLOR_BORDER_DEF);
+            }
+        } else {
+            componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+
+        }
+    };
+
+    function seleccionadorCuerpoHumano() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorCuerpoHumano"))',
+            params: {
+                accionSeleccion: 'getSeleccionPadreMaestroCuerpoHumano',
+                accionListado: 'LISTARPAG'
+            }
+        });
+    };
+
+    function cerrarWindow() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Se registró correctamente el usuario.',
+                accion: null
+            }
+        });
+    };
+
+    var onSuccess = function (data) {
+        accionMensajes(data);
+    };
+
+    var onFailure = function (modo) {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Un error en el evento ',
+                titulo: "Error",
+                tipo: 'ERROR'
+            }
+        });
+    };
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length>0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+        } else {
+            App.taAlerts.setVisible(false);
+        }
+
+    };
+
+    var getInvalidFields = function (form) {
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+        });
+        return invalidFields;
+    };
+
+    var beforeSave = function (form) {
+        var FieldsInvalidos = getInvalidFields(form);
+        if (!form.getForm().isValid()) {
+            if (FieldsInvalidos.length > 0) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("addRecursosValidacion"))',
+                    params: {
+                        data: FieldsInvalidos,
+                        indica: 'VALIDAR',
+                    },
+                    success: function (result) {
+                        accionMensajes(result.data);
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("addRecursosValidacion"))',
+                            params: {
+                                data: FieldsInvalidos,
+                                indica: 'RESTART',
+                            }
+                        });
+                    }
+                });
+
+            }
+        }
+    };
+
+    function seleccionadorMedicox() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorMedico"))',
+            params: {
+                AccionSeleccion: 'getSeleccionMedicoDos',
+                AccionListado: 'LISTARPAGEMPLEADO'
+            }
+        });
+    };
+
+    function seleccionadorLugar() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorLugar"))',
+            params: {
+                AccionSeleccion: 'getSeleccionadorLugar',
+                AccionListado: 'COMBOSGENERICOS'
+            }
+        });
+    };
+
+    function validarCantidadPac(objPac, valorPac, valorCombo) {
+        if (valorCombo == "D") {
+            if (valorPac.length > 8) {
+                objPac.setValue(valorPac.substring(0, 8));
+                return;
+            }
+        }
+        if (valorCombo == "R") {
+            if (valorPac.length > 11) {
+                objPac.setValue(valorPac.substring(0, 11));
+                return;
+            }
+        }
+    };
+
+    function seleccionadorPersonas() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorPersonas"))',
+            params: {
+                accionSeleccion: 'getSeleccionadorPersonas',
+                accionListado: 'LISTARPAG'
+            }
+        });
+    };
+
+
+    function eventoAccionEpisodio(valorAccion) {
+        if (true) {
+            var ACCION_ = '';
+            if (valorAccion == 'N') {
+                ACCION_ = 'Medico';
+            } 
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("EstadoClinico"))',
+                params: {
+                    selection: App.IdPersonalSalud.getValue(),
+                    accion: ACCION_
+                }
+                , success: function (result) {  }
+            });
+
+
+        }
+    };
+
+
+    function InicioMedico(mensaje) {
+
+        Ext.Msg.show({
+            title: "Advertencia",
+            msg: mensaje,
+            icon: Ext.Msg.WARNING,
+            minWidth: 200,
+            buttons: false
+        });
+        App.WindowCuerpoHumano.close();
+        parent.App.txtRecargarX.setValue('RELOAD');
+
+    }
+</script>
+
+@(Html.X().Window()
+    .Width(700)
+    .Height(220)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowCuerpoHumano")
+    .Title("Asignar Médico")
+    .Padding(4)
+        
+            
+    .Items(
+    
+        X.FieldSet().ID("fsResponsable")
+                        .Collapsible(true) //F203.5
+                        .ColumnWidth(0.4).Title("Asignar Médico")
+                        .Layout(LayoutType.VBox)
+                        .MarginSpec("05 05 0 05")
+                        .Defaults(d =>
+                            {
+                                d.Add(new Parameter("LabelWidth", "100"));
+                                d.Add(new Parameter("DefaultAnchor", "100%"));
+                                d.Add(new Parameter("LabelAlign", "Left"));
+                            })
+                        .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Left })
+                        .Items(
+                                               
+                               X.Container()
+                                .Layout(LayoutType.VBox)   
+
+                                        .Items(
+                                            X.NumberField().ID("IdPersonalSalud").FieldLabel("Codigo").Width(170).ReadOnly(true)
+                                            .PaddingSpec("2"),
+                                            X.Component().Width(20),
+                                            X.TextField().ID("tfNomMed").Width(400).FieldLabel("Nombre Medico").ReadOnly(true)
+                                            .PaddingSpec("2"),
+                                             X.TextField().ID("tfNroMed").Width(200).FieldLabel("C.M.P").ReadOnly(true).PaddingSpec("2")),
+                                        X.Container()
+                                         .Layout(LayoutType.HBox)
+                                         .Items(
+                                             X.Button().Text("Buscar Médico").Handler("seleccionadorMedicox();").Width(90).PaddingSpec("0")
+                                            ),
+                                             
+                                             X.Button().Text("Asignar Médico").Margins("10")
+                                                  .Icon(Icon.Application).PaddingSpec("2")
+                /* .Handler("eventoVerGrafico(2);")*/
+                  .Handler("eventoAccionEpisodio('N');")
+                                           
+
+                                    )
+                                    
+
+                             )
+            )
+       
+)
+

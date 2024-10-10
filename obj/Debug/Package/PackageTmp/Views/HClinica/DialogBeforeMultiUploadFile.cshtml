@@ -1,0 +1,183 @@
+﻿@model SoluccionSalud.Entidades.Entidades.ENTITY_GENERALHCE
+
+@{
+    var X = Html.X();
+    var idWindow = "WindowBEFOREUPLOAD";
+}
+
+<script>
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 0)
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+
+    var seleccionRecordActual = null;
+    var seleccionActual =null;
+    var seleccionActualDesc = null;
+    var seleccionActualCod = null;
+    function setSeleccion(record) {
+        seleccionRecordActual = record;
+    }
+
+    function enviarSeleccion(valorTabla, valorTipo) {
+        if (seleccionRecordActual != null) {
+            var status = seleccionRecordActual.data.ValorEntero1;
+            var status2 = seleccionRecordActual.data.ValorCodigo1;
+            var status3 = seleccionRecordActual.data.DescripcionLocal;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action(Model.ACCION))',
+                params: {
+                    MODO: 'get',
+                    id: status,
+                    cod: status2,
+                    descripcion: status3,
+                    tabla: valorTabla,
+                    tiporetorno: valorTipo,
+                    idWindow: "WindowBEFOREUPLOAD"
+                }
+            });
+        } else {
+            Ext.Msg.alert('Debe Seleccionar un elemento.');
+        }
+
+    }
+
+    function enviarSeleccionDirect(record, valorTabla, valorTipo) {
+        var status = record.data.ValorEntero1;
+        var status2 = record.data.ValorCodigo1;
+        var status3 = record.data.DescripcionLocal;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action(Model.ACCION))',
+            params: {
+                MODO: 'get',
+                campoEvento: status2,
+                codigoFile: status3,
+                idWindow: "WindowBEFOREUPLOAD"
+            }
+        });
+    }
+
+
+    var onSuccess = function (data,codigo,campo) {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action(Model.ACCION))',
+            params: {
+                MODO: 'get',
+                campoEvento: campo,
+                codigoFile: codigo,
+                idWindow: "WindowBEFOREUPLOAD"
+            }
+        });
+        App.winSelectFile.close();
+    };
+
+    var eventoCheckFiltro = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+
+    var accionBuscarFiltroSelecc = function (tipo) {
+        varTipoBuscar = tipo;
+        App.GridPanelSelGenerico.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+</script>
+
+
+@(X.Window()
+        .ID("winSelectFile")
+        .Title("Confirmación de Selección")
+        .Icon(Icon.Application)
+        .Y(80)
+        .Height(400)
+        .Width(450)
+        //.BodyStyle("background-color: #fff;")
+        .Layout(LayoutType.Fit)
+        //.BodyPadding(5)
+        .Modal(true)
+        .Loader(
+            Html.X().ComponentLoader()
+            .Url(Url.Action("PanelMultiUploadFile"))
+                                    .Mode(LoadMode.Script)
+                                    .Params(new { 
+                                        containerId = "winSelectFile",
+                                        form = "PanelMultiUploadFileAux"
+                                    })
+                                    
+        )      
+        /*  
+        .Items(
+            X.FormPanel().ID("BasicForm").Frame(true).Border(false)
+            .PaddingSpec("10px 10px 0 10px")
+            .FieldDefaults(fd => fd.LabelWidth = 50)
+            .Defaults(d =>
+            {
+                d.Add(new Parameter("anchor", "95%", ParameterMode.Value));
+                //d.Add(new Parameter("allowBlank", "false", ParameterMode.Raw));
+                d.Add(new Parameter("msgTarget", "side", ParameterMode.Value));
+            })
+            .Items(items =>
+            {
+                items.Add(new Panel
+                {
+                    ID = "PanelSelectFileMulti",
+                    //  Title = "Procesos",
+                    //Width = 240,
+                    //Header=false,
+                    Border = true,
+                    //Layout = "Accordion",
+                    //Region = Region.West,
+                    Loader = Html.X().ComponentLoader()
+                        .Url(Url.Action("PanelMultiUploadFile"))
+                        .Mode(LoadMode.Html)
+                        .Params(new { containerId = "PanelSelectFileMulti" })
+                });
+
+            })
+                */
+             .Buttons(
+             X.Button()
+                            .ID("SaveButton")
+                            .Text("Aceptar")
+                            //.Disabled(true)
+                            .DirectEvents(de =>
+                            {
+                                de.Click.Url = Url.Action("UploadFileEvento");
+                                //de.Click.FormID = "fileUpload";
+                                de.Click.ExtraParams.Add(new Parameter("tipoLoad", "MULTI", ParameterMode.Value));
+                                de.Click.ExtraParams.Add(new Parameter("codigoFile", Model.campoStr01, ParameterMode.Value));
+                                de.Click.ExtraParams.Add(new Parameter("idWindow", idWindow, ParameterMode.Value));
+                                de.Click.ExtraParams.Add(new Parameter("idFileUploadField", "FileMultiUploadField_HCE", ParameterMode.Value));
+
+                                de.Click.Before = @"if (!#{BasicForm}.getForm().isValid()) { return false; }
+                                        Ext.Msg.wait('Cargando Archivo...', 'Cargando');";
+                                de.Click.Success = "Ext.MessageBox.hide(); onSuccess(result.data,'" + Model.campoStr01 + "','" + Model.campoStr03 + "');";
+                                de.Click.Failure = @"Ext.Msg.show({
+                                title   : 'Error',
+                                msg     : 'Error durante subida de archivo',
+                                minWidth: 200,
+                                modal   : true,
+                                icon    : Ext.Msg.ERROR,
+                                buttons : Ext.Msg.OK
+                            });";
+                            }),
+
+                        X.Button()
+                            .Text("Cancelar").Handler("App.winSelectFile.close();")
+        //.OnClientClick("#{BasicForm}.getForm().reset();")
+                )
+        )
+        //.Content(c => "This is my first <a target='_blank' href='http://www.ext.net/'> Ext.NET</a> Window.")
+)

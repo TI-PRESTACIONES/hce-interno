@@ -1,0 +1,559 @@
+﻿@model SoluccionSalud.Entidades.Entidades.MA_MiscelaneosHeader
+
+@{
+    var X = Html.X();
+    var funcionX = "alert('XXXXXXXXX');";
+    var modoDesc = (Model.ACCION == "NUEVO" ? "Nuevo" :
+                    (Model.ACCION == "UPDATE" ? "Modificar" :
+                        (Model.ACCION == "DELETE" ? "Eliminar" :
+                            (Model.ACCION == "VER" ? "Ver" : "--"))));
+
+    var indicaModoLecturaDos = !(Model.ACCION == "NUEVO" ? true :
+                              (Model.ACCION == "UPDATE" ? false :
+                              (Model.ACCION == "DELETE" ? false :
+                              (Model.ACCION == "VER" ? false : false))));
+
+    var indicaModoLectura = !(Model.ACCION == "NUEVO" ? true :
+                            (Model.ACCION == "UPDATE" ? true :
+                            (Model.ACCION == "DELETE" ? false :
+                            (Model.ACCION == "VER" ? false : false))));
+
+    var indicaModoLecturaKey = !(Model.ACCION == "NUEVO" ? true :
+                            (Model.ACCION == "UPDATE" ? false :
+                            (Model.ACCION == "DELETE" ? false :
+                            (Model.ACCION == "VER" ? false : false))));
+
+    var STYLE_BACKGROUND_NODEIT = "background: #7CB8B0"; //BBD8D6  #9FBCB9
+    var COLOR_BORDER_DEFAULT = "#b5b8c8";
+
+    var STYLE_BORDER_DEF_VALID01 =
+        (Model.AplicacionCodigo != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+    var STYLE_BORDER_DEF_VALID02 =
+            (Model.CodigoTabla != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+
+}
+
+<script>
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 'A')
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == 'I')
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+
+    var template = 'color:{0};';
+
+    var seleccionesActual1 = null;
+
+    function setSeleccionesDet(param1) {
+        seleccionesActual1 = param1;
+    }
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_RED01 = "#990000";
+
+    var COLOR_BORDER_ERROR = "red";
+    var COLOR_BORDER_DEF = "#b5b8c8";
+    var COLOR_BACKGROUND_NOEDIT = "#9FBCB9";
+
+    function NuevoDetalle(CodigoApp, CodigoTab, Compan, UltimoUsuario) {
+        var status1 = CodigoApp.getValue();
+        var status2 = CodigoTab.getValue();
+        var status3 = Compan.getValue();
+        var status4 = UltimoUsuario.getValue();
+
+        if (status4 != null && status4 != "") {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("MiscelaneoDetalleRegistro"))',
+            params: {
+                MODO: 'NUEVO',
+                codapp: status1,
+                codigotabla: status2,
+                company: status3
+            }
+        });
+    } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe guardar un Miscelaneo antes de Ingresar Fila.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+    }
+    };
+
+    function modificarDetalle() {
+        if (seleccionesActual1 != null) {
+            var status1 = seleccionesActual1;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("MiscelaneoDetallesBRegistro"))',
+                params: {
+                    MODO: 'UPDATE',
+                    time: status1
+                }
+            });
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Seleccionar un Detalle Miscelaneo de la grilla existente.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+    }
+
+    function eliminarDetalle() {
+        if (seleccionesActual1 != null) {
+            var status1 = seleccionesActual1;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("MiscelaneoDetallesBRegistro"))',
+                params: {
+                    MODO: 'DELETE',
+                    time: status1
+                }
+            });
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Seleccionar un Detalle Miscelaneo de la grilla existente.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+    }
+
+
+
+    function verDetalle() {
+        eventoVerSelectedDet(seleccionesActual1);
+    }
+    function eventoVerSelectedDet(param1) {
+        if (param1 != null) {
+            var status1 = seleccionesActual1;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("MiscelaneoDetallesBRegistro"))',
+                params: {
+                    MODO: 'VER',
+                    time: status1
+                }
+            });
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Seleccionar un Detalle Miscelaneo de la grilla existente.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+    }
+    var change = function (value, meta) {
+        return value;
+
+    };
+
+    var accionFinal = function (btn) {
+        App.GridPanel.getSelectionModel().deselectAll();
+        seleccionesActual1 = null;
+        App.GridPanel.getStore().reload();
+    };
+
+    var validarCampo = function (componente) {
+        if (componente.getValue() != null) {
+            if (componente.getValue().trim() == 0) {
+                componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+
+            } else {
+                componente.setFieldStyle("border-color: " + COLOR_BORDER_DEF);
+            }
+        } else {
+            componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+
+        }
+    };
+
+    function cerrarWindow() {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Se registró correctamente el usuario.',
+                accion: null
+            }
+        });
+    }
+
+    var onSuccessDet = function (data) {
+        accionMensajes(data);
+    };
+
+    var onFailure = function (modo) {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Un error en el evento ',
+                titulo: "Error",
+                tipo: 'ERROR'
+            }
+        });
+    };
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length>0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+        } else {
+            App.taAlerts.setVisible(false);
+        }
+
+    };
+
+    var getInvalidFields = function (form) {
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+        });
+        return invalidFields;
+    };
+
+    var beforeSave = function (form) {
+        var FieldsInvalidos = getInvalidFields(form);
+        if (!form.getForm().isValid()) {
+            if (FieldsInvalidos.length > 0) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("addRecursosValidacion"))',
+                    params: {
+                        data: FieldsInvalidos,
+                        indica: 'VALIDAR',
+                    },
+                    success: function (result) {
+                        accionMensajes(result.data);
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("addRecursosValidacion"))',
+                            params: {
+                                data: FieldsInvalidos,
+                                indica: 'RESTART',
+                            }
+                        });
+                    }
+                });
+
+            }
+        }
+    };
+</script>
+
+@(Html.X().Window()
+    .Width(500)
+    .Height(300)
+    .Maximizable(true)
+    .Modal(true)
+
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowCuerpoHumano")
+    .Title("Registro de Miscelaneo:" + modoDesc)
+    .Padding(4)
+    .Items(
+                Html.X().FormPanel()
+                        .ID("FormPanel1")
+                             .Frame(false)
+                             .Border(false)
+                            .AutoScroll(true)
+                            .Layout(LayoutType.VBox)
+                            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                    .Items(
+                        Html.X().FormPanel()
+                             .Frame(false)
+                             .Border(false)
+                            .Layout(LayoutType.HBox)
+                            .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+
+                            .Items(
+                                    Html.X().FormPanel()
+                                    .Layout(LayoutType.Form)
+                                    .Width(700)
+                                    .FieldDefaults(d =>
+                                    {
+                                        d.LabelWidth = 100;
+                                    })
+                                    .BodyPadding(10)
+                                    .Frame(false)
+                                    .Border(false)
+                                    .Items(
+
+
+
+                                                      X.ComboBoxFor(m => m.AplicacionCodigo).Editable(false).Width(250)
+                                              .Items(SoluccionSalud.Service.MiscelaneosService
+                                              .SvcMiscelaneos.comboMiscelaneoLista.GetComboGenericoTxt("APLICACIONESMAST")
+                                                      .Select(d => new ListItem(d.Name, d.Codigo))).ReadOnly(indicaModoLecturaDos).Value("WA")
+                                              .FieldLabel("Aplicación").SimpleSubmit(true)
+
+                                                ,
+                                              X.ComboBoxFor(m => m.Compania).Editable(false).Width(250)
+                                          .Items(SoluccionSalud.Service.MiscelaneosService
+                                          .SvcMiscelaneos.comboMiscelaneoLista.GetComboGenericoTxt("COMPANIAMAST")
+                                                  .Select(d => new ListItem(d.Name, d.Codigo))).ReadOnly(indicaModoLecturaDos).Value("999999")
+                                          .FieldLabel("Compañia").SimpleSubmit(true),
+
+                                                    X.TextFieldFor(m => m.CodigoTabla).Width(250)
+                                                    .FieldLabel("Código Tabla").ReadOnly(indicaModoLecturaDos)
+                                                    ,
+
+                                   Html.X().Container().Layout(LayoutType.HBox)
+                                   .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                   .Items(
+                                         X.TextFieldFor(m => m.DescripcionLocal).Width(250)
+                                          .FieldLabel("Descripción Local").ReadOnly(indicaModoLectura)),
+
+                                   Html.X().Container().Layout(LayoutType.HBox)
+                                   .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                   .Items(
+                                            X.TextFieldFor(m => m.DescripcionExtranjera).Width(250)
+                                        .FieldLabel("Desc. Extranjera").ReadOnly(indicaModoLectura)),
+
+
+                                   Html.X().Container().Layout(LayoutType.HBox)
+                                   .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                   .Items(
+                                            X.ComboBoxFor(m => m.Estado).Width(250)
+                                                  .Editable(false)
+                                                  .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico
+                                                      .GetComboGenericoTxt("ESTADOVAR").Select(d => new ListItem(d.Name, d.Codigo)))
+                                                      .FieldLabel("Estado").Value("A").ReadOnly(indicaModoLectura)   
+                                                  .SimpleSubmit(true)  
+                                           .ID("ESTDET")),
+
+                                                        Html.X().Container().Layout(LayoutType.HBox)
+                                                        .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+
+                                                        .Items(
+
+                                                                X.TextFieldFor(m => m.UltimoUsuario)
+                                                                .FieldLabel("Modificación").ReadOnly(true),
+                                                                    X.DateFieldFor(m => m.UltimaFechaModif).ID("dfFechaModif")
+                                                                        .Format("dd/MM/yyyy")
+
+                                                                        .ReadOnly(true).HideLabel(true).Width(80)
+                                                                ,
+                                                                    X.TimeFieldFor(m => m.UltimaFechaModif)
+                                                                .Width(80).Format("H:mm:ss").ReadOnly(true)
+                                                            .FieldLabel("")
+                                                        )
+
+
+                                    )
+
+
+                                ),
+
+                        //                  Html.X().FormPanel()
+                        //             .Frame(false)
+                        //             .Border(false)
+                        //            .Layout(LayoutType.HBox)
+                        //            .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        //                .Items(
+                        //                        Html.X().FormPanel()
+                        //                        .Layout(LayoutType.Form)
+                        //                        .TopBar(
+                        //                       X.Toolbar()
+                        //.Height(30)
+                        //    .Items(
+                        //        X.Button()
+                        //             .Text("Ingresar Fila")
+                        //            .Icon(Icon.ApplicationFormAdd)
+                        //                .Handler("NuevoDetalle(App.AplicacionCodigo,App.CodigoTabla,App.Compania,App.UltimoUsuario);"),
+                        //                                X.ToolbarSeparator(),
+                        //                                X.ToolbarSpacer(),
+                        //                X.Button()
+                        //                     .Text("Modificar Fila")
+                        //                    .Icon(Icon.ApplicationFormEdit)
+                        //                        .Handler("modificarDetalle();"),
+                        //                                    X.ToolbarSeparator(),
+                        //                                    X.ToolbarSpacer(),
+                        //            X.Button()
+                        //                    .Text("Eliminar")
+                        //                .Icon(Icon.ApplicationFormDelete)
+                        //                .Handler("eliminarDetalle();"),
+                        //                                    X.ToolbarSeparator(),
+                        //                                    X.ToolbarSpacer(),
+                        //            X.Button()
+                        //                .Text("Ver")
+                        //                .Icon(Icon.ApplicationViewDetail)
+                        //                .Handler("verDetalle();")
+                        //                ))
+                        //                        .Width(700)
+                        //                        .FieldDefaults(d =>
+                        //                         {
+                        //                             d.LabelWidth = 150;
+                        //                         })
+                        //                        .BodyPadding(10)
+                        //                        .Frame(false)
+                        //                            .Border(false)
+                        //                            .Items(
+                        //                                X.FieldSet()
+                        //                                .Title("Detalle Miscelaneo")
+                        //                                .FieldDefaults(d => { d.LabelWidth = 90; d.InputWidth = 120; })
+                        //                                .Items(
+                        //                                X.GridPanel()
+                        //                                .Border(false)
+                        //                                .Scroll(ScrollMode.Both)
+                        //                                .AutoScroll(true)
+                        //                             .ID("GridPanel")
+                        //                             .Margins("0 0 0 0")
+                        //                             .Store(store => store.Add
+                        //                                 (Html.X().Store().ID("Store")
+                        //                                 .AutoLoad(true)
+                        //                                 .RemoteSort(false)
+                        //                                 .IsPagingStore(true)
+                        //                                 .RemotePaging(true)
+                        //                                 .PageSize(5)
+                        //                                     .Proxy(proxy => proxy.Add(Html.X().AjaxProxy().Url("getGrillaMiscelaneos")
+                        //                                 .Reader(reader => reader.Add(Html.X().JsonReader()
+                        //                                 .Root("data").TotalProperty("total")
+                        //                                 .IDProperty("ValorEntero1")
+                        //                                 ))))
+                        //                                 /***/
+                        //                                         .Parameters(ps => ps.Add(new
+                        //                                         {
+                        //                                             //codigoapp = JRawValue.From("App.AplicacionCodigo.getValue()"),
+                        //                                             codigotabla = JRawValue.From("App.CodigoTabla.getValue()"),
+                        //                                             //compania = JRawValue.From("App.Compania.getValue()"),
+                        //                                             tipoBuscar = JRawValue.From("varTipoBuscar")
+                        //                                         }))
+                        //                                 /**/
+                        //                             .Model(model => model.Add(Html.X().Model()
+                        //                                 .Fields(fields =>
+                        //                                     {
+                        //                                         fields.Add(Html.X().ModelField().Name("AplicacionCodigo"));
+                        //                                         fields.Add(Html.X().ModelField().Name("CodigoTabla"));
+                        //                                         fields.Add(Html.X().ModelField().Name("Compania"));
+                        //                                         fields.Add(Html.X().ModelField().Name("CodigoElemento"));
+                        //                                         fields.Add(Html.X().ModelField().Name("DescripcionLocal"));
+                        //                                         fields.Add(Html.X().ModelField().Name("DescripcionExtranjera"));
+                        //                                         fields.Add(Html.X().ModelField().Name("ValorNumerico"));
+                        //                                         fields.Add(Html.X().ModelField().Name("ValorCodigo1"));
+                        //                                         fields.Add(Html.X().ModelField().Name("ValorCodigo2"));
+                        //                                         fields.Add(Html.X().ModelField().Name("ValorCodigo3"));
+                        //                                         fields.Add(Html.X().ModelField().Name("ValorCodigo4"));
+                        //                                         fields.Add(Html.X().ModelField().Name("ValorCodigo5"));
+                        //                                         fields.Add(Html.X().ModelField().Name("ValorFecha"));
+                        //                                         fields.Add(Html.X().ModelField().Name("Estado"));
+                        //                                         fields.Add(Html.X().ModelField().Name("UltimoUsuario"));
+                        //                                         fields.Add(Html.X().ModelField().Name("UltimaFechaModif"));
+                        //                                         fields.Add(Html.X().ModelField().Name("Timestamp"));
+                        //                                         fields.Add(Html.X().ModelField().Name("RowID"));
+                        //                                         fields.Add(Html.X().ModelField().Name("ValorEntero1"));
+                        //                                         fields.Add(Html.X().ModelField().Name("ValorEntero2"));
+                        //                                         fields.Add(Html.X().ModelField().Name("ValorEntero3"));
+                        //                                         fields.Add(Html.X().ModelField().Name("ValorEntero4"));
+                        //                                         fields.Add(Html.X().ModelField().Name("ValorEntero5"));
+                        //                                         fields.Add(Html.X().ModelField().Name("ValorCodigo6"));
+                        //                                         fields.Add(Html.X().ModelField().Name("ValorCodigo7"));
+                        //                                         fields.Add(Html.X().ModelField().Name("ValorEntero6"));
+                        //                                         fields.Add(Html.X().ModelField().Name("ValorEntero7"));
+                        //                                     })))))
+                        //                   .ColumnModel(columnModel =>
+                        //                       {
+                        //                           columnModel.Columns.Add(Html.X().Column().Text("Orden").DataIndex("ValorEntero1").Width(100).Hidden(true));
+                        //                           columnModel.Columns.Add(Html.X().Column().Text("Codigo Aplicación").DataIndex("AplicacionCodigo").Width(120).Hidden(true));
+                        //                           columnModel.Columns.Add(Html.X().Column().Text("Codigo Tabla").DataIndex("CodigoTabla").Width(120).Hidden(true));
+                        //                           columnModel.Columns.Add(Html.X().Column().Text("Compañia").DataIndex("Compania").Width(100).Hidden(true));
+                        //                           columnModel.Columns.Add(Html.X().Column().Text("Timestamp").DataIndex("Timestamp").Width(100).Hidden(true));
+                        //                           columnModel.Columns.Add(Html.X().Column().Text("Elemento").DataIndex("CodigoElemento").Width(100));
+                        //                           columnModel.Columns.Add(Html.X().Column().Text("Valor Elemento").DataIndex("ValorCodigo1").Width(120));
+                        //                           columnModel.Columns.Add(Html.X().Column().Text("Descripción").DataIndex("DescripcionLocal").Width(150));
+                        //                           columnModel.Columns.Add(Html.X().Column().Text("Descripción Extranjera").DataIndex("DescripcionExtranjera").Width(150));
+                        //                           columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(100)
+                        //                           .Renderer("changeEstado")
+                        //                               );
+                        //                       })
+                        //     .View(Html.X().GridView().TrackOver(false))
+                        //     .Border(false)
+                        //    .Listeners(l => l.CellClick
+                        //                .Handler = "setSeleccionesDet(record.data.Timestamp);")
+                        //    .Listeners(l => l.CellDblClick
+                        //                .Handler = "eventoVerSelectedDet(record.data.Timestamp);")
+                        //                       .BottomBar(bar => bar.Add(Html.X().PagingToolbar()))
+                        //                   )
+                        //                      )
+                         //                 ),
+        //
+                                X.TextArea().ID("taAlerts")
+                                    .Border(false)
+                                    .StyleSpec("background:white;border:1px solid gray;")
+                                    .FieldStyle("color: red")
+                                    .Hidden(true)
+                                    .ReadOnly(true)
+                         )
+        //
+                         .TopBar(
+                             X.Toolbar()
+                             .Height(30)
+                             .Items(
+                                    X.ToolbarFill(),
+                                        X.Button()
+                                            .Hidden((Model.ACCION == "VER" ? true : false))
+                                            .ID("btnSave")
+                                                .Text((Model.ACCION == "DELETE" ? "Eliminar" : "Guardar"))
+                                                .Icon((Model.ACCION == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave))
+                                     .DirectEvents(de =>
+                                      {
+                                          de.Click.Url = Url.Action("save_Miscelaneo");
+                                          de.Click.EventMask.ShowMask = true;
+                                          de.Click.Before = "App.btnSave.setDisabled(true); " +
+                                                            "beforeSave(App.FormPanel1); return App.FormPanel1.getForm().isValid(); ";
+                                          de.Click.After = "App.btnSave.setDisabled(false); ";
+                                          de.Click.ExtraParams.Add(new Parameter("MODO", Model.ACCION, ParameterMode.Value));
+                                          de.Click.ExtraParams.Add(new Parameter("idWindow", "WindowCuerpoHumano", ParameterMode.Value));
+                                          de.Click.Success = "onSuccessDet(result.data);";
+                                          de.Click.Failure = "onFailure('" + Model.ACCION + "');";
+
+                                      }),
+                                    X.Button()
+                                                .Text((Model.ACCION == "VER" ? "Aceptar" : "Cancelar"))
+                                                .Icon((Model.ACCION == "VER" ? Icon.Accept : Icon.Cancel))
+                                     .DirectEvents(de =>
+                                      {
+                                          de.Click.Url = Url.Action("cerrarWindow");
+                                          de.Click.ExtraParams.Add(new Parameter(
+                                                "id", "WindowCuerpoHumano", ParameterMode.Value));
+                                      })
+                                      ,
+                                      X.ToolbarSpacer(20)
+                                 )
+                                )
+    )
+
+
+
+            .DirectEvents(de =>
+                {
+
+                    de.Render.Url = Url.Action("postWindowMisc");
+                    de.Render.ExtraParams.Add(new Parameter("id", "" + Model.AplicacionCodigo, ParameterMode.Value));
+                })
+
+    .CloseAction(CloseAction.Destroy)
+
+)

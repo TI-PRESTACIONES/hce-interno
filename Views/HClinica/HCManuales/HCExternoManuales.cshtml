@@ -1,0 +1,442 @@
+﻿@model SoluccionSalud.Entidades.Entidades.V_EpisodioAtenciones
+
+
+@{
+    var X = Html.X();
+    var COLOR_BLUE01_temp = "#284A89";
+    var COLOR_RED01_temp = "#990000";
+    var COLOR_GREEN01_temp = "#177506";
+    var COLOR_YELLOW02_temp = "#D9A407";
+    var urlActivo="";
+    urlActivo = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.PacienteDatos1;
+
+    var NODOROOT_desc = "DOCUMENTOS-SALUD";
+    var NODOROOT_id = "1|0|0|";
+}
+
+<style type="text/css">
+    /*<![CDATA[*/
+    #img_uno {
+        width: auto;
+        height: 100%;
+        align-self: center;        
+        -webkit-user-select: none;
+        cursor: zoom-in;
+    }
+    #img_dos {        
+        -webkit-user-select: none;
+        cursor: zoom-out;
+    }
+    .logo {
+        border: solid 3px #000;
+    }
+    /*]]>*/
+</style>
+
+<script>
+
+    var actualPrev_X = null;
+    var actualPrev_Y = null;
+    var actualPrev_H = null;
+    var actualPrev_W = null;
+    
+    var panelActual = null;
+    var pathImage = "resources/IndexImagen/";
+   
+    var sistemas = function (record) {
+        
+        var desc = record.data.text;        
+        var vector = record.data.id.split('|');
+        var showURL = "";
+        var tipo = 0;
+        if (vector.length > 3) {
+            tipo = vector[0];
+            showURL = vector[3];
+        }
+        if (tipo> 1) {            
+            var cont = App.centerPanels;
+            cont.setTitle('Selección actual: ' + desc);
+            imagendiv(showURL);
+        } else {
+        }
+    };
+                 
+ 
+    function imagendiv(showURL) {
+        var imagen = document.createElement('img');
+        /* agregamos propiedades al elemento
+        */
+        imagen.src = showURL;
+        imagen.id = 'img_uno';
+        imagen.className = 'logo';
+        imagen.title = 'titulo de la imagen';
+        imagen.alt = 'texto alternativo';
+        imagen.onclick = function () {
+            if (this.id == 'img_uno') {
+                this.id = 'img_dos';
+            } else {
+                this.id = 'img_uno';
+            }                        
+        };
+        /* definimos el elemento donde insertamos la imagen
+        */        
+        var div = document.getElementById("centerPanels-body");
+        div.innerHTML = "";
+        div.style.overflow = "scroll";
+        /* agregamos la imagen
+        */
+        div.appendChild(imagen);
+    }
+
+    var eventoExpandir = function (window, contraer) {
+        if (contraer) {
+            if (actualPrev_X != null && actualPrev_Y != null && actualPrev_H != null && actualPrev_W != null) {
+                window.setHeight(actualPrev_H);
+                window.setWidth(actualPrev_W);
+                window.setX(actualPrev_X);
+                window.setY(actualPrev_Y);
+                App.btnContract.setVisible(false);
+                App.btnExpand.setVisible(true);
+            }
+        } else {
+            actualPrev_H = window.getHeight();
+            actualPrev_W = window.getWidth();
+            actualPrev_X = window.getX();
+            actualPrev_Y = window.getY();
+            var KK = 30;
+            var h = screen.height;
+            var w = screen.width;
+            window.setHeight(h - KK - 100);
+            window.setWidth(w);
+            window.setX(0);
+            window.setY(KK);
+            App.btnContract.setVisible(true);
+            App.btnExpand.setVisible(false);
+        }
+
+    };
+
+    var accionReloadNodoRoot = function (buscar) {
+        if (true) {
+            var tree = App.TreeDocumentosHC;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("setNodoRootGeneral"))',
+                params: {
+                    tipo: 0,
+                    text: '@(NODOROOT_desc)',
+                    id: '@(NODOROOT_id)',
+                    leaf: false
+                },
+                success: function (node) {                    
+                    if (!Ext.isEmpty(node)) {
+                        tree.setRootNode(node);
+                    }
+                    else {
+                        tree.getRootNode().removeAll();                        
+                    }
+                    if (buscar) {                        
+                        buscarfiltrosArbol(node.text);
+                    }
+                }
+            });
+        } else {
+        }
+    };
+
+    var buscarfiltrosArbol = function (texto) {        
+        var tree = App.TreeDocumentosHC;
+        tree.clearFilter();
+        if (Ext.isEmpty(texto, false)) {
+            return;
+        } else {
+            var re = new RegExp(".*" + texto + ".*", "i");
+            tree.filterBy(function (node) {
+                return re.test(node.data.text);
+            });
+        }
+    };
+    var eventoCheckFiltro = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+    var eventoCheckFiltroCompuesto = function (check, componente1, componente2, componente3, btn) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente1.setDisabled(true);
+            componente1.setValue(null);
+            componente2.setDisabled(true);
+            componente2.setValue(null);
+            componente3.setDisabled(true);
+            componente3.setValue(null);
+            btn.setDisabled(true);
+        } else {
+            componente1.setDisabled(false);
+            componente2.setDisabled(false);
+            componente3.setDisabled(false);            
+            btn.setDisabled(false);
+        }
+    };
+
+    function seleccionadorMedico() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorMedico"))',
+            params: {
+                AccionSeleccion: 'getSeleccionMedicoEsp_DocHC',
+                AccionListado: 'LISTARPAG'
+            }
+        });
+    };
+
+    function seleccionadorDiagnosticoDoc() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorDiagnostico"))',
+            params: {
+                AccionSeleccion: 'getSeleccionDiagnostico_DocHC',
+                AccionListado: 'LISTARPAG'
+            }
+        });
+    };
+
+    function seleccionadorUnidadServicio() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorUnidadServicio"))',
+            params: {
+                AccionSeleccion: 'getSeleccionCatUnidadServicio_DocHC',
+                AccionListado: 'LISTARPAG'
+            }
+        });
+    };
+
+</script>
+
+
+@(Html.X().Window()
+    .Width(900)
+    .Height(500)
+    //.X(0)
+    //.Y(0)    
+    .Maximizable(false)
+    .Closable(false)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)    
+    .Resizable(false)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowAsignarPerfil")
+        .Title("Indexación Documentaria H.C. Externas/Manuales")
+    .Padding(4)   
+        .TopBar(
+            X.Toolbar()
+            .Height(30)
+            .Items(
+                X.ToolbarSpacer(),
+                  X.Label().Html("<b><span style='color:" + COLOR_BLUE01_temp + ";'>" + 
+                    "Paciente" + ": " + Model.NombreCompleto + "</span> </b>")
+                ,
+                X.ToolbarSpacer(40),
+                  X.Label().Html("<b><span style='color:" + COLOR_BLUE01_temp + ";'>" +
+                        "Unidad de Replicación" + ": " + Model.UnidadReplicacionEC + "</span> </b>")
+                ,                                
+                X.ToolbarFill(),            
+                X.Button().ID("btnBuscar")
+                    .Text("Buscar")
+                    .Icon(Icon.Find)
+                        .Handler("accionReloadNodoRoot (true);")
+                ,X.ToolbarSeparator()
+                ,                
+                X.Button().ID("btnExpand")
+                    .Text("Expandir")
+                    .Icon(Icon.ApplicationSideExpand)
+                                    .Handler("eventoExpandir (App.WindowAsignarPerfil,false);")
+                            ,
+                X.Button().ID("btnContract")
+                    .Text("Restaurar").Hidden(true)
+                    .Icon(Icon.ApplicationSideContract)
+                                    .Handler("eventoExpandir (App.WindowAsignarPerfil,true);")
+                            ,                             
+                            
+                X.Button()
+                    .Text("Aceptar")
+                    .Icon(Icon.Accept)
+                    .DirectEvents(de =>
+                     {  //Model.ACCION : Posee el MODO ACTUAL
+                         de.Click.Url = Url.Action("cerrarWindow");
+                         //de.Click.EventMask.ShowMask = true;
+                         de.Click.ExtraParams.Add(new Parameter(
+                               "id", "WindowAsignarPerfil", ParameterMode.Value));                        
+                     })                     
+                     
+                )
+          )
+    //INICIO
+    .Items(
+        X.Panel()                        
+        .Border(false)            
+        .Layout(LayoutType.VBox)
+        .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })            
+        .Items(    
+            X.FieldSet().Height(100).ColumnWidth(0.4).Collapsible(true)
+            .Title("Filtros de Búsqueda")      .MarginSpec("0 05 05 05")//BOTT LEFT TOP RIGHT
+            .Items(
+                Html.X().Container().Layout(LayoutType.HBox).MarginSpec("0 00 05 00")//BOTT LEFT TOP RIGHT
+                .Defaults(d =>
+                {
+                    d.Add(new Parameter("LabelWidth", "90"));
+                })
+                .Items(   
+                    X.Checkbox().Checked(true)
+                    .IndicatorTip("Habilita o deshabilita la Asignación del Tipo de Atención")
+                    .FieldLabel("Tipo Atención")
+                        .Listeners(l => l.Change.Handler = "eventoCheckFiltro(this,App.cmbBuscarTipoAtencion_HCDoc);")
+                    ,
+                     X.ComboBox().ID("cmbBuscarTipoAtencion_HCDoc").InputWidth(260)
+                    .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico
+                    .GetComboGenerico("TIPOATENCION").Select(d => new ListItem(d.Name, d.ID)))
+                    .FieldLabel("").Editable(true)
+                     .SimpleSubmit(true).Disabled(true)                   
+                    ,
+                    X.Component().Width(40)
+                    ,
+                    X.Checkbox().FieldLabel("Especialidad")
+                    .Listeners(l => l.Change.Handler = "eventoCheckFiltro(this,App.cmbBuscarEsp_HCDoc);")
+                    .Checked(true),
+                    X.ComboBox().InputWidth(260)
+                    .ID("cmbBuscarEsp_HCDoc").Disabled(true).Name("buscarEsp")
+                    .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("ESPECIALI").Select(d => new ListItem(d.Name, d.ID)))
+                    .FieldLabel("").Editable(true).SimpleSubmit(true)
+                                                                     
+                )
+                ,
+                Html.X().Container().Layout(LayoutType.HBox).MarginSpec("0 00 05 00")//BOTT LEFT TOP RIGHT
+                .Defaults(d =>
+                {
+                    d.Add(new Parameter("LabelWidth", "90"));
+                })
+                .Items(
+                    X.Checkbox().FieldLabel("Médico")
+                    .Listeners(l => l.Change.Handler =
+                    "eventoCheckFiltroCompuesto(this,App.txtFiltroIdMedico_HCDoc,App.txtFiltroDescMedico_HCDoc,"+
+                        "App.txtFiltroDescMedico_HCDoc,App.btnFiltroMedico_HCDoc)")
+                    .Checked(true),
+                    X.NumberField().ID("txtFiltroIdMedico_HCDoc").Width(75).ReadOnly(true)
+                        .FieldLabel("").Disabled(true),
+                    X.TextField().ID("txtFiltroDescMedico_HCDoc").Width(185).ReadOnly(true)
+                    .FieldLabel("").Disabled(true)
+                   , X.Button().ID("btnFiltroMedico_HCDoc").Text("...").Handler("seleccionadorMedico();").Disabled(true)
+                   ,X.Component().Width(17)
+                   ,
+                    X.Checkbox().FieldLabel("Diagnóstico")
+                    .Listeners(l => l.Change.Handler =
+                    "eventoCheckFiltroCompuesto(this,App.txtFiltroCodDiagnostico_HCDoc,"
+                            + "App.txtFiltroDescDiagnostico_HCDoc,App.nfFiltroIdDiagnostico_HCDoc, App.btnFiltroDiagnostico_HCDoc)")
+                    .Checked(true),
+                    X.NumberField().ID("nfFiltroIdDiagnostico_HCDoc").Width(75).ReadOnly(true)
+                    .FieldLabel("").Disabled(true).Hidden(true),
+                    X.TextField().ID("txtFiltroCodDiagnostico_HCDoc").Width(75).ReadOnly(true)
+                    .FieldLabel("").Disabled(true),
+                    X.TextField().ID("txtFiltroDescDiagnostico_HCDoc").Width(185).ReadOnly(true)
+                    .FieldLabel("").Disabled(true)
+                    , X.Button().ID("btnFiltroDiagnostico_HCDoc").Text("...").Handler("seleccionadorDiagnosticoDoc();").Disabled(true)                   
+                )
+                ,
+                Html.X().Container().Layout(LayoutType.HBox).MarginSpec("0 00 05 00")//BOTT LEFT TOP RIGHT
+                .Defaults(d =>
+                {
+                    d.Add(new Parameter("LabelWidth", "90"));
+                })
+                .Items(
+                    X.Checkbox().FieldLabel("Unid. Servicio")
+                    .Listeners(l => l.Change.Handler =
+                        "eventoCheckFiltroCompuesto(this,App.nfIdUnidadServicio_HCDoc,App.tfUnidServ_HCDoc," +
+                        "App.tfUnidServ_HCDoc,App.btnFiltroUnidServ_HCDoc)")
+                    .Checked(true),
+                    X.NumberField().ID("nfIdUnidadServicio_HCDoc").Width(75).ReadOnly(true)
+                    .FieldLabel("").Disabled(true),
+                    X.TextField().ID("tfUnidServ_HCDoc").Width(185).ReadOnly(true)
+                    .FieldLabel("").Disabled(true)
+                    , X.Button().ID("btnFiltroUnidServ_HCDoc").Text("...").Handler("seleccionadorUnidadServicio();").Disabled(true)
+                    , X.Component().Width(17)                
+                )                
+            )
+            ,
+            X.Panel().Header(false).Border(false).Flex(1)
+            .Layout(LayoutType.Border)
+            .Items(
+                    X.TreePanel().Icon(Icon.BookOpen).Collapsible(true)
+                    //.Resizable(true)                   
+                    .Draggable(false)
+                    .Region(Region.West)
+                    .Title("Documentos H.C.")
+                    .Width(270)
+                    .Border(true)
+                    .ID("TreeDocumentosHC")
+                        .Store(
+                            Html.X().TreeStore()
+                                .Proxy(
+                                    Html.X().AjaxProxy().Url(Url.Action("ArbolDocHCEManuales"))
+                                )
+                                .Parameters(ps =>
+                                
+                                ps.Add(new
+                                    {
+                                        Accion = Model.Accion,
+                                        formato = Model.UsuarioCreacion,
+                                        codigoOA = "",
+                                        idPaciente = Model.IdPaciente,
+                                        idOrdenAtencion = Model.IdOrdenAtencion,
+                                        tipoAtencion = JRawValue.From("App.cmbBuscarTipoAtencion_HCDoc.getValue()"),
+                                        especialidad = JRawValue.From("App.cmbBuscarEsp_HCDoc.getValue()"),
+                                        medico = JRawValue.From("App.txtFiltroIdMedico_HCDoc.getValue()"),
+                                        unidadServ = JRawValue.From("App.nfIdUnidadServicio_HCDoc.getValue()"),
+                                        diagnostico = JRawValue.From("App.nfFiltroIdDiagnostico_HCDoc.getValue()"),
+                                        
+                                    })
+                                )
+
+                        )
+                    .Root(
+                        X.Node()
+                        .Text(NODOROOT_desc)
+                            .NodeID(NODOROOT_id)     //HARDCODE                                        
+                                 )
+                   .Listeners(l =>
+                         {
+                             //l.ItemClick.Handler = "if (record.data.href) { e.stopEvent(); loadPages(this.next('idTab'), record); }";
+                             l.ItemClick.Handler = "sistemas(record);";
+                         }),
+                              Html.X().Panel()
+                               .Region(Region.Center)
+                               .ID("centerPanels")
+                               .Height(600)
+                               .Title("Documento no seleccionado.")
+                               .AutoDoLayout(true)
+                               .Loader(new ComponentLoader
+                               {
+
+                                   AutoLoad = false,
+                                   DisableCaching = true,
+                                   Url = "http://10.10.2.62/Carpeta/Pacientes/002.jpg",
+                                   ReloadOnEvent = true
+                               })
+
+
+            )             
+        )               
+    )//FIN
+    .CloseAction(CloseAction.Destroy)
+    /*.Listeners(l =>
+    {
+        l.Maximize.Handler = "alert('MAXX');";    
+    })  */
+        //.Html(DateTime.Now.ToLongTimeString())
+
+)
+
+

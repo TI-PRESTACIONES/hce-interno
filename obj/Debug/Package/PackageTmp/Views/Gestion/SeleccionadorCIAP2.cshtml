@@ -1,0 +1,207 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_GE_ProcedimientoMedicoDos
+@{
+    var X = Html.X(); 
+}
+
+<script>
+    var template = '<span style="color:{0};">{1}</span>';
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 2)
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+
+    var seleccionActual = null;
+    var seleccionActualDesc = null;
+    var seleccionActual3 = null;
+    function setSeleccion(param1) {
+        seleccionActual = param1.IdProcedimientoDos;
+        seleccionActualDesc = param1.Nombre;
+        seleccionActual3 = param1.CodigoProcedimientoDos;
+    }
+
+
+    function enviarSeleccion(grid) {
+        if (seleccionActual != null) {
+            var status = seleccionActual;
+            var status2 = seleccionActualDesc;
+            var status3 = seleccionActual3;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action(Model.Accion))',
+                params: {
+                    MODO: 'get',
+                    id: status,
+                    descripcion: status2,
+                    idWindow: "WindowSelecCIAP",
+                    codigo : status3
+                }
+            });
+        } else {
+            Ext.Msg.alert('Debe Seleccionar un elemento.');
+        }
+
+    }
+
+    function enviarSeleccionDirect(param1) {
+        var status = param1.IdProcedimientoDos;
+        var status2 = param1.Nombre;
+        var status3 = param1.CodigoProcedimientoDos;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action(Model.Accion))',
+            params: {
+                MODO: 'get',
+                id: status,
+                descripcion: status2,
+                idWindow: "WindowSelecCIAP",
+                codigo: status3
+            }
+        });
+    }
+
+    var eventoCheckFiltro = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+
+    var accionBuscarFiltroCiap = function (tipo) {
+        varTipoBuscar = tipo;
+        App.GridPanelCIAP.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+</script>
+
+@(Html.X().Window()
+    .Width(450)
+    .Height(450)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+        .ID("WindowSelecCIAP")
+    .Title("Seleccionar CIAP Padre")
+    .Padding(4)
+        .TopBar(
+                                         X.Toolbar()
+                                         .Height(30)
+                                             .Items(
+                                   X.Button()
+                                    .Text("Buscar")
+                                        .Icon(Icon.Find)
+                                         .Handler("accionBuscarFiltroCiap('FILTRO');"),
+                                                X.ToolbarFill(),
+                                            X.Button()
+                                                .Text("Aceptar")
+                                                .Icon(Icon.Accept)
+                                                .Handler("enviarSeleccion(App.GridPanelCIAP.getSelectionSubmit().getSelectionModelField().getValue());")
+
+                                                     ,
+                                            X.Button()
+                                                .Text("Cancelar")
+                                                .Icon(Icon.Cancel)
+                                                 .DirectEvents(de =>
+                                                  {
+                                                      de.Click.Url = Url.Action("cerrarWindow");
+
+                                                      de.Click.ExtraParams.Add(new Parameter(
+                                                            "id", "WindowSelecCIAP", ParameterMode.Value));
+
+                                                  }),
+                                          X.ToolbarSpacer(20)     
+                                             )
+                                             )
+
+            .Items(
+                        X.GridPanel()
+
+                                    .TopBar(
+                                        X.Toolbar()
+                                            .Items(
+                                                    X.Checkbox().FieldLabel("Descripción").ID("chkId").Checked(true)
+                                                       .Handler("eventoCheckFiltro(App.chkId,App.tfBuscarDesc);").LabelWidth(70),
+                                            X.TextField()
+                                                .ID("tfBuscarDesc").Disabled(true)
+                                            .FieldLabel(""),
+                                            X.ToolbarFill()
+                                        )
+                                        )
+
+
+                            .Border(false)
+                            .Scroll(ScrollMode.Both)
+                            .AutoScroll(true)
+                            .ID("GridPanelCIAP")
+
+                            .Margins("0 0 0 0")
+                        .Store(store => store.Add(
+                                 Html.X().Store()
+                                         .ID("StoreSelCIAP")
+                                     .AutoLoad(true)
+                                     .RemoteSort(false)
+                                     .IsPagingStore(true)
+                                     .RemotePaging(true)
+                                     .PageSize(15)
+                                 .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                    .Url("getGrillaCIAPDOS")
+                                            .Reader(reader => reader.Add(Html.X().JsonReader()
+                                            .Root("data")
+                                            .TotalProperty("total")
+                                                     .IDProperty("IdProcedimientoDos"))))
+                                            )
+
+                                                .Parameters(ps =>
+                                                        ps.Add(new
+                                                            {
+                                                                descripcion = JRawValue.From("App.tfBuscarDesc.getValue()"),
+                                                                tipoBuscar = JRawValue.From("varTipoBuscar")
+                                                            })
+                                                 )
+                                     .Model(model => model.Add(Html.X().Model()
+                                             .Fields(fields =>
+                                             {
+                                                 fields.Add(Html.X().ModelField().Name("IdProcedimientoDos"));
+                                                 fields.Add(Html.X().ModelField().Name("Nombre"));
+                                                 fields.Add(Html.X().ModelField().Name("CodigoProcedimientoDos"));
+                                                 fields.Add(Html.X().ModelField().Name("Estado"));
+                                             }))
+                                            )
+                                          )
+                               )
+                            .ColumnModel(columnModel =>
+                            {
+                                columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("IdProcedimientoDos").Width(80));
+                                columnModel.Columns.Add(Html.X().Column().Text("Descripción").DataIndex("Nombre").Width(300));
+                                columnModel.Columns.Add(Html.X().Column().Text("Código").DataIndex("CodigoProcedimientoDos").Width(300));
+                                columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(100)
+                                    .Renderer("changeEstado"));
+
+                            })
+                             .View(Html.X().GridView().TrackOver(false))
+                                .Border(false)
+                                        .Listeners(l => l.CellDblClick.Handler = "enviarSeleccionDirect(record.data);")
+                                        .Listeners(l => l.CellClick.Handler = "setSeleccion(record.data);")
+                                .BottomBar(bar => bar.Add(
+                                    Html.X().PagingToolbar()
+
+                                ))
+                                )
+                                 .CloseAction(CloseAction.Destroy)
+
+)
+@(
+ X.KeyNav()
+    .Target("WindowSelecCIAP")
+    .Enter(a => a.Handler = "accionBuscarFiltroCiap('FILTRO');")
+)

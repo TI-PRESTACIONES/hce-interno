@@ -1,0 +1,226 @@
+﻿@model SoluccionSalud.Entidades.Entidades.CM_CO_TablaMaestro
+
+@{
+    var X = Html.X();
+    var modoDesc = (Model.Accion == "NUEVO" ? "Nuevo" :
+                   (Model.Accion == "UPDATE" ? "Modificar" :
+                   (Model.Accion == "DELETE" ? "Eliminar" :
+                   (Model.Accion == "VER" ? "Ver" : "--"))));
+
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                             (Model.Accion == "UPDATE" ? true :
+                             (Model.Accion == "DELETE" ? false :
+                             (Model.Accion == "VER" ? false : false))));
+
+    var indicaModoLecturaKey = !(Model.Accion == "NUEVO" ? true :
+                                (Model.Accion == "UPDATE" ? false :
+                                (Model.Accion == "DELETE" ? false :
+                                (Model.Accion == "VER" ? false : false))));
+
+    var STYLE_BACKGROUND_NODEIT = "background: #BBD8D6"; //BBD8D6  #9FBCB9
+    var COLOR_BORDER_DEFAULT = "#b5b8c8";
+
+    var STYLE_BORDER_DEF_VALID01 =(Model.IdTablaMaestro != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+    var STYLE_BORDER_DEF_VALID02 =(Model.Descripcion != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+}
+
+<script>
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_RED01 = "#990000";
+    var COLOR_BORDER_ERROR = "red";
+    var COLOR_BORDER_DEF = "#b5b8c8";
+    var COLOR_BACKGROUND_NOEDIT = "#9FBCB9";
+
+    var change = function (value, meta) {
+        return value;
+    };
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 0) {
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        }
+        if (value == 2) {
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+        }
+    };
+    
+    var onSuccess = function (data) {
+        if (data != null) {
+            accionMensajes(data);
+        }
+    };
+    
+    var onFailure = function (modo) {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Un error en el evento ',
+                titulo: "Error",
+                tipo: 'ERROR'
+            }
+        });
+    };
+
+    function cerrarWindow() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Se registró correctamente el usuario.',
+                accion: null
+            }
+        });
+    }
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "\t *" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+        } else {
+            App.taAlerts.setVisible(false);
+        }
+
+    };
+    var validarCampo = function (componente) {
+        if (componente.getValue() != null) {
+            if (componente.getValue().trim() == 0) {
+                componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+            } else {
+                componente.setFieldStyle("border-color: " + COLOR_BORDER_DEF);
+            }
+        } else {
+            componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+        }
+    };
+</script>
+
+@(Html.X().Window()
+    .Width(860)
+    .Height(510)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowX")
+    .Title("Edición de Maestro Tabla Datos:" + modoDesc)
+    .Padding(4)
+    .Items(
+        Html.X().FormPanel().Frame(false).Border(false).AutoScroll(true).Layout(LayoutType.VBox).LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+        .Items(
+                Html.X().FormPanel().Layout(LayoutType.Form).Height(150).FieldDefaults(d =>{d.LabelWidth = 100;}).BodyPadding(10).Frame(false).Border(false)
+                .Items(
+                    Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch })
+                    .Items(
+                    X.FieldSet().Title("Información General").FieldDefaults(d => { d.LabelWidth = 70; d.InputWidth = 100; }).MarginSpec("0 0 0 0")
+                    .Items(
+                        Html.X().Container().Layout(LayoutType.VBox).LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                        .Items(
+                            Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch }).MarginSpec("0 0 5 0")
+                            .Items(
+                                X.TextFieldFor(m => m.IdTablaMaestro).FieldLabel("Id").ID("id").ReadOnly(indicaModoLectura).Width(200).ReadOnly(true),
+                                X.TextFieldFor(m => m.CodigoTabla).FieldLabel("Código").ReadOnly(indicaModoLectura).Width(200)
+                                ),
+                            Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch }).MarginSpec("0 0 5 0")
+                            .Items(
+                                X.TextFieldFor(m => m.Version).FieldLabel("Versión").ReadOnly(indicaModoLectura).Width(200),
+                                X.TextFieldFor(m => m.Nombre).FieldLabel("Descripción").ID("txtDes").ReadOnly(indicaModoLectura).Width(190)
+                                )
+                              )
+                            ),
+                     X.FieldSet().Title("Información Adicional").FieldDefaults(d => { d.LabelWidth = 100; d.InputWidth = 120; }).MarginSpec("0 0 0 23")
+                     .Items(
+                        Html.X().Container().Layout(LayoutType.VBox).LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                        .Items(
+                            Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch }).MarginSpec("0 0 5 0")
+                            .Items(
+                                   X.ComboBoxFor(m => m.Estado).Editable(false).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("ESTADOINT").Select(d => new ListItem(d.Name, d.ID))).FieldLabel("Estado").Value(Model.Accion == "NUEVO" ? 2 : (Model.Estado)).SimpleSubmit(true).ReadOnly(indicaModoLectura).LabelWidth(69)
+                                ),
+                            Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch }).MarginSpec("0 0 5 0")
+                            .Items(
+                                X.TextFieldFor(m => m.UsuarioCreacion).ID("tfUserCreacion").FieldLabel("Creación").ReadOnly(true).LabelWidth(70).Width(160),
+                                X.DateFieldFor(m => m.FechaCreacion).ID("dfFechaCreacion").Format("dd/MM/yyyy").ReadOnly(true).HideLabel(true).Width(80),
+                                X.TimeFieldFor(m => m.FechaCreacion).ID("dfHoraCrea").Format("H:mm:ss").ReadOnly(true).HideLabel(true)
+                                ),
+                            Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Stretch }).MarginSpec("0 0 5 0")
+                            .Items(
+                                X.TextFieldFor(m => m.UsuarioModificacion).ID("tfUserModif").FieldLabel("Modificación").ReadOnly(true).LabelWidth(70).Width(160),
+                                X.DateFieldFor(m => m.FechaModificacion).ID("dfFechaModif").Format("dd/MM/yyyy").ReadOnly(true).HideLabel(true).Width(80),
+                                X.TimeFieldFor(m => m.FechaModificacion).ID("dfHoraModif").Format("H:mm:ss").ReadOnly(true).HideLabel(true).Width(80)
+                            )
+                          ))  
+                          )                                
+                           )                                
+                                .TopBar(X.Toolbar().Height(30).Items(X.ToolbarFill(), X.Button().Hidden((Model.Accion == "VER" ? true : false))
+                                .ID("btnSave").Text((Model.Accion == "DELETE" ? "Eliminar" : "Guardar"))
+                                .Icon((Model.Accion == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave))
+                                .DirectEvents(de =>
+                                {
+                                    de.Click.Url = Url.Action("save_Detalle");
+                                    de.Click.Before = "App.btnSave.setDisabled(true); ";
+                                    de.Click.After = "App.btnSave.setDisabled(false); ";
+                                    de.Click.EventMask.ShowMask = true;
+                                    de.Click.ExtraParams.Add(new Parameter("MODO", Model.Accion, ParameterMode.Value));
+                                    de.Click.ExtraParams.Add(new Parameter("idWindow", "WindowX", ParameterMode.Value));
+                                    de.Click.Success = "onSuccess(result.data);";
+                                    de.Click.Failure = "onFailure('" + Model.Accion + "');";
+                                }),
+                                X.Button()
+                                .Text((Model.Accion == "VER" ? "Aceptar" : "Cancelar"))
+                                .Icon((Model.Accion == "VER" ? Icon.Accept : Icon.Cancel))
+                                .DirectEvents(de =>
+                                {
+                                    de.Click.Url = Url.Action("cerrarWindow");
+                                    de.Click.ExtraParams.Add(new Parameter("id", "WindowX", ParameterMode.Value));
+                                }),
+                                          X.ToolbarSpacer(20)     )) ,
+                                Html.X().FormPanel().Frame(false).Border(false).Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                                .Items(
+                                    Html.X().FormPanel().Layout(LayoutType.Form).Flex(1).FieldDefaults(d => { d.LabelWidth = 150; }).BodyPadding(10).Frame(false).Border(false)
+                                    .Items(
+                                        X.FieldSet().Title("Detalle").FieldDefaults(d => { d.LabelWidth = 90; d.InputWidth = 120; }).
+                                        Items(
+                                        X.GridPanel().Border(false).Scroll(ScrollMode.Both)
+                                        .ID("GridPanel").Margins("0 0 0 0").Store(store => store.Add(
+                                            Html.X().Store().ID("Store").AutoLoad(true).RemoteSort(false).IsPagingStore(true).RemotePaging(true).PageSize(10)
+                                            .Proxy(proxy => proxy.Add(Html.X().AjaxProxy().Url("getGrillaDetalleMaestro").Reader(reader => reader.Add(Html.X().JsonReader()
+                                            .Root("data").TotalProperty("total").IDProperty("IdTablaMaestro").IDProperty("IdCodigo")))))
+                                                     /***/
+                                                         .Parameters(ps =>ps.Add(new
+                                                         {
+                                                        codigo = JRawValue.From("App.id.getValue()"),
+                                                        tipoBuscar = JRawValue.From("varTipoBuscar")}))
+                                             /**/
+                                                 .Model(model => model.Add(Html.X().Model()
+                                                     .Fields(fields =>
+                                                     {
+                                                         fields.Add(Html.X().ModelField().Name("IdTablaMaestro"));
+                                                         fields.Add(Html.X().ModelField().Name("IdCodigo"));
+                                                         fields.Add(Html.X().ModelField().Name("Codigo"));
+                                                         fields.Add(Html.X().ModelField().Name("Nombre"));
+                                                         fields.Add(Html.X().ModelField().Name("Estado"));
+                                                     })))))
+                                       .ColumnModel(columnModel =>
+                                       {
+                                           columnModel.Columns.Add(Html.X().Column().Text("Id Tabla").DataIndex("IdTablaMaestro").Width(120));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Id Código").DataIndex("IdCodigo").Width(120));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Código").DataIndex("Codigo").Width(120));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Nombre").DataIndex("Nombre").Width(300));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(120).Renderer("changeEstado"));
+                                       })
+                                           .BottomBar(bar => bar.Add(Html.X().PagingToolbar()))
+                                       )
+                                          )
+                                      )
+                            ))
+                            //.DirectEvents(de =>{de.Render.Url = Url.Action("postWindowDetalle");
+                            //de.Render.ExtraParams.Add(new Parameter("IdTablaMaestro", "" + Model.IdTablaMaestro, ParameterMode.Value));})                         
+                            .CloseAction(CloseAction.Destroy)
+                            )

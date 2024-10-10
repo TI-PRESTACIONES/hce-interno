@@ -1,0 +1,483 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_HC_DescansoMedico
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                        (Model.Accion == "UPDATE" ? true :
+                        (Model.Accion == "DELETE" ? false :
+                        (Model.Accion == "VISTA" ? false : false))));
+
+    var COLOER_IND_OBLIGA = AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("COL_BCOBLI"); ;
+
+    var MENS_NUMERO = "No se permite un valor negativo.";
+    string caracteres_permitidos="^[a-zA-ZñÑáéíóúÁÉÍÓÚ0-9,/:; .<>=)#+?¿(&%$!¡"+"]*$";
+}
+@section cabecera
+{
+
+<style>
+    html body {
+        padding: 0px;
+        background: none;
+        background: none;
+        background: none;
+        background-attachment: fixed;
+        background-position: center;
+        font-family: tahoma,verdana,sans-serif;
+        background-color: #ffffff;
+    }
+</style>
+
+    <script>
+        function eventoRenderForm() {
+            var kk = 195;
+            var scrH = screen.height;
+            var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+            var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+            if (southH == 0) {
+                southH = 30;
+            }
+            var dimCentral = (scrH - (northH + southH) - kk);
+            App.formactual.setHeight(dimCentral);
+        }
+        var indicaCambios = false;
+        function setIndicaCambios(value) {
+            indicaCambios = value;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("setIndicaCambiosFormulario"))',
+                params: {
+                    indica: (value ? 1 : 0)
+                }
+            });
+        }
+        var onSuccess = function (data) {
+            App.btnOnEdit.setVisible(true);
+            App.btnCancel.setVisible(false);
+
+            var reload = true;
+            if (data != null) {
+                if (data.length > 0) {
+                    reload = false
+                    App.cmdGuardar.setDisabled(false);
+                    if (data[0].TIPOMSG == 'EXCEPTION') {
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("showMensajeNotify"))',
+                            params: {
+                                titulo: data[0].TITULO,
+                                message: data[0].DESCRIPCION,
+                                tipo: 'ERROR'
+                            }
+                        });
+                    } else {
+                        accionMensajes(data);
+                    }
+                }
+            }
+            if (reload) {
+                parent.App.txtRecargarX.setValue('RELOAD');
+            }
+        };
+
+        var onFailure = function (data) {
+            App.cmdGuardar.setDisabled(false);
+        };
+    </script>
+    <script>
+    var hhValidation = function (h) {
+        str = h.value;
+        tempo = "'";
+        str = str.replace('javascript:myFunction(' + tempo, '');
+        str = str.replace('%20', ' ');
+        str = str.replace('%C3%B3', 'ó');
+        str = str.replace('%C3%A1', 'á');
+        str = str.replace('%C3%A9', 'é');
+        str = str.replace('%C3%AD', 'í');
+        str = str.replace('%C3%BA', 'ú');
+        str = str.replace('%C3%B1', 'ñ');
+
+        str = str.replace('%C3%8D', 'Í');
+        str = str.replace('%C3%93', 'Ó');
+        str = str.replace('%C3%81', 'Á');
+        str = str.replace('%C3%91', 'Ñ');
+        str = str.replace('%C3%9A', 'Ú');
+        str = str.replace(tempo + ')', '');
+        h.setValue(str);
+
+    }
+    var mmValidation = function (m) {
+        if (m.getValue() > 59) {
+            m.setValue(59);
+        }
+
+    }
+    var eventoOnEditar = function (btn) {
+        App.cmdGuardar.setDisabled(false);
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+
+    };
+
+    function Mostrar(grid) {
+        var oneDay = 24 * 60 * 60 * 1000;
+        var date1 = new Date(App.FechaInicioDescanso.getValue());
+        var date2 = new Date(App.FechaFinDescanso.getValue());
+        var diffDays = Math.round(Math.abs((date1.getTime() - date2.getTime()) / (oneDay))) + 1;
+        // alert(diffDays);
+        var diaDescanso = 0;
+        diaDescanso = diffDays;
+        App.Dias.setValue(diffDays);
+        var APMiscelaneos = new Array();
+
+        var MA_MiscelaneosDetalle = {
+            ValorEntero1: diaDescanso,
+            ValorFecha: App.FechaInicioDescanso.getValue(),
+            ACCION: "POSaludValidDescanso"
+
+        };
+        APMiscelaneos.push(MA_MiscelaneosDetalle);
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("POSaludDescansoMedico"))',
+            params: {
+                PacienteID: 0,
+                dias: diaDescanso,
+                regla: 'POSaludDescansoMedico',
+                arrays: APMiscelaneos
+            },
+            success: function (result) { mostrarAlarma(result.data); }
+        });
+
+        // alert(edad);
+    };
+        var mostrarAlarma = function (data) {            
+            if (data != null) {
+                if (data[0].ESTADOBOOL) {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: 'Advertencia Motor Reglas',
+                            message: 'Excede numero de dias autorizadas..',
+                            tipo: 'WARNING'
+                        }
+                    });
+                } else {
+                }
+            }
+        }
+        var accionMensajes = function (data) {
+            var mensajes = "";
+            if (data.length > 0) {
+                for (var i = 0; i < data.length; i++) {
+                    mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+                }
+                App.taAlerts.setVisible(true);
+                App.taAlerts.setValue(mensajes);
+                App.conthbIndicaError.setVisible(true);
+                App.taAlerts.focus();
+            } else {
+                App.taAlerts.setVisible(false);
+                App.conthbIndicaError.setVisible(false);
+            }
+
+        };
+
+        var getInvalidFields = function (form) {
+            var invalidFields = new Array();
+            var fields = form.getForm().getFields();
+            fields.filterBy(function (field) {
+                if (!field.isValid()) {
+                    var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                        NombreCampo: field.name,
+                        IdEvento: (field.isValid() ? 1 : 0),
+                        ValorTexto: field.name + ': ' + field.getErrors()
+                    };
+                    invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+                }
+            });
+            return invalidFields;
+        };
+
+        var beforeSave = function (form) {
+            App.taAlerts.setVisible(false);
+            App.taAlerts.setValue(null);
+            App.conthbIndicaError.setVisible(false);
+            var FieldsInvalidos = getInvalidFields(form);
+            if (FieldsInvalidos.length > 0) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("addRecursosValidacion"))',
+                params: {
+                    data: FieldsInvalidos,
+                    indica: 'VALIDAR',
+                },
+                success: function (result) { accionMensajes(result.data); }
+            });
+        }
+    };
+    function eventoCancelar(form) {
+        form.getForm().reset();
+        App.taAlerts.setVisible(false);
+        App.conthbIndicaError.setVisible(false);
+        setIndicaCambios(false);
+    }
+
+    function eventoVisorReportDescanso(param1) {
+        window.location.href = '@Url.Action("VistaDescansoMedico", "HClinica")';
+    }
+    function eventoVisorReport(param1) {
+        //alert(param1);
+        // alert("Sistemas");
+        if (param1 != null) {
+            var status = param1;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("VisorDescansoMedico"))',
+                params: {
+                    MODO: 'VER',
+                    id: status
+                }
+            });
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Seleccionar un Elemento.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+    }
+
+    function validarfechas(obj, fecha1, fecha2) {
+        if (fecha1 != null && fecha2 != null) {
+            if (fecha1 > fecha2) {
+                obj.setValue(null);
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("showMensajeNotify"))',
+                    params: {
+                        message: 'Las fecha inicial no debe ser mayor que la fecha final.',
+                        titulo: 'Advertencia',
+                        tipo: 'ERROR'
+                    }
+                });
+
+
+            } else {
+                Mostrar(obj);
+            }
+        } else {
+            App.Dias.setValue(null);
+        }
+    }
+
+    function eventoIncrementoFecha(obj) {
+        if (App.FechaInicioDescanso.getValue() != null && obj.getValue() != null) {
+            var dias = obj.getValue();
+            var fechaIni = App.FechaInicioDescanso.getValue();
+            var tiempo = fechaIni.getTime();
+            var milisegundos = parseInt(dias * 24 * 60 * 60 * 1000);
+            var total = fechaIni.setTime(tiempo + milisegundos);
+            var day = fechaIni.getDate();
+            var month = fechaIni.getMonth() + 1;
+            var year = fechaIni.getFullYear();
+            var monthShow = month;
+            if (month < 10) {
+                monthShow = '0' + month;
+            }
+            var dayShow = day;
+            if (day < 10) {
+                dayShow = '0' + day;
+            }
+            var fecha = monthShow + '/' + dayShow + '/' + year;
+            fecha = new Date(fecha);
+            App.FechaFinDescanso.setValue(fecha);
+        } else {
+            App.FechaFinDescanso.setValue(null);
+        }
+    }
+
+    var eventoKey = function (tf, e) {
+        if (e.getKey() == '190') {
+            var str = tf.getRawValue().replace('.', '');
+            tf.setValue(str);
+        } else if (e.getKey() == '109') {
+            var str = tf.getRawValue().replace('-', '');
+            tf.setValue(str);
+        }
+    };
+
+    </script>
+}
+
+
+@section cuerpo
+{
+
+
+    @(Html.X().Viewport()
+        .Layout(LayoutType.VBox)
+
+        .LayoutConfig(
+            new VBoxLayoutConfig { Align = VBoxAlign.Stretch }
+        )
+        .Listeners(l =>
+        {
+            l.AfterLayout.BroadcastOnBus = "App.resize";
+            l.AfterLayout.Single = true;
+        })
+        .Items(regions =>
+        {
+
+            regions.Add(Html.X().FormPanel()
+                .ItemID("center")
+                .DefaultAnchor("100%")
+                .AutoScroll(true)
+                .Height(340)
+               .Header(false)
+               .Border(true)
+                .ID("formactual")
+                .Listeners(l =>
+                {
+                    l.Render.Handler = "eventoRenderForm();";
+                })   
+               .Items(
+                         X.FieldSet()
+                                            .ColumnWidth(0.4)
+                                            .Title("DESCANSO MÉDICO")
+                                            .MarginSpec("0 05 0 05")
+                                            .Defaults(d =>
+                                            {
+                                                d.Add(new Parameter("LabelWidth", "170"));
+
+                                            })
+                                            .DefaultAnchor("100%")
+                                            .FieldDefaults(d =>
+                                            {
+                                                d.LabelAlign = LabelAlign.Left;
+                                            })
+
+                                                .Items(
+                                                       X.TextAreaFor(c => c.Observacion).FieldLabel("Tipo de descanso").ReadOnly(indicaModoLectura).MaskRe("/[^¬^]/"),
+                                                       X.Container()
+                                                            .Layout(LayoutType.HBox)
+                                                            .Defaults(d =>
+                                                            {
+                                                                d.Add(new Parameter("LabelWidth", "170"));
+                                                            })
+                                                            .Items(
+                                                                    X.DateFieldFor(c => c.FechaInicioDescanso).FieldLabel("Del").ReadOnly(indicaModoLectura)
+                                                                    .Format("dd/MM/yyyy")
+                                                                     .Listeners(l =>
+                                                                     {
+                                                                         l.Change.Handler =
+                                                                             "validarfechas(this,App.FechaInicioDescanso.getValue(),App.FechaFinDescanso.getValue()); ";
+                                                                     })                                                                    
+                                                                    ,
+                                                                    X.Component().Width(20),
+                                                                    X.DateFieldFor(c => c.FechaFinDescanso).FieldLabel("Al").ReadOnly(indicaModoLectura)                                                                    
+                                                                     .Format("dd/MM/yyyy")
+                                                                     .Listeners(l => { l.Change.Handler =
+                                                                         "validarfechas(this,App.FechaInicioDescanso.getValue(),App.FechaFinDescanso.getValue()); "
+                                                                         //"Mostrar(this);" 
+                                                                         ; 
+                                                                        })
+                                                                   ),
+                                                        X.Container()
+                                                            .Layout(LayoutType.HBox)
+                                                            .Defaults(d =>
+                                                            {
+                                                                d.Add(new Parameter("LabelWidth", "170"));
+                                                            })
+                                                            .Items(
+                                                                X.NumberFieldFor(c => c.Dias).FieldLabel("Dias").ReadOnly(indicaModoLectura)                                                                
+                                                                .MinValue(0).NegativeText(MENS_NUMERO)
+                                                                .Editable(false)                                                             
+                                                                .EnableKeyEvents(true)                                                                
+                                                                .Listeners(l =>
+                                                                {
+                                                                    l.Blur.Handler ="eventoIncrementoFecha(this);";
+                                                                    l.KeyUp.Fn = "eventoKey";
+                                                                })                                                                 
+                                                            )
+                                            )
+                                ////////ADD PARA MSGS/////		
+                                ,
+                                X.TextArea().ID("taAlerts")
+                                .Border(false)
+                                .StyleSpec("background:white;border:1px solid gray;")
+                                .FieldStyle("color: red")
+                                .Hidden(true)
+                                .ReadOnly(true)
+                                //////////////////////                                      
+                     )
+                    .TopBar(X.Toolbar().Hidden(indicaModoLectura).Items(
+                                X.ToolbarSpacer(20),
+                                X.TextField().Width(15).FieldStyle("border-color: " + COLOER_IND_OBLIGA).ReadOnly(true),
+                                X.Label().Html("<b><font color='" + COLOER_IND_OBLIGA + "'>Campos Obligatorios</font></b>"),
+                                X.ToolbarSpacer(20)
+                                ,
+                                Html.X().Container().Layout(LayoutType.HBox)
+                                .ID("conthbIndicaError").Hidden(true).Items(
+                                    X.Label().Html("<font  size='1.9em'; color='red'>(</font>"),
+                                    X.Label().Html("<font  size='3.9em'; color='red'><b>&#161;</b></font>"),
+                                    X.Label().Html("<font  size='1.9em'; color='red'>) Verificar los errores presentados</font>")
+                                ),
+                    
+                                X.ToolbarFill(),
+                             X.Button()
+                                .Text("Reportes")
+                                .Icon(Icon.Report)
+                                .Hidden(false)
+                                .ID("cmdImprimir")
+                                .Handler("eventoVisorReportDescanso(2);")
+                             
+                                   ,
+                            X.Button()
+                                .Text("Guardar")
+                                .Icon(Icon.Disk)
+                                .ID("cmdGuardar")
+                                
+                               .DirectEvents(directEvents =>
+                               {
+                                   directEvents.Click.Url = "Save_SS_HC_DescanzoMedico";
+                                   directEvents.Click.Before = "" +
+                                        "beforeSave(App.formactual); return App.formactual.getForm().isValid();";                                   
+                                   directEvents.Click.EventMask.ShowMask = true;
+                                   directEvents.Click.EventMask.Msg = "Loading...";
+                                   directEvents.Click.Success = "onSuccess(result.data);";
+                                   directEvents.Click.Failure = "onFailure();";                                      
+                                   /*directEvents.Click.ExtraParams.Add(new
+                                   {
+                                       selection = "",
+                                       accion = "Continuar"
+                                   });*/
+                               })  ,                                 
+                               //.DirectClickAction("Save_SS_HC_DescanzoMedico"),
+                            //.OnClientClick("var form = this.up('form'); form.getForm().updateRecord(form.down('grid').getSelectionModel().getLastSelected());"),
+                            X.Button()
+                                .Text("Cancelar")
+                                .ID("btnCancel")
+                                .Icon(Icon.Cancel)
+                                .OnClientClick("eventoCancelar(this.up('form'));")
+                                ,
+                            X.Button()
+                                .Text("Editar")
+                                .ID("btnOnEdit")
+                                .Icon(Icon.ApplicationFormEdit)
+                                .Hidden(true)
+                                .Handler("eventoOnEditar(App.btnOnEdit);")
+
+                        ))
+                        .Listeners(l => l.FieldChange
+                            .Handler = "setIndicaCambios(true);"
+                        )  
+                );
+        }
+        )
+
+
+    )
+
+}
+

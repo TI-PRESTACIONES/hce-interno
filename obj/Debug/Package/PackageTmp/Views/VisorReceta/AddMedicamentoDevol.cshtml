@@ -1,0 +1,466 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_FA_DevolucionProductoDetalle
+
+
+@{
+    var X = Html.X();
+    var COLOR_BLUE01_temp = "#284A89";
+    var COLOR_RED01_temp = "#848484";
+    var idOpcion = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.IDOPCION_ACTUAL;
+    var idWindow = "WindowNotificacionDetalle";
+}
+
+<style type="text/css">
+
+</style>
+
+<script>
+
+
+    var varAux = "1";
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_YELLOW02 = "#D9A407";
+    var COLOR_BLACK = "#000000";
+
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 2)
+            return Ext.String.format(template, COLOR_BLUE01, "Activo");
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01, "Inactivo");
+    };
+
+
+    var eventoExpandir = function (window, contraer) {
+        if (contraer) {
+            if (actualPrev_X != null && actualPrev_Y != null && actualPrev_H != null && actualPrev_W != null) {
+                window.setHeight(actualPrev_H);
+                window.setWidth(actualPrev_W);
+                window.setX(actualPrev_X);
+                window.setY(actualPrev_Y);
+                App.btnContract.setVisible(false);
+                App.btnExpand.setVisible(true);
+            }
+        } else {
+            actualPrev_H = window.getHeight();
+            actualPrev_W = window.getWidth();
+            actualPrev_X = window.getX();
+            actualPrev_Y = window.getY();
+            var KK = 30;
+            var h = screen.height;
+            var w = screen.width;
+            window.setHeight(h - KK - 100);
+            window.setWidth(w);
+            window.setX(0);
+            window.setY(KK);
+            App.btnContract.setVisible(true);
+            App.btnExpand.setVisible(false);
+        }
+
+    };
+
+
+    var eventoCargarMain = function () {
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("addPermisosFormatos"))',
+            params: {
+                data: 'FORMATO',
+                indica: 'PERMISO',
+            },
+            success: function (result) { accionSetPermisos(result.data); }
+        });
+    };
+    var accionSetPermisos = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                if (data[i].ACCION == 'BUSCAR' && App.compoBUSCAR != null) {
+                    App.compoBUSCAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'NUEVO' && App.compoNUEVO != null) {
+                    App.compoNUEVO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'MODIFICAR' && App.compoMODIFICAR != null) {
+                    App.compoMODIFICAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'ELIMINAR' && App.compoELIMINAR != null) {
+                    App.compoELIMINAR.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'VER' && App.compoVER != null) {
+
+                } else if (data[i].ACCION == 'VER2' && App.compoVER != null) {
+                    App.compoVER.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'ACCESO' && App.compoACCESO != null) {
+                    App.compoACCESO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'HABILITADO' && App.compoHABILITADO != null) {
+                    App.compoHABILITADO.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'OBLIGA' && App.compoOBLIGA != null) {
+                    App.compoOBLIGA.setVisible((data[i].campoInt01 == 2 ? true : false));
+                } else if (data[i].ACCION == 'PRIORIDADAGOPCION' && App.compoPRIORIDADAGOPCION != null) {
+                    App.compoPRIORIDADAGOPCION.setVisible((data[i].campoInt01 == 2 ? true : false));
+                }
+
+            }
+        }
+    };
+
+
+
+    var seleccionActual = null;
+    function setSeleccion(param1) {
+        seleccionActual = param1;
+    }
+
+    var eventoCheckFiltro = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+
+
+    var onSuccess = function (grid, data) {
+        grid.show();
+        grid.getStore().loadData(data);
+    };
+
+
+
+    var varTipoBuscar = "LOAD";
+    var accionBuscarFiltro = function (tipo) {
+        varTipoBuscar = tipo;
+        App.GridPanelVer.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+
+
+
+
+
+    function eventoAgregarFormulario(parOpcion, window) {
+
+        if (window != null) {
+
+            var records = App.GridPanelVer.getSelectionModel().getSelection();
+            var ArrayList0 = new Array();
+
+            for (var i = 0; i < records.length; i++) {
+                var MA_MiscelaneosDetalle = {
+
+                    CodigoElemento: records[i].get('CodigoComponente'),
+                    ValorCodigo5: records[i].get('IdNotificacion'),
+                    DescripcionLocal: records[i].get('Descripcion01'),
+                    ValorCodigo1: records[i].get('codigo01'),
+                    ValorCodigo2: records[i].get('Descripcion01'),
+                    ValorCodigo3: records[i].get('Descripcion02'),
+                    ValorCodigo4: records[i].get('Descripcion03'),
+                    ValorCodigo7: records[i].get('codigo01'),
+                    ValorEntero1: records[i].get('codigo02'),
+                    ValorEntero2: records[i].get('codigo03')
+
+
+                };
+                ArrayList0.push(MA_MiscelaneosDetalle);
+
+            }
+
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("eventoAgregarHistoricoFormulario"))',
+                params: {
+
+                    idWindow: '@(idWindow)',
+                    accion: "AGREGAR",
+                    data: ArrayList0
+                }
+                , success: function (result) {
+
+                    if (result.data != null) {
+
+                        parent.App.PanelA.getBody().App.RecepcionaRecurso.setValue(JSON.stringify(MA_MiscelaneosDetalle));
+                    }
+                }
+            });
+        } else {
+
+        }
+    };
+
+
+    var SelectDobleClik = function (model) {
+
+        var MA_MiscelaneosDetalle =
+            {
+                CodigoElemento: model.CodigoComponente,
+                ValorCodigo5: model.IdNotificacion,
+                DescripcionLocal: model.Descripcion01,
+                ValorCodigo1: model.codigo01,
+                ValorCodigo2: model.Descripcion01,
+                ValorCodigo3: model.Descripcion02,
+                ValorCodigo4: model.Descripcion03,
+                ValorCodigo7: model.codigo01,
+                ValorEntero1: model.codigo02,
+                ValorEntero2: model.codigo03,
+                ValorEntero3: model.Observacion
+
+            };
+
+        parent.App.PanelA.getBody().App.RecepcionaRecurso.setValue(JSON.stringify(MA_MiscelaneosDetalle));
+
+    };
+
+
+
+</script>
+
+
+@(  Html.X().Window()
+    .Width(800)
+    .Height(300)
+    .Maximizable(true)
+    .Closable(true)
+    .Modal(true).OnEsc("false")
+    .AutoScroll(true)
+    .Y(10)
+    .Resizable(false)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID(idWindow)
+    .Title("Medicamentos Solicitados")
+    .Padding(4)
+
+  .Items(
+      X.Panel()
+            .Border(false)
+            .Layout(LayoutType.VBox)
+            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+        .TopBar(
+                X.Toolbar()
+                .Height(30)
+                .Items(
+
+                   X.Button().ID("btnExpand")
+                    .Text("Expandir")
+                    .Icon(Icon.ApplicationSideExpand)
+                    .Handler("eventoExpandir (App." + idWindow + ",false);")
+                            ,
+                X.Button().ID("btnContract")
+                    .Text("Restaurar").Hidden(true)
+                    .Icon(Icon.ApplicationSideContract)
+                    .Handler("eventoExpandir (App." + idWindow + ",true);"),
+
+                X.Button().ID("btnBuscar")
+                    .Text("Buscar")
+                    .Icon(Icon.Find)
+                    .Handler("accionBuscarFiltro('FILTRO');"),
+
+                    X.ToolbarFill(),
+                    X.ToolbarFill(),
+
+
+                        X.ToolbarSpacer(),
+                        X.ToolbarSpacer(),
+                        X.ToolbarSpacer(),
+                         X.Button()
+                        .Text("Agregar")
+                        .Icon(Icon.PageWhiteCopy)
+                                .Handler("eventoAgregarFormulario('" + idOpcion + "',App." + idWindow + ");")
+                    ,
+
+                   X.Button()
+                   .Text("Cancelar")
+                   .Icon(Icon.Cancel)
+                   .DirectEvents(de =>
+        {
+            de.Click.Url = Url.Action("cerrarWindow");
+            de.Click.ExtraParams.Add(new Parameter("id", idWindow, ParameterMode.Value));
+        })
+
+
+        )
+        )
+
+        .Items(
+                    X.FieldSet().Collapsible(true).DefaultAnchor("100%")
+            .Title("Filtros de Búsqueda").MarginSpec("0 05 05 05")//BOTT LEFT TOP RIGHT
+            .Items(
+                Html.X().Container().Layout(LayoutType.HBox).MarginSpec("0 00 05 00")//BOTT LEFT TOP RIGHT
+                .Defaults(d =>
+                {
+                    d.Add(new Parameter("LabelWidth", "90"));
+                })
+                .Items(
+                    X.Checkbox()
+                    .FieldLabel("Descripcion")
+                     .ID("AgregarForm_chkDesc")
+                     .Listeners(l => l.Change.Handler = "eventoCheckFiltro(this,App.AgregarForm_txtDesc);")
+                    .Checked(true),
+                    X.TextField()
+                    .Width(220)
+                            .ID("AgregarForm_txtDesc")
+                    .Disabled(true)
+                    ,
+
+                    Html.X().Container().Layout(LayoutType.HBox)
+                      .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                      .Items(
+                          X.Checkbox()
+                          .FieldLabel("Estado")
+                               .ID("chHEst").Listeners(l => l.Change.Handler = "eventoCheckFiltro(App.chHEst,App.tfBuscarEst);")
+                            .Checked(true),
+                              X.ComboBox()
+                               .ID("tfBuscarEst").Disabled(true)
+                                     .Name("cmbBuscarEst")
+                                 .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("ESTADOINT").Select(d => new ListItem(d.Name, d.ID)))
+                                 .FieldLabel("").SimpleSubmit(true)
+
+                       )
+
+
+                )
+               )
+            )
+
+            .Items(
+                   X.Panel().Icon(Icon.BookOpen).Collapsible(false).Resizable(false)
+                        .Layout(LayoutType.Fit)
+                        .Draggable(false)
+                        .Region(Region.Center)
+                        .Title("Medicamentos Solicitados")
+                        .Border(true)
+                .Items(
+
+                             X.GridPanel()
+                            .Layout(LayoutType.Fit)
+                            .Border(false)
+                            .Scroll(ScrollMode.Both)
+                            .AutoScroll(true)
+                            .ID("GridPanelVer")
+                            .Height(300)
+                            .Margins("0 0 0 0")
+                            .Store(store => store.Add(
+                                     Html.X().Store()
+                                         .ID("StoreVer")
+                                         .AutoLoad(true)
+                                //  .RemoteSort(false)
+                                         .IsPagingStore(true)
+                                         .RemotePaging(true)
+                                         .PageSize(10)////CAMBIAR DE ACUERDO A ALGÚN UN CRITERIO
+                                         .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                             .Url("GrillaListadoMedicamentoPacientes")
+                                         .Reader(reader => reader.Add(Html.X().JsonReader()
+                                         .Root("data")
+                                         .TotalProperty("total")
+                                             .IDProperty("Secuencia"))))
+                                          )
+
+                                         .Parameters(ps =>
+                                          ps.Add(new
+                                          {
+                                              start = 0,
+                                              limit = 5,                                             
+                                              txtFecha1 = JRawValue.From("App.txtFecha1.getValue()"),
+                                              txtFecha2 = JRawValue.From("App.txtFecha2.getValue()"),                                              
+                                              txtPaciente = JRawValue.From("App.txtPaciente.getValue()"),                                              
+                                              tipoEstado = JRawValue.From("App.txtObservacion.getValue()"),                                             
+                                              tipoBuscar = JRawValue.From("varTipoBuscar")
+                                              //tipoListado = PAR_TIPOLISTADO
+
+                                          })
+                                        )
+                                        .Model(model => model.Add(Html.X().Model()
+                                                 .Fields(fields =>
+                                                 {
+                                                     fields.Add(Html.X().ModelField().Name("IdPaciente").Type(ModelFieldType.Int));
+                                                     fields.Add(Html.X().ModelField().Name("NombreCompleto"));
+                                                     fields.Add(Html.X().ModelField().Name("EpisodioClinico"));
+                                                     fields.Add(Html.X().ModelField().Name("IdEpisodioAtencion"));
+                                                     fields.Add(Html.X().ModelField().Name("Secuencia"));
+                                                     fields.Add(Html.X().ModelField().Name("Linea"));
+                                                     fields.Add(Html.X().ModelField().Name("Familia"));
+                                                     fields.Add(Html.X().ModelField().Name("SubFamilia"));
+                                                     fields.Add(Html.X().ModelField().Name("TipoComponente"));
+                                                     fields.Add(Html.X().ModelField().Name("FechaCreacion"));
+                                                     fields.Add(Html.X().ModelField().Name("GrupoMedicamento"));
+                                                     fields.Add(Html.X().ModelField().Name("CodigoComponente"));
+                                                     fields.Add(Html.X().ModelField().Name("Medicamento"));
+                                                     fields.Add(Html.X().ModelField().Name("Cantidad"));
+                                                     fields.Add(Html.X().ModelField().Name("CodigoOA"));
+                                                     fields.Add(Html.X().ModelField().Name("Estado"));
+                                                     fields.Add(Html.X().ModelField().Name("Accion"));
+                                                     fields.Add(Html.X().ModelField().Name("RecetadoMed"));
+
+
+
+
+                                                 }))
+                                                )
+                                              )
+                                   )
+
+                                ///CONFIGURAR LAS COLUMNAS
+                                .ColumnModel(columnModel =>
+                                {
+                                    columnModel.Columns.Add(Html.X().Column().Text("IdPaciente").DataIndex("IdPaciente").Width(50).Hidden(true));
+
+
+                                    columnModel.Columns.Add(Html.X().Column().Text("EpisodioClinico").DataIndex("EpisodioClinico").Width(100).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Recetado<br/>Médico").DataIndex("RecetadoMed").Renderer("changeModalidad2").Width(55).Hidden(false));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Secuencia").DataIndex("Secuencia").Width(80).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Linea").DataIndex("Linea").Width(150).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Familia").DataIndex("Familia").Width(150).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("SubFamilia").DataIndex("SubFamilia").Width(280).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("TipoComponente").DataIndex("TipoComponente").Width(50).Hidden(true));                                    
+                                    //////////////////MOSTRADOS
+                                    columnModel.Columns.Add(Html.X().Column().Text("Paciente").DataIndex("NombreCompleto").Width(250).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Episodio<br/>Atención").DataIndex("IdEpisodioAtencion").Width(60));
+                                    columnModel.Columns.Add(Html.X().DateColumn().Text("Fecha").DataIndex("FechaCreacion").Width(85).Format("dd/MM/yyyy"));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Grupo").DataIndex("GrupoMedicamento").Width(80).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("IdMedicamento").DataIndex("CodigoComponente").Width(80).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Medicamento").DataIndex("Medicamento").Width(200));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Cantidad<br/>Recetada").DataIndex("Cantidad").Width(55).Hidden(false));
+                                    columnModel.Columns.Add(Html.X().ComponentColumn().Editor(true).Text("Cantidad").DataIndex("CodigoOA").Component(
+                                                      Html.X().NumberField().MinValue(1).Listeners(l => { l.AfterRender.Handler = "editarCantidad(this);"; })
+                                                      ).Width(80).Hidden(false));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Renderer("changeEstado").Width(90).Hidden(false));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Accion").DataIndex("Accion").Width(80).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().CommandColumn().Text("Accion").Width(60).Commands(
+                                                 Html.X().GridCommand()
+                                                 .CommandName("Delete")
+                                                 .Icon(Icon.Delete)
+                                        //.Text("Eliminar")
+                                                 )
+                                                 .Listeners(ls => ls.Command.Handler = "deleteActual(this.up('grid'),record);"));
+
+
+                                })
+                                 .View(Html.X().GridView().TrackOver(false))
+                                 .Border(false)
+                               .Listeners(
+
+                                            l => l.CellDblClick.Handler = "SelectDobleClik(record.data);"
+
+                                        )
+
+
+
+                                           .SelectionModel(
+                                    X.CheckboxSelectionModel()
+                                        .Mode(SelectionMode.Multi)
+
+                                    )
+
+
+                                .BottomBar(bar => bar.Add(
+                                    Html.X().PagingToolbar()
+                                ))
+
+                    )
+                )
+            )
+                  .Listeners(l => l.Render.Handler = "eventoCargarMain();")
+
+).CloseAction(CloseAction.Destroy)
+)

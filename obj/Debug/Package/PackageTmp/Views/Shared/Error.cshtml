@@ -1,0 +1,35 @@
+﻿@model System.Web.Mvc.HandleErrorInfo
+
+@{
+    ViewBag.Title = "Error";
+}
+
+<div>
+    <span>Error Inesperado</span>
+    <br />
+</div>
+<div>
+    <div>
+        Ha Ocurrido un error inesperado. Por favor consulte con su administrador de sistemas.
+    </div>
+
+    @if (Model != null && HttpContext.Current.IsDebuggingEnabled)
+    {
+        <div>
+            <p>
+                <b>Exception:</b> @Model.Exception.Message<br />
+                @if (Model.ControllerName.Length > 1)
+                {
+                    <b>Controller:</b> @Model.ControllerName
+                    <br />
+                }
+                @if (Model.ActionName.Length > 1)
+                {
+                    <b>Action:</b> @Model.ActionName
+                    <br />
+                }
+            </p>
+        </div>
+    }
+
+</div>

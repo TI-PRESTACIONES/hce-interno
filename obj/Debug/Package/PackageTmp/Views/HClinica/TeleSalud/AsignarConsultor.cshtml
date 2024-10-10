@@ -1,0 +1,318 @@
+﻿@model SoluccionSalud.Entidades.Entidades.VW_ATENCIONPACIENTE
+
+@{
+    var X = Html.X();
+    var idWindow = "WindowAsignar";
+
+                            
+    var STYLE_TEXT = "Border : none; background: none; font: normal 11px tahoma; height: 18px;";
+
+    var STYLE_LABEL = "'width:140px;height: 18px; margin-right:5px; font: bold 11px tahoma ; color: #284A89 ' >";
+    var STYLE_LABEL_SMALL = "'width:10px;height: 18px; margin-right:5px; font: bold 11px tahoma ; color: #284A89 ' >";
+
+    var STYLE_ETQ_ABR = "<label style= ";
+    var STYLE_ETQ_CER = "</label>";
+    var COLORBLU01 = "#284A89";
+
+                                
+    var PARAM_COMPA = AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("COMPANIA_LOGIN");
+    var PARAM_SUCUR = AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("SUCURSAL_LOGIN");
+    var PARAM_ESTABLEC = AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("ESTABLEC_LOGIN");
+    var PARAM_MODULO = AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("MODULO_LOGIN");
+
+    var PAR_CODTRABAJADORMEDICO = "" + (AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("CODTRABMED") != null ?
+        AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("CODTRABMED") : "08");
+
+
+    var PAR_CODTRABAJADORREQUERIDO = (Model.UsuarioCreacion);
+
+    var indicaEspecialidadVisible = (PAR_CODTRABAJADORREQUERIDO == PAR_CODTRABAJADORMEDICO) ? true : false;
+
+    var PARAM_NOTAESPECIALIDAD = (indicaEspecialidadVisible ? "(Deberá especifcar también la Especialidad)" : "");
+}
+
+<script>
+
+
+    var template = 'color:{0};';
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_RED01 = "#990000";
+
+    var COLOR_BORDER_ERROR = "red";
+    var COLOR_BORDER_DEF = "#b5b8c8";
+    var COLOR_BACKGROUND_NOEDIT = "#9FBCB9";
+
+
+    var change = function (value, meta) {
+        return value;
+
+    };
+
+
+    function cerrarWindow(win) {
+        win.hide();
+    }
+
+
+        var onSuccess = function (data) {
+            
+        };
+
+        var onFailure = function (modo) {
+            App.btnSave.setDisabled(false);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("showMensajeBox"))',
+                params: {
+                    message: 'Un error en el evento ',
+                    titulo: "Error",
+                    tipo: 'ERROR'
+                }
+            });
+        };
+
+    function eventoSetUsuario() {
+        var indicaEspecialidad = '@(indicaEspecialidadVisible)';                
+        if (indicaEspecialidad == 'True') {
+            
+            App.IdCodigo.clearValue();
+            App.IdCodigo.getStore().load();
+        } else {            
+        }
+    }
+    
+
+</script>
+
+@(Html.X().Window()
+    .Width(450)
+    .Height(320)
+    .Maximizable(false)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+        //.LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.StretchMax })    
+    .Icon(Icon.Lock)
+    .ID(idWindow)
+    .Title("Autenticación Requerida: ")
+        //.Padding(4)
+        //.X(0)
+        //.Y(0)
+    .Items(
+            Html.X().FormPanel()
+            //Frame(false)
+            .ID("panelAutenticExtra")
+            .Border(false)
+            .BodyStyle("background-color:transparent;")
+            .Layout(LayoutType.VBox)
+            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+            .Items( 
+                    Html.X().FieldSet()
+                       .Title("<b>Datos de Preferencias Actuales</b>")
+                    .MarginSpec("05 05 05 05")
+                    .Layout(LayoutType.VBox)
+                    .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                    .Items(
+                          Html.X().ComboBox().ReadOnly(true)
+                          .ID("cbCompania")
+                          .Editable(false)
+                          .FieldLabel("Compañia")
+                            //.SelectedItems("00000000")
+                          .QueryMode(DataLoadMode.Local)
+                          .Width(300)
+                            .TriggerAction(TriggerAction.All)
+                            .EmptyText("Seleccione Compañía")
+                            .DisplayField("name")
+                            .ValueField("codigo")
+                            .EmptyText("Cargando...")
+                            .ValueNotFoundText("No cargado...")
+                            .Listeners(ls =>
+                                ls.Change.Handler = "App.cbSucursal.clearValue(); App.cbSucursal.getStore().load();"
+                            )
+                    //.Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico
+                        //.GetComboSeguridadTxt("COMPANIA","","",0).Select(d => new ListItem(d.Name, d.Codigo)))
+                            .SimpleSubmit(true)
+                            .Store(Html.X().Store()
+                                .AutoLoad(true)
+                                .Model(Html.X().Model()
+                                .IDProperty("Codigo")
+                                .Fields(
+                                    new ModelField("codigo", ModelFieldType.String) { Mapping = "Codigo" },
+                                    new ModelField("name", ModelFieldType.String) { Mapping = "Name" }
+                                )
+                                )
+                                .Proxy(Html.X().AjaxProxy()
+                                    .Url(Url.Action("obtenerComboSeguridadTxt"))
+                                    .Reader(Html.X().JsonReader().Root("data"))
+                                )
+                                .Parameters(ps =>
+                                ps.Add(new
+                                {
+                                    paramStr01 = "",
+                                    paramStr02 = "",
+                                    paramInt01 = 0,
+                                    usuario = "",
+                                    Accion = "COMPANIA"
+                                    })
+                                )
+                                .Listeners(ls =>
+                                ls.Load.Handler = @"var combo = App.cbCompania;App.cbCompania.setValue('"+PARAM_COMPA+"');"
+                                )
+                            )
+                            ,
+                            Html.X().ComboBox().ReadOnly(true)
+                            .ID("cbSucursal")
+                            .Editable(false)
+                            .FieldLabel("Sucursal")
+                            //.SelectedItems("LIMA")
+                            .QueryMode(DataLoadMode.Local)
+                            .TriggerAction(TriggerAction.All)
+                            .Width(300)
+                            .EmptyText("Seleccione una Sucursal")
+                              .DisplayField("name")
+                              .ValueField("codigo")
+                              .EmptyText("Cargando...")
+                              .ValueNotFoundText("No cargado...")
+                              //.Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboSeguridadTxt("SUCURSAL").Select(d => new ListItem(d.Name, d.Codigo)))
+                              .SimpleSubmit(true)
+                              .Listeners(ls =>
+                                 ls.Change.Handler = "App.cbEstablecimiento.clearValue(); App.cbEstablecimiento.getStore().load();"
+                               )
+                                .Store(Html.X().Store()
+                                .AutoLoad(false)
+                                .Model(Html.X().Model()
+                                .IDProperty("Codigo")
+                                .Fields(
+                                    new ModelField("codigo", ModelFieldType.String) { Mapping = "Codigo" },
+                                    new ModelField("name", ModelFieldType.String) { Mapping = "Name" }
+                                )
+                                )
+                                 .Proxy(Html.X().AjaxProxy()
+                                 .Url(Url.Action("obtenerComboSeguridadTxt"))
+                                 .Reader(Html.X().JsonReader().Root("data"))
+                                 )
+                                 .Parameters(ps =>
+                                 ps.Add(new
+                                 {
+                                    paramStr01 = JRawValue.From("App.cbCompania.getValue()"),
+                                    paramStr02 = "",
+                                    paramInt01 = 0,
+                                    usuario = "",
+                                    Accion = "SUCURSAL"
+                                 })
+                                  )
+                                  .Listeners(ls =>
+                                  ls.Load.Handler = @"var combo = App.cbSucursal;
+                                  App.cbSucursal.setValue('"+PARAM_SUCUR+"');"
+                                  )
+                              )
+                              ,
+                               Html.X().ComboBox().ReadOnly(true)
+                              .ID("cbEstablecimiento")
+                              .Editable(false)
+                              .FieldLabel("Establecimiento")
+                              //.SelectedItems("001")
+                              .QueryMode(DataLoadMode.Local)
+                              .TriggerAction(TriggerAction.All)
+                              .Width(300)
+                              .EmptyText("Seleccione un Establecimiento")
+                              .DisplayField("name")
+                               .ValueField("ID")
+                              .EmptyText("Cargando...")
+                              .ValueNotFoundText("No cargado...")
+                                //.Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboSeguridadTxt("ESTABLEC").Select(d => new ListItem(d.Name, d.Codigo)))
+                              .SimpleSubmit(true)
+                              .Store(Html.X().Store()
+                              .AutoLoad(false)
+                              .Model(Html.X().Model()
+                                  .IDProperty("ID")
+                              .Fields(
+                               new ModelField("ID", ModelFieldType.String) { Mapping = "ID" },
+                                new ModelField("name", ModelFieldType.String) { Mapping = "Name" }
+                              )
+                              )
+                              .Proxy(Html.X().AjaxProxy()
+                                .Url(Url.Action("obtenerComboSeguridadTxt"))
+                               .Reader(Html.X().JsonReader().Root("data"))
+                              )
+                              .Parameters(ps =>
+                                ps.Add(new
+                                {
+                                    paramStr01 = JRawValue.From("App.cbCompania.getValue()"),
+                                    paramStr02 = JRawValue.From("App.cbSucursal.getValue()"),
+                                    paramInt01 = 0,
+                                    usuario = "",
+                                    Accion = "ESTABLEC"
+                                })
+                             )
+                             .Listeners(ls =>
+                                ls.Load.Handler = @"var combo = App.cbEstablecimiento;                                
+                                App.cbEstablecimiento.setValue('"+PARAM_ESTABLEC+"');"
+                              )
+                           )
+                           ,
+                           Html.X().ComboBox().ReadOnly(true)                    
+                           .ID("cbModulos")
+                           .Editable(false)
+                           .FieldLabel("Módulos")
+                           .SelectedItems("" + PARAM_MODULO)
+                           .Width(300)
+                           //.Select(0)
+                           .QueryMode(DataLoadMode.Local)
+                           .TriggerAction(TriggerAction.All)
+                           .EmptyText("Seleccione un módulo")
+                        //.Listeners(ls =>
+                            //           ls.Select.Handler = "App.cbSucursal.clearValue(); App.cbSucursal.getStore().load()"
+                            //)
+                            .Items(
+                                new ListItem("Módulo Historía Clínica (HCE)", "HCE"),
+                                new ListItem("Módulo Gestión Salud", "MGS")
+                            )                    
+                    
+                    )                                                   
+                )
+                .BottomBar(                
+                    X.Toolbar()
+                    .Items(
+                        X.ToolbarFill(),
+                        X.Button().Text("Continuar")       
+                        .ID("btnAutentic")                  
+                        .Icon(Icon.Accept)
+                        .DirectEvents(de =>
+                        {  //Model.ACCION : Posee el MODO ACTUAL
+                                              de.Click.Url = Url.Action("autenticacion_Usuario");
+                                              de.Click.EventMask.ShowMask = true;
+                                              de.Click.Before = "App.btnAutentic.setDisabled(true); ";
+                                              de.Click.After = "App.btnAutentic.setDisabled(false); ";
+                                                  de.Click.ExtraParams.Add(new Parameter("tipoTrabajadorReq", Model.UsuarioCreacion, ParameterMode.Value));
+                                              de.Click.Success = "onSuccess(''); ";
+                                              de.Click.Failure = "onFailure('" + Model.Accion + "');";
+                        })                        
+                        ,
+                        X.Button()
+                        .Text("Cancelar")
+                        .Icon( Icon.Cancel)
+                        .DirectEvents(de =>
+                        {  //Model.ACCION : Posee el MODO ACTUAL
+                            de.Click.Url = Url.Action("cerrarWindow");
+                            //de.Click.EventMask.ShowMask = true;
+                            de.Click.ExtraParams.Add(new Parameter(
+                            "id", idWindow, ParameterMode.Value));
+                            //de.Click.Success = "onSuccess(result.data,'" + Model.ACCION + "');";
+                                              //de.Click.Failure = "onSuccess(result.data,'"+ Model.ACCION + "');";
+                         })  
+                    )
+                )              
+
+                //)
+    )
+        /*.DirectEvents(de =>
+        {
+            de.Render.Url = Url.Action("postWindowAgente");
+            de.Render.ExtraParams.Add(new Parameter(
+                  "idGrupo", "" + Model.IdGrupo, ParameterMode.Value));
+        })*/
+    .CloseAction(CloseAction.Destroy)
+)

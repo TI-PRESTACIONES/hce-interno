@@ -1,0 +1,235 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.ENTITY_GENERALHCE
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+
+    var indicaModoLectura = !(Model.ACCION == "NUEVO" ? true :
+                        (Model.ACCION == "UPDATE" ? true :
+                        (Model.ACCION == "DELETE" ? false :
+                        (Model.ACCION == "VISTA" ? false : false))));
+
+    var COLOER_IND_OBLIGA = "#035895";
+}
+
+@section cabecera
+{
+     
+    <style>
+        body  {
+            font : normal 11px tahoma, arial, helvetica, sans-serif;
+        }
+
+        #customers-ct table { width : 100% !important; }
+
+        #customers-ct th {
+            background  : #F0F4F5 url(@Url.Content("~/extjs/packages/ext_theme_classic/build/resources/images/toolbar/toolbar-default-bg-gif/ext.axd")) repeat-x scroll left top;
+            font-weight : bold;
+            padding     : 8px 5px;
+        }
+
+        #customers-ct td {
+            padding : 5px;
+            border-bottom : 1px solid silver;
+        }
+
+        #customers-ct .letter-row {
+            padding-top : 15px;
+            border : none;
+        }
+
+        #customers-ct .letter-row h2 { font-size : 2em; }
+
+        #customers-ct .header { padding : 10px 0px 10px 5px; }
+
+        #customers-ct .header p { font-size : 2em; }
+
+        #customers-ct .header a { margin-bottom : 10px; }
+
+        .cust-name-over {
+            cursor : pointer;
+            background-color : #efefef;
+        }
+
+        #customers-ct .letter-row div {
+            border-bottom : 2px solid #99bbe8;
+            cursor        : pointer;
+            background    : transparent url(@Url.Content("/extjs/packages/ext_theme_classic/build/resources/images/grid/group-expand-sprite-gif/ext.axd")) no-repeat 0px -42px;
+            margin-bottom : 5px;
+        }
+
+        #customers-ct .letter-row div h2  { padding-left : 18px; }
+
+        #customers-ct .letter-row div.collapsed { background-position : 0px 8px; }
+
+        #customers-ct table.collapsed { display : none; }
+
+        .customer-label {
+            font-weight : bold;
+            font-size:12px;
+            padding     : 0px 0px 0px 32px;
+            width       : 150px;
+        }
+    </style>
+
+    <script>
+        var itemClick = function (view, record, item, index, e) {
+            var group = e.getTarget("h2.letter-selector");
+
+            if (group) {
+                Ext.get(group)
+                    .up("div")
+                    .toggleCls("collapsed")
+                    .up("td")
+                    .select("table")
+                    .toggleCls("collapsed");
+            }
+
+            var row = e.getTarget("tr.customer-record"),
+                nd = row && Ext.get(row).child("td.cust-name");
+
+            if (nd) {
+                App.DataViewContextMenu.node = {
+                    id: nd.getAttribute("custID"),
+                    name: nd.getAttribute("custName"),
+                    email: nd.getAttribute("email"),
+                    contact: nd.dom.innerHTML
+                };
+
+                App.DataViewContextMenu.showAt(e.getXY());
+            }
+        };
+        function eventoVisorReportDescanso(param1) {
+            window.location.href = '@Url.Action("CCEP0313_View", "HClinica")';
+        }
+        function printDiv(divName) {
+            var printContents = document.getElementById(divName).innerHTML;
+            var originalContents = document.body.innerHTML;
+            document.body.innerHTML = printContents;
+            window.print();
+            document.body.innerHTML = originalContents;
+           
+        }
+    </script>
+}
+
+@section cuerpo
+{
+    @(
+ Html.X().Menu()
+            .ID("DataViewContextMenu")
+            .Items(
+                Html.X().Label().Cls("customer-label"),
+
+                Html.X().MenuItem()
+                    .Text("Send Mail")
+                    .Icon(Icon.Mail)
+                    .Handler("if (Ext.isEmpty(this.parentMenu.node.email, false)) { Ext.Msg.alert('Error', 'Customer has no email');} else { parent.location = 'mailto:'+this.parentMenu.node.email; }"),
+
+                Html.X().MenuItem()
+                    .Text("Show Details")
+                    .Icon(Icon.ApplicationFormEdit)
+                    .Handler("Ext.Msg.alert('Details', Ext.encode(this.parentMenu.node));")
+            )
+            .Listeners(l =>
+            {
+                l.BeforeShow.Handler = "this.getComponent(0).setText(this.node.contact);";
+            })
+    )
+    
+        @(
+             Html.X().Toolbar()
+                        .Items(
+                              X.Button()
+                                .Text("Imprimir")
+                                .Icon(Icon.Printer)
+                                .Handler("window.print();"),
+                                //.Handler("printDiv('printableView')"),
+                               X.Button()
+                                 .Text("Editar")
+                                 .Icon(Icon.ApplicationFormEdit)
+                                 .ID("cmdEditar")
+                                 .Handler("eventoVisorReportDescanso(2);")
+                        )
+        )
+    
+
+    <div id="printable" >
+    @(
+ Html.X().DataView()
+            .ID("printableView")
+            .DisableSelection(true)
+            .ItemSelector("td.letter-row")
+            .EmptyText("No customers to display")
+            .AutoScroll(true)
+            .Tpl(@<text>
+                <div id="customers-ct">
+                    <div class="header">
+                        <b>DESCANSO MÉDICO</b>
+                    </div>
+                    <table>
+                        <tr>
+                            <th style="width: 15% ">Paciente </th>
+                            <td style="width:90%"> @Html.DisplayFor(x => x.campoStr01) </td>
+                        </tr>
+                        <tr>
+                            <th style="width: 15%; margin-left: 10px; ">H.C.Nro. </th>
+                            <td> @Html.DisplayFor(x => x.campoStr02)</td>
+
+                        </tr>
+                        <tr>
+                            <th style="width: 15%; margin-left: 10px; ">Diagnóstico </th>
+                            <td> @Html.DisplayFor(x => x.campoStr03) </td>
+
+                        </tr>
+                        <tr>
+                            <th style="width: 15%; margin-left: 10px; ">Tipo de Descanso </th>
+                            <td> @Html.DisplayFor(x => x.campoStr04) </td>
+                        </tr>
+                        <tr>
+                            <th style="width:15%">Dias </th>
+                            <td style="width:15%"> @Html.DisplayFor(x => x.campoInt01) </td>
+                        </tr>
+                    </table>
+                    <table>
+
+                        <tr>
+                            <th style="width:15%">Del </th>
+                            <td> @Html.DisplayFor(x => x.campoStr05) </td>
+                            <th style="width:15%">Al </th>
+                            <td> @Html.DisplayFor(x => x.campoStr06) </td>
+                        </tr>
+                        <tr>
+                            <th style="width:15%">Fecha </th>
+                            <td> @Html.DisplayFor(x => x.campoStr07) </td>
+                            <th style="width:15%">Hora </th>
+                            <td> @Html.DisplayFor(x => x.campoStr08) </td>
+                        </tr>
+                        <tr>
+                            <th style="width:15%">Doctor(a) </th>
+                            <td> @Html.DisplayFor(x => x.campoStr09) </td>
+                            <th style="width:15%">CMP </th>
+                            <td> @Html.DisplayFor(x => x.campoStr11) </td>
+                        </tr>
+                        <tr>
+                            <th style="width:15%">Especialidad </th>
+                            <td> @Html.DisplayFor(x => x.campoStr10) </td>
+                        </tr>
+                        <tr><th style="width:15%"><br />  </th></tr>
+
+                        <tr>
+                            <th style="width:15%">  </th>
+                            <th style="width:15%">  </th>
+                            <th style="width:15%">Firma y Sello </th>
+                        </tr>
+                    </table>
+                </div>
+            </text>)
+
+    )
+</div>
+  
+
+   
+}

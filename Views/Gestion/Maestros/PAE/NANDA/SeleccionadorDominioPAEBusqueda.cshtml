@@ -1,0 +1,193 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_HC_DominioPAE
+
+@{
+    ViewBag.Title = "SeleccionadorDominioPAEBusqueda";
+    var X = Html.X();
+}
+
+<script>
+
+    var varTipoBuscar = "LOAD";
+
+    var accionBuscarFiltroDominio = function (tipo) {
+        varTipoBuscar = tipo;
+        App.GridPanelSelDom.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+
+    var template = '<span style="color:{0};">{1}</span>';
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 2)
+            return Ext.String.format(template, COLOR_BLUE01, "ACTIVO");
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01, "INACTIVO");
+    };
+
+    var seleccionActual = null;
+    var seleccionDesc = null;
+    /*AQUI ME QUEDO*/
+
+    function setSeleccion(param1, param2) {
+        seleccionActual = param1;
+        seleccionDesc = param2;
+
+    }
+
+    function enviarSeleccion(grid) {
+        if (seleccionActual != null) {
+            var status = seleccionActual;
+            var status2 = seleccionDesc;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action(Model.Accion))',
+                params: {
+                    MODO: 'get',
+                    id: status,
+                    descripcion : status2,
+                    idWindow: "WindowDominioPAEBusqueda"
+                }
+            });
+        } else {
+            Ext.Msg.alert('Debe Seleccionar un elemento.');
+        }
+
+    }
+
+    function enviarSeleccionDirect(param1,param2) {
+        var status = param1;
+        var status2 = param2;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action(Model.Accion))',
+            params: {
+                MODO: 'get',
+                id: status,
+                descripcion: status2,
+                idWindow: "WindowDominioPAEBusqueda"
+            }
+        });
+    }
+    var eventoCheckFiltro = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+
+
+
+</script>
+
+@(Html.X().Window()
+    .Width(480)
+    .Height(300)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+        .ID("WindowDominioPAEBusqueda")
+    .Title("Seleccionar DominioPAE")
+    .Padding(4)
+    .TopBar(
+                                     X.Toolbar()
+                                     .Height(30)
+                                     .Items(
+                                        X.Button()
+                                        .Border(true)
+                                        .Text("Buscar")
+                                        .Icon(Icon.Find)
+                                        .Handler("accionBuscarFiltroDominio('FILTRO');"),
+                                        X.ToolbarFill(),
+                                        X.Button()
+                                            .Text("Aceptar")
+                                            .Icon(Icon.Accept)
+                                            .Handler("enviarSeleccion(App.GridPanelSelDom.getSelectionSubmit().getSelectionModelField().getValue());"),
+                                        X.Button()
+                                            .Text("Cancelar")
+                                            .Icon(Icon.Cancel)
+                                             .DirectEvents(de =>
+                                              {
+                                                  de.Click.Url = Url.Action("cerrarWindow");
+                                                  de.Click.ExtraParams.Add(new Parameter("id", "WindowDominioPAEBusqueda", ParameterMode.Value));
+                                              }),
+                                          X.ToolbarSpacer(20)
+                                         ))
+                                         .Items(
+                                         X.GridPanel()
+                                         .TopBar(X.Toolbar()
+                                            .Items(
+                                                X.Checkbox().FieldLabel("Descripción").ID("chkDesc").Checked(true).Handler("eventoCheckFiltro(App.chkDesc,App.tfBuscarSeleccDesc);").LabelWidth(70),
+                                                X.TextField().ID("tfBuscarSeleccDesc").Disabled(true).FieldLabel(""),
+                                                X.ToolbarFill()
+                                                )
+                                                )
+                                .Border(false)
+                            .Layout(LayoutType.Fit)
+                            .Scroll(ScrollMode.Both)
+                            .AutoScroll(true)
+                                .ID("GridPanelSelDom")
+                            .Margins("0 0 0 0")
+                            .Store(store => store.Add(
+                                     Html.X().Store()
+                                          .ID("StoreSelDom")
+                                         .AutoLoad(true)
+                                         .RemoteSort(false)
+                                         .IsPagingStore(true)
+                                         .RemotePaging(true)
+                                         .PageSize(10)
+                                             .Proxy(proxy => proxy.Add(Html.X().AjaxProxy().Url("getGrillaDominioPAE")
+                                                .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                .Root("data")
+                                                .TotalProperty("total")
+                                                             .IDProperty("IdDominioPAE"))))
+                                                )
+                                             .Parameters(ps =>
+                                                            ps.Add(new
+                                                            {
+
+                                                                descripcion = JRawValue.From("App.tfBuscarSeleccDesc.getValue()"),
+                                                                tipoBuscar = JRawValue.From("varTipoBuscar")
+                                                            })
+                                                     )
+                                         .Model(model => model.Add(Html.X().Model()
+                                                 .Fields(fields =>
+                                                 {
+                                                     fields.Add(Html.X().ModelField().Name("IdDominioPAE"));                                                    
+                                                     fields.Add(Html.X().ModelField().Name("Descripcion"));
+                                                     fields.Add(Html.X().ModelField().Name("Estado"));
+
+                                                 }))
+                                                )
+                                              )
+                                   )
+                                .ColumnModel(columnModel =>
+                                {
+                                    columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("IdDominioPAE").Width(80));                                   
+                                    columnModel.Columns.Add(Html.X().Column().Text("Descripción").DataIndex("Descripcion").Width(250));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(250).Renderer("changeEstado"));
+
+                                })
+                                 .View(Html.X().GridView().TrackOver(false)).Border(false)
+                                            .Listeners(l => l.CellDblClick.Handler = "enviarSeleccionDirect(record.data.IdDominioPAE,record.data.Descripcion);")
+                                            .Listeners(l => l.CellClick.Handler = "setSeleccion(record.data.IdDominioPAE,record.data.Descripcion);")
+                                .BottomBar(bar => bar.Add(Html.X().PagingToolbar()
+                                ))
+    )
+    .CloseAction(CloseAction.Destroy)
+)
+@(
+ X.KeyNav()
+                .Target("WindowDominioPAEBusqueda")
+        .Enter(a => a.Handler = "accionBuscarFiltroDominio('FILTRO');")
+)
+
+
+

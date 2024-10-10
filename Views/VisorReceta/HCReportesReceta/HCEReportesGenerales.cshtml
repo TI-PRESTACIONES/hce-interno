@@ -1,0 +1,432 @@
+﻿@model SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL
+
+
+@{
+    var X = Html.X();
+    var COLOR_BLUE01_temp = "#284A89";
+    var COLOR_RED01_temp = "#990000";
+    var COLOR_GREEN01_temp = "#177506";
+    var COLOR_YELLOW02_temp = "#D9A407";
+    var urlActivo = "";
+    urlActivo = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.PacienteDatos1;
+
+    var NODOROOT_desc = "DOCUMENTOS-SALUD";
+    var NODOROOT_id = "1|0|0|";
+}
+
+<style type="text/css">
+    /*<![CDATA[*/
+    #img_uno {
+        width: auto;
+        height: 100%;
+        align-self: center;
+        -webkit-user-select: none;
+        cursor: zoom-in;
+    }
+
+    #img_dos {
+        -webkit-user-select: none;
+        cursor: zoom-out;
+    }
+
+    .logo {
+        border: solid 3px #000;
+    }
+    /*]]>*/
+</style>
+
+<script>
+
+    var actualPrev_X = null;
+    var actualPrev_Y = null;
+    var actualPrev_H = null;
+    var actualPrev_W = null;
+
+    var panelActual = null;
+    var pathImage = "resources/IndexImagen/";
+
+    var loadReporte = function (record) {
+        var desc = record.data.text;
+        var id = record.data.id;
+
+        var showURL = '';
+        var path = '';
+        var accionReport = '';
+        var pathLocalURL = 'Reportes/VisorReportesHCE.aspx?ReportID=';
+        var showURL_end = '&Visor=I';
+
+        if (id > 1) {
+            var cont = App.centerPanels;
+            cont.setTitle('Selección actual: ' + desc);
+
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("eventoLoadReporte"))',
+                params: {
+                    containerId : '',
+                    text: id
+                },
+                success: function (resultRegla) {
+                    if (resultRegla.data != null) {
+                        if (resultRegla.data[0].TIPOMSG == 'FFIJO') {
+                            showURL_end = '&Visor=I';
+                            path = resultRegla.data[0].TITULO;
+                            accionReport = resultRegla.data[0].DESCRIPCION;
+                            if (accionReport != null) {
+                                showURL = path + pathLocalURL + accionReport + showURL_end;
+                            } else {
+                                showURL = 'http://www.sanna.pe';
+                            }
+                            var contX = cont.getLoader();
+                            cont.getLoader().url = 'http://' + showURL;
+                            contX.load({
+                                params: {
+                                }
+                            });
+                            /*
+                            showURL = 'localhost:11505/Reportes/VisorReportesHCE.aspx?ReportID=CCEP0003&Visor=I';
+                            contendiv('http://'+showURL);
+                            */
+                        } else {
+                        }
+                    }
+                }
+            });
+
+            /**
+              implementar evento load reporte
+              contendiv("http://localhost:11505/Reportes/VisorReportesHCE.aspx?ReportID=CountryListReport&dc=1464211190953");
+            */
+        } else {
+        }
+    };
+
+    function contendiv(showURL) {
+        /* definimos el elemento donde insertamos la imagen
+        */
+        var div = document.getElementById('centerPanels-body');
+        div.style.overflow = 'scroll';
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function () {
+            if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+                div.innerHTML = xmlHttp.responseText;
+            }
+        };
+        xmlHttp.open("GET", showURL, true);
+        xmlHttp.send(null);
+
+
+
+    }
+    function imagendiv(showURL) {
+        var imagen = document.createElement('img');
+        /* agregamos propiedades al elemento
+        */
+        imagen.src = showURL;
+        imagen.id = 'img_uno';
+        imagen.className = 'logo';
+        imagen.title = 'titulo de la imagen';
+        imagen.alt = 'texto alternativo';
+        imagen.onclick = function () {
+            if (this.id == 'img_uno') {
+                this.id = 'img_dos';
+            } else {
+                this.id = 'img_uno';
+            }
+        };
+        /* definimos el elemento donde insertamos la imagen
+        */
+        var div = document.getElementById("centerPanels-body");
+        div.innerHTML = "";
+        div.style.overflow = "scroll";
+        /* agregamos la imagen
+        */
+        div.appendChild(imagen);
+    }
+
+    var eventoExpandir = function (window, contraer) {
+        if (contraer) {
+            if (actualPrev_X != null && actualPrev_Y != null && actualPrev_H != null && actualPrev_W != null) {
+                window.setHeight(actualPrev_H);
+                window.setWidth(actualPrev_W);
+                window.setX(actualPrev_X);
+                window.setY(actualPrev_Y);
+                App.btnContract.setVisible(false);
+                App.btnExpand.setVisible(true);
+            }
+        } else {
+            actualPrev_H = window.getHeight();
+            actualPrev_W = window.getWidth();
+            actualPrev_X = window.getX();
+            actualPrev_Y = window.getY();
+            var KK = 30;
+            var h = screen.height;
+            var w = screen.width;
+            window.setHeight(h - KK - 100);
+            window.setWidth(w);
+            window.setX(0);
+            window.setY(KK);
+            App.btnContract.setVisible(true);
+            App.btnExpand.setVisible(false);
+        }
+
+    };
+
+    var accionReloadNodoRoot = function (buscar) {
+        if (true) {
+            var tree = App.TreeDocumentosHC;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("setNodoRootGeneral"))',
+                params: {
+                    tipo: 0,
+                    text: '@(NODOROOT_desc)',
+                    id: '@(NODOROOT_id)',
+                    leaf: false
+                },
+                success: function (node) {
+                    if (!Ext.isEmpty(node)) {
+                        tree.setRootNode(node);
+                    }
+                    else {
+                        tree.getRootNode().removeAll();
+                    }
+                    if (buscar) {
+                        buscarfiltrosArbol(node.text);
+                    }
+                }
+            });
+        } else {
+        }
+    };
+
+    var buscarfiltrosArbol = function (texto) {
+        var tree = App.TreeDocumentosHC;
+        tree.clearFilter();
+        if (Ext.isEmpty(texto, false)) {
+            return;
+        } else {
+            var re = new RegExp(".*" + texto + ".*", "i");
+            tree.filterBy(function (node) {
+                return re.test(node.data.text);
+            });
+        }
+    };
+    var eventoCheckFiltro = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+    var eventoCheckFiltroCompuesto = function (check, componente1, componente2, componente3, btn) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente1.setDisabled(true);
+            componente1.setValue(null);
+            componente2.setDisabled(true);
+            componente2.setValue(null);
+            componente3.setDisabled(true);
+            componente3.setValue(null);
+            btn.setDisabled(true);
+        } else {
+            componente1.setDisabled(false);
+            componente2.setDisabled(false);
+            componente3.setDisabled(false);
+            btn.setDisabled(false);
+        }
+    };
+
+    function seleccionadorMedico() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorMedico"))',
+            params: {
+                AccionSeleccion: 'getSeleccionMedicoEsp_DocHC',
+                AccionListado: 'LISTARPAG'
+            }
+        });
+    };
+
+    function seleccionadorDiagnosticoDoc() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorDiagnostico"))',
+            params: {
+                AccionSeleccion: 'getSeleccionDiagnostico_DocHC',
+                AccionListado: 'LISTARPAG'
+            }
+        });
+    };
+
+    function seleccionadorUnidadServicio() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorUnidadServicio"))',
+            params: {
+                AccionSeleccion: 'getSeleccionCatUnidadServicio_DocHC',
+                AccionListado: 'LISTARPAG'
+            }
+        });
+    };
+
+</script>
+
+
+@(Html.X().Window()
+    .Width(900)
+    .Height(500)
+        //.X(0)
+        //.Y(0)
+    .Maximizable(false)
+    .Closable(false)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Resizable(false)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowAsignarPerfil")
+        .Title("Reportes de Formularios H.C.E.")
+    .Padding(4)
+        .TopBar(
+            X.Toolbar()
+            .Height(30)
+            .Items(
+                X.ToolbarSpacer(),
+                X.Button().ID("btnImpTodos")
+                .Hidden(false)
+                .Text("Descargar Todos")
+                .Icon(Icon.PackageDown)
+                .Handler("")
+                ,
+                X.ToolbarFill(),
+                X.Button().ID("btnBuscar")
+                .Hidden(true)
+                    .Text("Buscar")
+                    .Icon(Icon.Find)
+                        .Handler("accionReloadNodoRoot (true);")
+                , X.ToolbarSeparator()
+                ,
+                X.Button().ID("btnExpand")
+                    .Text("Expandir")
+                    .Icon(Icon.ApplicationSideExpand)
+                                    .Handler("eventoExpandir (App.WindowAsignarPerfil,false);")
+                            ,
+                X.Button().ID("btnContract")
+                    .Text("Restaurar").Hidden(true)
+                    .Icon(Icon.ApplicationSideContract)
+                                    .Handler("eventoExpandir (App.WindowAsignarPerfil,true);")
+                            ,
+
+                X.Button()
+                    .Text("Aceptar")
+                    .Icon(Icon.Accept)
+                    .DirectEvents(de =>
+                     {  //Model.ACCION : Posee el MODO ACTUAL
+                         de.Click.Url = Url.Action("cerrarWindow");
+                         //de.Click.EventMask.ShowMask = true;
+                         de.Click.ExtraParams.Add(new Parameter(
+                               "id", "WindowAsignarPerfil", ParameterMode.Value));
+                     })
+
+                )
+          )
+        //INICIO
+    .Items(
+        X.Panel()
+        .Border(false)
+        .Layout(LayoutType.VBox)
+        .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+        .Items(
+            X.Panel()
+            .Header(false).Border(false).Flex(1)
+            .Layout(LayoutType.Border)
+            .Items(
+                    X.TreePanel()
+                        .Icon(Icon.ReportMagnify).Collapsible(true).Resizable(true)
+                        .Draggable(false)
+                        .Region(Region.West)
+        //.Title("Procesos Salud")
+        //.Icon(Icon.World)
+        // .Header(false)
+        //.Height(500)
+                    .Width(280)
+                    .Border(true)
+                    .ID("TreeReportes")
+                    .TopBar(
+                    X.Toolbar()
+                        .Items(
+                        )
+                    )
+                    .Store(
+                    Html.X().TreeStore().Proxy(
+                        Html.X().AjaxProxy().Url(Url.Action("ArbolMacroProcesos"))
+                    )
+                    )
+                    .Root(
+                        Html.X().Node().NodeID(Model.OPCION_PADRE)
+                        .Text((Model.OPCION_PADRE != null ? (Model.PERFILACTUAL + "").Trim() : "OPCIONES NO DETERMINADAS"))
+        // .Text(("MACROPROCESOS HCE"))
+                    )
+        //.Expand(true)
+        //.RootVisible(false)
+        /*.Listeners(l =>
+        {
+            l.ItemClick.Handler = "loadCentral(record.data.id,'"+Model.indicadorAuxiliar+"' );";
+            //l.ItemClick.Fn = "nodeLoad";
+        })*/
+
+                   .Listeners(l =>
+                    {
+                        //EVENTO JAVA SCRIPT
+                        l.ItemClick.Handler = "loadReporte(record);";
+                    })
+        /*
+         .DirectEvents(ev =>
+         {
+             //ev.Select.Url = "HClinica/LoadCentral";
+             ev.Select.Url = "HClinica/eventoLoadReporte";
+             ev.Select.Method = HttpMethod.GET;
+             ev.Select.ExtraParams.Add(new
+             {
+                 text = JRawValue.From("record.data.id"),
+                 containerId = "centerPanels"
+             });
+         })
+         */
+                    ,
+
+                    Html.X().Panel()
+                    .Region(Region.Center)
+                    .ID("centerPanels")
+                    .Height(600)
+                    .Title("Vista de Reporte")
+                    .AutoDoLayout(true)
+                    .Loader(
+                        Html.X().ComponentLoader()
+                        .Listeners(l =>
+                        {
+                            //EVENTO JAVA SCRIPT
+                            l.Load.Handler = "loadReporte(record);";
+                        })
+                        .ID("compLoaderReporte")
+                        .AutoLoad(true)
+        //.Url("http://www.sanna.pe")
+                                 .Url("http://localhost:11505/Content/Imagen/pacientes/1076841.jpg")
+
+                        .Mode(LoadMode.Frame)
+                        .ReloadOnEvent(false)
+                        .DisableCaching(true)
+                    )
+            )
+        )
+    )//FIN
+    .CloseAction(CloseAction.Destroy)
+        /*.Listeners(l =>
+        {
+            l.Maximize.Handler = "alert('MAXX');";
+        })  */
+        //.Html(DateTime.Now.ToLongTimeString())
+
+)
+
+

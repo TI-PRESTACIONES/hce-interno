@@ -1,0 +1,848 @@
+﻿@model SoluccionSalud.Entidades.Entidades.VW_PERSONAPACIENTE
+
+@{
+    var X = Html.X();
+    var funcionX = "alert('XXXXXXXXX');";
+    var modoDesc =
+        (Model.ACCION == "NUEVO" ? "Nuevo" :
+        (Model.ACCION == "UPDATE" ? "Modificar" :
+        (Model.ACCION == "DELETE" ? "Eliminar" :
+        (Model.ACCION == "VER" ? "Ver" : "--"))));
+
+    var indicaModoLectura =
+        !(Model.ACCION == "NUEVO" ? true :
+        (Model.ACCION == "UPDATE" ? true :
+        (Model.ACCION == "DELETE" ? false :
+        (Model.ACCION == "VER" ? false : false))));
+
+    var indicaModoLecturaKey =
+        !(Model.ACCION == "NUEVO" ? true :
+        (Model.ACCION == "UPDATE" ? false :
+        (Model.ACCION == "DELETE" ? false :
+        (Model.ACCION == "VER" ? false : false))));
+
+    var indicatriaje = true;
+
+}
+
+<script>
+    var template = 'color:{0};';
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_RED01 = "#990000";
+
+    var COLOR_BORDER_ERROR = "red";
+    var COLOR_BORDER_DEF = "#b5b8c8";
+    var COLOR_BACKGROUND_NOEDIT = "#9FBCB9";
+
+
+    var change = function (value, meta) {
+        return value;
+
+    };
+
+    var validarCampo = function (componente) {
+        if (componente.getValue() != null) {
+            if (componente.getValue().trim() == 0) {
+                componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+
+            } else {
+                componente.setFieldStyle("border-color: " + COLOR_BORDER_DEF);
+            }
+        } else {
+            componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+
+        }
+    };
+
+    function seleccionadorCuerpoHumano() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorCuerpoHumano"))',
+            params: {
+                accionSeleccion: 'getSeleccionPadreMaestroCuerpoHumano',
+                accionListado: 'LISTARPAG'
+            }
+        });
+    };
+
+    function modificarSelected() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("PacienteTriaje"))',
+            params: {
+                AccionSeleccion: 'getSeleccionadorLugar',
+                AccionListado: 'COMBOSGENERICOS'
+            }
+        }); EnviarPaciente
+    }
+
+    function cerrarWindow() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Se registró correctamente el usuario.',
+                accion: null
+            }
+        });
+    };
+
+
+    function SendData() {
+
+        App.btnSave.setDisabled(true);
+        App.FormPanel2.setDisabled(true);
+        console.log("idpaciente:", document.getElementById('Persona-inputEl').value);
+
+       var SS_HC_EpisodioTriaje = {
+            UnidadReplicacion: "CEG",
+            IdPaciente: document.getElementById('Persona-inputEl').value,
+            IdPersonalSalud: 0,
+            FechaAtencion: null,
+            IdEspecialidad: null,
+            IdPrioridad: 0,
+            FlagFirma: 0,
+            FechaFirma: null,
+            IdMedicoFirma: 0,
+            ObservacionFirma: null,
+            Accion: "INSERT_TRIAJE",
+            Version: null,
+            Estado: 9,
+            UsuarioCreacion: null,
+            UsuarioModificacion: null,
+            FechaModificacion: null
+        };
+
+
+
+        Ext.net.DirectMethod.request({
+            url: '/BandejaMedico/GuardarBandeja',
+            params: SS_HC_EpisodioTriaje,
+            cleanRequest: true,
+            json: true,
+            success: function (jsonResult) {
+                App.GridPanel1.getStore().reload();
+                ConfirmaFinaliza();
+                App.WindowPacienteTriaje.setVisible(false);
+            }
+        });
+
+
+
+
+    }
+
+    function ConfirmaFinaliza() {
+        Ext.Msg.confirm("Registro Triaje", "¿Desea realizar el triaje?, Si acepta, se redireccionará a los formularios correspondientes", function (btn) {
+            if (btn === "yes") {
+
+
+                eventoEstadoClinicotEST();
+
+            } else {
+                App.GridPanel1.getStore().reload();
+            }
+        })
+
+    }
+
+    function EnviarForm() {
+
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("autenticacion_Usuario"))',
+            params: {
+                txtUsername: App.CodigoAgente.getValue(),
+                txtPassword: App.Clave.getValue(),
+                idEspecialidad: App.IdCodigo.getValue(),
+                MODO: '@(Model.ACCION)',
+                idWindow: 'WindowAutenticarExtra',
+                campoEvento: 'DIRECT',
+                indicaEspecialidad: '1',
+                idEmpleadoCreador: '156149',
+                tipoTrabajadorReq: '08',
+                tipoEvento: 'JS'
+            },
+            success: function (result) { onSuccess(result.data); },
+            failure: function (result) { onFailure(''); },
+            eventMask: {
+                showMask: true,
+                msg: "Verificando Usuario.."
+            }
+
+        });
+    }
+
+
+    function eventoEstadoClinicotEST(valorAccion, idUnidadServ) {
+
+        var valorAccion = "ABRIR_TRIAJE";
+        var idUnidadServ = null;
+  
+
+
+        var reglaAplica = false;
+
+        if (valorAccion == 'M' || valorAccion == 'N' || valorAccion == 'A') {
+            var APMiscelaneos = new Array();
+            var MA_MiscelaneosDetalle = {
+                ValorEntero1: 1,
+                ACCION: "POSaludFirmaMedico"
+            };
+            APMiscelaneos.push(MA_MiscelaneosDetalle);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("POSaludFirmaMedico"))',
+                params: {
+                    PacienteID: 1,
+                    valor: 77,
+                    regla: 'POSaludFirmaMedico',
+                    arrays: APMiscelaneos
+                },
+                success: function (resultRegla) {
+                    reglaAplica = mostrarAlarmaReglas(resultRegla.data);
+                    if (!reglaAplica) {
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("EstadoClinicoTriaje"))',
+                            params: {
+                                selection: '',
+                                accion: ACCION_,
+
+                                idUnidadServicio: idUnidadServ
+                            }
+                        , success: function (result) {
+
+                            parent.window.location.href = ' @Url.Action("Index", "HClinica") ';
+                            ;
+                        }
+                        });
+                    } else {
+                        App.GridPanel1.getStore().reload();
+                    }
+
+                }
+            });
+        } else {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("EstadoClinicoTriaje"))',
+                params: {
+                    selection: '',
+                    accion: valorAccion,
+                    idUnidadServicio: '1'
+                }
+                , success: function (result) {
+
+                    parent.window.location.href = ' @Url.Action("Index", "HClinica") ';
+                }
+            });
+        }
+    };
+
+
+
+
+    function eventoAutenticacionEpiPreviaTest() {
+
+        alert("aa");
+
+        var valores, empleado, tipoagente;
+
+        valores = 'A';
+        empleado = 8;
+        tipoagente = 1;
+
+        valorEpiModo_aux = valores;
+        var idEspecialidadSelecc = null;
+        var notaAutencticacion = '';
+        var idEmpleadoCreadorAux = 0;
+        var empleadoCreadorValido = true;
+
+
+        if (empleado != 0) {
+
+            eventoAccionEpisodio(valores);
+
+        } else {
+            if (seleccionDataActual != null) {
+                idEspecialidadSelecc = seleccionDataActual.IdEspecialidad;
+                var ACCION_ = '';
+                if (valores == 'N') {
+                    ACCION_ = 'NUEVO';
+                } else if (valores == 'M') {
+                    ACCION_ = 'UPDATE';
+                } else if (valores == 'V') {
+                    ACCION_ = 'VER';
+                } else if (valores == 'F') {
+                    ACCION_ = 'FINALIZAR';
+                } else if (valores == 'A') {
+                    ACCION_ = 'ABRIR';
+                }
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("AutenticacionAdicional"))',
+                    params: {
+                        MODO: ACCION_,
+                        tipotrab: '',
+                        trabajadorRequerido: '08',
+                        empleadoCreador: idEmpleadoCreadorAux,
+                        mensajes: notaAutencticacion,
+                        especialidad: idEspecialidadSelecc,
+                        campoEvento: 'txtEventoAutenticaEpi'
+                    }
+                });
+            }
+        }
+    };
+
+
+    function eventoAutenticacionEpiPrevia(valores, empleado, tipoagente) {
+
+
+        valorEpiModo_aux = valores;
+        var idEspecialidadSelecc = null;
+        var notaAutencticacion = '';
+        var idEmpleadoCreadorAux = 0;
+        var empleadoCreadorValido = true;
+        idEmpleadoCreadorAux = 156149;
+        idEspecialidadSelecc = 1;
+        Ext.net.DirectMethod.request({
+
+
+            url: '@(Url.Action("AutenticacionAdicional"))',
+            params: {
+                MODO: 'ABRIR',
+                tipotrab: '',
+                trabajadorRequerido: '08',
+                empleadoCreador: idEmpleadoCreadorAux,
+                mensajes: notaAutencticacion,
+                especialidad: idEspecialidadSelecc,
+                campoEvento: 'txtEventoAutenticaEpi'
+
+
+            }
+
+        });
+
+    };
+
+
+
+    var onSuccess = function (data) {
+        accionMensajes(data);
+    };
+
+    var onFailure = function (modo) {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Un error en el evento ',
+                titulo: "Error",
+                tipo: 'ERROR'
+            }
+        });
+    };
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+        } else {
+            App.taAlerts.setVisible(false);
+        }
+
+    };
+
+    var getInvalidFields = function (form) {
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+        });
+        return invalidFields;
+    };
+
+    var beforeSave = function (form) {
+        var FieldsInvalidos = getInvalidFields(form);
+        if (!form.getForm().isValid()) {
+            if (FieldsInvalidos.length > 0) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("addRecursosValidacion"))',
+                    params: {
+                        data: FieldsInvalidos,
+                        indica: 'VALIDAR',
+                    },
+                    success: function (result) {
+                        accionMensajes(result.data);
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("addRecursosValidacion"))',
+                            params: {
+                                data: FieldsInvalidos,
+                                indica: 'RESTART',
+                            }
+                        });
+                    }
+                });
+
+            }
+        }
+    };
+
+
+    function RetrocederTriaje() {
+
+        App.vistaconsultatriaje.setVisible(true);
+        App.VistaNuevoPaciente.setVisible(false);
+        App.BtnCrearPaciente.setVisible(false);
+        App.btnSave.setVisible(true);
+        App.BtnAtrasTriaje.setVisible(false);
+        App.BtnHaPaciente.setVisible(true);
+
+    }
+
+    function SendPaciente() {
+
+      
+        
+
+        if (document.getElementById('TxtRegFechaNacimientp-inputEl').value == "") {
+            Ext.Msg.notify("Campo no completado..!", "Ingrese Fecha de Nacimiento");
+
+
+
+
+        } else if (document.getElementById('TxtRegistroAPaterno-inputEl').value == "") {
+
+            Ext.Msg.notify("Campo no completado..!", "Ingrese Apellido paterno");
+
+
+        } else if (document.getElementById('TxtRegistroAMaterno-inputEl').value == "") {
+
+            Ext.Msg.notify("Campo no completado..!", "Ingrese Apellido materno");
+
+
+        } else if (document.getElementById('TxtRegistroNombres-inputEl').value == "") {
+
+            Ext.Msg.notify("Campo no completado..!", "Ingrese Nombres");
+
+        } else if (document.getElementById('TxtRegDireccion-inputEl').value == "") {
+
+            Ext.Msg.notify("Campo no completado..!", "Ingrese Dirección");
+
+        } else if (document.getElementById('TxtRegDocumento-inputEl').value == "") {
+
+            Ext.Msg.notify("Campo no completado..!", "Ingrese nro de documento");
+        } else if (document.getElementById('Celular-inputEl').value.length > 9) {
+
+            Ext.Msg.notify("Aviso..!", "El número de celular tiene más de 9 caracteres");
+
+        } else {
+
+            App.BtnCrearPaciente.setDisabled(true);
+            App.FormPanel3.setDisabled(true);
+
+
+        var PERSONAMAST = {
+            Documento: document.getElementById('TxtRegDocumento-inputEl').value,
+            TipoDocumento: App.TxtTipoDoc.getValue(),
+            FechaNacimiento: document.getElementById('TxtRegFechaNacimientp-inputEl').value,
+            Sexo: document.getElementById('TxtRegSexo-inputEl').value,
+            ApellidoPaterno: document.getElementById('TxtRegistroAPaterno-inputEl').value,
+            ApellidoMaterno: document.getElementById('TxtRegistroAMaterno-inputEl').value,
+            Nombres: document.getElementById('TxtRegistroNombres-inputEl').value,
+            Direccion: document.getElementById('TxtRegDireccion-inputEl').value,
+            Departamento: App.tfDepartamento.getValue(),
+            Provincia: App.tfProvincia.getValue(),
+            Celular: document.getElementById('Celular-inputEl').value,
+            Pais: App.tfPais.getValue(),
+            ACCION: "INSERTAR_PERSONA_TRIAJE"
+        };
+
+
+        Ext.net.DirectMethod.request({
+            url: '/BandejaMedico/GuardarPacienteNuevo',
+            params: PERSONAMAST,
+            cleanRequest: true,
+            json: true,
+            success: function (jsonResult) {
+
+
+                if (jsonResult == 0) {
+                    Ext.Msg.notify("Aviso..!", "El paciente con el documento ingresado ya existe..!!");
+                    App.BtnCrearPaciente.setDisabled(false);
+                    App.FormPanel3.setDisabled(false);
+
+                } else if (jsonResult == "Fecha_Excedida") {
+                    Ext.Msg.notify("Aviso..!", "La fecha de nacimiento debe ser menor o igual a la fecha actual..!!");
+                    App.BtnCrearPaciente.setDisabled(false);
+                    App.FormPanel3.setDisabled(false)
+
+                } else if (jsonResult >= 1) {
+                    App.GridPanel1.getStore().reload();
+                    ConfirmaFinaliza();
+
+                    App.WindowPacienteTriaje.setVisible(false);
+                } else {
+                    App.GridPanel1.getStore().reload();
+                }
+
+            }
+        });
+
+
+    }
+
+
+    }
+
+
+
+    function Limpiar() {
+
+        App.vistaconsultatriaje.setVisible(false);
+        App.VistaNuevoPaciente.setVisible(true);
+        App.BtnCrearPaciente.setVisible(true);
+        App.btnSave.setVisible(false);
+        App.BtnHaPaciente.setVisible(false);
+        App.BtnAtrasTriaje.setVisible(true);
+
+
+
+
+
+
+
+
+
+
+
+        document.getElementById('Persona-inputEl').value = 0;
+
+        document.getElementById('ApellidoMaterno-inputEl').value = "";
+        document.getElementById('ApellidoMaterno-inputEl').readOnly = false;
+
+        document.getElementById('ApellidoPaterno-inputEl').readOnly = false;
+        document.getElementById('ApellidoPaterno-inputEl').value = "";
+
+        document.getElementById('Nombres-inputEl').readOnly = false;
+        document.getElementById('Nombres-inputEl').value = "";
+
+        document.getElementById('FechaNacimiento-inputEl').readOnly = false;
+        document.getElementById('FechaNacimiento-inputEl').value = "";
+
+        document.getElementById('Sexo-inputEl').readOnly = false;
+        document.getElementById('Sexo-inputEl').value = "";
+
+        document.getElementById('Busqueda-inputEl').readOnly = false;
+        document.getElementById('Busqueda-inputEl').value = "";
+
+        document.getElementById('Documento-inputEl').readOnly = false;
+        document.getElementById('Documento-inputEl').value = "";
+
+        document.getElementById('Direccion-inputEl').readOnly = false;
+        document.getElementById('Direccion-inputEl').value = "";
+
+        document.getElementById('tfProvincia-inputEl').readOnly = false;
+        document.getElementById('tfProvincia-inputEl').value = "";
+
+        document.getElementById('tfPais-inputEl').readOnly = false;
+        document.getElementById('tfPais-inputEl').value = "";
+
+        document.getElementById('tfDepartamento-inputEl').readOnly = false;
+        document.getElementById('tfDepartamento-inputEl').value = "";
+
+        document.getElementById('tfDistrito-inputEl').readOnly = false;
+        document.getElementById('tfDistrito-inputEl').value = "";
+        App.btnSave.setDisabled(false)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    }
+
+    function validate() {
+        var documento = document.getElementById('Documento-inputEl');
+        if (documento.value.length == 0) {
+            alert("mal")
+        }
+    }
+
+    function seleccionadorLugar() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorLugar"))',
+            params: {
+                AccionSeleccion: 'getSeleccionadorLugar',
+                AccionListado: 'COMBOSGENERICOS'
+            }
+        });
+    };
+
+    function validarCantidadPac(objPac, valorPac, valorCombo) {
+        if (valorCombo == "D") {
+            if (valorPac.length > 8) {
+                objPac.setValue(valorPac.substring(0, 8));
+                return;
+            }
+        }
+        if (valorCombo == "R") {
+            if (valorPac.length > 11) {
+                objPac.setValue(valorPac.substring(0, 11));
+                return;
+            }
+        }
+    };
+
+    function seleccionadorPersonas() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorPersonasTriaje"))',
+            params: {
+                accionSeleccion: 'getSeleccionadorPersonas',
+                accionListado: 'LISTARPAG'
+            },
+            success: function (result) {
+                App.btnSave.setDisabled(false)
+            }
+        });
+    };
+</script>
+
+@(Html.X().Window()
+           .Width(650)
+        .Height(350)
+        .Maximizable(true)
+        .Modal(true)
+        .OnEsc("false")
+        .AutoScroll(true)
+        .Layout(LayoutType.Fit)
+        .CloseAction(CloseAction.Destroy)
+        .Icon(Icon.ApplicationForm)
+            .ID("WindowPacienteTriaje")
+            .Title("Registro de Paciente3")
+        .Padding(4)
+
+         .Items(
+         Html.X().FormPanel().ID("FormPanel2").Frame(false).Border(false).AutoScroll(true).Layout(LayoutType.VBox).LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+        //Html.X().Container().Layout(LayoutType.VBox).LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+             .Items(
+                    Html.X().FormPanel().Layout(LayoutType.Form).Width(500).FieldDefaults(d => { d.LabelWidth = 120; }).BodyPadding(10).Frame(false).Border(false)
+            .Items(
+                    Html.X().Container().Layout(LayoutType.VBox).LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                .Items(
+                         X.FieldSet().Title("Información General").ID("vistaconsultatriaje").FieldDefaults(d => { d.LabelWidth = 90; d.InputWidth = 120; })
+                        .Items(
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                            X.TextFieldFor(c => c.EsCliente).FieldLabel("Es Cliente").ReadOnly(indicaModoLectura).Hidden(true).Value("S"),
+                            X.TextFieldFor(c => c.EsEmpleado).FieldLabel("Es Empleado").ReadOnly(indicaModoLectura).Hidden(true).Value("N"),
+                            X.TextFieldFor(c => c.EsOtro).FieldLabel("Es Otro").ReadOnly(indicaModoLectura).Hidden(true).Value("N"),
+                            X.TextFieldFor(c => c.EsProveedor).FieldLabel("Es Proveedor").ReadOnly(indicaModoLectura).Hidden(true).Value("N"),
+                            X.TextFieldFor(c => c.EsPaciente).FieldLabel("Es Paciente").ReadOnly(indicaModoLectura).Hidden(true).Value("S"),
+                            X.TextFieldFor(m => m.Persona).Width(230).Height(20).LabelWidth(105).FieldLabel("Paciente").Hidden(false).ReadOnly(true).RightButtons(X.Button().Text("...").Disabled(Model.ACCION == "NUEVO" ? false : true).Handler("seleccionadorPersonas();")),
+                            X.ComboBoxFor(x => x.TipoPersona).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboMiscelaneoLista.GetComboGenericoTxt("TIPOPERSON")
+                            .Select(d => new ListItem(d.Name, d.Codigo))).ReadOnly(true).FieldLabel("Tipo Persona").LabelWidth(105).Value("N").Editable(false).SimpleSubmit(true).Hidden(true),
+                                    X.DateFieldFor(c => c.FechaNacimiento).Hidden(true).FieldLabel("Fecha Nacimiento").LabelWidth(130).ReadOnly(false).Editable(false),
+                            X.TextFieldFor(c => c.LugarNacimiento).FieldLabel("Lugar Nacim.").ReadOnly(true).Hidden(true)
+                            ), Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                                X.TextFieldFor(c => c.ApellidoPaterno).FieldLabel("Apellido Paterno").LabelWidth(105).ReadOnly(true),
+                            X.ComboBoxFor(x => x.EstadoCivil).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenericoTxt("ESTADOCIVI")
+                            .Select(d => new ListItem(d.Name, d.Codigo))).ReadOnly(true).Value("S").FieldLabel("Estado Civil").LabelWidth(105).Editable(false).SimpleSubmit(true).Hidden(true),
+                               X.TextFieldFor(x => x.Nacionalidad).FieldLabel("Nacionalidad").LabelWidth(100).ReadOnly(true).Value("Peruana").Hidden(true)
+                            ),
+
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                                    X.TextFieldFor(c => c.ApellidoMaterno).FieldLabel("Apellido Materno").LabelWidth(105).ReadOnly(true),
+
+                            X.ComboBoxFor(f => f.EstadoPaciente).Editable(false).Name("buscarEst").Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("ESTADOINT").Select(d => new ListItem(d.Name, d.ID))).FieldLabel("Estado").Value(2)
+                            .SimpleSubmit(true).LabelWidth(130).ReadOnly(true).Hidden(true),
+                                X.TextFieldFor(c => c.NivelInstruccion).FieldLabel("Nivel Instrucción").LabelWidth(130).ReadOnly(true).Hidden(true)
+
+                            ),
+
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                                    X.TextFieldFor(c => c.Nombres).FieldLabel("Nombres").LabelWidth(105).ReadOnly(true).Hidden(false),
+
+                                X.ComboBoxFor(c => c.rangoEtario).FieldLabel("Rango Etario").Hidden(true).Editable(false).LabelWidth(130).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboMiscelaneoLista.GetComboGenericoTxt("RANGETARIO")
+                            .Select(d => new ListItem(d.Name, d.Codigo))).ReadOnly(true).SimpleSubmit(true)
+
+                            ),
+
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                                X.TextFieldFor(c => c.NombreCompleto).FieldLabel("Nombre Completo").LabelWidth(105).Hidden(true),
+                                X.TextFieldFor(c => c.CorreoElectronico).FieldLabel("Correo").LabelWidth(105).ReadOnly(true).Hidden(true),
+                                X.TextFieldFor(c => c.edad).FieldLabel("Edad").ReadOnly(true).LabelWidth(130).Hidden(true)
+
+                            ),
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                            X.TextFieldFor(c => c.Paciente).FieldLabel("Código Paciente").LabelWidth(105).ReadOnly(true).Hidden(true),
+                                X.TextFieldFor(c => c.Busqueda).Hidden(true).FieldLabel("Búsqueda").LabelWidth(105).ReadOnly(false),
+                                X.TextFieldFor(c => c.TipoPaciente).FieldLabel("Tipo Paciente").LabelWidth(105).ReadOnly(true).Value(5).Hidden(true),
+                                    X.TextFieldFor(c => c.Direccion).Hidden(true).FieldLabel("Dirección").ReadOnly(true).LabelWidth(130),
+                            X.TextFieldFor(m => m.CodigoPostal).FieldLabel("").Hidden(true)
+                            ),
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+
+
+
+                            X.TextFieldFor(c => c.IDPACIENTE_OK).FieldLabel("ID PACIENTE_OK").ReadOnly(true).Hidden(true),
+                            X.TextFieldFor(c => c.IndicadorAsistencia).FieldLabel("Indicador Asistencia").ReadOnly(true).Hidden(true).Value(1),
+                            X.TextFieldFor(c => c.CantidadAsistencia).FieldLabel("Cantidad Asistencia").ReadOnly(true).Hidden(true).Value(0),
+                            X.TextFieldFor(c => c.IndicadorMigradoSiteds).FieldLabel("Indicador MigradoSiteds").ReadOnly(true).Hidden(true).Value(1),
+                            X.TextFieldFor(c => c.IndicadorCodigoBarras).FieldLabel("Indicador Codigo Barras").ReadOnly(true).Hidden(true).Value(1)
+                            )
+                            ,
+                             X.TextFieldFor(c => c.Documento).FieldLabel("Documento").LabelWidth(105).ReadOnly(true).Hidden(false)
+
+                            ))),
+                        Html.X().FormPanel().ID("FormPanel3").Layout(LayoutType.Form).Width(500).FieldDefaults(d => { d.LabelWidth = 120; }).BodyPadding(10).Frame(false).Border(false)
+                .Items(
+
+                            X.FieldSet().Hidden(true).Title("Registrar Nuevo Paciente").ID("VistaNuevoPaciente").FieldDefaults(d => { d.LabelWidth = 90; d.InputWidth = 120; })
+                        .Items(
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                                 X.ComboBoxFor(x => x.TipoDocumento).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboMiscelaneoLista.GetComboGenericoTxt("TIPDOCTRIA")
+                                    .Select(d => new ListItem(d.Name, d.Codigo))).ReadOnly(false).ID("TxtTipoDoc").FieldLabel("Tipo Documento").LabelWidth(105).Value("D").SimpleSubmit(true),
+
+                                X.TextFieldFor(c => c.RutaFoto).ID("TxtRegDocumento").FieldLabel("Documento").LabelWidth(130).MaxLength(20)
+                            ),
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+
+                            X.DateFieldFor(c => c.FechaNacimiento).ID("TxtRegFechaNacimientp").Editable(false).FieldLabel("Fecha Nacimiento :").LabelWidth(105),
+                                     X.TextField().ID("tfPais").LabelWidth(130).FieldLabel("País").ReadOnly(true).RightButtons(X.Button().Text("...").Disabled(false).Handler("seleccionadorLugar();")),
+                                X.TextFieldFor(m => m.Pais).FieldLabel("").Hidden(true)
+                            ),
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                            X.ComboBoxFor(x => x.Sexo).Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenericoTxt("TIPOSEXO")
+                                        .Select(d => new ListItem(d.Name, d.Codigo))).ReadOnly(false).ID("TxtRegSexo").FieldLabel("Sexo").LabelWidth(105).Value("M").Editable(false).SimpleSubmit(true),
+
+                             X.TextField().ID("tfDepartamento").FieldLabel("Departamento").ReadOnly(true).LabelWidth(130),
+                                    X.TextFieldFor(m => m.Departamento).FieldLabel("").Hidden(true)
+                            ),
+
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                            X.TextFieldFor(c => c.Raza).ID("TxtRegistroAPaterno").FieldLabel("Apellido Paterno").LabelWidth(105),
+                                 X.TextField().ID("tfProvincia").FieldLabel("Provincia").ReadOnly(true).LabelWidth(130),
+                                X.TextFieldFor(m => m.Provincia).FieldLabel("").Hidden(true)
+
+
+                            ),
+
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                                      X.TextFieldFor(c => c.Religion).ID("TxtRegistroAMaterno").FieldLabel("Apellido Materno").LabelWidth(105),
+
+                                       X.TextField().ID("tfDistrito").FieldLabel("Distrito").ReadOnly(true).LabelWidth(130)
+                            ),
+
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+                                X.TextFieldFor(c => c.UbicacionHHCC).ID("TxtRegistroNombres").FieldLabel("Nombre").LabelWidth(105),
+                                             X.TextFieldFor(c => c.Celular).MaxLength(9).InputType(Ext.Net.InputType.Number).FieldLabel("Celular").LabelWidth(105).LabelWidth(130).Hidden(false)
+                            ),
+
+                        Html.X().Container().Layout(LayoutType.HBox).LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                        .Items(
+
+                                X.TextAreaFor(m => m.Direccion).ID("TxtRegDireccion").FieldLabel("Direccion")
+                                                 .Width(500).LabelWidth(105)
+
+                            ))
+                        ),
+                        X.TextArea().ID("taAlerts")
+                        .Border(false)
+                        .StyleSpec("background:white;border:1px solid gray;")
+                        .FieldStyle("color: red")
+                        .Hidden(true)
+                        .ReadOnly(indicaModoLectura)
+
+                )
+                     .TopBar(
+            X.Toolbar().Height(30)
+            .Items(
+            X.ToolbarFill(),
+
+                X.Button().ID("BtnAtrasTriaje").Hidden(true).Text((Model.ACCION == "VER" ? "Aceptar" : "Volver Triaje")).Handler("RetrocederTriaje()")
+                            .Icon((Model.ACCION == "VER" ? Icon.PageBack : Icon.PageBack)),
+
+
+
+                        X.Button().ID("BtnHaPaciente").Text((Model.ACCION == "VER" ? "Aceptar" : "Nuevo Paciente")).Handler("Limpiar()")
+                    .Icon((Model.ACCION == "VER" ? Icon.Accept : Icon.ShapeSquareAdd)),
+
+                         X.Button().ID("BtnCrearPaciente").Hidden(true).Text((Model.ACCION == "VER" ? "Aceptar" : "Crear Paciente")).Handler("SendPaciente()")
+                    .Icon((Model.ACCION == "VER" ? Icon.Accept : Icon.Heart))
+        //.DirectEvents(de =>
+        //{
+        //    de.Click.Url = Url.Action("cerrarWindow");
+        //    de.Click.ExtraParams.Add(new Parameter("id", "WindowCuerpoHumano", ParameterMode.Value));
+        //})
+                ,
+            X.Button().Hidden((Model.ACCION == "VER" ? true : false)).ID("btnSave").Disabled(true)
+            .Text((Model.ACCION == "DELETE" ? "Eliminar" : "Guardar Triaje"))
+            .Handler("SendData();")
+            .Icon((Model.ACCION == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave)).DirectEvents(de =>
+            {
+
+                //& de.Click.Before = "SendData();";
+
+                // de.Click.Url = Url.Action("save_Paciente");
+                de.Click.EventMask.ShowMask = true;
+                de.Click.Before = "SendData();App.btnSave.setDisabled(true); " + "beforeSave(App.FormPanel2); return App.FormPanel2.getForm().isValid(); ";
+                de.Click.After = "App.btnSave.setDisabled(false); ";
+                de.Click.ExtraParams.Add(new Parameter("MODO", Model.ACCION, ParameterMode.Value));
+                de.Click.ExtraParams.Add(new Parameter("idWindow", "WindowPacienteTriaje", ParameterMode.Value));
+                de.Click.Success = "onSuccess(result.data);";
+                de.Click.Failure = "onFailure('" + Model.ACCION + "');";
+            }),
+                X.Button().Text((Model.ACCION == "VER" ? "Aceptar" : "Cancelar")).Handler("App.WindowPacienteTriaje.close()")
+            .Icon((Model.ACCION == "VER" ? Icon.Accept : Icon.Cancel))
+        //.DirectEvents(de =>
+        //{
+        //    de.Click.Url = Url.Action("cerrarWindow");
+        //    de.Click.ExtraParams.Add(new Parameter("id", "WindowCuerpoHumano", ParameterMode.Value));
+        //})
+            ,
+
+            X.ToolbarSpacer(20)
+            )
+            )
+
+    )
+    .DirectEvents(de =>
+    {
+        de.Render.Url = Url.Action("postWindowMedico");
+        de.Render.ExtraParams.Add(new Parameter("idPais", "" + Model.Pais, ParameterMode.Value));
+        de.Render.ExtraParams.Add(new Parameter("idDepa", "" + Model.Departamento, ParameterMode.Value));
+        de.Render.ExtraParams.Add(new Parameter("idProv", "" + Model.Provincia, ParameterMode.Value));
+        de.Render.ExtraParams.Add(new Parameter("idDist", "" + Model.CodigoPostal, ParameterMode.Value));
+    }).CloseAction(CloseAction.Destroy)
+)
+

@@ -1,0 +1,399 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_CE_DICCIONARIO
+
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+}
+
+@section cabecera
+{
+    <script>
+        var prepareGroupToolbar = function (grid, toolbar, groupId, records) {
+            // you can prepare ready toolbar
+        };
+
+        var onGroupCommand = function (column, command, group) {
+            if (command === 'SelectGroup') {
+                column.grid.getSelectionModel().select(group.children, true);
+                return;
+            }
+
+            Ext.Msg.alert(command, 'Group name: ' + group.name + '<br/>Count - ' + group.children.length);
+        };
+
+        var getAdditionalData = function (data, idx, record, orig) {
+            var o = Ext.grid.feature.RowBody.prototype.getAdditionalData.apply(this, arguments),
+                d = data;
+
+            Ext.apply(o, {
+                rowBodyColspan: record.fields.getCount(),
+                rowBody: Ext.String.format('<div style=\'padding:0 5px 5px 5px;\'>The {0} [{1}] requires light conditions of <i>{2}</i>.<br /> </div>', d.DESCRIPCION, d.DESCRIPCIONINGLES, d.CONCEPTO),
+                rowBodyCls: ""
+            });
+    
+            return o;
+        };
+    </script>
+
+    <script>
+        var Valores;
+        var template = '<span style="color:{0};">{1}</span>';
+
+        var change = function (value) {
+            return Ext.String.format(template, (value > 0) ? "green" : "red", value);
+        };
+
+        var pctChange = function (value) {
+            return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+        };
+
+        var onSuccess = function (grid, data) {
+            grid.show();
+            grid.getStore().loadData(data);
+        };
+
+        function deleteSelected(grid) {
+            var store = grid.store,
+                records = grid.selModel.getSelection();
+
+            store.remove(records);
+            store.load(true);
+        }
+
+
+    </script>
+    <script>
+        var template = '<span style="color:{0};">{1}</span>';
+
+        var change = function (value) {
+            return Ext.String.format(template, (value > 0) ? "green" : "red", value);
+        };
+
+        var pctChange = function (value) {
+            return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+        };
+
+        (function () {
+            var prevWidth = 10000,
+                viewPort,
+                thresholdWidth = 1000,
+                resizeHandler = function (width, height) {
+                    var portal,
+                        menu,
+                        breadcrumb,
+                        wide,
+                        narrow,
+                        north;
+                    viewPort = viewPort || Ext.ComponentQuery.query("viewport")[0];
+
+                    if (!viewPort) {
+                        return;
+                    }
+                    narrow = width < thresholdWidth && thresholdWidth <= prevWidth;
+                    wide = width >= thresholdWidth && thresholdWidth > prevWidth;
+
+                    if (wide || narrow) {
+                        Ext.suspendLayouts();
+                        portal = viewPort.down("portalpanel");
+                        menu = viewPort.down("#managementMenu");
+                        breadcrumb = viewPort.down("#breadcrumb");
+
+                        if (narrow) {
+                            portal.items.each(function (column) {
+                                column._columnWidth = column.columnWidth;
+                                column.columnWidth = 1;
+
+                                column.items.each(function (item) {
+                                    item._minHeight = item.minHeight;
+                                    item.minHeight = item.minHeight >= 500 ? item.minHeight : 500;
+                                });
+                            });
+
+                            breadcrumb.insert(0, {
+                                xtype: "button",
+                                text: (menu.menu.getComponent(menu.selectedIndex || 0)).text,
+                                menu: {
+                                    items: menu.menu.removeAll(false),
+                                    listeners: {
+                                        click: function (menu, item) {
+                                            this.up("button").setText(item.text);
+                                        }
+                                    }
+                                }
+                            });
+
+                            menu.hide();
+                            north = viewPort.down("#north");
+                            north.setHeight(150);
+                            north.getLayout().setActiveItem(1);
+                            north.getComponent(1).add(north.getComponent(0).removeAll(false));
+                        }
+                        else if (wide) {
+                            portal.items.each(function (column) {
+                                column.columnWidth = column._columnWidth;
+
+                                column.items.each(function (item) {
+                                    item.minHeight = item._minHeight;
+                                });
+                            });
+
+                            menu.menu.add(breadcrumb.getComponent(0).menu.removeAll(false));
+                            breadcrumb.getComponent(0).destroy();
+                            menu.show();
+                            north = viewPort.down("#north");
+                            north.getLayout().setActiveItem(0);
+                            north.getComponent(0).add(north.getComponent(1).removeAll(false));
+                            north.setHeight(100);
+                        }
+
+                        Ext.resumeLayouts(false);
+                        viewPort.updateLayout();
+                    }
+
+                    prevWidth = width;
+                };
+
+            Ext.EventManager.onWindowResize(resizeHandler, window, { buffer: 100 });
+            Ext.net.Bus.subscribe("App.resize", function () {
+                resizeHandler(Ext.Element.getViewportWidth());
+            });
+        })();
+
+    </script>
+}
+
+@section cuerpo
+{
+
+    @(Html.X().Viewport()
+        .Layout(LayoutType.VBox)
+        .LayoutConfig(
+            new VBoxLayoutConfig { Align = VBoxAlign.Stretch }
+        )
+        .Listeners(l =>
+        {
+            l.AfterLayout.BroadcastOnBus = "App.resize";
+            l.AfterLayout.Single = true;
+        })
+        .Items(regions =>
+        {
+            regions.Add(Html.X().Panel()
+                    .ItemID("north")
+                    .Height(70)
+                    .Header(false)
+                    .Border(false)
+                    .TopBarItem(
+                            Html.X().Button()
+                                .Text("Nuevo")
+                                .Icon(Icon.New)
+                                .Handler("App.Window1.show(this);")
+                                .ToolTip("Add a new row"),
+
+                            Html.X().ToolbarSeparator(),
+
+                            Html.X().Button()
+                                .Text("Modificar")
+                                .Icon(Icon.BasketEdit)
+                                .Handler("App.Window1.show(this);")
+                                .ToolTip("Modificar Formulario"),
+
+                            Html.X().ToolbarSeparator(),
+
+                            Html.X().Button()
+                                .Text("Eliminar")
+                                .Icon(Icon.Delete)
+                                .ToolTip("Remove the selected item")
+                        )
+                    .Layout(LayoutType.Card)
+                    .Items(
+                        Html.X().Container()
+                                .Layout(LayoutType.HBox)
+                                .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Middle })
+                                .Items(items =>
+                                {
+                                    items.Add(new Container
+                                    {
+                                        LayoutConfig = {
+                                                new HBoxLayoutConfig {Align = HBoxAlign.Top, Pack = BoxPack.Start}},
+                                        Width = 600,
+                                        Height = 100,
+                                        Margins = "5 5 5 5",
+                                        Items = {
+                                        Html.X().Label()
+                                            .ID("lbBuscar")
+                                            .Margins("0 10 0 0")
+                                            .Text("Apellidos y Nombres")
+                                            //.EmptyText("Search...")
+                                            .Width(150),
+                                         Html.X().TextField()
+                                            .ID("txtSearch")
+                                            .Margins("0 10 0 0")
+                                            .EmptyText("Search...")
+                                            .Width(250),
+
+                                         Html.X().Button()
+                                            .Text("Buscar")
+                                            .Icon(Icon.Find)
+                                            .DirectEvents(directEvents =>
+                                                        {
+                                                            directEvents.Click.IsUpload = true;
+                                                            directEvents.Click.Url = Url.Action("../gestion/GrillaListadPaginas");
+                                                            directEvents.Click.Success = "onSuccess(App.GridPanel1, result.data);";
+                                                            directEvents.Click.EventMask.ShowMask = true;
+                                                            directEvents.Click.EventMask.Msg = "Loading...";
+                                                            directEvents.Click.ExtraParams.Add(new
+                                                                                            {
+                                                                                                start =1,
+                                                                                                limit = 5,
+                                                                                                descript = JRawValue.From("App.txtSearch.getValue()"),
+                                                                                            });
+
+
+                                                        }),
+                                            Html.X().Container().Flex(1),
+                                           Html.X().Button()
+                                            .Text("Historia Clinica")
+                                            .Icon(Icon.ApplicationEdit)
+                                            .DirectEvents(directEvents =>
+                                                        {
+
+                                                            directEvents.Click.EventMask.ShowMask = true;
+                                                            directEvents.Click.EventMask.Msg = "Loading...";
+                                                            directEvents.Click.ExtraParams.Add(new
+                                                                    {
+                                                                        Name = "selection",
+
+                                                                        selection = new JRawValue("this.selModel.getSelected().id"),
+
+                                                                        Mode = ParameterMode.Raw
+                                                                    });
+                                                        })
+                                                    }
+                                    }
+                                            );
+                                })
+                        )
+                );
+            regions.Add(Html.X().Panel()
+                .ItemID("center")
+               .Height(600)
+               .Header(false)
+               .Border(false)
+               .Items(
+               Html.X().GridPanel()
+                                        .Title("Listado de Pacientes")
+                                         .Scroll(ScrollMode.Both)
+                                         .AutoScroll(true)
+                                        .Layout(LayoutType.Anchor)
+                // .DefaultAnchor("100%")
+                                         .Anchor("100% 100%")
+                // .Width(100)
+                //.Width(600)
+                                        .Height(500)
+                                        .ID("GridPanel1")
+                                        .Frame(true)
+                //.Layout(Ext.Net.LayoutType.Auto)
+                                        .Margins("0 0 2 2")
+                                        .Border(false)
+
+                                       .Store(store => store.Add(Html.X().Store()
+
+                                       .AutoLoad(true)
+                                       .RemoteSort(false)
+                                       .IsPagingStore(true)
+                                       .RemotePaging(true)
+                                       .PageSize(5)
+
+                                       .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                           .Url("../Gestion/GrillaListadPaginas")
+                                                           .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                                                                  .Root("data")
+                                                                                                  .TotalProperty("total")
+                                                                                                  .IDProperty("IDPAGINA")))))
+                                      .GroupField("DESCRIPCIONINGLES")
+                                      .Sorters(sorters =>
+                                            sorters.Add(Html.X().DataSorter()
+                                                .Property("DESCRIPCION")
+                                                .Direction(Ext.Net.SortDirection.ASC)
+                                            )
+                                        )
+                                      .Model(model => model.Add(Html.X().Model()
+                                                       .Fields(fields =>
+                                                       {
+
+                                                           fields.Add(Html.X().ModelField().Name("IDPAGINA"));
+                                                           fields.Add(Html.X().ModelField().Name("DESCRIPCIONINGLES"));
+                                                           fields.Add(Html.X().ModelField().Name("CONCEPTO"));
+                                                           fields.Add(Html.X().ModelField().Name("DESCRIPCION"));
+                                                       })))))
+
+                                       .ColumnModel(columnModel =>
+                                       {
+                                           columnModel.Columns.Add(Html.X().Column().Text("id").DataIndex("IDPAGINA").Hidden(true));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Grupo").DataIndex("DESCRIPCIONINGLES").Width(200));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Codigo").DataIndex("CONCEPTO").Flex(1).Width(100));
+                                           columnModel.Columns.Add(Html.X().Column().Text("Descripción").DataIndex("DESCRIPCION").Width(250));
+                                           columnModel.Columns.Add(Html.X().CommandColumn()
+                                                              .Hidden(true)
+                                                              .GroupCommands(
+                                                                  Html.X().GridCommand()
+                                                                      .Icon(Icon.TableRow)
+                                                                      .CommandName("SelectGroup")
+                                                                      .ToolTip(tt =>
+                                                                      {
+                                                                          tt.Title = "Select";
+                                                                          tt.Text = "Select all rows of the group";
+                                                                      }),
+
+                                                                  Html.X().CommandFill()
+                                                              )
+                                                              .PrepareGroupToolbar("prepareGroupToolbar")
+                                                              .Listeners(ls =>
+                                                                  ls.GroupCommand.Fn = "onGroupCommand"
+                                                              )
+                                                              );
+                                       })
+                                      
+                                       .BottomBar(bar => bar.Add(Html.X().PagingToolbar()
+                                                                         .DisplayInfo(true)
+                                                                         .DisplayMsg("Displaying customers {0} - {1} of {2}")))
+                                       .View(view => view.Add(Html.X().GridView()))
+                                       .Border(false)
+                                       //.Features(Html.X().Grouping()
+                                       //         .HideGroupedHeader(false)
+                                       //         .GroupHeaderTplString("{columnName}: {name} ({[values.rows.length]} {[values.rows.length > 1 ? \"Items\" : \"Item\"]})"),
+                                       //     Html.X().RowBody().GetAdditionalData("getAdditionalData")
+                                       // )
+                                       
+                     
+          
+                    )
+                );
+        })
+    )
+
+
+    @(Html.X().Window()
+            .ID("Window1")
+            .Title("Registro de Diccionario")
+            .Width(500)
+            .Height(300)
+            .Modal(true)
+            .AutoRender(false)
+            .Collapsible(true)
+            .Maximizable(true)
+            .Hidden(true)
+                    .Loader(Html.X().ComponentLoader()
+                            .Url("CCEP0902_ViewRegistro")
+                            .Mode(LoadMode.Frame)
+                            .LoadMask(lm => lm.ShowMask = true)
+                            .Params(new
+                                     { Eventos = "selection",
+                                       //selection = new JRawValue("App.GridPanel1.getSelectionModel().selectRow(0)"),
+                                       selection = new JRawValue("App.GridPanel1.getSelectionSubmit().getSelectionModelField().getValue()"),
+                                       Mode = ParameterMode.Raw
+                                           })
+            )
+    )
+}

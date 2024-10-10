@@ -1,0 +1,2411 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.BE_Medicamento_FE
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+
+    var indicaVisiblePrint = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_VISIBLE_IMPRESION;
+    var indicaVisibleTB = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_VISIBLE_TB_IMPRESION;
+
+
+    var indicaModoLectura2 = !(indicaVisibleTB == 2 ? false : true);
+
+    var visibleImpresion = (indicaVisiblePrint == 2/* && Model.Accion == "UPDATE"*/ ? true : false);
+    var isVista = (Model.Accion == "VISTA" ? true : false);
+    var isNuevo = (Model.Accion == "NUEVO" ? true : false);
+
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VISTA" ? false : false))));
+    var DESC_ADD = "Medicamentos";
+    var COLOR_BLUE01 = "#284A89";
+
+    var COLOR_RED01 = "#990000";
+    var COLOR_YELLOW02 = "#D9A407";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_ORANGE01 = "#E07509";
+
+    var COLOR_REDbackg = "#FD9788";
+    var COLOER_IND_OBLIGA =
+    AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("COL_BCOBLI");
+
+    var opcionAlmacenDietas = Session["OPCIONALMACENDIETAS"];
+}
+@section cabecera
+{
+    <link rel="stylesheet" href="@Url.Content("~/resources/css/main.css")" />
+
+    <style>
+        html body {
+            padding: 0px;
+            background: none;
+            background: none;
+            background: none;
+            background-attachment: fixed;
+            background-position: center;
+            font-family: tahoma,verdana,sans-serif;
+            background-color: #ffffff;
+        }
+    </style>
+    <script>
+    var lectura = "false";
+    var haynuevos = false;
+    var COLOR_BLUE01_ = "#284A89";
+    var COLOR_RED01_ = "#990000";
+    var COLOR_YELLOW02_ = "#D9A407";
+    var COLOR_GREEN01_ = "#177506";
+    var COLOR_ORANGE01_ = "#E07509";
+    var tempEliminar = false;
+    var changeEPS = function (value) {
+
+        var templateX = '<div unselectable="on" class="x-grid-cell-inner " style="text-align:left;background-color: {0}; "></div>';
+        var template = '<span style="font-size: 1.9em; color:{0};"> <b>&bull;</b></span>';
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01_, "No Coberturado");
+        else if (value == 2)
+            return Ext.String.format(template, COLOR_GREEN01_, "Coberturado");
+        else if (value == 3)
+            return Ext.String.format(template, COLOR_ORANGE01_, "Auditoria");
+        else if (value == 4)
+            return Ext.String.format(template, COLOR_YELLOW02_, "Carta de Garantia");
+        else
+            return Ext.String.format(template, "gray", "No especificada");
+
+    };
+
+    var Valores = 0;
+    var ContDell = 1;
+    var RegActivoMed = 0;
+    var EstadoDetalle = 0;
+
+    var onSuccessOld = function () {
+    };
+
+    var onSuccess = function (data) {
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+        App.FormActual.setDisabled(true);
+        var reload = true;
+        if (data != null) {
+
+            if (data.length > 0) {
+                reload = false;
+                App.cmdGuardar.setDisabled(false);
+                App.FormActual.setDisabled(false);
+                if (data[0].TIPOMSG == 'EXCEPTION') {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: data[0].TITULO,
+                            message: data[0].DESCRIPCION,
+                            tipo: 'ERROR'
+                        }
+                    });
+                } else {
+                    accionMensajes(data);
+                }
+            }
+        }
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+        }
+    };
+
+
+
+    function eventoRenderForm() {
+
+        var kk = 195;
+        var scrH = screen.height;
+        var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+        var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+
+        if (southH == 0) {
+            southH = 30;
+        } else if (parent.App.PanelMainSouth.collapsed) {
+            southH = 30;
+        }
+        var dimCentral = (scrH - (northH + southH) - kk);
+        lectura = '@(indicaModoLectura)';
+        App.FormActual.setHeight(545);
+
+        var v = '@isNuevo';
+        if (v == 'True') {
+            App.btnImpresion.setVisible(false);
+            App.btnImpresionHC.setVisible(false);
+        }
+    }
+
+    var indicaCambios = false;
+    function setIndicaCambios(value) {
+        indicaCambios = value;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("setIndicaCambiosFormulario"))',
+            params: {
+                indica: (value ? 1 : 0)
+            }
+        });
+        var val = '@visibleImpresion';
+        var vis = '@isVista';
+
+        if (vis == 'False') {
+            if (val == 'True') {
+                if (value == true) {
+                    App.btnImpresion.setDisabled(true);
+                    App.btnImpresionHC.setDisabled(true);
+                    parent.App.btnGuardarFirma.setDisabled(true);
+
+                } else {
+                    App.btnImpresion.setDisabled(false);
+                    App.btnImpresionHC.setDisabled(false);
+                    parent.App.btnGuardarFirma.setDisabled(false);
+                }
+            }
+        }
+
+    }
+
+    var seleccRecordActualMicronut = null;
+    var seleccRecordActualDietas = null;
+
+    function setSeleccionActualMicronut(record) {
+        seleccRecordActualMicronut = record;
+    }
+    function setSeleccionActualDieta(record) {
+        seleccRecordActualDietas = record;
+    }
+
+
+    function eliminarComplementoDietas(record) {
+        seleccRecordActualMicronut = record;
+
+        setIndicaCambios(true);
+        var store = App.grillaMedNut.store;
+        if (App.txtDataErrorMedicamento.getValue() == "error") {
+            alert(App.txtDataErrorMedicamento.getValue());
+            console.log = "error";
+        } else {
+            store.remove(seleccRecordActualMicronut);
+        }
+    }
+
+    function deleteActualComplementoDietas(tipo, grid, recordAct) {
+        var record = recordAct;
+        setSeleccionActualMicronut = recordAct;
+
+        if (record != null) {
+            setIndicaCambios(true);
+            var store = grid.store;
+            var Secuencia_var = record.data.Secuencia;
+            var TipoMedicamento_var = record.data.TipoMedicamento
+            var datitooo = record.data.SecuencialHCE;
+            //   store.remove(record);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("addDataEliminarMedicamentos_CCEPF100"))',
+                params: {
+                    MODO: 'DELETEINDIV',
+                    id: Secuencia_var,
+                    tipo: TipoMedicamento_var,
+                    DatoSecuencialHCE: datitooo
+                },
+                success: function (result) {
+                    eliminarComplementoDietas(setSeleccionActualMicronut);
+                }
+
+            });
+           //alert("Eliminado: secuencia= " +Secuencia_var+ "  TipoMedicamento: "+ TipoMedicamento_var);
+            //store.remove(record);
+           tempEliminar = true;
+            record = null;
+        }
+    };
+
+
+        function deleteActual(tipo, grid, recordAct) {
+            var record = recordAct;
+            if (record != null) {
+                setIndicaCambios(true);
+                var store = grid.store;
+                var Secuencia_var = record.data.Secuencia;
+                var TipoMedicamento_var = record.data.TipoMedicamento
+                var datitooo = record.data.SecuencialHCE;
+                //   store.remove(record);
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("addDataEliminarMedicamentos_CCEPF100"))',
+                    params: {
+                        MODO: 'DELETEINDIV',
+                        id: Secuencia_var,
+                        tipo: TipoMedicamento_var,
+                        DatoSecuencialHCE: datitooo
+                    }
+
+                });
+                //alert("Eliminado: secuencia= " +Secuencia_var+ "  TipoMedicamento: "+ TipoMedicamento_var);
+                store.remove(record);
+                tempEliminar = true;
+                record = null;
+            }
+        };
+
+
+
+
+
+    var invalidFields = new Array();
+
+    function updateActual(tipo, grid) {
+        var record = null;
+        var indtipo = 0;
+        if (tipo == 'MICRONUT') {
+            indtipo = 3;
+        } else if (tipo == 'DIETA') {
+            indtipo = 2;
+        }
+        var ArrayList0 = new Array();
+        if (indtipo > 0) {
+            setIndicaCambios(true);
+            var store = grid.store;
+            var fila = 0;
+            grid.store.each(function (r) {
+                ///VALIDACIÓN
+                fila = fila + 1;
+                setValuesGridForm(r, null, tipo);
+                invalidFields = getInvalidFieldsGrid(App.FormActual, invalidFields, fila, tipo);
+
+                var HC_Medicamento = {
+                    Secuencia: r.get('Secuencia'),
+                    IdUnidadMedida: r.get('IdUnidadMedida'),
+                    Dosis: r.get('Dosis'),
+                    IdVia: r.get('IdVia'),
+                    TipoComida: r.get('TipoComida'),
+                    Cantidad: r.get('Cantidad'),
+                    Frecuencia: r.get('Frecuencia'),
+                    DiasTratamiento: r.get('DiasTratamiento'),
+                    Linea: r.get('Linea'),
+                    Familia: r.get('Familia'),
+                    SubFamilia: r.get('SubFamilia'),
+                    LineaDescripcion: r.get('LineaDescripcion'),
+                    FamiliaDescripcion: r.get('FamiliaDescripcion'),
+                    SubFamiliaDescripcion: r.get('SubFamiliaDescripcion'),
+                    Comentario: r.get('Comentario'),
+                    TipoMedicamento: r.get('TipoMedicamento'),
+                    VolumenDia: r.get('VolumenDia'),
+                    FrecuenciaToma: r.get('FrecuenciaToma'),
+                    Presentacion: r.get('Presentacion'),
+                    Hora: r.get('Hora'),
+                    Indicacion: r.get('Indicacion'),
+                    Estado: r.get('Estado'),
+                    CodigoComponente: r.get('CodigoComponente'),
+                    IndicadorEPS: r.get('IndicadorEPS')
+
+                };
+                ArrayList0.push(HC_Medicamento);
+            });
+            if (invalidFields.length > 0) {
+                addRecursosValidacion(invalidFields);
+                App.cmdGuardar.setDisabled(false);
+            }
+        }
+        return ArrayList0;
+    };
+
+    function seleccTipoRecurso() {
+        if (App.TipoMedicamento.getValue() == 3) {
+            App.cbIdUnidadMedida.setVisible(true);
+            App.Dosis.setVisible(true);
+            App.Frecuencia.setVisible(true);
+            App.labHoras.setVisible(true);
+
+            App.IdVia.setVisible(true);
+            App.DiasTratamiento.setVisible(true);
+            App.labDias.setVisible(true);
+            App.TipoComida.setVisible(false);
+
+            App.btnAgregarRec.setText('Agregar Micronutriente');
+        } else {
+            App.cbIdUnidadMedida.setVisible(false);
+            App.Dosis.setVisible(false);
+            App.Frecuencia.setVisible(false);
+            App.labHoras.setVisible(false);
+
+            App.IdVia.setVisible(true);
+            App.DiasTratamiento.setVisible(false);
+            App.labDias.setVisible(false);
+            App.TipoComida.setVisible(true);
+
+            App.btnAgregarRec.setText('Agregar Dieta');
+        }
+    }
+
+
+
+    var count = 0; // a counter for new records
+    var countDell = 0; // a counter for new records
+
+    function visiblePanel(valor) {
+        var panel = App.Panel1;
+        panel.setVisible(valor);
+    }
+
+    var eventoOnEditar = function (btn) {
+        App.cmdGuardar.setDisabled(false);
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+
+    };
+
+    //function SelectDobleClik(secuencia, Linea, Familia) {
+    function SelectDetalleClik() {
+
+        EstadoDetalle = 2;
+    };
+    var hhValidation = function (h) {
+        str = h.value;
+        tempo = "'";
+        str = str.replace('javascript:myFunction(' + tempo, '');
+        str = str.replace('%20', ' ');
+        str = str.replace('%C3%B3', 'ó');
+        str = str.replace('%C3%A1', 'á');
+        str = str.replace('%C3%A9', 'é');
+        str = str.replace('%C3%AD', 'í');
+        str = str.replace('%C3%BA', 'ú');
+        str = str.replace('%C3%B1', 'ñ');
+
+        str = str.replace('%C3%8D', 'Í');
+        str = str.replace('%C3%93', 'Ó');
+        str = str.replace('%C3%81', 'Á');
+        str = str.replace('%C3%91', 'Ñ');
+        str = str.replace('%C3%9A', 'Ú');
+        str = str.replace(tempo + ')', '');
+        h.setValue(str);
+
+    };
+
+    ;
+
+    function PanelOcultar(grid) {
+
+        App.cbIdVia99.setValue("");
+        App.txtAreaIndicaciones.setValue("");
+        App.FrecTomas.setValue("");
+        App.HoraIni.setValue("");
+        App.VolDia.setValue("");
+
+
+        App.cbIdDieta999.setValue(1);
+        App.cbIdDietaHijos999.setValue("");
+
+        var panel1 = App.Panel1;
+        panel1.setVisible(false);
+    };
+
+
+
+
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+            App.conthbIndicaError.setVisible(true);
+            App.taAlerts.focus();
+        } else {
+            App.taAlerts.setVisible(false);
+            App.conthbIndicaError.setVisible(false);
+        }
+
+    };
+
+    var getInvalidFields = function (form) {
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+        });
+        return invalidFields;
+    };
+
+    var beforeSave = function (form) {
+        App.taAlerts.setVisible(false);
+        App.taAlerts.setValue(null);
+        App.conthbIndicaError.setVisible(false);
+
+        var FieldsInvalidos = getInvalidFields(form);
+        if (FieldsInvalidos.length > 0) {
+            addRecursosValidacion(FieldsInvalidos);
+        }
+    };
+
+    var addRecursosValidacion = function (FieldsInvalidos) {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("addRecursosValidacion"))',
+            params: {
+                data: FieldsInvalidos,
+                indica: 'VALIDAR',
+            },
+            success: function (result) { accionMensajes(result.data); }
+        });
+    };
+
+    var getInvalidFieldsGridNew = function (form, invalidFields, fila, tipo) {
+
+        var fields = App.FormActual.getForm().getFields();
+
+        fields.filterBy(function (field) {
+
+
+            var validar = false;
+            var varIsValid = true;
+
+            if (tipo == 'DIETA') {
+
+
+                if (field.name == 'Comentario') {
+                    var Comentario;
+                    Comentario = App.Comentario.getValue();
+
+
+                    if ((Comentario == null) || (Comentario == "")) {
+
+                        varIsValid = false;
+                    }
+
+                }
+                if (field.name == 'VolumenDia') {
+                    var varVolumenDia;
+                    varVolumenDia = App.VolumenDia.getValue();
+
+
+                    if ((varVolumenDia == null) || (varVolumenDia == "")) {
+
+                        varIsValid = false;
+                    }
+
+                }
+
+                if (field.name == 'Dosis') {
+                }
+                if (field.name == 'IdVia') {
+                }
+                if (field.name == 'IdUnidadMedida') {
+                }
+                if (field.name == 'Frecuencia') {
+                }
+                if (field.name == 'DiasTratamiento') {
+                }
+                if (field.name == 'DiasTratamiento') {
+                }
+
+            } else if (tipo == 'MICRONUT') {
+                if (field.name == 'Comentario') {
+
+                    var Comentario;
+                    Comentario = App.Comentario.getValue();
+
+
+                    if ((Comentario == null) || (Comentario == "")) {
+
+                        varIsValid = false;
+                    }
+
+                }
+
+            }
+
+
+            if (!varIsValid) {
+
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (varIsValid ? 1 : 0),
+                    ValorTexto: 'En el detalle ' + tipo + '; Fila N° ' + fila + ': ' + 'Debe ingresar el campo ' + field.name
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+                field.reset();
+            } else {
+
+            }
+
+
+        });
+
+        return invalidFields;
+    };
+
+    var getInvalidFieldsGrid = function (form, invalidFields, fila, tipo) {
+
+        //var fields = App.formactual.getForm().getFields();
+        var fields = App.FormActual.getForm().getFields();
+        fields.filterBy(function (field) {
+            var validar = true;
+            if (tipo == 'MICRONUT') {
+                validar = true;
+                if (field.name == 'VolumenDia') {
+                    validar = false;
+                }
+
+            } else if (tipo == 'DIETA') {
+                if (field.name == 'Dosis') {
+                    validar = false;
+                }
+                if (field.name == 'IdVia') {
+                    validar = false;
+                }
+                if (field.name == 'IdUnidadMedida') {
+                    validar = false;
+                }
+                if (field.name == 'Frecuencia') {
+                    validar = false;
+                }
+                if (field.name == 'DiasTratamiento') {
+                    validar = false;
+                }
+            }
+
+            // V y F  => F
+            if (!field.isValid() && validar) {
+            //if (!field.isValid()) {
+
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: tipo + '; Fila N° ' + fila + '-' + field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+                field.reset();
+            } else {
+
+            }
+        });
+
+        return invalidFields;
+    };
+    var setValuesGridForm = function (r, valor, tipo) {
+        ////ESTE METODO  CAMBIA DE ACUERDO A CADA FORMULARIO:
+        var Secuencia = r.get('Secuencia');
+        var IdUnidadMedida = r.get('IdUnidadMedida');
+        var Dosis = r.get('Dosis');
+        var IdVia = r.get('IdVia');
+        var TipoComida = r.get('TipoComida');
+        var Cantidad = r.get('Cantidad');
+        var Frecuencia = r.get('Frecuencia');
+        var DiasTratamiento = r.get('DiasTratamiento');
+        var Linea = r.get('Linea');
+        var Familia = r.get('Familia');
+        var SubFamilia = r.get('SubFamilia');
+        var LineaDescripcion = r.get('LineaDescripcion');
+        var FamiliaDescripcion = r.get('FamiliaDescripcion');
+        var SubFamiliaDescripcion = r.get('SubFamiliaDescripcion');
+        var Comentario = r.get('Comentario');
+        var TipoMedicamento = r.get('TipoMedicamento');
+        var CodigoComponente = r.get('CodigoComponente');
+        var VolumenDia = r.get('VolumenDia');
+        var FrecuenciaToma = r.get('FrecuenciaToma');
+        var Presentacion = r.get('Presentacion');
+        var Hora = r.get('Hora');
+        var Indicacion = r.get('Indicacion');
+
+       /* App.Linea.setValue(Linea == null ? null : Linea);
+        App.Familia.setValue(Familia == null ? null : Familia);
+        App.Dosis.setValue(Dosis == null ? null : Dosis);
+        App.Frecuencia.setValue(Frecuencia == 0 ? null : Frecuencia);
+        App.SubFamilia.setValue(SubFamilia == null ? null : SubFamilia);
+        App.IdVia.setValue(IdVia == 0 ? null : IdVia);
+        App.DiasTratamiento.setValue(DiasTratamiento == 0 ? null : DiasTratamiento);
+        App.TipoMedicamento.setValue(TipoMedicamento == 0 ? null : TipoMedicamento);
+        App.Cantidad.setValue(Cantidad == 0 ? null : Cantidad);
+        App.IdUnidadMedida.setValue(IdUnidadMedida == 0 ? null : '' + IdUnidadMedida);
+        App.Comentario.setValue(Comentario == null ? null : Comentario);
+        App.VolumenDia.setValue(VolumenDia == null ? null : VolumenDia);*/
+
+    };
+
+    function eventoCancelar(form) {
+
+        App.bar.setDisabled(true);
+        var reload = true;
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+            // beforeSave(form);
+        }
+
+
+    };
+    </script>
+    <script>
+
+
+    @*var SubFamilia = function (h) {
+        str = h.value;
+        tempo = "'";
+        str = str.replace('javascript:myFunction(' + tempo, '');
+        str = str.replace('%20', ' ');
+        str = str.replace('%C3%B3', 'ó');
+        str = str.replace('%C3%A1', 'á');
+        str = str.replace('%C3%A9', 'é');
+        str = str.replace('%C3%AD', 'í');
+        str = str.replace('%C3%BA', 'ú');
+        str = str.replace('%C3%B1', 'ñ');
+
+        str = str.replace('%C3%8D', 'Í');
+        str = str.replace('%C3%93', 'Ó');
+        str = str.replace('%C3%81', 'Á');
+        str = str.replace('%C3%91', 'Ñ');
+        str = str.replace('%C3%9A', 'Ú');
+        str = str.replace(tempo + ')', '');
+        h.setValue(str);
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("ReturnFindSubFamilia"))',
+            params: {
+                modo: 'set',
+                linea: '',
+                familia: '',
+                subFamilia: str,
+                descripcion: '',
+                descripLinea: '',
+                descripFamilia: '',
+                idWindow: "IdBuscadorMedicamento"
+            }
+        });
+    }*@
+
+
+        var SubFamilia = function (h) {
+            var numero2 = grillaActiva.replace('grillaExamenes', '')
+            str = h.value;
+            tempo = "'";
+            str = str.replace('javascript:myFunction(' + tempo, '');
+            str = str.replace('%20', ' ');
+            str = str.replace('%C3%B3', 'ó');
+            str = str.replace('%C3%A1', 'á');
+            str = str.replace('%C3%A9', 'é');
+            str = str.replace('%C3%AD', 'í');
+            str = str.replace('%C3%BA', 'ú');
+            str = str.replace('%C3%B1', 'ñ');
+
+            str = str.replace('%C3%8D', 'Í');
+            str = str.replace('%C3%93', 'Ó');
+            str = str.replace('%C3%81', 'Á');
+            str = str.replace('%C3%91', 'Ñ');
+            str = str.replace('%C3%9A', 'Ú');
+            str = str.replace(tempo + ')', '');
+            h.setValue(str);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("ReturnFindSubFamilia"))',
+                params: {
+                    modo: 'set',
+                    linea: '',
+                    familia: '',
+                    subFamilia: str,
+                    descripcion: '',
+                    descripLinea: '',
+                    descripFamilia: '',
+                    idWindow: "IdBuscadorMedicamento",
+                    idgrupo: 0 /* parseInt(numero2)*/
+                }
+            });
+        }
+
+
+
+
+    var mmValidation = function (m) {
+        if (m.getValue() > 59) {
+            m.setValue(59);
+        }
+    }
+
+    //var invalidFieldsGrid = new Array();
+
+    function EnviarDataServer(grid) {
+        var reload = true;
+        var data;
+
+
+        //beforeSave(App.FormActual);
+        if (true) {
+
+            var store1 = 'storeDieta';
+            var store2 = 'storeMedNut';
+            var id = Ext.getStore(store2).getCount();
+
+            if (Ext.getStore(store1).getCount() > 0 || Ext.getStore(store2).getCount() > 0 || tempEliminar == true) {
+
+        //if (App.FormActual.getForm().isValid()) {
+
+            App.taAlerts.setVisible(false);
+            App.taAlerts.setValue(null);
+            App.conthbIndicaError.setVisible(false);
+
+            var i = 0;
+            //invalidFields = new Array();
+            var invalidFieldsGrid = new Array();
+            var fila = 0;
+
+            // GRILLA DIETA
+            var ArrayDieta = new Array();
+            App.storeDieta.each(function (r) {
+                fila = fila + 1;
+
+                //VALIDACIÓN campos ingresos
+                setValuesGridForm(r, null);
+                //invalidFieldsGrid = getInvalidFieldsGridNew(App.FormActual, invalidFieldsGrid, fila, 'DIETA');
+                invalidFieldsGrid = getInvalidFieldsGrid(App.FormActual, invalidFieldsGrid, fila, 'DIETA');
+
+
+                var HC_Medicamento = {
+                    Secuencia: r.get('Secuencia'),
+                    IdUnidadMedida: r.get('IdUnidadMedida'),
+                    Dosis: r.get('Dosis'),
+                    IdVia: r.get('IdVia'),
+                    TipoComida: r.get('TipoComida'),
+                    Cantidad: r.get('Cantidad'),
+                    Frecuencia: r.get('Frecuencia'),
+                    DiasTratamiento: r.get('DiasTratamiento'),
+                    Linea: r.get('Linea'),
+                    Familia: r.get('Familia'),
+                    SubFamilia: r.get('SubFamilia'),
+                    LineaDescripcion: r.get('LineaDescripcion'),
+                    FamiliaDescripcion: r.get('FamiliaDescripcion'),
+                    SubFamiliaDescripcion: r.get('SubFamiliaDescripcion'),
+
+                    //Comentario: r.get('Comentario'),
+                    Comentario: r.get('Indicacion'),  //ANGEL
+
+                    TipoMedicamento: r.get('TipoMedicamento'),
+                    VolumenDia: r.get('VolumenDia'),
+                    FrecuenciaToma: r.get('FrecuenciaToma'),
+                    Presentacion: r.get('Presentacion'),
+                    Hora: r.get('Hora'),
+
+                    //Indicacion: r.get('Indicacion'),
+                     Indicacion: r.get('Comentario'),  //ANGEL
+
+                    Estado: r.get('Estado'),
+                    CodigoComponente: r.get('CodigoComponente'),
+                    IndicadorEPS: r.get('IndicadorEPS'),
+
+                    IdPadreNutriente: r.get('IdPadreNutriente'),
+                    IdHijoNutriente: r.get('IdHijoNutriente'),
+                    Accion: (r.get('Accion') == 'NUEVO' ? 'NUEVO' : 'UPDATEINDIV')
+                };
+                ArrayDieta.push(HC_Medicamento);
+
+
+                i = i + 1;
+
+            });
+
+            var contador = 0;
+            var fila = 0;
+            // GRILLA MICRONUTRIENTES
+            var ArrayMicroNut = new Array();
+            App.storeMedNut.each(function (r) {
+
+                fila = fila + 1;
+                ///VALIDACIÓN campos ingresos
+                setValuesGridForm(r, null);
+                //invalidFieldsGrid = getInvalidFieldsGridNew(App.FormActual, invalidFieldsGrid, fila, 'MICRONUT');
+                invalidFieldsGrid = getInvalidFieldsGrid(App.FormActual, invalidFieldsGrid, fila, 'MICRONUT');
+                data = r.get('Comentario')
+
+                if (data.length > 250) {
+                    /* alert(App.txtAreaIndicaciones.getValue().length);*/
+                    App.txtAreaIndicaciones.setActiveError('El campo Indicaciones solo admite 250 caracteres.');
+                    App.taAlerts.setValue('*El campo Indicaciones solo admite 250 caracteres.');
+                    App.taAlerts.setVisible(true);
+                    contador = 1;
+                    return false;
+                }
+                else {
+                    App.taAlerts.setValue('');
+                    App.taAlerts.setVisible(false);
+                }
+                var HC_Medicamento = {
+                    Secuencia: r.get('Secuencia'),
+                    IdUnidadMedida: r.get('IdUnidadMedida'),
+                    Dosis: r.get('Dosis'),
+                    IdVia: r.get('IdVia'),
+                    TipoComida: r.get('TipoComida'),
+                    Cantidad: r.get('Cantidad'),
+                    Frecuencia: r.get('Frecuencia'),
+                    DiasTratamiento: r.get('DiasTratamiento'),
+                    Linea: r.get('Linea'),
+                    Familia: r.get('Familia'),
+                    SubFamilia: r.get('SubFamilia'),
+                    LineaDescripcion: r.get('LineaDescripcion'),
+                    FamiliaDescripcion: r.get('FamiliaDescripcion'),
+                    SubFamiliaDescripcion: r.get('SubFamiliaDescripcion'),
+                    Comentario: r.get('Comentario'),
+                    TipoMedicamento: r.get('TipoMedicamento'),
+                    VolumenDia: r.get('VolumenDia'),
+                    FrecuenciaToma: r.get('FrecuenciaToma'),
+                    Presentacion: r.get('Presentacion'),
+                    Hora: r.get('Hora'),
+                    Indicacion: r.get('Indicacion'),
+                    Estado: r.get('Estado'),
+                    CodigoComponente: r.get('CodigoComponente'),
+                    IndicadorEPS: r.get('IndicadorEPS'),
+                    CodAlmacen: r.get('CodAlmacen'),
+
+                    Accion: (r.get('Accion') == 'NUEVO' ? 'NUEVO' : 'UPDATEINDIV')
+
+                };
+                ArrayMicroNut.push(HC_Medicamento);
+                i = i + 1;
+            });
+
+            // COMENTAR
+
+                @*var array01 = updateActual('DIETA', App.grillaMedDieta);
+            var array02 = updateActual('MICRONUT', App.grillaMedNut);
+            if (invalidFields.length == 0) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("Save_MedDietasMicroNutrientes_CCEPF100"))',
+                    params: {
+                        selectionArray1: array01,
+                        selectionArray2: array02,
+                        Id: 0,
+                        Evento: 'Server'
+                    }
+                });
+            }*@
+                if (contador == 1) {
+                    //App.taAlerts.setValue('');
+                    //App.taAlerts.setVisible(false);
+                    return false;
+                }
+                 if (invalidFieldsGrid.length > 0) {
+
+               addRecursosValidacion(invalidFieldsGrid);
+                App.cmdGuardar.setDisabled(false);
+                return false;
+            } else {
+                App.FormActual.setDisabled(true);
+                //App.formactual.setDisabled(true);
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("Save_MedDietasMicroNutrientes_CCEPF100"))',
+                    params: {
+                        selectionArray1: ArrayDieta,
+                        selectionArray2: ArrayMicroNut,
+                        text: '0'
+                    }
+                });
+                return true;
+                tempEliminar = false;
+            }
+
+
+            } else {
+
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("showMensajeNotify"))',
+                    params: {
+                        titulo: 'Advertencia',
+                        message: 'No se ingresaron datos para guardar',
+                        tipo: 'WARNING'
+                    }
+                });
+                //valor.setValue('');
+                //App.cmdGuardar.setDisabled(false);
+                return ;
+        }
+         //return true;
+
+        } else {
+            App.cmdGuardar.setDisabled(false);
+            return false;
+        }
+
+    };
+
+        @*function EnviarDataServerOld(grid) {
+            if (true) {
+                invalidFields = new Array();
+                App.taAlerts.setVisible(false);
+                App.taAlerts.setValue(null);
+                App.conthbIndicaError.setVisible(false);
+                var array01 = updateActual('DIETA', App.grillaMedDieta);
+                var array02 = updateActual('MICRONUT', App.grillaMedNut);
+                if (invalidFields.length == 0) {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("Save_MedDietasMicroNutrientes_CCEPF100"))',
+                    params: {
+                        selectionArray1: array01,
+                        selectionArray2: array02,
+                        Id: 0,
+                        Evento: 'Server'
+                    }
+                });
+            }
+        } else {
+            App.cmdGuardar.setDisabled(false);
+        }
+    };*@
+
+    var grillaActiva = null;
+    function eventoDesactivarSeleccion(btnComponente, btnComponenteMostrar) {
+        btnComponente.setVisible(false);
+        btnComponenteMostrar.setVisible(true);
+        grillaActiva = null;
+    };
+
+    function eventoActivarSeleccionOld(btnComponente, btnComponenteMostrar, idGrillaActiva) {
+        App.btnSelDesactivo_MicroNut.setVisible(true);
+        App.btnSelActivo_MicroNut.setVisible(false);
+
+        App.btnSelDesactivo_Dieta.setVisible(true);
+        App.btnSelActivo_Dieta.setVisible(false);
+
+
+        btnComponente.setVisible(false);
+        btnComponenteMostrar.setVisible(true);
+
+        grillaActiva = idGrillaActiva;
+
+    };
+
+
+    function eventoActivarSeleccion(button, event) {
+
+        //if (button == App.btnSelDesactivo0) {
+        //    parent.App.cbAlmacen.hide(true);
+        //    parent.App.chkAlmacen.hide(true);
+        //}
+        parent.App.cbAlmacen.setDisabled(false);
+        parent.App.cbAlmacen.setValue('@opcionAlmacenDietas');
+
+
+        var panelServ = Ext.getCmp('East1');
+        parent.App.East1.expand();
+        var numero = button.id.replace('btnSelDesactivo0', '');
+        Ext.getCmp(button.id).hide();
+        Ext.getCmp('btnSelActivo0' + numero).show();
+        var idGrillaActiva = 'grillaMedNut';
+        parent.App.txtparametro.setValue("MEDDIETAS");
+        //alert("entro receta individual");
+        parent.App.cbLinea.clearValue();
+        parent.App.cbLinea.getStore().load();
+        parent.App.cbLinea.setValue("04");
+
+        grillaActiva = idGrillaActiva;
+    };
+
+
+    function eventoDesactivarSeleccion(button, event) {
+
+
+        parent.App.East1.collapse();
+
+        var numero = button.id.replace('btnSelActivo0', '')
+
+        Ext.getCmp(button.id).hide();
+
+        Ext.getCmp('btnSelDesactivo0' + numero).show();
+
+    };
+
+    function validaDuplicado(valor, grid) {
+        var numero = grillaActiva.replace('grillaMedNut', '')
+        var store1 = 'storeMedNut' + numero;
+        var store = Ext.getStore(store1);
+        var estados = false;
+        var valor1;
+        var valor2;
+        store.each(function (r) {
+            if (trim(r.get('SubFamiliaDescripcion')) == trim(valor)) estados = true;
+        });
+        // alert(estados);
+        return estados;
+    }
+
+    var count = 0; // a counter for new records
+    function InsertRow(valor, estado, soloLectura) {
+
+        if (soloLectura == '1') {
+            setIndicaCambios(false);
+        } else {
+            if (grillaActiva != null) {
+            /*if (true) {*/
+                if (valor.getValue() != '') {
+                    var obj = JSON.parse(valor.getValue());
+
+                    var CodigoElemento_var = obj.CodigoElemento;
+                    var DescripcionLocal_var = obj.DescripcionLocal;
+                    var ValorCodigo1_var = obj.ValorCodigo1;
+                    var ValorCodigo2_var = obj.ValorCodigo2;
+                    var ValorCodigo3_var = obj.ValorCodigo3;
+
+                    var ValorAlmacen_var = obj.UltimoUsuario;
+
+                    var Compania_var = obj.Compania;
+
+                    var grid = Ext.getCmp("" + grillaActiva);
+                    var TipoMedicamento_var = null;
+                    if (grillaActiva == 'grillaMedDieta') {
+                        TipoMedicamento_var = 2;
+                    } else if (grillaActiva == 'grillaMedNut') {
+                        TipoMedicamento_var = 3;
+                    }
+                    if (validaDuplicado(obj.DescripcionLocal, grid)) {
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("showMensajeNotify"))',
+                            params: {
+                                titulo: 'Advertencia',
+                                message: 'Ya existe registro',
+                                tipo: 'WARNING'
+                            }
+                        });
+                        valor.setValue('');
+                        return;
+                    }
+                    valor.setValue('');
+                    setIndicaCambios(true);
+                    grid.store.insert(0, {
+                        Secuencia: count--,
+                        IdVia: 1,
+                        SubFamiliaDescripcion: DescripcionLocal_var,
+                        TipoMedicamento: TipoMedicamento_var,
+                        Linea: ValorCodigo1_var,
+                        CodAlmacen: ValorAlmacen_var,
+                        Familia: ValorCodigo2_var,
+                        SubFamilia: ValorCodigo3_var,
+                        CodigoComponente: CodigoElemento_var,
+                        Presentacion: Compania_var,
+                        Accion: 'NUEVO'
+                    });
+
+                    Ext.Function.defer(function () {
+                        grid.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+                    }, 100);
+                    valor.setValue('');
+                }
+            } else {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("showMensajeNotify"))',
+                    params: {
+                        titulo: 'Advertencia',
+                        message: 'Debe activar la selección de una de las grillas.',
+                        tipo: 'WARNING'
+                    }
+                });
+                return;
+            }
+
+        }
+    }
+
+    @*function InsertRowOld(valor, estado, soloLectura) {
+
+        if (soloLectura == '1') {
+            setIndicaCambios(false);
+        } else {
+            if (valor.getValue() != '') {
+                var obj = JSON.parse(valor.getValue());
+                var DescripcionLocalVar = obj.DescripcionLocal;
+                var ValorEntero4Var = obj.ValorEntero4;
+                App.Linea.setValue(null);
+                App.cbIdUnidadMedida.setValue(null);
+                App.Familia.setValue(null);
+                App.Dosis.setValue(null);
+                App.Frecuencia.setValue(null);
+                App.SubFamilia.setValue(null);
+                App.TipoComida.setValue(null);
+                App.IdVia.setValue(null);
+                App.DiasTratamiento.setValue(null);
+                App.Cantidad.setValue(null);
+                App.IndicadorEPS.setValue(null);
+
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("ReturnFindSubFamilia"))',
+                    params: {
+                        modo: 'set',
+                        linea: '',
+                        familia: '',
+                        subFamilia: DescripcionLocalVar,
+                        descripcion: '',
+                        descripLinea: '',
+                        descripFamilia: '',
+                        indicadoreps: ValorEntero4Var,
+                        idWindow: "IdBuscadorMedicamento"
+                    }
+                });
+                valor.setValue('');
+            }
+        }
+    }*@
+
+    function noDuplicado(tipo) {
+
+        var descTipo = '';
+        var store = null;
+        if (tipo == 3) {
+            descTipo = 'Micronutrientes';
+            store = App.storeMedNut;
+        } /*else if (tipo == 2) {
+            descTipo = 'Dietas';
+            store = App.storeDieta;
+        }*/
+        var noHayDuplicado = true;
+        if (store != null) {
+            store.each(function (r) {
+                if (trim(r.get('SubFamiliaDescripcion')) == trim(App.Linea.getValue())/* &&
+                    trim(r.get('Familia')) == trim(App.Familia.getValue()) &&
+                    trim(r.get('SubFamilia')) == trim(App.SubFamilia.getValue())*/) {
+                    noHayDuplicado = false;
+                }
+            });
+        }
+        if (!noHayDuplicado) {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("showMensajeNotify"))',
+                params: {
+                    titulo: 'Advertencia',
+                    message: 'Ya existe registro.',
+                    tipo: 'WARNING'
+                }
+            });
+        }
+
+        return noHayDuplicado;
+    }
+
+
+    function trim(str) {
+        return str.replace(/^\s+|\s+$/g, "");
+    }
+
+    function eventoVisorReporte(param1) {
+        if (param1 == 'HC') {
+            window.location.href = '@Url.Action("HCEReportesView_total", "HClinica")';
+        } else {
+            window.location.href = '@Url.Action("HCEReportesView", "HClinica")';
+        }
+    }
+
+    function setImpresion(store) {
+       /* App.btnImpresion.setVisible(false);
+        App.btnImpresionHC.setVisible(false);*/
+        var contar = 0;
+        if (store != null) {
+            store.each(function (r) {
+                contar++;
+            });
+        }
+        if (contar > 0) {
+            App.btnImpresion.setVisible(true);
+            App.btnImpresionHC.setVisible(true);
+
+        }
+    }
+
+    function setImpresion1(store) {
+
+        var contar = 0;
+        if (store != null) {
+            store.each(function (r) {
+                contar++;
+            });
+        }
+        if (contar > 0 || Ext.getStore('storeMedNut').getCount() > 0) {
+            if (haynuevos == false) {
+                App.btnImpresion.setVisible(true);
+                App.btnImpresionHC.setVisible(true);
+            }
+            else {
+                App.btnImpresion.setVisible(false);
+                App.btnImpresionHC.setVisible(false);
+            }
+        } else {
+
+            var v1 = '@isVista';
+            if (v1 == 'True') {
+                App.btnImpresion.setVisible(true);
+                App.btnImpresionHC.setVisible(true);
+            } else {
+                App.btnImpresion.setVisible(false);
+                App.btnImpresionHC.setVisible(false);
+            }
+        }
+    }
+    function setImpresion2(store) {
+
+        var contar = 0;
+        if (store != null) {
+            store.each(function (r) {
+                contar++;
+            });
+        }
+        if (contar > 0 || Ext.getStore('storeDieta').getCount() > 0) {
+            if (haynuevos == false) {
+                App.btnImpresion.setVisible(true);
+                App.btnImpresionHC.setVisible(true);
+            }
+            else {
+                App.btnImpresion.setVisible(false);
+                App.btnImpresionHC.setVisible(false);
+            }
+
+        } else {
+            App.btnImpresion.setVisible(false);
+            App.btnImpresionHC.setVisible(false);
+        }
+    }
+
+
+
+
+    function addRecordMain(grid) {
+        //var contar = App.storeDieta.getCount();
+        App.storeDieta.each(function (r) {
+
+            count++
+
+
+        });
+        /*
+                App.storeDieta.insert(0, { Secuencia: SecuenciaMAx + 1, IdVia: '', SubFamiliaDescripcion: '', SubFamiliaDescripcion2: '', VolumenDia: '', FrecuenciaToma: '', Hora: 0, Comentario: '', TipoMedicamento: '', Accion: 'NUEVO' });
+                Ext.Function.defer(function () {
+                    App.grillaAFAM.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+                }, 100);
+                */
+      /*  App.txtDietas.setValue("0");*/
+     /*   alert(contar);*/
+
+      /*  App.storeDieta.insert(parseInt(contar), {
+            Secuencia: count++,
+            IdVia: App.cbIdVia99.getValue(),
+            IdPadreNutriente: App.cbIdDieta999.getValue(),
+            Indicacion: App.cbIdDieta999.getDisplayValue(),
+            IdHijoNutriente: App.cbIdDietaHijos999.getValue(),
+            Presentacion: App.cbIdDietaHijos999.getDisplayValue(),
+            VolumenDia: App.VolDia.getValue(),
+            TipoMedicamento: '2',
+            FrecuenciaToma: App.FrecTomas.getValue(),
+            Hora: App.HoraIni.getValue(),
+            Comentario: App.txtAreaIndicaciones.getValue(),
+            Linea: '',
+            Familia: '',
+            CodigoComponente: '',
+            Accion: 'NUEVO'
+        });
+        Ext.Function.defer(function () {
+            App.grillaMedDieta.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+        }, 100);
+        App.Panel1.setVisible(false);
+        App.cbIdVia99.setValue(1);
+        App.cbIdDieta999.setValue(1);
+
+
+        App.VolDia.setValue('');
+        App.FrecTomas.setValue('');
+        App.HoraIni.setValue('');
+        App.txtAreaIndicaciones.setValue('');*/
+        var contar = App.storeDieta.getCount();
+        var ArrayList1 = new Array();
+
+        var HC_Medicamento = {
+            Secuencia: count++,
+            IdVia: App.cbIdVia99.getValue(),
+            IdPadreNutriente: App.cbIdDieta999.getValue(),
+            Indicacion: App.cbIdDieta999.getDisplayValue(),
+            IdHijoNutriente: App.cbIdDietaHijos999.getValue(),
+            Presentacion: App.cbIdDietaHijos999.getDisplayValue(),
+            VolumenDia: App.VolDia.getValue(),
+            TipoMedicamento: '2',
+            FrecuenciaToma: App.FrecTomas.getValue(),
+            Hora: App.HoraIni.getValue(),
+            Comentario: App.txtAreaIndicaciones.getValue(),
+            Linea: '',
+            Familia: '',
+            CodigoComponente: '',
+            Accion: 'NUEVO'
+        };
+        ArrayList1.push(HC_Medicamento);
+
+
+
+        if (App.txtAreaIndicaciones.getValue().length > 250) {
+           /* alert(App.txtAreaIndicaciones.getValue().length);*/
+            App.txtAreaIndicaciones.setActiveError('El campo Indicaciones solo admite 250 caracteres.');
+            App.taAlerts.setValue('*El campo Indicaciones solo admite 250 caracteres.');
+            App.taAlerts.setVisible(true);
+            return false;
+        }
+        else {
+            App.taAlerts.setValue('');
+            App.taAlerts.setVisible(false);
+        }
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("InsertarDieta_Temp"))',
+            params: {
+                selectionArray1: ArrayList1
+            }
+        });
+        haynuevos = true;
+        App.Panel1.setVisible(false);
+        App.cbIdVia99.setValue(1);
+        App.cbIdDieta999.setValue(1);
+
+
+        App.VolDia.setValue('');
+        App.FrecTomas.setValue('');
+        App.HoraIni.setValue('');
+        App.txtAreaIndicaciones.setValue('');
+        App.storeDieta.reload();
+
+    };
+
+
+    var onFailure = function (data) {
+        App.cmdGuardar.setDisabled(false);
+    };
+
+
+
+    function enviar(data1) {
+        //alert(data1.value);
+        //alert(data1.record.data.SubFamiliaDescripcion);
+        /*App.txtDietas.setValue(data1.value);
+        var indice = data1.column.rowIndex;
+        var columna2 = App.CombosHijos;
+        var combobox2 = columna2.getComponent(indice);
+        combobox2.getStore().load();*/
+
+       /* var id_dieta = data1.value;
+        if (id_dieta == null) { id_dieta = ""; }
+        if(id_dieta!="")
+        {
+            App.txtDietas.setValue(id_dieta);
+            var indice = data1.column.rowIndex;
+
+            var columna2 = App.CombosHijos;
+            var combobox2 = columna2.getComponent(indice);
+            if (combobox2 != null) {
+                //combobox2.getStore().load({ params: { Dieta: id_dieta } });
+                combobox2.getStore().load();
+            }
+        }*/
+        App.cbIdDietaHijos999.setValue("");
+        App.cbIdDietaHijos999.getStore().load();
+
+        /*Dieta = JRawValue.From("App.txtDietas.getValue()"),
+                                                               Accion = "DIETAHIJOS"
+       */
+
+    }
+    function ObtenerID(val)
+    {
+        /*App.txtDietas.setValue(data1.value);*/
+        var indice = val.column.rowIndex;
+        var valor = val.record.data.SubFamiliaDescripcion;
+       var columna1 = App.CombosPadres;
+       var combobox1 = columna1.getComponent(indice);
+       var seleccion = combobox1.value;
+      /* var seleccion=combobox1.lastValue;*/
+       /*combobox2.getStore().load();*/
+       App.txtDietas.setValue(seleccion);
+    }
+
+    function getIDDieta(data1) {
+        /* console.debug(data1);
+         alert(data1)*/
+        /*var indice = data1.column.rowIndex;*/
+        /* alert(indice);*/
+
+        var indice = data1.column.rowIndex;
+        alert(indice);
+        var columna1 = App.CombosPadres;
+        var combobox1 = columna1.getComponent(indice);
+        /* if (combobox1 != null) {
+             //combobox2.getStore().load({ params: { Dieta: id_dieta } });
+             combobox2.value()
+
+
+         }*/
+
+        return combobox1.value();
+
+    };
+    function AgregarMed() {
+        App.storeDieta.reload();
+
+        App.Panel1.setVisible(true);
+        App.btnAgregar9.setVisible(true);
+        App.btnModificar9.setVisible(false);
+    };
+
+    function getActualizar(grid) {
+        var indtipo = 1;
+        if (lectura != "True") {
+
+        App.txtSecuencia.setValue(grid.data.Secuencia);
+        App.cbIdVia99.setValue(grid.data.IdVia);
+        App.cbIdDieta999.setValue(grid.data.IdPadreNutriente);
+
+        App.cbIdDietaHijos999.setValue(grid.data.IdHijoNutriente);
+
+        App.VolDia.setValue(grid.data.VolumenDia);
+        App.FrecTomas.setValue(grid.data.FrecuenciaToma);
+        App.HoraIni.setValue(grid.data.Hora);
+        App.txtAreaIndicaciones.setValue(grid.data.Comentario);
+
+
+
+        App.Panel1.setVisible(true);
+
+        App.btnAgregar9.setVisible(false);
+        App.btnModificar9.setVisible(true);
+        seleccRecordActualDietas = grid;
+        setIndicaCambios(true);
+        }
+    };
+
+    function updRecordMain(grid) {
+
+
+
+        if (App.txtAreaIndicaciones.getValue().length > 250) {
+            App.txtAreaIndicaciones.setActiveError('El campo Indicaciones solo admite 250 caracteres.');
+            App.taAlerts.setValue('*El campo Indicaciones solo admite 250 caracteres.');
+            App.taAlerts.setVisible(true);
+            return false;
+        }
+        else {
+            App.taAlerts.setValue('');
+            App.taAlerts.setVisible(false);
+        }
+
+
+        var contar = App.storeDieta.getCount();
+        var ArrayList1 = new Array();
+
+        var HC_Medicamento = {
+            Secuencia: App.txtSecuencia.getValue(),
+            IdVia: App.cbIdVia99.getValue(),
+            IdPadreNutriente: App.cbIdDieta999.getValue(),
+            Indicacion: App.cbIdDieta999.getDisplayValue(),
+            IdHijoNutriente: App.cbIdDietaHijos999.getValue(),
+            Presentacion: App.cbIdDietaHijos999.getDisplayValue(),
+            VolumenDia: App.VolDia.getValue(),
+            TipoMedicamento: '2',
+            FrecuenciaToma: App.FrecTomas.getValue(),
+            Hora: App.HoraIni.getValue(),
+            Comentario: App.txtAreaIndicaciones.getValue(),
+            Linea: '',
+            Familia: '',
+            CodigoComponente: '',
+            /*Accion: 'UPDATEDETALLE'*/
+        };
+        ArrayList1.push(HC_Medicamento);
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("GuardarDieta_Temp"))',
+            params: {
+                selectionArray1: ArrayList1
+            }
+        });
+        App.Panel1.setVisible(false);
+        App.cbIdVia99.setValue(1);
+        App.cbIdDieta999.setValue(1);
+
+
+        App.VolDia.setValue('');
+        App.FrecTomas.setValue('');
+        App.HoraIni.setValue('');
+        App.txtAreaIndicaciones.setValue('');
+        App.storeDieta.reload();
+    };
+
+
+        function Editable(ev)
+        {
+            var dato = ev.record.data.Presentacion;
+
+            if (dato.length > 0) {
+                ev.setReadOnly(true)
+            }
+           /* alert(ev);*/
+        }
+
+        var keyCode
+        function ReplaceCaracterEspec(e) {
+            /*Capturar tecla pulsada*/
+            if (window.event) keyCode = window.event.keyCode;
+            else if (e) keyCode = e.which;
+            var prueba = keyCode;
+            // alert(keyCode);
+            //
+            if (prueba == 60) {
+                var textactual = e.getValue();
+                e.value = e.setValue(textactual + " ");
+            }
+            var texto = e.getValue();
+            var vacio = "";
+            var cadena = vacio + e.getValue();
+            var recortado = cadena.substr(-1, 1);
+            // alert(recortado + ' antes');
+            if (recortado == "<" || recortado == ">") {
+                //  alert(recortado + ' despues');
+                e.value = e.setValue(texto + " ");
+            }
+
+        }
+
+    </script>
+}
+@section cuerpo
+{
+    @(Html.X().Viewport().ID("ViewportXD")
+        .Layout(LayoutType.VBox)
+
+        .LayoutConfig(
+            new VBoxLayoutConfig { Align = VBoxAlign.Stretch }
+        )
+        .Listeners(l =>
+        {
+            l.AfterLayout.BroadcastOnBus = "App.resize";
+            l.AfterLayout.Single = true;
+        })
+        .Items(regions =>
+        {
+            regions.Add(Html.X().FormPanel()
+                .ItemID("center")
+                .DefaultAnchor("100%")
+                .AutoScroll(true)
+                .Height(340)
+                .Header(false)
+                .Border(true)
+                .ID("FormActual")
+                .Listeners(l =>
+                {
+                    l.Render.Handler = "eventoRenderForm();";
+                })
+               .Items(
+                // PANEL 1 (Borrar)
+                           X.FormPanel()
+                                .ID("Panel1")
+                                .BodyPadding(5)
+                                .AutoScroll(true)
+                                .Border(false)
+                                .Header(false)
+                                .Hidden(true)
+                                .Items(
+                                     X.TextField().ID("txtDietas").Hidden(true),
+                                     X.TextField().ID("txtSecuencia").Hidden(true),
+                                        X.FieldSet()
+                                         .ColumnWidth(0.4)
+                                         .Title("<b>Información de Dieta<b>")
+                                         .MarginSpec("0 05 0 05")
+                                         .Defaults(d =>
+                                         {
+                                             d.Add(new Parameter("LabelWidth", "170"));
+                                         })
+
+                                         .DefaultAnchor("100%")
+                                         .FieldDefaults(d =>
+                                         {
+                                             d.LabelAlign = LabelAlign.Left;
+                                         })
+                                             .Items(
+                                              X.Container().Layout(LayoutType.HBox)
+                                                  .Defaults(d =>
+                                                  {
+                                                      d.Add(new Parameter("LabelWidth", "70"));
+                                                  })
+                                                  .Items(
+                                                    X.NumberFieldFor(c => c.IndicadorEPS).FieldLabel("EPS").Hidden(true)
+                                                  ),
+                                                    X.Container()
+                                                        .Layout(LayoutType.HBox).PaddingSpec("6")
+                                                        .Defaults(d =>
+                                                        {
+                                                            d.Add(new Parameter("LabelWidth", "90"));
+                                                        })
+                //.MarginSpec("0 0 10")
+                                                        .Items(
+                                                        X.Component(),
+                                                           X.ComboBox().ReadOnly(indicaModoLectura)
+                                                                        .ID("cbIdVia99")
+                                                                        .Editable(false)
+                                                                        .FieldLabel("Vía").EmptyText("Seleccione")
+                                                                        .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("VIADIETA").Select(d => new ListItem(d.Name, d.ID)))
+                                                                        .SimpleSubmit(true)//.Value(1)
+                                                                        .Listeners(l => l.Select.Handler = "setIndicaCambios(true);"),
+
+                //.Width(100),
+
+                //.Width(120),
+                                                            X.Component().Width(10),
+                                                            X.ComboBox().ReadOnly(indicaModoLectura).FieldLabel("Dieta")
+                                                                        .ID("cbIdDieta999").Width(270)
+                                                                        .Editable(false)
+                                                                        .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("DIETA").Select(d => new ListItem(d.Name, d.ID)))
+                                                                        .SimpleSubmit(true).Value(1)
+                                                                        .Listeners(ls =>
+                                                                         ls.Change.Handler = "enviar(this);"
+
+                                                                         ),
+                                                              X.Component().Width(10),
+                                    X.ComboBox()
+                                                            .ID("cbIdDietaHijos999")
+                                                            .Editable(false)
+                                                             .FieldLabel("Tipo de Dieta").EmptyText("Seleccione")
+                                                             .QueryMode(DataLoadMode.Local)
+                                                             .TriggerAction(TriggerAction.All)
+                                                             .Listeners(l => l.Select.Handler = "setIndicaCambios(true);")
+                                                        .Width(245)
+                /*   .EmptyText("Seleccione una Dieta")*/
+                                                     .DisplayField("name")
+                                                     .ValueField("codigo")
+                /*  .EmptyText("Cargando...")*/
+                /*       .ValueNotFoundText("No cargado...")*/
+                                                    .SimpleSubmit(true)
+
+                                                  .Store(Html.X().Store().ID("StoreHijos")
+                                                       .AutoLoad(true)
+                                                       .Model(Html.X().Model()
+                                                           .IDProperty("Codigo")
+                                                           .Fields(
+                                                               new ModelField("codigo", ModelFieldType.Int) { Mapping = "Codigo" },
+                                                               new ModelField("name", ModelFieldType.String) { Mapping = "Name" }
+                                                           )
+                                                       )
+                //.Listeners(l => { l.Load.Handler = "setImpresion(this);"; })
+                                                       .Proxy(Html.X().AjaxProxy()
+                                                                   .Url(Url.Action("DietasHijos"))
+                                                           .Reader(Html.X().JsonReader().Root("data"))
+                                                       )
+                                                      .Parameters(ps =>
+                                                            ps.Add(new
+                                                            {
+
+                                                                Dieta = JRawValue.From("App.cbIdDieta999.getValue()"),
+                                                                // Dieta = JRawValue.From("getIDDieta(this)"),
+                                                                Accion = "DIETAHIJOS"
+                                                            })
+                                                       )
+
+                                                   )
+                                                            ),
+                                                    X.Container()
+                                                        .Layout(LayoutType.HBox)
+                                                        .Defaults(d =>
+                                                        {
+                                                            d.Add(new Parameter("LabelWidth", "90"));
+                                                        })
+                //.MarginSpec("0 0 10")
+                                                        .Items(
+
+
+                                                            Html.X().TextField().ID("VolDia").FieldLabel("Volumen al día")
+                                                            .EnableKeyEvents(true)
+                                                            .Listeners(l =>
+                                                            { //l.Focus.Handler = "setIndicaCambios(true);";
+                                                                l.KeyPress.Handler = "setIndicaCambios(true); ReplaceCaracterEspec(this)";
+                                                            })
+
+                                                            ,
+
+                                                             //.Width(120),
+                                                             X.Component().Width(10),
+                                        Html.X().TextField().ID("FrecTomas").FieldLabel("Frec. de tomas").Width(270)
+                                        .EnableKeyEvents(true)
+                                        .Listeners(l =>
+                                        {// l.Focus.Handler = "setIndicaCambios(true);";
+                                            l.KeyPress.Handler = "setIndicaCambios(true); ReplaceCaracterEspec(this)";
+                                        }),
+                                        X.Component().Width(10),
+                                   Html.X().TimeField().ID("HoraIni").FieldLabel("Hora inicio").Width(245).Editable(false)
+
+                                                             .Format("HH:mm")
+                                                             .MaskRe("[0-9:]")
+                                                             .Increment(60)
+
+                                                            ).PaddingSpec("6"),
+
+                                                             X.Container()
+                                                        .Layout(LayoutType.HBox)
+                                                        .Defaults(d =>
+                                                        {
+                                                            d.Add(new Parameter("LabelWidth", "90"));
+                                                        })
+                //.MarginSpec("0 0 10")
+                                                        .Items(
+
+                                                           X.Component().Width(50),
+                                                            X.TextArea().ReadOnly(indicaModoLectura).FieldLabel("Indicaciones").ID("txtAreaIndicaciones").PaddingSpec("6").Flex(1)
+                                                            .EnableKeyEvents(true)
+                                                            .MaxLength(250)
+                                                            .Listeners(l => { l.KeyPress.Handler = "setIndicaCambios(true); ReplaceCaracterEspec(this)"; })
+                                           ),
+
+
+                                                    X.Container()
+                                                        .Layout(LayoutType.HBox)
+                                                        .Defaults(d =>
+                                                        {
+                                                            d.Add(new Parameter("LabelWidth", "70"));
+                                                        })
+                //.MarginSpec("0 0 10")
+                                                        .Items(
+
+
+                                                             X.Button()
+                                                                .Text("Agregar")
+                                                                .ID("btnAgregar9")
+                                                                .Handler("addRecordMain('grid');")
+                                                                ,
+                                                               X.Button()
+                                    .Text("Modificar").ID("btnModificar9").Hidden(true).Handler("updRecordMain('grid');")
+                                    ,
+                                    X.Component().Width(10),
+                                                              X.Button()
+                                                                .Text("Ocultar")
+                                                                .Handler("PanelOcultar(this.up('grid'));")
+                                                            )
+                                            )
+                                ),
+
+
+                        // PANEL 2
+                        X.FormPanel()
+                                .ID("Panel2")
+                                .BodyPadding(5)
+                                .AutoScroll(true)
+                                .Border(false)
+                                .Header(false)
+                                .Items(
+                                 X.FieldSet().Collapsible(true)
+                                 .ColumnWidth(0.4)
+                                 .Title("<b>Dietas</b>")
+                                 .MarginSpec("0 05 0 05")
+                                 .Defaults(d =>
+                                 {
+                                     d.Add(new Parameter("LabelWidth", "170"));
+                                 })
+
+                                 .DefaultAnchor("100%")
+                                 .FieldDefaults(d =>
+                                 {
+                                     d.LabelAlign = LabelAlign.Left;
+                                 })
+                                     .Items(
+                //  Para Validacion
+                                        X.TextField().ID("Comentario").Hidden(true).Value("DATA"),
+                                        X.TextField().ID("VolumenDia").Hidden(true).Value("DATA"),
+                // GRILLA  DIETA
+                                            X.GridPanel()
+                                                 .ID("grillaMedDieta")
+                                                 .Border(false)
+                                                 .Store(
+                                                     Html.X().Store()
+                                                             .ID("storeDieta")
+                                                           .Model(
+                                                             Html.X().Model()
+                                                                 .IDProperty("Secuencia")
+                                                                .Fields(
+                                                                           new ModelField("Secuencia", ModelFieldType.String),
+                                                                           new ModelField("IdUnidadMedida", ModelFieldType.Int),
+                                                                           new ModelField("Dosis", ModelFieldType.String),
+                                                                           new ModelField("IdVia", ModelFieldType.Int),
+                                                                           new ModelField("TipoComida", ModelFieldType.Int),
+                                                                           new ModelField("Cantidad", ModelFieldType.Float),
+                                                                           new ModelField("Frecuencia", ModelFieldType.Float),
+                                                                           new ModelField("DiasTratamiento", ModelFieldType.Float),
+                                                                           new ModelField("Linea", ModelFieldType.String),
+                                                                           new ModelField("Familia", ModelFieldType.String),
+                                                                           new ModelField("SubFamilia", ModelFieldType.String),
+                                                                           new ModelField("LineaDescripcion", ModelFieldType.String),
+                                                                           new ModelField("FamiliaDescripcion", ModelFieldType.String),
+                                                                           new ModelField("SubFamiliaDescripcion", ModelFieldType.String),
+                                                                           new ModelField("Comentario", ModelFieldType.String),
+                                                                           new ModelField("VolumenDia", ModelFieldType.String),
+                                                                           new ModelField("FrecuenciaToma", ModelFieldType.String),
+                                                                           new ModelField("Presentacion", ModelFieldType.String),
+                                                                           new ModelField("Hora", ModelFieldType.Date),
+                                                                           new ModelField("Estado", ModelFieldType.Int),
+                                                                           new ModelField("TipoMedicamento", ModelFieldType.Int),
+                                                                           new ModelField("CodigoComponente", ModelFieldType.String),
+
+                                                                           new ModelField("IndicadorEPS", ModelFieldType.Int),
+                                                                           new ModelField("CodAlmacen", ModelFieldType.String),
+
+                                                                           new ModelField("Accion", ModelFieldType.String),
+                                                                           new ModelField("IdPadreNutriente", ModelFieldType.Int),
+                                                                           new ModelField("IdHijoNutriente", ModelFieldType.Int),
+                                                                           new ModelField("Indicacion", ModelFieldType.String)
+
+                                                                 )
+                                                            )
+                                                          .AutoLoad(true)
+                                                          .RemoteSort(false)
+                                                          .IsPagingStore(true)
+                                                          .RemotePaging(true)
+                                                          .PageSize(5)
+                //.Listeners(l => { l.Load.Handler = "setImpresion1(this);"; })   //2018/09/24 jordan mateo  comentado
+                                                          .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                                            .Url("CCEPF100_MED_MICRONUTRIENTES")
+                                                                            .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                                                           .Root("data")
+                                                                                           .TotalProperty("total")
+                                                                                           .IDProperty("Secuencia")))))
+                                                         .Parameters(ps =>
+                                                                ps.Add(new
+                                                                {
+                                                                    tipoRecurso = 2 //Micro
+                                                                })
+                                            )
+                                                 ).Listeners(l => { l.Select.Handler = "setIndicaCambios(true);"; }) //2018/09/24 jordan mateo  agregado
+                                                 .ColumnModel(
+                                                    Html.X().Column().Text("EPS").DataIndex("IndicadorEPS").Hidden(true) //Oculta la columna EPS
+                                                    .Width(30).Renderer("changeEPS"),
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true).Hidden(true)
+                                                         .DataIndex("Secuencia")
+                                                         .Text("Nro")
+                                                          .Width(30)
+                                                         .Component(
+                                                             Html.X().TextField()
+                                                                    .ReadOnly(true)
+                                                             ),
+                                                       Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("IdVia")
+                                                         .Text("Vía")
+                                                         .Width(110)
+                                                         .Component(
+                                                             Html.X().ComboBox().ReadOnly(true)
+                                                                        .ID("cbIdVia")
+                                                                        .Editable(false)
+                                                                        .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("VIADIETA").Select(d => new ListItem(d.Name, d.ID)))
+                                                                        .SimpleSubmit(true)
+                                                                        .Listeners(l => l.Select.Handler = "setIndicaCambios(true);")
+                                                             ),
+
+
+                                                             Html.X().Column().Text("CodigoComponente").DataIndex("").Hidden(true) //Oculta la columna EPS
+                                                    .Width(30).Renderer(""),
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true).Hidden(true)
+                                                         .DataIndex("Secuencia")
+                                                         .Text("Nro")
+                                                          .Width(30)
+                                                         .Component(
+                                                             Html.X().TextField()
+                                                                    .ReadOnly(true)
+                                                             ),
+
+
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true).ID("CombosPadres")
+                                                         .DataIndex("IdPadreNutriente").Hidden(true)
+                                                         .Text("Dieta")
+                                                         .Flex(1)
+                                                        .Component(
+                                                             Html.X().TextField().ReadOnly(true)
+                                                                        .ID("cbIdDieta")
+                /*.AutoPostBack(true)*/
+
+                                                                        /*.Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("DIETA").Select(d => new ListItem(d.Name, d.ID)))
+                                                                        .SimpleSubmit(true)
+                                                                        .Listeners(ls =>
+                                                                         ls.Change.Handler = "enviar(this);"
+                                                                        )*/
+                                                             )
+
+
+
+                                                             ,
+
+
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("Indicacion")
+                                                         .Text("Dieta")
+                                                         .Flex(1)
+                                                        .Component(
+                                                             Html.X().TextField().ReadOnly(true)
+
+
+                                                             ),
+                                                     Html.X().ComponentColumn()
+                                                     .Editor(true).Editor(true)
+                                                     .DataIndex("IdHijoNutriente").Hidden(true)
+                                                     .Text("Tipo de Dieta")
+                                                     .Component(
+                                                           Html.X().TextField().ReadOnly(true)
+                                                   )
+
+
+                                                             ,
+                                                              Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("Presentacion")
+                                                         .Text("Tipo de Dieta")
+                                                         .Flex(1)
+                                                        .Component(
+                                                             Html.X().TextField().ReadOnly(true)
+
+
+                                                             ),
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("VolumenDia")
+                                                         .Text("Volumen al día")
+                                                         .Width(100)
+                                                         .Component(
+                                                             Html.X().TextField().ReadOnly(true).Listeners(l => l.Focus.Handler = "setIndicaCambios(true);")
+                                                             ),
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("FrecuenciaToma")
+                                                         .Text("Frec. de tomas")
+                                                          .Width(100)
+                                                         .Component(
+                                                             Html.X().TextField().ReadOnly(true).Listeners(l => l.Focus.Handler = "setIndicaCambios(true);")
+                                                             ),
+                                                    Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("Hora")
+                                                         .Text("Hora inicio")
+                                                         .Width(70)
+                                                         .Component(
+                                                         Html.X().TimeField()
+                                                             .Format("HH:mm")
+                                                            .ReadOnly(true)
+                                                             ),
+
+                                                   Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("Comentario")
+                                                         .Text("Indicaciones")
+                                                         .Flex(1)
+                                                         .Component(
+                                                             Html.X().TextArea().ReadOnly(true)
+                                                                                .Height(40)
+                //.AllowBlank(false)
+                //.Listeners(l => l.Focus.Handler = "setIndicaCambios(true);")
+                //.Listeners(l => { l.Change.Handler = "indicaCambios=true;"; })
+                                                                ),
+                                                    Html.X().ComponentColumn()
+                                                         .Editor(true).Hidden(true)
+                                                         .DataIndex("TipoMedicamento")
+                                                         .Text("Tipo")
+                                                         .Width(70)
+                                                         .Component(
+                                                             Html.X().NumberField().ReadOnly(indicaModoLectura)
+                                                             )
+                                                        ,
+
+
+                                                          Html.X().ComponentColumn()
+                                                         .Editor(true).Hidden(false)
+                                                         .DataIndex("CodAlmacen")
+                                                         .Text("ALmacen").Hidden(true)
+                                                         .Component(
+                                                              Html.X().TextField().ReadOnly(indicaModoLectura)
+                                                             ),
+                                                        Html.X().CommandColumn()
+                                                        .Width(50)
+                                                        .Text("Acción")
+                                                        .Commands(
+                                                        Html.X().GridCommand().Disabled(indicaModoLectura)
+                                                        .CommandName("Delete")
+                                                        .Icon(Icon.Delete)
+                //.Text("Eliminar")
+                                                        )
+
+
+
+                                                        .Listeners(ls => ls.Command.Handler = "deleteActual('DIETA',App.grillaMedDieta,record);")
+
+                                                 )
+                                                 .SelectionModel(Html.X().RowSelectionModel().Mode(SelectionMode.Multi))
+                                                 .Plugins(Html.X().CellEditing())
+                //.Listeners(l => l.CellClick.Handler = "setSeleccionActualDieta(record);")
+                                             .Listeners(l => l.CellClick.Handler = "setSeleccionActualDieta(record);")
+                                                .Listeners(l => l.CellDblClick.Handler = "getActualizar(record);")
+                                                 .TopBar(
+                                                         Html.X().Toolbar().Hidden(indicaModoLectura)
+                                                             .Items(
+                                                                Html.X().ToolbarSeparator()
+                                                                , Html.X().Label()
+                                                                    .Html("<b><font color='" + COLOR_BLUE01 + "'> Detalle - Dietas</font></b>")
+                                                                , X.ToolbarFill()
+
+                                                                //, X.Button().Text("Bienes/servicios")
+                //.Handler("parent.App.txtEventoBienes.setValue('FILTRO_X');")
+                                                                ,
+
+                                                                Html.X().Button().Disabled(indicaModoLectura)
+                                                                  .Text("Agregar")
+                                                                 .Icon(Icon.Add)
+                //.Handler("addRecordMain(this.up('grid'));")
+                 .Handler("AgregarMed()")
+
+                                                             )
+                                                   )
+                                        )
+                                ),
+
+                        // PANEL 0
+                        X.FormPanel()
+                                .ID("Panel0")
+                                .BodyPadding(5)
+                                .AutoScroll(true)
+                                .Border(false)
+                                .Header(false)
+                                .Items(
+                                 X.FieldSet().Collapsible(true)
+                                 .ColumnWidth(0.4)
+                                 .Title("<b>Complemento de dietas</b>")
+                                 .MarginSpec("0 05 0 05")
+                                 .Defaults(d =>
+                                 {
+                                     d.Add(new Parameter("LabelWidth", "170"));
+                                 })
+
+                                 .DefaultAnchor("100%")
+                                 .FieldDefaults(d =>
+                                 {
+                                     d.LabelAlign = LabelAlign.Left;
+                                 })
+                                     .Items(
+                                             X.TextField()
+                                                 .ID("RecepcionaRecurso")
+                                                 .Listeners(l =>
+                                                 {
+                                                     l.Change.Handler = "InsertRow(this,'Logico','" + (indicaModoLectura ? 1 : 0) + "');";
+                                                 })
+                                                 .Hidden(true),
+                // GRILLA  MICRONUTRIENTES
+                                            X.GridPanel()
+                                                 .ID("grillaMedNut")
+                                                 .Border(false)
+                                                 .Store(
+                                                     Html.X().Store()
+                                                             .ID("storeMedNut")
+                                                           .Model(
+                                                             Html.X().Model()
+                                                                 .IDProperty("Secuencia")
+                                                                .Fields(new ModelField("Secuencia", ModelFieldType.String),
+
+                                                                           new ModelField("IdUnidadMedida", ModelFieldType.Int),
+                                                                           new ModelField("Dosis", ModelFieldType.String),
+                                                                           new ModelField("IdVia", ModelFieldType.Int),
+                                                                           new ModelField("Cantidad", ModelFieldType.Float),
+                                                                           new ModelField("Frecuencia", ModelFieldType.Float),
+                                                                           new ModelField("DiasTratamiento", ModelFieldType.Float),
+                                                                           new ModelField("Linea", ModelFieldType.String),
+                                                                           new ModelField("Familia", ModelFieldType.String),
+                                                                           new ModelField("SubFamilia", ModelFieldType.String),
+                                                                           new ModelField("LineaDescripcion", ModelFieldType.String),
+                                                                           new ModelField("FamiliaDescripcion", ModelFieldType.String),
+                                                                           new ModelField("SubFamiliaDescripcion", ModelFieldType.String),
+                                                                           new ModelField("Comentario", ModelFieldType.String),
+                                                                           new ModelField("VolumenDia", ModelFieldType.String),
+                                                                           new ModelField("FrecuenciaToma", ModelFieldType.String),
+                                                                           new ModelField("Presentacion", ModelFieldType.String),
+                                                                           new ModelField("Hora", ModelFieldType.String),
+                                                                           new ModelField("Estado", ModelFieldType.Int),
+                                                                           new ModelField("TipoMedicamento", ModelFieldType.Int),
+                                                                           new ModelField("CodigoComponente", ModelFieldType.String),
+                                                                           new ModelField("CodAlmacen", ModelFieldType.String),
+                                                                           new ModelField("SecuencialHCE", ModelFieldType.String),
+                                                                           new ModelField("IndicadorEPS", ModelFieldType.Int),
+                                                                           new ModelField("Accion", ModelFieldType.String)
+
+                                                                 )
+                                                            )
+                                                          .AutoLoad(true)
+                                                          .RemoteSort(false)
+                                                          .IsPagingStore(true)
+                                                          .RemotePaging(true)
+                                                          .PageSize(5)
+                //.Listeners(l => { l.Load.Handler = "setImpresion2(this);"; })
+                                                          .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                                            .Url("CCEPF100_MED_MICRONUTRIENTESX")
+                                                                            .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                                                           .Root("data")
+                                                                                           .TotalProperty("total")
+                                                                                           .IDProperty("Secuencia")))))
+                                                         .Parameters(ps =>
+                                                                ps.Add(new
+                                                                {
+                                                                    tipoRecurso = 3 //Micro
+                                                                })
+                                            )
+                                              ).Listeners(l => { l.Select.Handler = "setIndicaCambios(true);"; }) //2018/09/24 jordan mateo  agregado
+                                                 .ColumnModel(
+                                                    Html.X().Column().Text("EPS").DataIndex("IndicadorEPS").Hidden(true) //oculta la columna EPS
+                                                    .Width(30).Renderer("changeEPS"),
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true).Hidden(true)
+                                                         .DataIndex("Secuencia").Hidden(true)
+                                                         .Text("Nro")
+                                                          .Width(30)
+                                                         .Component(
+                                                             Html.X().TextField().ReadOnly(indicaModoLectura)
+                                                                    .ReadOnly(true)
+                                                             ),
+                                                   Html.X().ComponentColumn()
+                                                     .Editor(true)
+                                                     .DataIndex("IdVia")
+                                                     .Text("Vía")
+                                                     .Width(110)
+                                                     .Component(
+                                                         Html.X().ComboBox().ReadOnly(indicaModoLectura)
+                                                                    .ID("cbIdVia2")
+                                                                    .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("VIADIETA").Select(d => new ListItem(d.Name, d.ID)))
+                                                                    .SimpleSubmit(true)
+                                                                    .Editable(false)
+                                                                    .Listeners(l => l.Select.Handler = "setIndicaCambios(true);")
+                                                         ),
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("SubFamiliaDescripcion")
+                                                         .Text("Micronutriente")
+                                                         .Flex(1)
+                                                         .Component(
+                                                              Html.X().TextArea().ReadOnly(true).Height(40)
+                                                                     .Listeners(l => { l.Change.Handler = "hhValidation(this);"; })
+                                                             ),
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("Presentacion")
+                                                         .Text("Presentación")
+
+                                                         .Width(110)
+                                                          .Component(
+                                                             Html.X().TextField().ReadOnly(indicaModoLectura)/*.ReadOnly(true)*/
+                                                                     .Listeners(l => { l.AfterRender.Handler = "Editable(this);"; l.Change.Handler = "hhValidation(this);"; })
+                                                                     .EnableKeyEvents(true)
+                                                                     .Listeners(l => l.KeyPress.Handler = "setIndicaCambios(true);   ReplaceCaracterEspec(this);")
+
+
+                                                             ),
+
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("Dosis")
+                                                         .Text("Dosis")
+                                                         .Width(50)
+                                                         .Component(
+                                                             Html.X().TextField().ReadOnly(indicaModoLectura)
+                                                             .EnableKeyEvents(true)
+                                                             .Listeners(l => l.KeyPress.Handler = "setIndicaCambios(true); ReplaceCaracterEspec(this);")
+                                                             ),
+
+                                                    Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("Comentario")
+                                                         .Text("Indicaciones (cantidad x horas, etc.)")
+                                                         .Flex(1)
+                                                         .Component(
+                                                             Html.X().TextArea().ReadOnly(indicaModoLectura).Height(40)
+                                                             .EnableKeyEvents(true)
+                                                             .Listeners(l =>
+                                                             {
+                                                                 l.KeyPress.Handler = "setIndicaCambios(true); ReplaceCaracterEspec(this);";
+                                                                 l.KeyDown.Handler = "setIndicaCambios(true);";
+                                                             })
+
+
+                                                             ),
+
+
+                                                    Html.X().ComponentColumn()
+                                                         .Editor(true).Hidden(true)
+                                                         .DataIndex("TipoMedicamento")
+                                                         .Text("Tipo")
+                                                         .Width(70)
+                                                         .Component(
+                                                             Html.X().NumberField()
+                                                             .Listeners(l => l.Focus.Handler = "setIndicaCambios(true);")
+                                                             )
+                                                        ,
+
+                                                         Html.X().ComponentColumn()
+                                                         .Editor(true).Hidden(true)
+                                                         .DataIndex("CodAlmacen")
+                                                         .Text("Almacen")
+                                                         .Width(70)
+                                                         .Component(
+                                                             Html.X().TextField().ReadOnly(indicaModoLectura)
+                                                             .Listeners(l => l.Focus.Handler = "setIndicaCambios(true);")
+                                                             )
+                                                        ,
+
+
+                                                         Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("SecuencialHCE")
+                                                         .Text("Secuencial HCE").Hidden(true)
+                                                         .Component(
+                                                             Html.X().TextField()
+                                                                    .ReadOnly(true)
+                                                             ),
+
+
+                                                        Html.X().CommandColumn()
+                                                        .Width(50)
+                                                        .Text("Acción")
+                                                        .Commands(
+                                                        Html.X().GridCommand().Disabled(indicaModoLectura)
+                                                        .CommandName("Delete")
+                                                        .Icon(Icon.Delete)
+                //.Text("Eliminar")
+                                                        )
+                                                        .Listeners(ls => ls.Command.Handler = "deleteActualComplementoDietas('MICRONUT',App.grillaMedNut,record);")
+                                                 )
+                                                 .SelectionModel(Html.X().RowSelectionModel().Mode(SelectionMode.Multi))
+                                                 .Plugins(Html.X().CellEditing())
+                .Listeners(l => l.CellClick.Handler = "setSeleccionActualMicronut(record);")
+
+                .TopBar(
+                                                         Html.X().Toolbar().Hidden(indicaModoLectura)
+                                                             .Items(
+                                                                  Html.X().Label()
+                                                                .Html("<b><font color='" + COLOR_BLUE01 + "'> Detalle - Complemento de Dietas</font></b>")
+                                                                , X.ToolbarFill(), X.ToolbarSeparator(),
+                                                                Html.X().Button().ID("btnSelDesactivo0")
+                                                                         .Html("<b>Catálogo</b>")
+                                                                         .Icon(Icon.PluginDisabled)
+                                                                         .Handler("eventoActivarSeleccion(App.btnSelDesactivo0)"),
+                                                                         Html.X().Button().ID("btnSelActivo0")
+                                                                         .Html("<b>Catálogo</b>")
+                                                                         .Icon(Icon.PluginGo).Hidden(true)
+                                                                         .Handler("eventoDesactivarSeleccion(App.btnSelActivo0)")
+                /*
+                 Html.X().Button()
+                     .Text("Eliminar")
+                     .Icon(Icon.Delete)
+                     .Handler("deleteActual(this.up('grid'));")*/
+                                                             )
+                                                   )
+                                                   .BottomBar(
+                                                         Html.X().Toolbar().Hidden(true).Height(30)
+                                                             .Items(
+                                                                Html.X().Label()
+                                                                .Html("<span style = 'color: " + COLOR_BLUE01 + "; '>" +
+                                                                "<span style=' color:" + COLOR_BLUE01 + ";'> <b>EPS: </b></span>" + "</span>")
+                                                                , X.ToolbarSpacer(5)
+                                                                , Html.X().Label()
+                                                                .Html("<span style='font-size: 1.6em; color:" + COLOR_RED01 + ";'> <b>&bull;</b>" +
+                                                                "<span style = 'font-size: 0.6em; color: " + COLOR_BLUE01 + "; '>No Coberturado </span>" +
+                                                                "</span>")
+                                                                , X.ToolbarSpacer(5)
+                                                                , Html.X().Label()
+                                                                .Html("<span style='font-size: 1.6em; color:" + COLOR_GREEN01 + ";'> <b>&bull;</b>" +
+                                                                "<span style = 'font-size: 0.6em; color: " + COLOR_BLUE01 + "; '>Coberturado </span>" +
+                                                                "</span>")
+                                                                , X.ToolbarSpacer(5)
+                                                                , Html.X().Label()
+                                                                .Html("<span style='font-size: 1.6em; color:" + COLOR_ORANGE01 + ";'> <b>&bull;</b>" +
+                                                                "<span style = 'font-size: 0.6em; color: " + COLOR_BLUE01 + "; '>Auditoría </span>" +
+                                                                "</span>")
+                                                                , X.ToolbarSpacer(5)
+                                                                , Html.X().Label()
+                                                                .Html("<span style='font-size: 1.6em; color:" + COLOR_YELLOW02 + ";'> <b>&bull;</b>" +
+                                                                "<span style = 'font-size: 0.6em; color: " + COLOR_BLUE01 + "; '>Carta de Garantía </span>" +
+                                                                "</span>")
+                                                             )
+                                                   )
+                                        )
+                                )
+
+                                ,
+                                  X.TextField().Hidden(true)
+                                .ID("txtDataErrorMedicamento")
+
+                ////////ADD PARA MSGS/////
+                                ,
+                                X.TextArea().ID("taAlerts")
+                                .Border(false)
+                                .StyleSpec("background:white;border:1px solid gray;")
+                                .FieldStyle("color: red")
+                                .Hidden(true)
+                                .ReadOnly(true)
+                //////////////////////
+                     )
+                    .TopBar(X.Toolbar().ID("bar").Items(
+                            X.ToolbarSpacer(20)
+                                ,
+                                Html.X().Container().Layout(LayoutType.HBox)
+                                .ID("conthbIndicaError").Hidden(true).Items(
+                                    X.Label().Html("<font  size='1.9em'; color='red'>(</font>"),
+                                    X.Label().Html("<font  size='3.9em'; color='red'><b>¡</b></font>"),
+                                    X.Label().Html("<font  size='1.9em'; color='red'>) Verificar los errores presentados</font>")
+                                ),
+                            X.ToolbarFill(),
+
+
+                                                X.Button()
+                                .Text("Imprimir")
+                                .Icon(Icon.Report)
+                                .Hidden(!visibleImpresion)
+                                .ID("btnImpresion")
+                                .Handler("eventoVisorReporte('');")
+                            , X.Button()
+                             .Text("Imprimir Todos")
+                             .Icon(Icon.ReportGo)
+                             .Hidden(!visibleImpresion)
+                             .ID("btnImpresionHC")
+                             .Handler("eventoVisorReporte('HC');")
+                                ,
+
+                X.ToolbarSpacer().Width(40),
+
+
+                            X.Button()
+                            .Text("Guardar")
+                            .Icon(Icon.Disk)
+                            .ID("cmdGuardar").Hidden(indicaModoLectura)
+                            .DirectEvents(de =>
+                            {
+                                de.Click.Url = Url.Action("Save_MedDietasMicroNutrientes_CCEPF100");
+                                de.Click.EventMask.ShowMask = true;
+                                //de.Click.Before = "return EnviarDataServer('grid');";
+                                de.Click.Before = "return EnviarDataServer(this.up('grid'));";
+                                de.Click.Success = "onSuccess(result.data);";
+                                de.Click.Failure = "onFailure();";
+
+                            }),
+
+                            X.Button()
+                                .Text("Cancelar")
+                                .ID("btnCancel").Hidden(indicaModoLectura)
+                                .Icon(Icon.Cancel)
+                                .OnClientClick("eventoCancelar(this.up('form'));")
+
+                                ,
+                            X.Button()
+                                .Text("Editar")
+                                .ID("btnOnEdit")
+                                .Icon(Icon.ApplicationFormEdit)
+                                .Hidden(true)
+                                .Handler("eventoOnEditar(App.btnOnEdit);")
+                        ))
+                //.Listeners(l => l.FieldChange
+                //    .Handler = "setIndicaCambios(true);"
+                //)
+                );
+        }
+        )
+    )
+}

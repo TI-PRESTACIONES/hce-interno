@@ -1,0 +1,1883 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_HC_Kardex1_FE
+
+@{
+    ViewBag.Title = "";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+
+
+    var indicaVisiblePrint = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_VISIBLE_IMPRESION;
+    var indicaVisibleTB = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_VISIBLE_TB_IMPRESION;
+
+    var Paciente = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.PacienteID;
+    long EpiAtencion = (long)SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.EpisodioAtencion;
+    int EpiClinico = (int)SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.EpisodioClinico;
+    int total = Convert.ToInt32(Session["CANTIDAD"]);
+
+    var visibleImpresion = (indicaVisiblePrint == 2 ? true : false);
+    var isVista = (Model.Accion == "VISTA" ? true : false);
+    var isNuevo = (Model.Accion == "NUEVO" ? true : false);
+
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VISTA" ? false : false))));
+    var indicaModoLectura2 = !(indicaVisibleTB == 2 ? false : true);
+
+    var indicaHora1 = true;
+
+    var COLOR_RED02 = "#F05F5F";
+    var COLOR_GRAY = "gray";
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_YELLOW02 = "#D9A407";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_ROSADO2 = "#F5A9D0";
+    var COLOR_NARANJA = "#FE642E";
+    var COLOR_BLANCO = "#FFFFFF";
+    var COLOR_RED01 = "#990000";
+    var COLOR_ORANGE01 = "#E07509";
+    var DESC_ADD = "Proc. Médicos SEGUS";
+    var DESC_ADDCPT = "Proc. Médicos CPT";
+    var DESC_ADD3 = "Apoyo al diagnóstico";
+    var DESC_ADD1 = "Diagnóstico de ingreso";
+
+    var PARTICULAR = 3;
+    var CPM = 6;
+    var PDS = 19;
+    var PPS = 5;
+
+}
+
+@{
+    MvcResourceManager.RegisterGlobalIcon(Icon.Accept);
+    MvcResourceManager.RegisterGlobalIcon(Icon.MoneyEuro);
+    MvcResourceManager.RegisterGlobalIcon(Icon.MoneyAdd);
+}
+
+@section cabecera
+{
+
+    <style>
+        html body {
+            padding: 0px;
+            background: none;
+            background: none;
+            background: none;
+            background-attachment: fixed;
+            background-position: center;
+            font-family: tahoma,verdana,sans-serif;
+            background-color: #ffffff;
+        }
+    </style>
+    <script>
+        var indicaCambios = false;
+        var indicaForm = false;
+        function setIndicaCambios(value) {
+
+            if (indicaForm == false) {
+                setTimeout(function () {
+                    indicaForm = true;
+                }, 2000);
+                return;
+            }
+
+            indicaCambios = value;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("setIndicaCambiosFormulario"))',
+                params: {
+                    indica: (value ? 1 : 0)
+                }
+            });
+
+            var val = '@visibleImpresion';
+            var vis = '@isVista';
+
+            if (vis == 'False') {
+                if (val == 'True') {
+
+                    if (value == true) {
+                        App.btnImpresion.setDisabled(true);
+                        App.btnImpresionHC.setDisabled(true);
+                        parent.App.btnGuardarFirma.setDisabled(true);
+                    } else {
+                        App.btnImpresion.setDisabled(false);
+                        App.btnImpresionHC.setDisabled(false);
+                        parent.App.btnGuardarFirma.setDisabled(false);
+                    }
+                }
+            }
+
+        };
+        var myRenderer1 = function (value, metadata) {
+            metadata.style = "background-color: green;";
+
+            return value;
+        };
+
+        var myRenderer2 = function (value, metadata) {
+            metadata.style = "background-color: yellow;";
+
+            return value;
+        };
+
+        function seleccionadorMedico() {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("seleccionadorMedico"))',
+                params: {
+                    AccionSeleccion: 'getSeleccionMedicoDos',
+                    AccionListado: 'LISTARPAGEMPLEADO'
+                }
+            });
+        };
+
+
+
+        var hhValidation = function (h) {
+            str = h.value;
+            tempo = "'";
+            str = str.replace('javascript:myFunction(' + tempo, '');
+            str = str.replace('%20', ' ');
+            str = str.replace('%C3%B3', 'ó');
+            str = str.replace('%C3%A1', 'á');
+            str = str.replace('%C3%A9', 'é');
+            str = str.replace('%C3%AD', 'í');
+            str = str.replace('%C3%BA', 'ú');
+            str = str.replace('%C3%B1', 'ñ');
+
+            str = str.replace('%C3%8D', 'Í');
+            str = str.replace('%C3%93', 'Ó');
+            str = str.replace('%C3%81', 'Á');
+            str = str.replace('%C3%91', 'Ñ');
+            str = str.replace('%C3%9A', 'Ú');
+            str = str.replace(tempo + ')', '');
+            h.setValue(str);
+
+        };
+
+        var keyCode
+        function ReplaceCaracterEspec(e) {
+            /*Capturar tecla pulsada*/
+            if (window.event) keyCode = window.event.keyCode;
+            else if (e) keyCode = e.which;
+            var prueba = keyCode;
+            // alert(keyCode);
+            //
+            if (prueba == 60) {
+                var textactual = e.getValue();
+                e.value = e.setValue(textactual + " ");
+            }
+            var texto = e.getValue();
+            var vacio = "";
+            var cadena = vacio + e.getValue();
+            var recortado = cadena.substr(-1, 1);
+            // alert(recortado + ' antes');
+            if (recortado == "<" || recortado == ">") {
+                //  alert(recortado + ' despues');
+                e.value = e.setValue(texto + " ");
+            }
+
+        };
+    </script>
+    <script>
+    var GlobalSelect = false;
+
+    var grupoAnterior = 0;
+    var ContadorColumnas = 0;
+    var ContadorColumnas2 = 0;
+    var ocultarCheck = false;
+
+    var Valores;
+    var template = '<span style="color:{0};">{1}</span>';
+
+    var SecuenciaMax = '@total';
+
+    var seleccRecordActual = null;
+
+    var seleccionDataActual = null;
+    function setSeleccionRecord(record) {
+        seleccionDataActual = record;
+
+    }
+
+    /*   function eventoRenderForm() {
+
+           var kk = 120;
+           var scrH = screen.height;
+           var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+           var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+
+           if (southH == 0) {
+               southH = 30;
+           } else if (parent.App.PanelMainSouth.collapsed) {
+               southH = 30;
+           }
+           var dimCentral = (scrH - (northH + southH) - kk);
+           App.formactual.setHeight(dimCentral);
+       }*/
+
+
+    function eventoRenderForm() {
+        var kk = 195;
+        var scrH = screen.height;
+        var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+        var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+        if (southH == 0) {
+            southH = 30;
+        }
+        var dimCentral = (scrH - (northH + southH) - kk);
+        App.formactual.setHeight(dimCentral);
+    }
+    function deleteActual(record) {
+        seleccRecordActual = record;
+        if (seleccRecordActual != null) {
+            //setIndicaCambios(true);
+            var store = App.grillaExamenes.store;
+            //var par1 = seleccRecordActual.data.ValorCodigo2;
+            var par1 = seleccRecordActual.data.ValorCodigo2;
+            var par2 = seleccRecordActual.data.CodigoElemento;
+            store.remove(seleccRecordActual);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("CCEPF150_addEliminar_Examen"))',
+                params: {
+                    MODO: 'DELETE',
+                    codigo: par1,
+                    secuencia: par2,
+                    accion: seleccRecordActual.data.ACCION
+                }
+            });
+
+            tempEliminar = true;
+            seleccRecordActual = null;
+            //setFocus(false);
+        }
+
+    };
+
+    var ALTURADEF = screen.height;
+    var indicaCambios = false;
+   
+
+    var Valores;
+
+
+    var changeGrupo = function (value) {
+        var template = '<span>{0}</span>';
+        if (value == 0 || value == null || value == "") {
+            return Ext.String.format(template, "Individual");
+        } else {
+            return Ext.String.format(template, value);
+        }
+    };/**/
+
+
+
+    var redirect = function () {
+        window.location.href = ' @Url.Action("Index", "ProgramarKardex") ';
+    }
+
+
+    var redirect = function () {
+        window.location.href = ' @Url.Action("Index", "ProgramarKardex") ';
+    }
+
+
+
+    var change = function (value) {
+        return Ext.String.format(template, (value > 0) ? "green" : "red", value);
+    };
+
+    var pctChange = function (value) {
+        return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
+    };
+
+    //var onSuccess = function (grid, data) {
+    //    grid.show();
+    //    grid.getStore().loadData(data);
+    //};
+
+
+
+    function deleteSelected(grid) {
+        var store = grid.store,
+            records = grid.selModel.getSelection();
+
+        store.remove(records);
+        store.load(true);
+    }
+
+
+
+
+
+    var varTipoBuscar = "LOAD";
+
+    var accionBuscarFiltro = function (tipo, fechaActual) {
+        if (App.txtFecha1.getValue() == null) {
+            App.txtFecha1.setValue(fechaActual);
+        }
+        if (App.txtFecha2.getValue() == null) {
+            App.txtFecha2.setValue(fechaActual);
+        }
+        varTipoBuscar = tipo;
+        App.GrillaVisorRecetas.getStore().reload();
+        varTipoBuscar = 'LOAD';
+
+    };
+    function ConfirmaFinaliza() {
+        Ext.Msg.confirm("Ventana de Confirmación", "¿Está seguro de finalizar Episodio Clínico?", function (btn) {
+            if (btn === "yes") {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("EstadoClinico"))',
+                    params: {
+                        selection: "",
+                        accion: "Finalizar"
+                    }
+                    , success: function (result) { App.GrillaVisorRecetas.getStore().reload(); }
+                });
+            }
+        })
+
+    }
+    function showResult() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("EstadoClinico"))',
+            params: {
+                selection: "",
+                accion: "Finalizar"
+            }
+        });
+    }
+
+
+    function getFormatDate(fecha, parent) {
+        var fechaForm = null;
+        if (fecha != null) {
+            var diaFec = fecha.getDate();
+            var mmFec = fecha.getMonth() + 1;
+            var yyyyFec = fecha.getFullYear();
+            var diaForm = '' + diaFec;
+            var mmForm = '' + mmFec;
+            var yyyyForm = '' + yyyyFec;
+            if (diaFec < 10) {
+                diaForm = '0' + diaFec;
+            }
+            if (mmFec < 10) {
+                mmForm = '0' + mmFec;
+            }
+            fechaForm = diaForm + '/' + mmForm + '/' + yyyyForm;
+        }
+        return fechaForm;
+    };
+    function setDateFormat(compo, fecha) {
+        compo.setValue(getFormatDate(fecha, '99/99/9999'));
+    };
+
+
+
+    function mostrarAlarmaReglas(data) {
+        if (data != null) {
+            if (data[0].ESTADOBOOL) {
+                Ext.Msg.show({
+                    title: "Advertencia Motor Reglas",
+                    msg: data[0].DESCRIPCION,
+                    icon: Ext.Msg.WARNING,
+                    minWidth: 200,
+                    buttons: Ext.Msg.OK
+                });
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+
+    function chkFechasActosFiltros(fechaActual) {
+        var checkAll = App.chFechas.getValue();
+        if (checkAll) {
+            App.txtFecha1.setDisabled(true);
+            App.txtFecha1.setValue(null);
+            App.txtFecha2.setDisabled(true);
+            App.txtFecha2.setValue(null);
+        } else {
+            App.txtFecha1.setValue(fechaActual);
+            App.txtFecha2.setValue(fechaActual);
+            App.txtFecha1.setDisabled(false);
+            App.txtFecha2.setDisabled(false);
+        }
+    }
+
+    function InsertRow(valor, estado) {
+        var grid = Ext.getCmp("GrillaVisorRecetas");
+        if (valor.getValue() != '') {
+            SecuenciaMax = parseInt(SecuenciaMax) + 1;
+            var obj = JSON.parse(valor.getValue());
+            var DescripcionLocalVar = obj.DescripcionLocal;
+            var episodio = obj.ValorCodigo5;
+            var linea = obj.ValorCodigo1;
+            var familia = obj.ValorCodigo2;
+            var subfamilia = obj.ValorCodigo3;
+            var codigo = obj.CodigoElemento;
+
+
+            //setIndicaCambios(true);
+            grid.store.insert(0, {
+
+
+                /* IdEpisodioAtencion: episodio,*/
+                FechaCreacion: new Date(),
+                GrupoMedicamento: 99,
+                IdPaciente: '@Paciente',
+                EpisodioClinico: '@EpiClinico',
+                IdEpisodioAtencion: '@EpiAtencion',
+                Secuencia: SecuenciaMax,
+                Linea: linea,
+                Familia: familia,
+                SubFamilia: subfamilia,
+                TipoComponente: 'M',
+                CodigoComponente: codigo,
+
+                Medicamento: DescripcionLocalVar,
+                Cantidad: 0,
+                Estado: 2/*,
+                ACCION: ''*/
+
+            });
+            valor.setValue('');
+            Ext.Function.defer(function () {
+                grid.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+            }, 100);
+        }
+
+    }
+
+    function Capturar(grid, casilla) {
+        var valor;
+
+        if (grid.value) {
+            valor = 1;
+        }
+        else {
+            valor = 0;
+        }
+
+
+        if (casilla == "Hora8") {
+            grid.record.data.Hora8 = valor;
+        }
+        else if (casilla == "Hora9") {
+            grid.record.data.Hora9 = valor;
+        }
+        else if (casilla == "Hora10") {
+            grid.record.data.Hora10 = valor;
+        }
+        else if (casilla == "Hora11") {
+            grid.record.data.Hora11 = valor;
+        }
+        else if (casilla == "Hora12") {
+            grid.record.data.Hora12 = valor;
+        }
+        else if (casilla == "Hora13") {
+            grid.record.data.Hora13 = valor;
+        }
+        else if (casilla == "Hora14") {
+            grid.record.data.Hora14 = valor;
+        }
+        else if (casilla == "Hora15") {
+            grid.record.data.Hora15 = valor;
+        }
+        else if (casilla == "Hora16") {
+            grid.record.data.Hora16 = valor;
+        }
+        else if (casilla == "Hora17") {
+            grid.record.data.Hora17 = valor;
+        }
+        else if (casilla == "Hora18") {
+            grid.record.data.Hora18 = valor;
+        }
+        else if (casilla == "Hora19") {
+            grid.record.data.Hora19 = valor;
+        }
+        else if (casilla == "Hora20") {
+            grid.record.data.Hora20 = valor;
+        }
+        else if (casilla == "Hora21") {
+            grid.record.data.Hora21 = valor;
+        }
+        else if (casilla == "Hora22") {
+            grid.record.data.Hora22 = valor;
+        }
+        else if (casilla == "Hora23") {
+            grid.record.data.Hora23 = valor;
+        }
+
+        else if (casilla == "Hora0") {
+            grid.record.data.Hora0 = valor;
+        }
+        else if (casilla == "Hora1") {
+            grid.record.data.Hora1 = valor;
+        }
+        else if (casilla == "Hora2") {
+            grid.record.data.Hora2 = valor;
+        }
+        else if (casilla == "Hora3") {
+            grid.record.data.Hora3 = valor;
+        }
+        else if (casilla == "Hora4") {
+            grid.record.data.Hora4 = valor;
+        }
+        else if (casilla == "Hora5") {
+            grid.record.data.Hora5 = valor;
+        }
+        else if (casilla == "Hora6") {
+            grid.record.data.Hora6 = valor;
+        }
+        else if (casilla == "Hora7") {
+            grid.record.data.Hora7 = valor;
+        }
+        else if (casilla == "Estado") {
+            if (valor == 1) { valor = 2; }
+            grid.record.data.Estado = valor;
+        }
+
+
+    }
+
+    function eventoCancelar(form) {
+        App.bar.setDisabled(true);
+        var reload = true;
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+            // beforeSave(form);
+        }
+    }
+
+
+
+    function validaDuplicado(valor) {
+        var estados = false;
+        App.storeExamenes.each(function (r) {
+            if (trim(r.get('Medicamento')) == trim(valor)) estados = true;
+        });
+        // alert(estados);
+        return estados;
+    }
+
+    function trim(str) {
+        return str.replace(/^\s+|\s+$/g, "");
+    }
+
+    /* }*/
+
+    function Editable(ev, numero2) {
+
+        if ((ev.record.data.Hora0 == 2 && numero2 == "Hora0") || ev.record.data.Estado == 2) {
+            ev.hide();
+        } else if (ev.record.data.Hora0 == 1 && numero2 == "Hora0") {
+            ev.disabled = true;
+        }
+
+        if ((ev.record.data.Hora1 == 2 && numero2 == "Hora1") || ev.record.data.Estado == 2) {
+            ev.hide();
+        } else if (ev.record.data.Hora1 == 1 && numero2 == "Hora1") {
+            ev.disabled = true;
+        }
+
+        if ((ev.record.data.Hora2 == 2 && numero2 == "Hora2") || ev.record.data.Estado == 2) {
+            ev.hide();
+        } else if (ev.record.data.Hora2 == 1 && numero2 == "Hora2") {
+            ev.disabled = true;
+        }
+
+        if ((ev.record.data.Hora3 == 2 && numero2 == "Hora3") || ev.record.data.Estado == 2) {
+            ev.hide();
+        } else if (ev.record.data.Hora3 == 1 && numero2 == "Hora3") {
+            ev.disabled = true;
+        }
+
+        if ((ev.record.data.Hora4 == 2 && numero2 == "Hora4") || ev.record.data.Estado == 2) {
+            ev.hide();
+        } else if (ev.record.data.Hora4 == 1 && numero2 == "Hora4") {
+            ev.disabled = true;
+        }
+
+        if ((ev.record.data.Hora5 == 2 && numero2 == "Hora5") || ev.record.data.Estado == 2) {
+            ev.hide();
+        } else if (ev.record.data.Hora5 == 1 && numero2 == "Hora5") {
+            ev.disabled = true;
+        }
+
+        if ((ev.record.data.Hora6 == 2 && numero2 == "Hora6") || ev.record.data.Estado == 2) {
+            ev.hide();
+        } else if (ev.record.data.Hora6 == 1 && numero2 == "Hora6") {
+            ev.disabled = true;
+        }
+
+        if ((ev.record.data.Hora7 == 2 && numero2 == "Hora7") || ev.record.data.Estado == 2) {
+            ev.hide();
+        } else if (ev.record.data.Hora7 == 1 && numero2 == "Hora7") {
+            ev.disabled = true;
+        }
+
+        if ((ev.record.data.Hora8 == 2 && numero2 == "Hora8") || ev.record.data.Estado == 2) {
+            ev.hide();
+        }
+        else if (ev.record.data.Hora8 == 1 && numero2 == "Hora8") {
+            ev.disabled = true;
+        }
+
+        if ((ev.record.data.Hora9 == 2 && numero2 == "Hora9") || ev.record.data.Estado == 2) {
+            ev.hide();
+        } else if (ev.record.data.Hora9 == 1 && numero2 == "Hora9") {
+            ev.disabled = true;
+        }
+
+        if ((ev.record.data.Hora10 == 2 && numero2 == "Hora10") || ev.record.data.Estado == 2) {
+            ev.hide();
+        } else if (ev.record.data.Hora10 == 1 && numero2 == "Hora10") {
+            ev.disabled = true;
+        }
+
+        if ((ev.record.data.Hora11 == 2 && numero2 == "Hora11") || ev.record.data.Estado == 2) {
+            ev.hide();
+        } else if (ev.record.data.Hora11 == 1 && numero2 == "Hora11") {
+            ev.disabled = true;
+        }
+
+        if ((ev.record.data.Hora12 == 2 && numero2 == "Hora12") || ev.record.data.Estado == 2) {
+            ev.hide();
+        } else if (ev.record.data.Hora12 == 1 && numero2 == "Hora12") {
+            ev.disabled = true;
+        }
+
+        if ((ev.record.data.Hora13 == 2 && numero2 == "Hora13") || ev.record.data.Estado == 2) {
+            ev.hide();
+        } else if (ev.record.data.Hora13 == 1 && numero2 == "Hora13") {
+            ev.disabled = true;
+        }
+
+        if ((ev.record.data.Hora14 == 2 && numero2 == "Hora14") || ev.record.data.Estado == 2) {
+            ev.hide();
+        } else if (ev.record.data.Hora14 == 1 && numero2 == "Hora14") {
+            ev.disabled = true;
+        }
+
+        if ((ev.record.data.Hora15 == 2 && numero2 == "Hora15") || ev.record.data.Estado == 2) {
+            ev.hide();
+        } else if (ev.record.data.Hora15 == 1 && numero2 == "Hora15") {
+            ev.disabled = true;
+        }
+
+        if ((ev.record.data.Hora16 == 2 && numero2 == "Hora16") || ev.record.data.Estado == 2) {
+            ev.hide();
+        } else if (ev.record.data.Hora16 == 1 && numero2 == "Hora16") {
+            ev.disabled = true;
+        }
+
+        if ((ev.record.data.Hora17 == 2 && numero2 == "Hora17") || ev.record.data.Estado == 2) {
+            ev.hide();
+        } else if (ev.record.data.Hora17 == 1 && numero2 == "Hora17") {
+            ev.disabled = true;
+        }
+
+        if ((ev.record.data.Hora18 == 2 && numero2 == "Hora18") || ev.record.data.Estado == 2) {
+            ev.hide();
+        } else if (ev.record.data.Hora18 == 1 && numero2 == "Hora18") {
+            ev.disabled = true;
+        }
+
+        if ((ev.record.data.Hora19 == 2 && numero2 == "Hora19") || ev.record.data.Estado == 2) {
+            ev.hide();
+        } else if (ev.record.data.Hora19 == 1 && numero2 == "Hora19") {
+            ev.disabled = true;
+        }
+
+        if ((ev.record.data.Hora20 == 2 && numero2 == "Hora20") || ev.record.data.Estado == 2) {
+            ev.hide();
+        } else if (ev.record.data.Hora20 == 1 && numero2 == "Hora20") {
+            ev.disabled = true;
+        }
+
+        if ((ev.record.data.Hora21 == 2 && numero2 == "Hora21") || ev.record.data.Estado == 2) {
+            ev.hide();
+        } else if (ev.record.data.Hora21 == 1 && numero2 == "Hora21") {
+            ev.disabled = true;
+        }
+
+        if ((ev.record.data.Hora22 == 2 && numero2 == "Hora22") || ev.record.data.Estado == 2) {
+            ev.hide();
+        } else if (ev.record.data.Hora22 == 1 && numero2 == "Hora22") {
+            ev.disabled = true;
+        }
+
+        if ((ev.record.data.Hora23 == 2 && numero2 == "Hora23") || ev.record.data.Estado == 2) {
+            ev.hide();
+        } else if (ev.record.data.Hora23 == 1 && numero2 == "Hora23") {
+            ev.disabled = true;
+        }
+
+        if (ev.record.data.Estado == 2 && numero2 == "Estado") {
+            ev.hide();
+
+        } else if (ev.record.data.Estado == 1 && numero2 == "Estado") {
+            ev.disabled = true;
+        }
+
+
+    };
+
+    @*function eventoVisorReporte(param1) {
+        if (param1 == 'HC') {
+            window.location.href = '@Url.Action("HCEReportesView_total", "ProgramarKardex")';
+        } else {
+            window.location.href = '@Url.Action("HCEReportesViewReceta", "ProgramarKardex")';
+        }
+    }*@
+    function eventoVisorReporte(param1) {
+        if (param1 == 'HC') {
+            window.location.href = '@Url.Action("HCEReportesView_total", "HClinica")';
+        } else {
+            window.location.href = '@Url.Action("HCEReportesView", "HClinica")';
+        }
+    }
+
+    function setImpresion(store) {
+        App.btnImpresion.setVisible(false);
+        var contar = 0;
+        if (store != null) {
+            store.each(function (r) {
+                contar++;
+            });
+        }
+        if (contar > 0) {
+
+            App.btnImpresion.setVisible(true);
+        }
+    }
+
+    function deleteActual(grid, record) {
+        seleccRecordActual = record;
+
+        if (record != null) {
+
+
+            if (record.data.TipoComponente == "M") {
+                //setIndicaCambios(true);
+                var store = Ext.getStore('StoreTasks');
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("Delete_SolicitudDetalle"))',
+                    params: {
+                        accion: 'DELETE',
+                        codigo: record.data.CodigoComponente,
+                        secuencia: record.data.Secuencia
+                    }
+                });
+                store.remove(record);
+                record = null;
+
+            }
+            else {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("showMensajeNotify"))',
+                    params: {
+                        titulo: 'Advertencia',
+                        message: 'No se puede eliminar los medicamentos recetados por el médico',
+                        tipo: 'WARNING'
+                    }
+                });
+                record = null;
+            }
+
+        }
+    };
+
+
+    function ObtenerHoras(ev) {
+        App.StoreTasks.each(function (r) {
+            var horainicio = '--:--';
+            if (r.get('Medico') != null & r.get('Medico') != '') {
+                var cadena = (r.get('Medico')).split(',');
+
+                /* if (cadena.length>0){*/
+                /*var ultimo = '';
+                var ultimoentero = 0;*/
+                /* var horainicio = '--:--';*/
+                var numInicio = '';
+                /* if (cadena.length > 0) {
+                     if (cadena[0].length < 2) {
+
+                         r.set('HI', horainicio);
+                     }
+                     else {
+                         horainicio = cadena[0] + ':00';
+                         r.set('HI', horainicio);
+                     }
+                 };*/
+                /* else { r.set('HI', horainicio); }*/
+
+
+                for (var x = 0, longitud = cadena.length ; x < longitud; x++) {
+                    var numero = '';
+
+                    if (cadena[x].length < 2) {
+                        numero = '0' + cadena[x];
+                    }
+                    else { numero = cadena[x]; }
+
+                    r.set(numero, true);
+                    /* ultimo = numero;
+                     ultimoentero = x;
+                      }*/
+
+                };
+
+                if (r.get('Estado') == 4) {
+                    r.set('CT', true);
+
+                }
+
+                /* if (ultimo != '')
+                 {
+                     var num = parseInt(ultimo)+1;
+                     var i=0;
+                     for (i = 1; i < num; i++)
+                     {
+                         var numero2 = '';
+
+                         if (i < 10) {
+                             numero2 = '0' + i;
+                         }
+                         else { numero2 = i.toString(); }
+
+                         r.get(numero2).setReadOnly(true);
+
+                     }
+                 }*/
+
+                /* else {
+                     for (i = 1; i <= 24; i++) {
+                         var Xnumero = '';
+                         if (i < 10) {
+                             Xnumero = '0' + i;
+                         }
+
+                         else { Xnumero = i; }
+                         var numeroX = Xnumero.toString();
+                         /* alert(r.get('19'));*/
+                /*  r.set(Xnumero) = false
+
+              }
+
+          }*/
+
+            }
+            else {
+                /* alert(':-(');*/
+                /* r.set('Medico', null);*/
+                /*  if (r.get('Estado') == 4) {
+                      ev.setReadOnly(true);
+                  }*/
+
+
+                r.set('HI', horainicio);
+                var template = '<span style="text-align: center;"></span>';
+                return Ext.String.format(template);
+
+
+
+                /*   if (r.get('Estado') == 4) {
+
+
+
+                           for (var x = 0, longitud = 24; x < longitud; x++) {
+                               ev.setReadOnly(true);
+                           };
+
+                       r.set('CT', true);
+
+                   }*/
+
+
+
+                /*for (i = 1; i <= 24; i++) {
+                    var Xnumero = '';
+                    if (i < 10) {
+                        Xnumero = '0' + i;
+                    }
+
+                    else { Xnumero = i; }
+                    var numeroX = Xnumero.toString();
+                    /* alert(r.get('19'));*/
+                /* r.set(Xnumero)= false
+
+             }*/
+
+            }
+
+
+        });
+        /* r.set('Medico', r.get('Medico'));*/
+    };
+
+    var changeIndicaHoraCheck = function (value) {
+
+        var deshabilitadoCode = "readonly = 'true'";
+        /* var template = '<span><input type="checkbox" name="cheAcceso" value="2" {1} ' +
+                          deshabilitadoCode + '  ></span>';
+         */
+        var template = '<span style="text-align: center;"><input type="checkbox" name="cheAcceso"   style="margin-left: 0px;" value="2" {1}></span>';
+
+        if (value == '2') {
+            return Ext.String.format(template, "'" + "" + "'", 'checked = "true" ');
+        }
+        if (value == '1') {
+            return Ext.String.format(template, "'" + "" + "'", '');
+        }
+        return Ext.String.format(template, "'" + "" + "'", '');
+    };
+
+
+    function BackDate(value) {
+        var fecha2 = App.txtFecha1.getValue();
+        var tiempo = fecha2.getTime();
+        var fecha = new Date(tiempo - (1 * 24 * 60 * 60 * 1000));
+        var dia = fecha.getDate();
+        if (dia.toString().length < 2) { dia = '0' + dia.toString(); }
+
+        var mes = fecha.getMonth() + 1;
+        if (mes.toString().length < 2) { mes = '0' + mes.toString(); }
+
+        var year = fecha.getFullYear();
+        var fechanew = dia + '/' + mes + '/' + year;
+
+        App.txtFecha1.setValue(fechanew);
+        App.GrillaVisorRecetas.getStore().reload();
+
+    };
+
+    function NextDate(value) {
+        var fecha2 = App.txtFecha1.getValue();
+        var tiempo = fecha2.getTime();
+        var fecha = new Date(tiempo + (1 * 24 * 60 * 60 * 1000));
+        var dia = fecha.getDate();
+        if (dia.toString().length < 2) { dia = '0' + dia.toString(); }
+
+        var mes = fecha.getMonth() + 1;
+        if (mes.toString().length < 2) { mes = '0' + mes.toString(); }
+
+        var year = fecha.getFullYear();
+        var fechanew = dia + '/' + mes + '/' + year;
+
+        App.txtFecha1.setValue(fechanew);
+        App.GrillaVisorRecetas.getStore().reload();
+    };
+
+
+    /*function changeGrupo(ev) {
+        var template = '<span>{0}</span>';
+        var templateX = '<span style="Visibility:hidden;">{0}</span>';
+
+        if (ev.record.data.Celular == 'Ocultar') {
+            return Ext.String.format(templateX, value);
+        }
+
+        if (ev.record.data.GrupoMedicamento == 0 || ev.record.data.GrupoMedicamento == null || ev.record.data.GrupoMedicamento == "") {
+            return Ext.String.format(template, "Individual");
+        } else {
+            return Ext.String.format(template, value);
+        }
+    };*/
+
+
+
+    function validarDeseleccion(param1, index) { }
+
+    var changeEst = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 1)
+            return Ext.String.format(template, COLOR_YELLOW02, "No Iniciado");
+        if (value == 2)
+            return Ext.String.format(template, COLOR_BLUE01, "Programado");
+        if (value == 3)
+            return Ext.String.format(template, COLOR_GREEN01, "Realizado");
+        if (value == 4)
+            return Ext.String.format(template, COLOR_RED01, "Cortado");
+    };
+
+
+
+
+    var tempEliminar = false;
+
+
+    var numerogrupo = 0;
+    var grillaActiva = null;/*"grillaExamenes0";*/
+
+    var changeEPS = function (value) {
+
+        var templateX = '<div unselectable="on" class="x-grid-cell-inner " style="text-align:left;background-color: {0}; "></div>';
+        var template = '<span style="font-size: 1.9em; color:{0};"> <b>&bull;</b></span>';
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01_, "No Coberturado");
+        else if (value == 2)
+            return Ext.String.format(template, COLOR_GREEN01_, "Coberturado");
+        else if (value == 3)
+            return Ext.String.format(template, COLOR_ORANGE01_, "Auditoria");
+        else if (value == 4)
+            return Ext.String.format(template, COLOR_YELLOW02_, "Carta de Garantia");
+        else
+            return Ext.String.format(template, "gray", "No especificada");
+
+    };
+
+    var changeModalidad = function (value) {
+        var templateX = '<div unselectable="on" class="circulo" style="background: {0}; width: 11px; height: 11px; ">&nbsp;</div>';
+        var template = '<span style="color:{0};">{1}</span>';
+
+        if (value == 0)
+            return Ext.setDisabled;
+        if (value == 1)
+            return Ext.String.format(templateX, '@(COLOR_GREEN01)', "");
+        if (value == 2)
+            return Ext.String.format(templateX, '@(COLOR_GREEN01)', "");
+
+
+
+
+        if (value == 3)
+            return Ext.String.format(templateX, '@(COLOR_YELLOW02)', "");
+        if (value == 4)
+            return Ext.String.format(templateX, '@(COLOR_BLUE01)', "");
+        else
+            return Ext.String.format(templateX, '@(COLOR_BLANCO)', "Sin Seguro");
+
+    };
+
+
+    function EnviarDataServer(grid) {
+        var ArrayList1 = new Array();
+        var ArrayList2 = new Array();
+        var Insertar = 0;
+
+        var reload = false;
+
+        if (true) {
+            //var store1 = 'storeMedicacion';
+            var grid1 = Ext.getCmp('grillaMedicacion1');
+            var store = grid1.store;
+            var data = store.range;
+            var data1 = grid1.model;
+
+
+
+            grid1.store.each(function (r) {
+
+
+
+                var SS_HC_Medicamento_Kardex = {
+                    Secuencia: r.get('Secuencia'),
+                    Accion: "MEDICACION",
+                    Version: "CCEP0403_3",
+                    Estado: r.get('Estado'),
+                    Hora0: r.get('Hora0'),
+                    Hora1: r.get('Hora1'),
+                    Hora2: r.get('Hora2'),
+                    Hora3: r.get('Hora3'),
+                    Hora4: r.get('Hora4'),
+                    Hora5: r.get('Hora5'),
+                    Hora6: r.get('Hora6'),
+                    Hora7: r.get('Hora7'),
+                    Hora8: r.get('Hora8'),
+                    Hora9: r.get('Hora9'),
+                    Hora10: r.get('Hora10'),
+                    Hora11: r.get('Hora11'),
+                    Hora12: r.get('Hora12'),
+                    Hora13: r.get('Hora13'),
+                    Hora14: r.get('Hora14'),
+                    Hora15: r.get('Hora15'),
+                    Hora16: r.get('Hora16'),
+                    Hora17: r.get('Hora17'),
+                    Hora18: r.get('Hora18'),
+                    Hora19: r.get('Hora19'),
+                    Hora20: r.get('Hora20'),
+                    Hora21: r.get('Hora21'),
+                    Hora22: r.get('Hora22'),
+                    Hora23: r.get('Hora23'),
+                    Medicacion: r.get('Medicacion')
+                };
+                ArrayList1.push(SS_HC_Medicamento_Kardex);
+
+
+            });
+            if (Insertar == 0) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("CCEP0403_3_InsertarProgramacion_Kardex"))',
+                    params: {
+                        Array0: ArrayList1,
+                        tipo: 'CCEP0403_3'
+                    }
+                    ,
+                    success: function (result) {
+                        reload = true;
+                    }
+        ,
+                    failure: function (result) {
+                        reload = false;
+                    }
+                });
+
+
+                //if (reload) {
+
+                parent.App.txtRecargarX.setValue('RELOAD');
+                //}
+            }
+
+
+        }
+    };
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+            App.conthbIndicaError.setVisible(true);
+            App.taAlerts.focus();
+        } else {
+            App.taAlerts.setVisible(false);
+            App.conthbIndicaError.setVisible(false);
+        }
+
+    };
+
+    var beforeSave = function (form) {
+        App.taAlerts.setVisible(false);
+        App.taAlerts.setValue(null);
+        App.conthbIndicaError.setVisible(false);
+        var FieldsInvalidos = getInvalidFields(form);
+        if (FieldsInvalidos.length > 0) {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("addRecursosValidacion"))',
+                params: {
+                    data: FieldsInvalidos,
+                    indica: 'VALIDAR',
+                },
+                success: function (result) { accionMensajes(result.data); }
+            });
+        }
+    };
+
+    var getInvalidFields = function (form) {
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+        });
+        return invalidFields;
+    };
+
+    var onSuccess = function (data) {
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+
+        var reload = true;
+        if (data != null) {
+            if (data.length > 0) {
+                reload = false
+                App.cmdGuardar.setDisabled(false);
+                if (data[0].TIPOMSG == 'EXCEPTION') {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: data[0].TITULO,
+                            message: data[0].DESCRIPCION,
+                            tipo: 'ERROR'
+                        }
+                    });
+                } else {
+                    accionMensajes(data);
+                }
+            }
+        }
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+        }
+    };
+    </script>
+}
+@section cuerpo
+{
+
+
+    @(Html.X().Viewport().ID("ViewP")
+                .Layout(LayoutType.VBox)
+
+        .LayoutConfig(
+            new VBoxLayoutConfig { Align = VBoxAlign.Stretch }
+        )
+        .Listeners(l =>
+        {
+            /* l.Render.Handler = "eventoRenderForm2();";*/
+            l.AfterLayout.BroadcastOnBus = "App.resize";
+            l.AfterLayout.Single = true;
+        })
+
+        .Items(regions =>
+        {
+
+            regions
+                .Add(
+                Html.X().FormPanel().AutoScroll(true)
+                 .TopBar(
+
+                    X.Toolbar()
+                        .Height(30)
+                            .Items(
+                                    X.TextField().Hidden(true)
+                                     .ID("txtEventoUnidServicioNuevoEpiHCE")
+                                     .Listeners(l =>
+                                     {
+                                         /* l.Change.Handler = "eventoSeleccionUnidadServicio(this);";*/
+
+                                     })
+                                     ,
+                                      Html.X().Container().Layout(LayoutType.HBox)
+                                .ID("conthbIndicaError").Hidden(true).Items(
+                                    X.Label().Html("<font  size='1.9em'; color='red'>(</font>"),
+                                    X.Label().Html("<font  size='3.9em'; color='red'><b>&#161;</b></font>"),
+                                    X.Label().Html("<font  size='1.9em'; color='red'>) Verificar los errores presentados</font>")
+                                ),
+                /* X.Button()
+                    .Text("Buscar Pacientes")
+                    .Icon(Icon.PageWhiteFind)
+                    .Handler("accionBuscarFiltro('FILTRO',new Date());")
+                    ,*/
+                                X.ToolbarFill(),
+                                X.Button()
+                                .Text("Imprimir")
+                                .Icon(Icon.Report)
+                                .Hidden(!visibleImpresion)
+                                .ID("btnImpresion")
+                                .Handler("eventoVisorReporte('');")
+                                ,
+                                X.Button()
+                                .Text("Imprimir Todos")
+                                .Icon(Icon.ReportGo)
+                                .Hidden(!visibleImpresion)
+                                .ID("btnImpresionHC")
+                                .Handler("eventoVisorReporte('HC');")
+                                ,
+                                X.ToolbarSpacer().Width(40)
+                                ,
+                                X.Button()
+                                .ID("cmdGuardar").Disabled(false)
+                                .Text("Guardar").Hidden(indicaModoLectura)
+                                .Icon(Icon.Disk)
+                                .Handler("EnviarDataServer(this.up('grid'));"),
+                                
+                            X.Button()
+                                .Text("Cancelar")
+                                .ID("btnCancel").Hidden(indicaModoLectura)
+                                .Icon(Icon.Cancel)
+                                .OnClientClick("eventoCancelar(this.up('form'));")
+                                
+                //,
+                //X.Button()
+                //.ID("btnImprimiraaa").Hidden(true)
+                // .Text("Imprimir")/*.Hidden(!visibleImpresion)*/
+                //.Icon(Icon.Report).Handler("eventoVisorReporte('');")
+
+                              )
+                              )
+
+                .ItemID("center")
+                .DefaultAnchor("100%")
+                .AutoScroll(true)
+                .Height(500)
+
+                .Header(false)
+                .Border(true)
+                .ID("formactual")
+                /* .Listeners(l =>
+                 {
+                     l.Render.Handler = "eventoRenderForm();";
+
+                 })*/
+               .Items(Html.X().FormPanel()
+                    .ItemID("north").AutoScroll(true)
+                    .Margins("0 2 0 2")
+                    .Header(true)
+                    .Border(false)
+                    .Layout(LayoutType.Card)
+                    .Items(
+
+                       ),
+
+
+                                    X.FieldSet().Collapsible(true)
+                            .ColumnWidth(0.4).PaddingSpec("2")
+                            .Title("")
+                            .MarginSpec("0 05 0 05")
+
+                            .Items(
+
+                                                           X.Component().Height(20),
+
+                        Html.X().Panel()
+               .ItemID("center")
+
+               .Header(false)
+               .Border(false)
+               .Items(X.GridPanel()
+                                        .ID("grillaMedicacion1")
+                                        .Border(true)
+
+                                        .Store(
+                                            Html.X().Store()
+                                                    .ID("storeMedicacion1")
+                                                    .Model(
+                                                    Html.X().Model()
+                                                .IDProperty("Secuencia")
+                                                        .Fields(
+
+                                                                           new ModelField("Secuencia", ModelFieldType.String),
+                                                                           new ModelField("IdMedicacion", ModelFieldType.Int),
+                                                                           new ModelField("Medicacion", ModelFieldType.String),
+                                                                           new ModelField("CodigoComponente", ModelFieldType.String),
+
+
+                                                                           new ModelField("Dosis", ModelFieldType.Float),
+                                                                           new ModelField("Frecuencia", ModelFieldType.Float),
+                                                                           new ModelField("DiasTratamiento", ModelFieldType.Float),
+
+
+                                                                           new ModelField("Hora0", ModelFieldType.Int),
+                                                                           new ModelField("Hora1", ModelFieldType.Int),
+                                                                           new ModelField("Hora2", ModelFieldType.Int),
+                                                                           new ModelField("Hora3", ModelFieldType.Int),
+                                                                           new ModelField("Hora4", ModelFieldType.Int),
+                                                                           new ModelField("Hora5", ModelFieldType.Int),
+                                                                           new ModelField("Hora6", ModelFieldType.Int),
+                                                                           new ModelField("Hora7", ModelFieldType.Int),
+                                                                           new ModelField("Hora8", ModelFieldType.Int),
+                                                                           new ModelField("Hora9", ModelFieldType.Int),
+
+                                                                           new ModelField("Hora10", ModelFieldType.Int),
+                                                                           new ModelField("Hora11", ModelFieldType.Int),
+                                                                           new ModelField("Hora12", ModelFieldType.Int),
+                                                                           new ModelField("Hora13", ModelFieldType.Int),
+                                                                           new ModelField("Hora14", ModelFieldType.Int),
+                                                                           new ModelField("Hora15", ModelFieldType.Int),
+                                                                           new ModelField("Hora16", ModelFieldType.Int),
+                                                                           new ModelField("Hora17", ModelFieldType.Int),
+                                                                           new ModelField("Hora18", ModelFieldType.Int),
+                                                                           new ModelField("Hora19", ModelFieldType.Int),
+
+                                                                           new ModelField("Hora20", ModelFieldType.Int),
+                                                                           new ModelField("Hora21", ModelFieldType.Int),
+                                                                           new ModelField("Hora21", ModelFieldType.Int),
+                                                                           new ModelField("Hora22", ModelFieldType.Int),
+                                                                           new ModelField("Hora23", ModelFieldType.Int),
+                                                                           new ModelField("Estado", ModelFieldType.Int),
+
+
+                                                                           new ModelField("Version", ModelFieldType.String),
+
+
+                                                                           new ModelField("Accion", ModelFieldType.String)
+
+                                                        )
+                                                    )
+                                                .AutoLoad(true)
+                                                .RemoteSort(false)
+                                                .IsPagingStore(true)
+                                                .RemotePaging(true)
+                                                .PageSize(5)
+                                                    .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                                    .Url("CCEP0304_MEDICAMENTO_KARDEX_PROGRAMACION")
+                                                                    .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                                                    .Root("data")
+                                                                                    .TotalProperty("total")
+                                                                                    .IDProperty("Secuencia")))))
+                                                           .Parameters(ps =>
+                                                                ps.Add(new
+                                                                {
+                                                                    tipoRecurso = 1,
+                                                                    grupo = 0,
+                                                                    tipo = 1
+                                                                })
+                                                                )
+                                        )
+
+                                             .ColumnModel(
+
+
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("Secuencia")
+                                                         .Text("Nro").Hidden(true)
+                                                         .Component(
+                                                             Html.X().TextField()
+                                                                    .ReadOnly(true)
+                                                             ),
+
+                                                              Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("IdMedicacion")
+                                                         .Text("IdMedicacion").Hidden(true)
+                                                         .Component(
+                                                             Html.X().TextField()
+                                                                    .ReadOnly(true)
+                                                             ),
+
+                                                      Html.X().ComponentColumn()
+                                                         .Editor(true)
+                                                         .DataIndex("Dosis")
+                                                         .Text("Dosis").Hidden(true)
+                                                         .Component(
+                                                             Html.X().TextArea().ReadOnly(true).Height(40)
+
+                                                             ),
+
+                                                  Html.X().ComponentColumn().DataIndex("Frecuencia")
+                                                                                 .Editor(true)
+                                                                                 .Hidden(true)
+                                                                                 .Text("Frecuencia")
+                                                                                 .Component(
+                                                                                     Html.X().TextField().ReadOnly(indicaModoLectura)
+                                                                                  ),
+
+
+                                                      Html.X().ComponentColumn().ColSpan(3)
+                                                         .Editor(true)
+                                                         .DataIndex("Medicacion")
+                                                         .Text("Indicacion Médica").Width(400)
+                                                         .Component(
+                                                            Html.X().TextArea().Height(40)
+                                                             ),
+
+                                                        Html.X().ComponentColumn()
+                                                         .Editor(true).Hidden(true)
+                                                         .DataIndex("DiasTratamiento")
+                                                         .Text("DiasTratamiento")
+                                                         .Component(
+                                                              Html.X().TextField().ReadOnly(indicaModoLectura)
+                                                             ),
+
+
+                                                    Html.X().ComponentColumn()
+                                                             .Text("08:00").Width(35)
+                                                             .DataIndex("Hora8")
+                                                             .Editor(true)
+                                                             .Component(
+                                                              Html.X().Checkbox()
+
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora8');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Hora8');setIndicaCambios(true);")
+                                                              //.Listeners(l => { l.Change.Handler = "setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+
+
+                                                                 Html.X().ComponentColumn()
+                                                             .Text("09:00").Width(35)
+                                                             .Editor(true)
+                                                             .Editor(true)
+                                                             .DataIndex("Hora9")
+                                                             .Component(
+                                                             Html.X().Checkbox()
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora9');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Hora9');setIndicaCambios(true);")
+                                                              //.Listeners(l => { l.Change.Handler = "setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+
+                                                              Html.X().ComponentColumn()
+                                                             .Text("10:00").Width(35)
+                                                             .Editor(true)
+                                                             .DataIndex("Hora10")
+                                                             .Component(
+                                                              Html.X().Checkbox()
+
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora10');"; })
+                                                              .Handler("Capturar(this,'Hora10');")
+                                                            //  .Listeners(l => { l.Change.Handler = "setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+
+                                                              Html.X().ComponentColumn()
+                                                             .Text("11:00").Width(35)
+                                                             .Editor(true)
+                                                             .DataIndex("Hora11")
+                                                             .Component(
+                                                              Html.X().Checkbox()
+
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora11');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Hora11');setIndicaCambios(true);")
+                                                             // .Listeners(l => { l.Change.Handler = "setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+                                                              Html.X().ComponentColumn()
+                                                             .Text("12:00").Width(35)
+                                                             .Editor(true)
+                                                             .DataIndex("Hora12")
+                                                             .Component(
+                                                              Html.X().Checkbox()
+
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora12');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Hora12');setIndicaCambios(true);")
+                                                              //.Listeners(l => { l.Change.Handler = "setIndicaCambios(true);"; })
+
+                                                            )
+                                                            ,
+
+                                             Html.X().ComponentColumn()
+                                                             .Text("13:00").Width(35)
+                                                             .Editor(true)
+                                                             .DataIndex("Hora13")
+                                                             .Component(
+                                                              Html.X().Checkbox()
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora13');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Hora13');setIndicaCambios(true);")
+                                                             // .Listeners(l => { l.Change.Handler = "setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+                                                   Html.X().ComponentColumn()
+                                                             .Text("14:00").Width(35)
+                                                             .Editor(true)
+                                                             .DataIndex("Hora14")
+                                                             .Component(
+                                                              Html.X().Checkbox()
+
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora14');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Hora14');setIndicaCambios(true);")
+                                                             // .Listeners(l => { l.Change.Handler = "setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+                                                    Html.X().ComponentColumn()
+                                                             .Text("15:00").Width(35)
+                                                             .Editor(true)
+                                                             .DataIndex("Hora15")
+                                                             .Component(
+                                                              Html.X().Checkbox()
+
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora15');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Hora15');setIndicaCambios(true);")
+                                                              //.Listeners(l => { l.Change.Handler = "setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+                                                Html.X().ComponentColumn()
+                                                             .Text("16:00").Width(35)
+                                                             .Editor(true)
+                                                             .DataIndex("Hora16")
+                                                             .Component(
+                                                              Html.X().Checkbox()
+
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora16');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Hora16');")
+                                                              .Listeners(l => { l.Change.Handler = "setIndicaCambios(true);setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+                                             Html.X().ComponentColumn()
+                                                             .Text("17:00").Width(35)
+                                                             .Editor(true)
+                                                             .DataIndex("Hora17")
+                                                             .Component(
+                                                              Html.X().Checkbox()
+
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora17');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Hora17');setIndicaCambios(true);setIndicaCambios(true);")
+                                                              //.Listeners(l => { l.Change.Handler = "setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+                                                Html.X().ComponentColumn()
+                                                             .Text("18:00").Width(35)
+                                                             .Editor(true)
+                                                             .DataIndex("Hora18")
+                                                             .Component(
+                                                              Html.X().Checkbox()
+
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora18');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Hora18');setIndicaCambios(true);setIndicaCambios(true);")
+                                                              //.Listeners(l => { l.Change.Handler = "setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+                                                 Html.X().ComponentColumn()
+                                                             .Text("19:00").Width(35)
+                                                             .Editor(true)
+                                                             .DataIndex("Hora19")
+                                                             .Component(
+                                                              Html.X().Checkbox()
+
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora19');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Hora19');setIndicaCambios(true);")
+                                                              //.Listeners(l => { l.Change.Handler = "setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+                                                 Html.X().ComponentColumn()
+                                                             .Text("20:00").Width(35)
+                                                             .Editor(true)
+                                                             .DataIndex("Hora20")
+                                                             .Component(
+                                                              Html.X().Checkbox()
+
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora20');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Hora20');setIndicaCambios(true);")
+                                                              //.Listeners(l => { l.Change.Handler = "setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+                                                   Html.X().ComponentColumn()
+                                                             .Text("21:00").Width(35)
+                                                             .Editor(true)
+                                                             .DataIndex("Hora21")
+                                                             .Component(
+                                                              Html.X().Checkbox()
+
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora21');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Hora21');setIndicaCambios(true);")
+                                                              //.Listeners(l => { l.Change.Handler = "setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+                                                  Html.X().ComponentColumn()
+                                                             .Text("22:00").Width(35)
+                                                             .Editor(true)
+                                                             .DataIndex("Hora22")
+                                                             .Component(
+                                                              Html.X().Checkbox()
+
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora22');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Hora22');setIndicaCambios(true);")
+                                                              //.Listeners(l => { l.Change.Handler = "setIndicaCambios(true);setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+                                                    Html.X().ComponentColumn()
+                                                             .Text("23:00").Width(35)
+                                                             .Editor(true)
+                                                             .DataIndex("Hora23")
+                                                             .Component(
+                                                              Html.X().Checkbox()
+
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora23');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Hora23');setIndicaCambios(true);")
+                                                              //.Listeners(l => { l.Change.Handler = "setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+                                                Html.X().ComponentColumn()
+                                                             .Text("00:00").Width(35)
+                                                             .Editor(true)
+                                                             .DataIndex("Hora0")
+                                                             .Component(
+                                                              Html.X().Checkbox()
+
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora0');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Hora0');setIndicaCambios(true);")
+                                                              //.Listeners(l => { l.Change.Handler = "setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+                                                   Html.X().ComponentColumn()
+                                                             .Text("01:00").Width(35)
+                                                             .DataIndex("Hora1")
+                                                             .Editor(true)
+                                                             .Component(
+                                                              Html.X().Checkbox()
+
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora1');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Hora1');setIndicaCambios(true);")
+                                                              //.Listeners(l => { l.Change.Handler = "setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+                                                    Html.X().ComponentColumn()
+                                                             .Text("02:00").Width(35)
+                                                             .Editor(true)
+                                                             .DataIndex("Hora2")
+                                                             .Component(
+                                                              Html.X().Checkbox()
+
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora2');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Hora2');setIndicaCambios(true);")
+                                                              //.Listeners(l => { l.Change.Handler = "setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+                                                        Html.X().ComponentColumn()
+                                                             .Text("03:00").Width(35)
+                                                             .Editor(true)
+                                                             .DataIndex("Hora3")
+                                                             .Component(
+                                                              Html.X().Checkbox()
+
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora3');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Hora3');setIndicaCambios(true);")
+                                                              //.Listeners(l => { l.Change.Handler = "setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+
+                                                          Html.X().ComponentColumn()
+                                                             .Text("04:00").Width(35)
+                                                             .DataIndex("Hora4")
+                                                             .Editor(true)
+                                                             .Component(
+                                                              Html.X().Checkbox()
+
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora4');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Hora4');setIndicaCambios(true);")
+                                                              //.Listeners(l => { l.Change.Handler = "setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+                                                   Html.X().ComponentColumn()
+                                                             .Text("05:00").Width(35)
+                                                             .Editor(true)
+                                                             .DataIndex("Hora5")
+                                                             .Component(
+                                                              Html.X().Checkbox()
+
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora5');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Hora5');setIndicaCambios(true);")
+                                                              //.Listeners(l => { l.Change.Handler = "setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+                                                          Html.X().ComponentColumn()
+                                                             .Text("06:00").Width(35)
+                                                             .Editor(true)
+                                                             .DataIndex("Hora6")
+                                                             .Component(
+                                                              Html.X().Checkbox()
+
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora6');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Hora6');setIndicaCambios(true);")
+                                                              //.Listeners(l => { l.Change.Handler = "setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+
+                                                          Html.X().ComponentColumn()
+                                                             .Text("07:00").Width(35)
+                                                             .Editor(true)
+                                                             .DataIndex("Hora7")
+                                                             .Component(
+                                                              Html.X().Checkbox()
+
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Hora7');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Hora7');setIndicaCambios(true);")
+                                                              //.Listeners(l => { l.Change.Handler = "setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+                                                              Html.X().ComponentColumn()
+                                                             .Text("Cortar").Width(35)
+                                                             .Editor(true)
+                                                             .DataIndex("Estado")
+                                                             .Component(
+                                                              Html.X().Checkbox()
+                                                              .Listeners(l => { l.AfterRender.Handler = "Editable(this,'Estado');setIndicaCambios(true);"; })
+                                                              .Handler("Capturar(this,'Estado');setIndicaCambios(true);")
+                                                           //   .Listeners(l => { l.Change.Handler = "setIndicaCambios(true);"; })
+                                                            )
+                                                            ,
+
+
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true).Hidden(true)
+                                                         .DataIndex("Version")
+                                                         .Text("Version")
+                                                         .Component(
+                                                              Html.X().TextField().ReadOnly(indicaModoLectura)
+                                                             ),
+
+                                                     Html.X().ComponentColumn()
+                                                         .Editor(true).Hidden(true)
+                                                         .DataIndex("Accion")
+                                                         .Text("Accion")
+                                                         .Component(
+                                                              Html.X().TextField().ReadOnly(indicaModoLectura)
+                                                             ),
+
+
+                                                        Html.X().CommandColumn().Hidden(true)
+                                                        .Text("Acción")
+                                                        .Width(60)
+                                                        .Commands(
+                                                        Html.X().GridCommand().Disabled(indicaModoLectura).Hidden(true)
+
+                                                        .Icon(Icon.Delete)
+
+                                                        )
+
+
+                                        ).TopBar(
+                                          Html.X().Toolbar().ID("bar")
+                                                             .Items(
+                                                                Html.X().Label().Html("<b><font color='" + COLOR_BLUE01 + "'> Programación de medicación</font></b>")
+                                                                    ))
+
+
+                                                                    , X.Component().Height(10)
+
+
+
+                                                )
+
+
+
+
+
+
+                            , X.Component().Height(10),
+
+                             X.TextArea().ID("taAlerts")
+                            .Border(false)
+                            .StyleSpec("background:white;border:1px solid gray;")
+                            .FieldStyle("color: red")
+                            .Hidden(true)
+                            .ReadOnly(true)
+
+                            )
+
+                       )
+                );
+        }
+        )
+    )
+
+    @(X.KeyNav()
+                        .Target("={document.body}")
+            /*.Down(a => a.Handler = "move(#{Window1}, 'down');")
+            .Home(a => a.Handler = "move(#{Window1}, 'home');")*/
+                                .Enter(a => a.Handler = "accionBuscarFiltro('FILTRO',new Date());")
+    )
+
+}

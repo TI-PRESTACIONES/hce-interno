@@ -1,0 +1,357 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_HC_FavoritoNumero
+
+@{
+    var X = Html.X();
+    var idWindow = "WindowAgente";
+    var modoDesc = (Model.Accion == "NUEVO" ? "Nuevo" :
+                    (Model.Accion == "UPDATE" ? "Modificar" :
+                        (Model.Accion == "DELETE" ? "Eliminar" :
+                            (Model.Accion == "VER" ? "Ver" : "--"))));
+
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VER" ? false : false))));
+
+    var indicaModoLecturaKey = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? false :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VER" ? false : false))));
+
+    var STYLE_BACKGROUND_NODEIT = "background: #BBD8D6"; //BBD8D6  #9FBCB9
+    var COLOR_BORDER_DEFAULT = "#b5b8c8";
+
+    
+    var opcionAlmacen = Session["OPCIONALMACEN"];
+    var indicadorFavorito = Session["INDICADOR_TIPO_MED"];
+    var STYLE_BORDER_DEF_VALID01 =
+        (Model.Descripcion != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+    //var STYLE_BORDER_DEF_VALID02 =
+    //        (Model.IdFavorito != null ? "border-color: " + COLOR_BORDER_DEFAULT : "border-color: red");
+
+}
+
+<script>
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_RED01 = "#990000";
+
+    var COLOR_BORDER_ERROR = "red";
+    var COLOR_BORDER_DEF = "#b5b8c8";
+    var COLOR_BACKGROUND_NOEDIT = "#9FBCB9";
+
+    var change = function (value, meta) {
+        return value;
+    };
+
+
+    function cerrarWindow() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Se registró correctamente el Agente.',
+                accion: null
+            }
+        });
+    }
+
+    var onSuccess2 = function (data) {
+        if (data != null) {
+           /*parent.App.East1.getBody().App.RecepcionaRecurso.setValue('RELOAD')*/
+        }
+    };
+
+    var accionFinal = function (btn) {
+        /* parent.App.PanelServicios.getBody().App.RecepcionaRecurso.setValue('RELOAD')*/
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("PanelEast"))',
+            params: {
+                containerId: 'East1'
+
+            },
+            success: function (result) {
+                parent.App.cbLinea.setValue('@indicadorFavorito');
+                parent.App.cbAlmacen.setValue('@opcionAlmacen');
+            }
+        });
+    };
+
+    var onFailure = function (modo) {
+        App.btnSave.setDisabled(false);
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("showMensajeBox"))',
+            params: {
+                message: 'Un error en el evento ',
+                titulo: "Error",
+                tipo: 'ERROR'
+            }
+        });
+    };
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+        } else {
+            App.taAlerts.setVisible(false);
+        }
+
+    };
+
+    var getInvalidFields = function (form) {
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+        });
+        return invalidFields;
+    };
+
+    var beforeSave = function (form) {
+        var FieldsInvalidos = getInvalidFields(form);
+        if (!form.getForm().isValid()) {
+            if (FieldsInvalidos.length > 0) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("addRecursosValidacion"))',
+                    params: {
+                        data: FieldsInvalidos,
+                        indica: 'VALIDAR',
+                    },
+                    success: function (result) {
+                        accionMensajes(result.data);
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("addRecursosValidacion"))',
+                            params: {
+                                data: FieldsInvalidos,
+                                indica: 'RESTART',
+                            }
+                        });
+                    }
+                });
+
+            }
+        }
+    };
+
+    var eventoCheckFiltro = function (check, componente, componente2, componente3) {
+        var checkAll = check.getValue();
+        if (checkAll == 1) {
+            componente.setVisible(true);
+            componente2.setVisible(true);
+            componente3.setVisible(true);
+        } else {
+            componente.setVisible(false);
+            componente2.setVisible(false);
+            componente3.setVisible(false);
+        }
+    };
+
+    var changetextbox = function (combo, agente, agentenombre, button) {
+        var desabilite = combo.getValue();
+        if (desabilite == 2) {
+            agente.setDisabled(true);
+            agentenombre.setDisabled(true);
+            button.setDisabled(true);
+        } else {
+            agente.setDisabled(false);
+            agentenombre.setDisabled(false);
+            button.setDisabled(false);
+        }
+    };
+
+    function seleccionadorTabla() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorTabla"))',
+            params: {
+                accionSeleccion: 'getSeleccionadorTabla',
+                accionListado: 'LISTARPAG'
+            }
+        });
+    };
+
+    function seleccionadorAgente() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("seleccionadorAgente"))',
+            params: {
+                accionSeleccion: 'getSeleccionadorAgente',
+                accionListado: 'LISTARPAG'
+            }
+        });
+    };
+
+
+
+
+
+
+
+    var validarCampo = function (componente) {
+        if (componente.getValue() != null) {
+            if (componente.getValue().trim() == 0) {
+                componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+
+            } else {
+                componente.setFieldStyle("border-color: " + COLOR_BORDER_DEF);
+            }
+        } else {
+            componente.setFieldStyle("border-color: " + COLOR_BORDER_ERROR);
+
+        }
+    };
+
+    var eventoCheck = function (check, componente) {
+        var checkAll = check.getValue();
+        if (!checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    }
+
+</script>
+
+@(Html.X().Window()
+    .Width(460)
+    .Height(200)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+        //.AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID(idWindow)
+        .Title("Registro de Favorito:" + modoDesc)
+    .Padding(4)
+    .Items(
+                    Html.X().FormPanel().ID("FormPanel1")
+                             .Frame(false)
+                             .Border(false)
+                            .AutoScroll(true)
+                                .Layout(LayoutType.VBox).MarginSpec("05 05 05 00")
+                            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                    .Items(
+                        Html.X().FormPanel()
+                             .Frame(false)
+                             .Border(false)
+                                .Layout(LayoutType.VBox)
+                                        .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+
+                            .Items(
+                                            Html.X().Container().Layout(LayoutType.VBox)
+                                                                  .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+
+                                                           .Items(
+                                                           X.FieldSet().ID("fsFavorito")
+                 .ColumnWidth(0.4).Title("DETALLE DE FAVORITOs").MarginSpec("0 05 0 05").Defaults(d =>
+                    {
+                        d.Add(new Parameter("LabelWidth", "150"));
+                        d.Add(new Parameter("DefaultAnchor", "100%"));
+                        d.Add(new Parameter("LabelAlign", "Left"));
+                    })
+                .DefaultAnchor("100%").FieldDefaults(d => { d.LabelAlign = LabelAlign.Left; })
+                .Items(
+                                                          X.TextFieldFor(m => m.Mnemotecnico).ReadOnly(indicaModoLectura).Width(318)
+                                                      .FieldLabel("Mnemotecnico"),
+
+                                                         X.TextFieldFor(m => m.Descripcion).ReadOnly(indicaModoLectura).Width(318)
+                                                      .FieldLabel("Descripcion"),
+
+                                                         X.TextFieldFor(m => m.DescripcionExtranjera).Width(318)
+                                                      .FieldLabel("Descripcion Extranjera")
+                                      )            
+                                    ),
+                                    Html.X().FormPanel()
+                                    .Layout(LayoutType.Form)
+                                    .Width(450).Hidden(true)
+                                    .FieldDefaults(d =>
+                                    {
+                                        d.LabelWidth = 100;
+                                    })
+                                    .BodyPadding(10)
+                                    .Frame(false)
+                                    .Border(false)
+                                    .Items(
+                                                                         
+                                     Html.X().Container().Layout(LayoutType.HBox)
+                                     .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+
+                                         .Items(
+
+                                           X.TextFieldFor(m => m.Version).Width(150).LabelWidth(50).ReadOnly(indicaModoLectura)
+                                           .FieldLabel("Version").Hidden(true)
+                                           )
+                                    )
+
+                                ),
+                                 X.TextArea().ID("taAlerts")
+                                            .Border(false)
+                                            .StyleSpec("background:white;border:1px solid gray;")
+                                            .FieldStyle("color: red")
+                                            .Hidden(true)
+                                            .ReadOnly(true)
+                         )
+                         .TopBar(
+                             X.Toolbar()
+                             .Height(30)
+                             .Items(
+                                X.ToolbarFill(),
+                                    X.Button()
+                                            .Hidden((Model.Accion == "VER" ? true : false))
+                                            .ID("btnSave")
+                                            .Text((Model.Accion == "DELETE" ? "Eliminar" : "Guardar"))
+                                            .Icon((Model.Accion == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave))
+
+                                             .DirectEvents(de =>
+                                             {
+                                                 de.Click.Url = Url.Action("save_favoritonumero");
+                                                 de.Click.Before = "App.btnSave.setDisabled(true); " +
+                                                               "beforeSave(App.FormPanel1); return App.FormPanel1.getForm().isValid(); ";
+                                                 de.Click.After = "App.btnSave.setDisabled(false); ";
+                                                 de.Click.EventMask.ShowMask = true;
+                                                 de.Click.ExtraParams.Add(new Parameter("MODO", Model.Accion, ParameterMode.Value));
+                                                 de.Click.ExtraParams.Add(new Parameter("idWindow", idWindow, ParameterMode.Value));
+                                                 de.Click.Success = "onSuccess2(result.data);";
+                                                 de.Click.Failure = "onFailure('" + Model.Accion + "');";
+
+                                             }),
+                                        X.Button()
+                                            .Text((Model.Accion == "VER" ? "Aceptar" : "Cancelar"))
+                                            .Icon((Model.Accion == "VER" ? Icon.Accept : Icon.Cancel))
+                                     .DirectEvents(de =>
+                                      {
+                                          de.Click.Url = Url.Action("cerrarWindow");
+                                          de.Click.ExtraParams.Add(new Parameter(
+                                                "id", idWindow, ParameterMode.Value));
+                                      }),
+                                          X.ToolbarSpacer(20)
+                                 )
+                            )
+
+                //)
+                
+        )
+
+                      /* .DirectEvents(de =>
+                            {
+                                de.Render.Url = Url.Action("postWindowAgente_L");
+                                de.Render.ExtraParams.Add(new Parameter(
+                                      "idpadreagente", "" + Model.IdAgente, ParameterMode.Value));
+                                de.Render.ExtraParams.Add(new Parameter(
+                                      "idpadre", "" + Model.IdFavoritoTabla, ParameterMode.Value));
+                            })*/
+    .CloseAction(CloseAction.Destroy)
+)

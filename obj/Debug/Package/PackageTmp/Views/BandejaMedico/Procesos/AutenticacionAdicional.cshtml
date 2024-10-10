@@ -1,0 +1,355 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SG_Agente
+
+@{
+    var X = Html.X();
+    var idWindow = "WindowAutenticarExtra";
+    var modoDesc = (Model.ACCION == "NUEVO" ? "Nuevo" :
+                    (Model.ACCION == "UPDATE" ? "Firmar" :
+                        (Model.ACCION == "DELETE" ? "Eliminar" :
+                            (Model.ACCION == "VER" ? "Ver" : "--"))));
+
+    var indicaModoNuevo = (Model.ACCION == "NUEVO" ? true : false);
+
+    var indicaModoLectura = !(Model.ACCION == "NUEVO" ? true :
+                            (Model.ACCION == "UPDATE" ? true :
+                            (Model.ACCION == "DELETE" ? false :
+                            (Model.ACCION == "VER" ? false : false))));
+
+                            
+    var STYLE_TEXT = "Border : none; background: none; font: normal 11px tahoma; height: 18px;";
+
+    var STYLE_LABEL = "'width:140px;height: 18px; margin-right:5px; font: bold 11px tahoma ; color: #284A89 ' >";
+    var STYLE_LABEL_SMALL = "'width:10px;height: 18px; margin-right:5px; font: bold 11px tahoma ; color: #284A89 ' >";
+
+    var STYLE_ETQ_ABR = "<label style= ";
+    var STYLE_ETQ_CER = "</label>";
+    var COLORBLU01 = "#284A89";
+
+                                
+    var PARAM_COMPA = AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("COMPANIA_LOGIN");
+    var PARAM_SUCUR = AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("SUCURSAL_LOGIN");
+    var PARAM_ESTABLEC = AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("ESTABLEC_LOGIN");
+    var PARAM_MODULO = AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("MODULO_LOGIN");
+
+    var PAR_CODTRABAJADORMEDICO = "" + (AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("CODTRABMED") != null ?
+        AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("CODTRABMED") : "08");
+
+
+    var PAR_CODTRABAJADORREQUERIDO = (Model.UsuarioCreacion);
+
+    var indicaEspecialidadVisible = (PAR_CODTRABAJADORREQUERIDO == PAR_CODTRABAJADORMEDICO) ? true : false;
+
+    var PARAM_NOTAESPECIALIDAD = (indicaEspecialidadVisible ? "(Deberá especifcar también la Especialidad)" : "");
+}
+
+<script>
+
+
+    var template = 'color:{0};';
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_GREEN01 = "#177506";
+    var COLOR_RED01 = "#990000";
+
+    var COLOR_BORDER_ERROR = "red";
+    var COLOR_BORDER_DEF = "#b5b8c8";
+    var COLOR_BACKGROUND_NOEDIT = "#9FBCB9";
+
+
+    var change = function (value, meta) {
+        return value;
+
+    };
+
+
+    function cerrarWindow(win) {
+        win.hide();
+    }
+
+
+    var onSuccess = function (data) {                
+        if (data != null) {
+            accionMensajes(data);            
+        } else {
+            parent.App.txtRecargarNorth.setValue('RECARGA');
+            parent.App.txtRecargarWest.setValue('RECARGA');
+        }
+    };
+
+    var accionMensajes = function (data) {
+        var mensajes = "";        
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }            
+            App.fsAlerts.setVisible(true);
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+        } else {
+            App.fsAlerts.setVisible(false);
+            App.taAlerts.setVisible(false);
+        }
+
+    };
+
+        var onFailure = function (modo) {
+            App.btnSave.setDisabled(false);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("showMensajeBox"))',
+                params: {
+                    message: 'Un error en el evento ',
+                    titulo: "Error",
+                    tipo: 'ERROR'
+                }
+            });
+        };
+
+    function eventoSetUsuario() {
+        App.fsAlerts.setVisible(false);        
+        var indicaEspecialidad = '@(indicaEspecialidadVisible)';                
+        if (indicaEspecialidad == 'True') {
+            
+            App.IdCodigo.clearValue();
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("SetUsuarioEsp"))',
+                params: {
+                    usuario: App.CodigoAgente.getValue()
+                },
+                success: App.IdCodigo.getStore().load()
+
+            });
+           /* App.IdCodigo.getStore().load();*/
+        } else {            
+        }
+    }
+    
+    function loginExtra() {        
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("autenticacion_Usuario"))',
+            params: {
+                txtUsername: App.CodigoAgente.getValue(),
+                txtPassword: App.Clave.getValue(),
+                idEspecialidad:App.IdCodigo.getValue(),
+                MODO :'@(Model.ACCION)',
+                idWindow : '@(idWindow)',
+                campoEvento : '@(Model.Nombre)',
+                indicaEspecialidad :'@((indicaEspecialidadVisible ? "1" : "0"))' ,
+                idEmpleadoCreador : '@("" + Model.IdEmpleado)' ,
+                tipoTrabajadorReq: '@(Model.UsuarioCreacion)',
+                tipoEvento:'JS'
+            },
+            success: function (result) { onSuccess(result.data); },
+            failure: function (result) { onFailure('');},
+            eventMask: {
+                showMask: true,
+                msg: "Verificando Usuario.."
+            }
+
+        });
+    }
+
+
+   
+
+    
+</script>
+
+@(Html.X().Window()
+    .Width(450)
+    .Height(280)
+    .Maximizable(false)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+        //.LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.StretchMax })    
+    .Icon(Icon.Lock)
+    .ID(idWindow)
+    .Title("Autenticación Requerida: ")
+        //.Padding(4)
+        //.X(0)
+        //.Y(0)
+    .Items(
+            Html.X().FormPanel()
+            //Frame(false)
+            .ID("panelAutenticExtra")
+            .Border(false)
+            .BodyStyle("background-color:transparent;")
+            .Layout(LayoutType.VBox)
+            .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+               /* .Listeners(l =>
+                        {
+                            l.Render.Handler = "eventoRenderForm();";
+                           
+                        })*/
+            .Items(
+                    Html.X().FieldSet()
+                     .Title("<b>Datos de Ingreso "+PARAM_NOTAESPECIALIDAD+" <b>")
+                    .MarginSpec("05 05 05 05")
+                    .Layout(LayoutType.VBox)
+                    .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+                    .Items(
+                        /*Html.X().TextField().ID("txtRecepcionaErrorAutentic").Hidden(true)
+                        .Listeners(l =>
+                        {
+                            l.Change.Handler = "alert('EVENTO ERROR');";
+                        }),*/                                                 
+                        Html.X().TextFieldFor(m => m.CodigoAgente)                        
+                        .ReadOnly(false)
+                        .FieldLabel("Usuario")
+                        //.Text("")
+                        .Listeners(ls =>
+                                ls.Blur.Handler = "eventoSetUsuario();"
+                        )                                 
+                        .AllowBlank(false)        
+                        .BlankText("Su código de Usuario/Agente es requerido.")
+                        ,
+                             Html.X().ComboBoxFor(m=>m.IdCodigo).ReadOnly(false).Hidden(!indicaEspecialidadVisible)
+                           // .ID("cbEspecialidad")
+                                .Editable(false)
+                                .FieldLabel("Especialidad")
+                                .BlankText("La Epecialidad es requerida.")
+                                .QueryMode(DataLoadMode.Local)
+                                //.ForceSelection(false)
+                                .TriggerAction(TriggerAction.All)
+                                //.Value(13)
+                                
+                                .Width(300)
+                                .EmptyText("Seleccione una Especialidad")
+                                .DisplayField("Nombre")
+                                .ValueField("IdEspecialidad")
+                               // .EmptyText("Cargando...")
+                                .ValueNotFoundText("No cargado...")                              
+                                .SimpleSubmit(true)
+                              //.Listeners(ls =>
+                             //    ls.Change.Handler = "App.cbEstablecimiento.clearValue(); App.cbEstablecimiento.getStore().load();"
+                              // )
+                                .Store(Html.X().Store()
+                                .AutoLoad(true)
+        .Model(Html.X().Model()
+            .IDProperty("IdEspecialidad")
+        .Fields(
+            new ModelField("IdEspecialidad", ModelFieldType.Int) { Mapping = "IdEspecialidad" },
+            new ModelField("Nombre", ModelFieldType.String) { Mapping = "Nombre" }
+        )
+        )
+         .Proxy(Html.X().AjaxProxy()
+             .Url(Url.Action("obtenerComboEspecialidad"))
+             .Reader(Html.X().JsonReader().Root("data"))
+         )
+         .Parameters(ps =>
+             ps.Add(new
+             {                                                                        
+                paramIdEspecialidad = Model.IdCodigo,
+                usuario = JRawValue.From("App.CodigoAgente.getValue()"),
+                Accion = "LISTARPORAGENTE"
+             })
+          )
+                                  
+                                 .Listeners(ls =>
+                                    
+                                      //  ls.Load.Handler = @" var combo = App.IdCodigo; App.IdCodigo.setValue(" + Model.IdCodigo + ");"
+                                                          ls.Load.Handler = @"var combo = App.IdCodigo; 
+                                                            App.IdCodigo.setValue(" + SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.VALOR_ESPECIALIDAD + ");"
+
+                                         )
+
+                                 )
+                              ,                                   
+                         Html.X().TextFieldFor(m => m.Clave)
+                        //.ID("txtPassword")
+                        .ReadOnly(false)
+                        .InputType(Ext.Net.InputType.Password)
+                        .FieldLabel("Clave")        
+                        .Text("")    
+                     )                       
+                    ,
+                      Html.X().FieldSet()
+                      .ID("fsNotaAdi")
+                      .Hidden(((Model.Descripcion == null || Model.Descripcion=="") ? true : false))
+                      .Title("<b>Nota Adicional</b>").Flex(1)
+                        .MarginSpec("05 05 05 05")
+                        .Layout(LayoutType.Fit)                        
+                        .Items(
+                            Html.X().TextArea()
+                            //.StyleSpec("background:white;border:1px solid gray;")
+                            .FieldStyle("Border : none; background: none; font: normal 11px tahoma; height: 18px; Color: #284A89")                    
+                            .LabelSeparator("")
+                            //.FieldStyle(STYLE_TEXT).LabelWidth(110)
+                            //.Rows(3)
+                            .Text(Model.Descripcion )
+                        )
+                    ,
+                       Html.X().FieldSet().ID("fsAlerts")
+                      .Hidden(true)
+                      .Title("<b>Alertas</b>").Flex(1)
+                        .MarginSpec("05 05 05 05")
+                        .Layout(LayoutType.Fit)                        
+                        .Items(
+                            X.TextArea().ID("taAlerts")
+                            .Border(false)
+                            //.StyleSpec("border:1px solid gray;")
+                            .FieldStyle("Border : none; background: none; font: normal 11px tahoma; height: 18px; Color: red")                    
+                            .Hidden(true)
+                            .ReadOnly(true)    
+                        )                                                                                        
+                )
+                .BottomBar(                
+                    X.Toolbar()
+                    .Items(
+                        X.ToolbarFill(),
+                        X.Button().Text("Continuar")       
+                        .ID("btnAutentic")                  
+                        .Icon(Icon.Accept)
+                        .DirectEvents(de =>
+                        {  //Model.ACCION : Posee el MODO ACTUAL
+                                              de.Click.Url = Url.Action("autenticacion_Usuario");
+                                              de.Click.EventMask.ShowMask = true;
+                                              de.Click.EventMask.Msg = "Verificando Usuario...";
+                                              de.Click.Before = "App.btnAutentic.setDisabled(true); ";
+                                              de.Click.After = "App.btnAutentic.setDisabled(false); ";                                                         
+                                            de.Click.ExtraParams.Add(
+                                                  new
+                                                    {
+                                                        MODO = Model.ACCION,
+                                                        idWindow = idWindow,
+                                                        campoEvento = Model.Nombre,
+                                                        indicaEspecialidad = (indicaEspecialidadVisible ? "1" : "0"),
+                                                        idEmpleadoCreador = "" + Model.IdEmpleado,
+                                                        tipoTrabajadorReq = Model.UsuarioCreacion,
+                                                        tipoEvento="DIRECT"                              
+                                                    }                                                                                                                                                
+                                                );
+                                                /*
+                                              de.Click.ExtraParams.Add(new Parameter("MODO", Model.ACCION, ParameterMode.Value));
+                                              de.Click.ExtraParams.Add(new Parameter("idWindow", idWindow, ParameterMode.Value));
+                                              de.Click.ExtraParams.Add(new Parameter("campoEvento", Model.Nombre, ParameterMode.Value));
+                                              de.Click.ExtraParams.Add(new Parameter("indicaEspecialidad", (indicaEspecialidadVisible ? "1" : "0"), ParameterMode.Value));
+                                              de.Click.ExtraParams.Add(new Parameter("idEmpleadoCreador", ""+Model.IdEmpleado, ParameterMode.Value));
+                                              de.Click.ExtraParams.Add(new Parameter("tipoTrabajadorReq", Model.UsuarioCreacion, ParameterMode.Value));
+                                                */
+                                              de.Click.Success = "onSuccess(result.data); ";
+                                              de.Click.Failure = "onFailure('" + Model.ACCION + "');";
+                        })                        
+                        ,
+                       
+                         
+                          X.Button().Text("Cancelar").Handler("App.WindowAutenticarExtra.close();").Icon(Icon.Cancel)  
+                    )
+                )              
+
+                //)
+    )
+        /*.DirectEvents(de =>
+        {
+            de.Render.Url = Url.Action("postWindowAgente");
+            de.Render.ExtraParams.Add(new Parameter(
+                  "idGrupo", "" + Model.IdGrupo, ParameterMode.Value));
+        })*/
+    .CloseAction(CloseAction.Destroy)
+)
+
+@(Html.X().KeyNav()
+                .Target("panelAutenticExtra")
+                .Enter(a => a.Handler = "loginExtra();")
+)

@@ -1,0 +1,247 @@
+﻿@model SoluccionSalud.Entidades.Entidades.VW_PERSONAPACIENTE
+
+<script>
+    function eventoResize() {
+
+        //alert("aa");
+        if (parent.App.PanelA != null) {
+            if (parent.App.PanelA.getBody().App.formactual != null) {
+                var kk = 140;
+                var scrH = screen.height;
+                var northH = (App.PanelMainNorth != null ? (App.PanelMainNorth.height != null ? App.PanelMainNorth.height : 20) : 20);
+                if (!App.PanelMainSouth.collapsed) {
+                    var southH = (App.PanelMainSouth != null ? (App.PanelMainSouth.height != null ? App.PanelMainSouth.height : 20) : 20);
+                    if (southH == 0) {
+                        southH = 30;
+                    }
+                } else {
+                    southH = 30;
+                }
+                var dimCentral = (scrH - (northH + southH) - kk);
+                //parent.App.PanelA.getBody().App.formactual.setHeight(dimCentral);  //POR IMPLEMENTAR
+            }
+        }
+    }
+
+    function eventoCollapseNorth() {
+        if (parent.App.PanelA != null) {
+            if (parent.App.PanelA.getBody().App.formactual != null) {
+                var kk = 140;
+                var scrH = screen.height;
+                var northH = 20;
+                if (!App.PanelMainSouth.collapsed) {
+                    var southH = (App.PanelMainSouth != null ? (App.PanelMainSouth.height != null ? App.PanelMainSouth.height : 20) : 20);
+                    if (southH == 0) {
+                        southH = 30;
+                    }
+                } else {
+                    southH = 30;
+                }
+                var dimCentral = (scrH - (northH + southH) - kk);
+                //parent.App.PanelA.getBody().App.formactual.setHeight(dimCentral);//POR IMPLEMENTAR
+            }
+        }
+    }
+    function eventoCollapseSouth() {
+        if (parent.App.PanelA != null) {
+            if (parent.App.PanelA.getBody().App.formactual != null) {
+                var kk = 140;
+                var scrH = screen.height;
+                var northH = (App.PanelMainNorth != null ? (App.PanelMainNorth.height != null ? App.PanelMainNorth.height : 20) : 20);
+                var southH = 30;
+                var dimCentral = (scrH - (northH + southH) - kk);
+                //parent.App.PanelA.getBody().App.formactual.setHeight(dimCentral);//POR IMPLEMENTAR
+            }
+        }
+    }
+
+    function initLoadFormatos() {        
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("initLoadFormatos"))',
+            params: {
+                container: 'Center1'
+            }
+        });
+    }
+
+</script>
+
+@(
+ Html.X().Viewport()
+.Layout(LayoutType.Border)
+.ID("ViewportMainForm")
+ .Items(p =>
+ {
+     p.Add(Html.X().Panel()
+         //.Title("North")
+         .ID("PanelMainNorth")
+         .Height(70)
+         .MaxHeight(70)
+         .MinHeight(70)
+         .Region(Region.North)
+         .Header(false)
+         .Collapsible(false)
+         .Split(true)
+         .AutoScroll(true)
+         .Border(true)
+         .Resizable(false)
+         .Listeners(l =>
+         {
+             l.Resize.Handler = " eventoResize(); ";
+             l.Expand.Handler = " eventoResize();";
+             l.Collapse.Handler = " eventoCollapseNorth(); ";
+         }
+         )
+         .CollapseMode(CollapseMode.Mini)
+         .Margins("0 0 0 0")
+         .Items(
+            Html.X().Container()
+            .ID("North1")
+         //.AutoScroll(true)
+         //.StyleSpec("border:solid 1px black; height:150px; width:300px;")
+            .Loader(Html.X().ComponentLoader()
+                .Url(Url.Action("PanelNorth"))
+                .Mode(LoadMode.Script)
+                .Params(new { containerId = "North1" })
+
+               )
+            )
+         );
+     
+     // Sur
+     /*
+     p.Add(Html.X().Panel().ID("PanelMainSouth")
+                .Title("Listado-Cronologías")
+                .Region(Region.South)
+                .Split(true)
+                .Collapsible(true)
+                .Collapsed(true)
+                .Height(140)
+                .Resizable(false)
+  
+        .Margins("0 0 0 0")
+        .AutoScroll(true)
+        .Border(true)
+        .Listeners(l =>
+        {
+            l.Resize.Handler = " eventoResize(); ";
+            l.Expand.Handler = " eventoResize();";
+            l.Collapse.Handler = " eventoCollapseSouth(); ";
+        }
+        )
+
+        .Items(
+            Html.X().Container()
+            .ID("South1")
+            .Loader(Html.X().ComponentLoader()
+                .Url(Url.Action("PanelSouth"))
+                .Mode(LoadMode.Script)
+                .Params(new { containerId = "South1" })
+
+               )
+         )
+
+        );*/
+     p.Add(Html.X().Panel().Title("Center")
+         .ID("PanelMainCenter")
+          .Layout(LayoutType.Anchor)
+         // .Layout(Ext.Net.LayoutType.Fit)
+         //.Height(100)
+         .Region(Region.Center)
+         .Header(false)
+         .Collapsible(true)
+         .Split(true)
+         .Resizable(false)
+         .CollapseMode(CollapseMode.Mini)
+         //.Margins("0 5 5 5")
+         .Border(false)
+         .Listeners(l =>
+         {               
+            l.AfterRender.Handler = "initLoadFormatos();";
+         })         
+         .Items(items =>
+         {
+             items.Add(new Panel
+             {
+                 ID = "Center1",
+                 Region = Region.Center,
+                 Border = false,
+                 //BodyPadding = 10,
+                 Header = false
+             });
+         }));
+
+     p.Add(Html.X().Panel()
+         .Title("Menú Principal")
+         .ID("WestMain")
+         .Width(100)
+         .Region(Region.West)
+         .Layout(LayoutType.Fit)
+        .Width(240)
+        .Header(true)
+        .Collapsible(true)
+        .Split(true)
+        //.CollapseMode(CollapseMode.Mini)
+        .Margins("0 0 0 0")
+        .Border(false)
+
+        .Items(items =>
+        {
+            items.Add(new Panel
+            {
+                ID = "West1",
+                //Title = "Menú Principal",
+                Header=false,
+                Width = 240,
+                Border = true,
+                Collapsible=true,
+                Layout = "Accordion",
+                Region = Region.West,
+                Loader = Html.X().ComponentLoader()
+                    .Url(Url.Action("PanelWest"))
+                    .Mode(LoadMode.Script)
+                    .Params(new { containerId = "West1" })
+            });
+
+        })
+
+        );
+
+
+     p.Add(Html.X().Panel()
+        .Title("Buscar Notificacion")
+        .Region(Region.East)
+        .Layout(LayoutType.Card)
+        .Width(320)
+         //.Header(false)
+        .Collapsible(true)
+        .Collapsed(true)
+         //.Hidden(true)
+        .Split(true)
+        .ID("East1")
+         //.CollapseMode(CollapseMode.Mini)
+        .Margins("0 0 0 0")
+        .Border(false)
+        .AutoScroll(true)
+         //.Loader(Html.X().ComponentLoader()
+         //            .Url(Url.Action("PanelEast"))
+         //            .Mode(LoadMode.Script)
+         //            .Params(new { containerId = "East1" })
+         // )
+        .Items(items =>
+        {
+            //items.Add(new Panel
+            //{
+            //    Title = "East1",
+            //    HideMode = HideMode.Offsets,
+            //    Icon = Icon.Application,
+            //    Region = Region.East,
+            //    Loader = Html.X().ComponentLoader()
+            //        .Url(Url.Action("PanelEast"))
+            //        .Mode(LoadMode.Script)
+            //        .Params(new { containerId = "East1" })
+
+            //});
+        })
+        );
+ }))

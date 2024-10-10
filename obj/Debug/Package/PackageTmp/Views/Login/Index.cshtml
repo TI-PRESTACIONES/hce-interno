@@ -1,0 +1,174 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL
+@{
+    ViewBag.Title = "Desktop - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    
+    //if (Request.Cookies["cob_adm_id"] == null)
+    //{
+    //    Response.Redirect("Index.cshtml");
+    //}
+    
+}
+ 
+@section cabecera
+{ 
+
+   
+<script>
+
+
+
+    var getUser = function () {
+        var user =  App.txtUsername.getValue()             
+        return user;
+    };
+
+    function login() {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("Login"))',
+            params: {                
+                txtUsername: App.txtUsername.getValue(),
+                txtPassword: App.txtPassword.getValue()                
+            },
+            eventMask: {
+                showMask: true,
+                msg: "Verificando Usuario.."
+            }
+
+        });
+    }
+
+    function eventoRenderForm() {
+        try {
+            if (window.frames.length > 0 || parent.frames.length > 0) {
+               /* $(window.top.document).find('.ui-dialog').hide();*/
+                window.parent.location.reload();
+            }
+        } catch (e) {
+            console.log(e);
+        }
+    }
+
+
+</script>
+}
+
+@section cuerpo
+{
+@(        
+ Html.X().Window()
+            .Closable(false)
+            .CloseAction(CloseAction.Destroy)
+            .Resizable(false)
+            .Height(170)
+            .Icon(Icon.Lock)
+            .Title("Login - ERP Salud (Módulo HCE)")
+            .Draggable(false)
+            .Width(350)
+            .Modal(false)
+            .ID("WindowLogin")
+            .BodyPadding(5)
+            .Layout(LayoutType.Fit)
+            .Listeners(l =>
+            {
+                l.Render.Handler = "eventoRenderForm();";                
+            })
+            .Items(
+                Html.X().FormPanel()
+                    .ID("FormPanel1")
+                   // .Layout(LayoutType.Form)
+                    .Border(false)
+                    .BodyStyle("background-color:transparent;")
+                    .Layout(LayoutType.Column)
+                    .FieldDefaults(fd => {
+                        fd.LabelAlign = LabelAlign.Left;
+                        fd.MsgTarget = MessageTarget.Side;
+                    })
+                    .Items( 
+                            Html.X().Image()
+                                 .ID("IMG")
+                                .ImageUrl("~/resources/images/LOGOROYAL.jpg")
+                                    .MarginSpec("0 05 0 05")
+                               // .ApplyStyles("position: relative")
+                                .Width(90)
+                                .Height(100)
+                               ,
+                              Html.X().Container()
+                                        .Layout(LayoutType.VBox)
+                                        .Defaults(d =>
+                                        {
+                                            d.Add(new Parameter("LabelWidth", "50"));
+                                        })
+                            .Items(
+                                    Html.X().Label()
+                                            .Html("<br/><br/><br/>"),
+                                    Html.X().TextField()
+                                        .ID("txtUsername")
+                                        .ReadOnly(false)
+                                        .FieldLabel("Usuario")
+                                        .Text("")
+                                        //.Width(200)
+                                        //.ValidateBlank(true)
+                                        .AllowBlank(false)
+                                        //.MaxLength(2)                            
+                                        //.InvalidText("invalido...XXXXXXXXX")
+                                        .BlankText("Su código de Usuario/Agente es requerido.")
+                                        /*.Listeners(l =>
+                                        {
+                                          l.KeyPress.Handler = "hhValidation(this);";
+                                            // l.KeyPress.Handler = "if(e.getKey() == Ext.EventObject.F2){e.stopEvent();#{cmdBuscar}.fireEvent('click');}";
+                                                       //.Listeners(l => l.KeyPress.Handler = "if(e.getKey() == Ext.EventObject.ENTER){e.stopEvent();#{btnRegister}.fireEvent('click');}")
+                                        })*/
+                                        , //
+
+                                    Html.X().TextField()
+                                        .ID("txtPassword")
+                                        .ReadOnly(false)
+                                        .InputType(Ext.Net.InputType.Password)
+                                        .FieldLabel("Clave")
+                                       // .Width(200)
+                                        //.AllowBlank(false)
+                                        //.BlankText("Su clave es requerida.")
+                                        .Text("")    
+                            )                     
+                                                         
+                    )
+            )
+            .Buttons(
+                Html.X().Button()
+                   .Text("Login")
+                   .Icon(Icon.Accept)
+                   .DirectEvents(de =>
+                   {
+                       de.Click.Action = "Login";
+                       //de.Click.Before = "alert('TEST::'+ #{FormPanel1}.getForm().isValid());";
+                       /*
+                       de.Click.ExtraParams.Add(new Parameter(
+                             "txtUsername", "getUser()", ParameterMode.Value));
+                       de.Click.ExtraParams.Add(new Parameter(
+                             "txtPassword", getUser(), ParameterMode.Value));
+                        */
+
+                       //de.Click.Success = "this.up('window').close();";
+                       de.Click.EventMask.ShowMask = true;
+                       de.Click.EventMask.Msg = "Verificando...";
+                       de.Click.EventMask.MinDelay = 1000;
+                       de.Click.FormID = "#(return this.up('window').down('form');)";
+                   }),
+                  Html.X().Button()
+                       .Text("Cancelar")
+                       .Icon(Icon.Cancel)
+                           .Handler("parent.window.location.href = 'http://www.royalsystems.net/';")
+            )
+    )
+
+    @(Html.X().KeyNav()
+            .Target("FormPanel1")
+            .Enter(a => a.Handler = "login();")        
+    )
+
+          
+}
+
+

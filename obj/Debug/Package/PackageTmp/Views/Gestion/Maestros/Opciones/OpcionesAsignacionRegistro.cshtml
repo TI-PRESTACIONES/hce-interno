@@ -1,0 +1,481 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SG_Opcion
+
+
+@{
+    var X = Html.X();
+
+    var idWindow = "WindowOpcionesAsignacion";
+    var modoDesc = (Model.Accion == "NUEVO" ? "Nuevo" :
+                    (Model.Accion == "UPDATE" ? "Modificar" :
+                        (Model.Accion == "DELETE" ? "Eliminar" :
+                            (Model.Accion == "VER" ? "Ver" : "--"))));
+
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VER" ? false : false))));
+
+    var indicaModoLecturaKey = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? false :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VER" ? false : false))));
+                            
+
+    var COLOR_BLUE01_temp = "#284A89";
+    var COLOR_RED01_temp = "#990000";
+    var COLOR_GREEN01_temp = "#177506";
+    var COLOR_YELLOW02_temp = "#D9A407";
+
+}
+
+<script>
+
+    var template = 'color:{0};';
+    var cuenta = 0;
+    var change = function (value, meta) {
+        return value;
+
+    };
+
+    var selecRecordActualAsig = null;
+
+    function addRecord(grid, idOpcion) {
+        if (App.cmbCodigoID.getValue() != null) {
+            cuenta = cuenta - 1;
+            var valorSelec = App.cmbCodigoID.getValue();
+            grid.store.insert(0,
+                    {
+                        IdOpcion: idOpcion,
+                        CampoCodigoId: valorSelec,
+                        SecuenciaAsignacion: cuenta,
+                        IndicadorCodigoId: 2,
+                        ValorTexto: '',
+                        Accion: 'NUEVO',
+                        Version: App.cmbCodigoID.getRawValue()
+                    });
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia" + usuario,
+                msg: "Debe seleccionar un Código de Asignación para añadirlo.",
+                icon: Ext.Msg.INFO,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+
+    };
+
+    function deleteActual(record) {
+        var store = App.GridPanelFormatoCodId.store;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("add_DataDeleteOpcionesAsignacion"))',
+            params: {
+                MODO: 'DELETE',
+                idOpcion: record.data.IdOpcion,
+                campoCodigo: record.data.CampoCodigoId,
+                secuencia: record.data.SecuenciaAsignacion
+            }
+        });
+        store.remove(record);
+    };
+    function seleccionarActual(record) {
+        selecRecordActualAsig = record;
+        var store = App.GridPanelFormatoCodId.store;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("getSeleccionadorGenerico"))',
+            params: {
+                MODO: 'DELETE',
+                idOpcion: record.data.IdOpcion,
+                campoCodigo: record.data.CampoCodigoId,
+                titulo: 'Seleccionador',
+                misce: 'FORMCAMPOA'
+            }
+        });
+    };
+
+    function eventoSeleccionId(compo) {
+        if (compo.getValue() != null) {
+            if (selecRecordActualAsig != null) {
+                if (validaDuplicado('ValorId', selecRecordActualAsig.data.CampoCodigoId,
+                       compo.getValue())) {
+                    Ext.Msg.show({
+                        title: "Advertencia",
+                        msg: "Ya existe el Registro",
+                        icon: Ext.Msg.WARNING,
+                        minWidth: 200,
+                        buttons: Ext.Msg.OK
+                    });
+                } else {
+                    selecRecordActualAsig.data.ValorId = compo.getValue();
+                    selecRecordActualAsig.data.UsuarioCreacion = App.txtDescripcionaux.getValue();
+
+                    var grid = App.GridPanelFormatoCodId;
+                    grid.columns.forEach(function (col) {
+                        if ((col.text == 'IdOpcion')) {
+                            col.setVisible(true);
+                            col.setVisible(false);
+                        }
+                    });
+                    App.txtIDaux.setValue(null);
+                }
+            }
+        }
+    };
+
+    function eventoSeleccionCod(compo) {
+        if (compo.getValue()!= '') {
+            if (selecRecordActualAsig != null) {
+                if (validaDuplicado('ValorTexto', selecRecordActualAsig.data.CampoCodigoId,
+                       compo.getValue())) {
+                    Ext.Msg.show({
+                        title: "Advertencia",
+                        msg: "Ya existe el Registro",
+                        icon: Ext.Msg.WARNING,
+                        minWidth: 200,
+                        buttons: Ext.Msg.OK
+                    });
+                } else {
+                    selecRecordActualAsig.data.ValorTexto = compo.getValue();
+                    selecRecordActualAsig.data.UsuarioCreacion = App.txtDescripcionaux.getValue();
+                    var grid = App.GridPanelFormatoCodId;
+                    grid.columns.forEach(function (col) {
+                        if ((col.text == 'IdOpcion')) {
+                            col.setVisible(true);
+                            col.setVisible(false);
+                        }
+                    });
+                    App.txtCodigoaux.setValue('');
+                }
+            }
+        }
+    };
+    
+    function validaDuplicado(Columna, valor1, valor2) {
+        var estados = false;
+        App.StoreFormatoCodId.each(function (r) {
+            if (r.get('CampoCodigoId') == valor1
+                && trim(''+r.get(Columna)) == trim(''+valor2)
+                ) {
+                estados = true;
+            }
+        });
+        return estados;
+    }
+    function trim(str) {
+        return str.replace(/^\s+|\s+$/g, "");
+    }
+
+    function save_Detalle() {
+        var i = 0;
+        var store = App.StoreFormatoCodId;
+        var status;
+        var perfilusuariosArray = new Array();
+        store.each(function (r) {
+            var SS_HC_FormatoCodigoId = {
+                IdOpcion: r.get('IdOpcion'),
+                CampoCodigoId: r.get('CampoCodigoId'),
+                SecuenciaAsignacion: r.get('SecuenciaAsignacion'),
+                IndicadorCodigoId: r.get('IndicadorCodigoId'),
+                ValorTexto: r.get('ValorTexto'),
+                ValorId: r.get('ValorId'),
+                Accion: (r.get('Accion') == 'NUEVO' ? 'INSERT' : 'UPDATE')
+            };
+            perfilusuariosArray.push(SS_HC_FormatoCodigoId);
+        });
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("save_OpcionesAsignacion"))',
+            params: {
+                MODO: 'NUEVO',
+                idWindow: "WindowOpcionesAsignacion",
+                data: perfilusuariosArray,
+                tipoSave: 'SAVE'
+            }
+        });
+    };
+
+</script>
+
+@(Html.X().Store()
+        .ID("StoreComboAsigCampo")
+        .Model(Html.X().Model()
+            .IDProperty("IdAgente")
+            .Fields(
+                new ModelField("CodigoElemento"),
+                new ModelField( "DescripcionLocal")
+            )
+        )
+        .DataSource(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.listarMA_MiscelaneosDetalle(
+            new SoluccionSalud.Entidades.Entidades.MA_MiscelaneosDetalle() {
+                ACCION = "LISTACOMBO",
+                AplicacionCodigo="WA",
+                Compania="999999"  ,
+                CodigoTabla = "FORMCAMPOA"           
+                
+            }, 0, 0))
+)
+
+
+@(Html.X().Window()
+    .Width(780)
+    .Height(440)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+        .ID(idWindow)
+        .Title("Opciones Asignación")
+    .Padding(4)
+        //.X(0)
+        //.Y(0)
+            .Items(
+                    X.FormPanel()
+        //.Title("Búsqueda por descripción")
+                    .Header(false)
+                    .ID("PanelAsigOpciones")
+                    .Border(false)
+        //.BodyPadding(0)
+                    .Layout(LayoutType.VBox)
+                    .LayoutConfig(new VBoxLayoutConfig { Align = VBoxAlign.Stretch })
+            .TopBar(
+                X.Toolbar()
+                .Height(30)
+                .Items(
+                    X.ToolbarSpacer(),
+        //X.Label().Html("<b><span style='color:" + COLOR_BLUE01_temp + ";'>" + descTipoAgente + ": " + Model.Nombre + "</span> </b>")
+
+                    X.ToolbarFill(),
+                    X.Button()
+                        .Text((Model.Accion == "DELETE" ? "Eliminar" : "Guardar"))
+                            .Icon((Model.Accion == "DELETE" ? Icon.DatabaseDelete : Icon.DatabaseSave))
+                              .Handler("save_Detalle();")
+                              /*.DirectEvents(de =>
+                              {  //Model.ACCION : Posee el MODO ACTUAL
+                                  de.Click.Url = Url.Action("save_OpcionesAsignacion");
+                                  de.Click.EventMask.ShowMask = true;
+                                  de.Click.Before = "return save_Detalle();";
+                                  de.Click.ExtraParams.Add(new Parameter("MODO", Model.Accion, ParameterMode.Value));
+                                  de.Click.ExtraParams.Add(new Parameter("idWindow", idWindow, ParameterMode.Value));
+                                  //de.Click.Success = "onSuccess(result.data);";
+                                  de.Click.Failure = "onFailure();";
+                              })*/
+
+                            ,
+                    X.Button()
+                        .Text("Cancelar")
+                        .Icon(Icon.Cancel)
+                        .DirectEvents(de =>
+                         {  //Model.ACCION : Posee el MODO ACTUAL
+                             de.Click.Url = Url.Action("cerrarWindow");
+                             //de.Click.EventMask.ShowMask = true;
+                             de.Click.ExtraParams.Add(new Parameter(
+                                   "id", idWindow, ParameterMode.Value));
+                             //de.Click.Success = "onSuccess(result.data,'" + Model.ACCION + "');";
+                             //de.Click.Failure = "onSuccess(result.data,'"+ Model.ACCION + "');";
+                         })
+                    )
+                )                    
+                    .Items(
+                        X.FieldSet().Height(50)
+                        .Title("Información general")
+                        .MarginSpec("5 5 5 10")
+                        .Layout(LayoutType.VBox)
+                        /*.Defaults(d =>
+                        {
+                            d.Add(new Parameter("LabelWidth", "120"));
+                        })*/
+                        .Items(  
+                            X.NumberField().ID("txtIDaux").Hidden(true)
+                                .Listeners(ls => ls.Change.Handler = "eventoSeleccionId(this);") 
+                            ,
+                            X.TextField().ID("txtCodigoaux").Hidden(true)
+                                .Listeners(ls => ls.Change.Handler = "eventoSeleccionCod(this);") 
+                            ,                            
+                            X.TextField().ID("txtDescripcionaux").Hidden(true)
+                                //.Listeners(ls => ls.Change.Handler = "eventoSeleccionDesc(this);") 
+                            ,                            
+                            
+                            Html.X().Container().Layout(LayoutType.HBox)
+                            .MarginSpec("0 0 5 0")
+                            .LayoutConfig(new HBoxLayoutConfig { Align = HBoxAlign.Top })
+                            .Items(
+                               X.NumberFieldFor(m => m.IdOpcion).FieldLabel("Opción").ReadOnly(true)
+                               .LabelWidth(80).Width(150)
+                                   , X.TextFieldFor(m => m.Nombre).FieldLabel("").Width(350).ReadOnly(true)
+                            )                            
+                        )                       
+                        ,
+                           X.GridPanel().Flex(1)
+                           .TopBar(
+                                X.Toolbar().Items(
+                                    Html.X().ComboBox().ID("cmbCodigoID").LabelWidth(200)
+                                     .StoreID("StoreComboAsigCampo")
+                                     .DisplayField("DescripcionLocal")
+                                        /*.Items(
+                                            new ListItem("Compañía", 1),
+                                            new ListItem("Establecimiento", 2),
+                                            new ListItem("Especialidad",4),
+                                            new ListItem("Usuario", 8)
+                                        )*/
+                                      .ValueField("CodigoElemento")
+                                    .FieldLabel("Seleccionar Código de Asignación" ),
+                                    X.ToolbarFill(),
+                                    X.Button().Text("Agregar").Icon(Icon.Add)
+                                        .Handler("addRecord(App.GridPanelFormatoCodId,'" + Model.IdOpcion + "');")
+                                )
+                            )
+                           .AllowDeselect(true)
+                                .Border(false)
+                                .Scroll(ScrollMode.Both)
+                                .AutoScroll(true)
+                                .ID("GridPanelFormatoCodId")
+                                .Margins("0 0 0 0")
+        ///CONFIGURAR EL STORE
+                                .Store(store => store.Add(
+                                         Html.X().Store()
+                                             .ID("StoreFormatoCodId")
+                                             .AutoLoad(true)
+                                             .RemoteSort(false)
+                                             .IsPagingStore(true)
+                                             .RemotePaging(true)
+                                             .PageSize(15)
+                                             .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                                .Url("getGrillaOpcionesAsignacion")
+                                                    .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                    .Root("data").TotalProperty("total").IDProperty("Texto1")
+                                                         )))
+                                                        )
+                                                 .Parameters(ps =>
+                                                        ps.Add(new
+                                                        {
+                                                            id = Model.IdOpcion,
+                                                            codigo=0
+                                                            //tipoAplicacion = JRawValue.From("App.cmbBuscarAplicacion.getValue()"),
+                                                            //tipoBuscar = JRawValue.From("varTipoBuscarRecExtParam")
+                                                        })
+                                                 )
+                                             .Model(model => model.Add(Html.X().Model()
+                                                     .Fields(fields =>
+                                                     {
+                                                         fields.Add(Html.X().ModelField().Name("IdOpcion"));
+                                                         fields.Add(Html.X().ModelField().Name("CampoCodigoId"));
+                                                         fields.Add(Html.X().ModelField().Name("SecuenciaAsignacion"));
+                                                         
+                                                         fields.Add(Html.X().ModelField().Name("IndicadorCodigoId"));
+                                                         fields.Add(Html.X().ModelField().Name("ValorTexto"));
+                                                         fields.Add(Html.X().ModelField().Name("ValorId"));                                                         
+                                                         fields.Add(Html.X().ModelField().Name("Accion"));
+                                                         fields.Add(Html.X().ModelField().Name("Version"));
+                                                         fields.Add(Html.X().ModelField().Name("UsuarioCreacion"));
+                                                         
+                                                         
+                                                     }))
+                                                    )
+                                                  )
+                                       )
+                                    //CONFIGURAR LAS COLUMNAS
+                                    .ColumnModel(columnModel =>
+                                    {
+                                        columnModel.Columns.Add(Html.X().Column().Text("IdOpcion").DataIndex("IdOpcion").Width(100).Hidden(true));
+                                        columnModel.Columns.Add(Html.X().Column().Text("SecuenciaAsignacion").DataIndex("SecuenciaAsignacion").Width(100).Hidden(true));                                        
+                                        columnModel.Columns.Add(Html.X().Column().Text("Código ID").DataIndex("CampoCodigoId").Width(100).Hidden(true));
+                                        columnModel.Columns.Add(Html.X().Column().Text("Código Asignación").DataIndex("Version").Width(110));
+                                        columnModel.Columns.Add(
+                                            //Html.X().Column().Text("Indicador ID").DataIndex("IndicadorCodigoId").Width(100)
+                                            Html.X().ComponentColumn().Width(180)
+                                            .Editor(true)
+                                            .DataIndex("IndicadorCodigoId")                                            
+                                            .Text("Indicador Código/ID")
+                                            .Component(Html.X().ComboBox()
+                                                .Editable(false)
+                                                .Items(
+                                                    new ListItem("Específico (Incluir Asignación)",2),
+                                                    new ListItem("Todos (Excluir Asignación)" , 1)
+                                                )
+                                            )                                          
+                                        );
+                                        columnModel.Columns.Add(
+                                          //  Html.X().Column().Text("Valor Texto").DataIndex("ValorTexto").Width(150)
+                                          Html.X().ComponentColumn().Width(90)
+                                                        .Editor(true)
+                                                         .DataIndex("ValorTexto")
+                                                         .Text("Valor Código")
+                                                         //.Flex(1)
+                                                        .Hidden(false)
+                                                        .Component(
+                                                        Html.X().TextField().ReadOnly(true)
+                                                            ) 
+                                        );
+                                        columnModel.Columns.Add(
+                                            //Html.X().Column().Text("Valor ID").DataIndex("ValorId").Width(80)
+                                          Html.X().ComponentColumn().Width(80)
+                                                        .Editor(true)
+                                                         .DataIndex("ValorId")
+                                                         .Text("Valor ID")
+                                                         
+                                                        .Hidden(false)
+                                                        .Component(
+                                                        Html.X().NumberField().ReadOnly(true)
+                                                    )
+                                        );
+                                        columnModel.Columns.Add(
+                                            //Html.X().Column().Text("Valor ID").DataIndex("ValorId").Width(80)
+                                          Html.X().ComponentColumn().Flex(1)
+                                                        .Editor(true)
+                                                         .DataIndex("UsuarioCreacion")
+                                                         .Text("Descripción")                                                         
+                                                        .Hidden(false)
+                                                        .Component(
+                                                        Html.X().TextField().ReadOnly(true)
+                                                    )
+                                        );                                        
+                                        
+                                        columnModel.Columns.Add(
+                                            Html.X().CommandColumn()
+                                            .Width(100)
+                                            .Text("Acción Código/ID")
+                                            .Commands(
+                                                Html.X().GridCommand()
+                                                    .CommandName("Selección")
+                                                    .Icon(Icon.ApplicationEdit)
+                                                    .Text("Selección")
+                                            )
+                                            .Listeners(ls => ls.Command.Handler = "seleccionarActual(record);")
+                                            
+                                        );                                                                                                                 
+                                        columnModel.Columns.Add(
+                                            Html.X().CommandColumn()
+                                            .Width(70)
+                                            .Commands(
+                                                Html.X().GridCommand()
+                                                    .CommandName("Delete")
+                                                    .Icon(Icon.Delete)
+                                                    .Text("Eliminar")
+                                            )
+                                            .Listeners(ls => ls.Command.Handler = "deleteActual(record);") 
+                                        );
+                                        
+                                        
+                                        //columnModel.Columns.Add(Html.X().Column().Text("CIA").DataIndex("CompaniaCodigo").Width(100));
+                                        //columnModel.Columns.Add(Html.X().Column().Text("Tipo de Valor").DataIndex("TipodeDatoFlag").Width(100).Renderer("changeTipoDato"));
+                                        //columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(100).Renderer("changeEstado"));
+                                        //columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("Texto1").Width(50).Hidden(true));
+                                    })
+                                     .View(Html.X().GridView().TrackOver(false))
+                                     .Border(false)
+                                     //.Listeners(l => l.CellClick.Handler = "setSeleccionRecExtParam(record);")
+                                     //.Listeners(l => l.CellDblClick.Handler = "enviarSeleccionDirectRecExtParam(record);")
+                                .Plugins(
+                                    Html.X().CellEditing()
+                                )                                                                             
+                    )
+    )
+    .CloseAction(CloseAction.Destroy)
+        //.Html(DateTime.Now.ToLongTimeString())
+
+)
+
+

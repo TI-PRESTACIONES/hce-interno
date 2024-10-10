@@ -1,0 +1,249 @@
+﻿@model SoluccionSalud.Entidades.Entidades.SS_CC_Horario
+
+@{
+    var X = Html.X();
+    var idWindow = "WindowSelecUnidadServicio";
+}
+
+<script>
+
+    var COLOR_BLUE01 = "#284A89";
+    var COLOR_RED01 = "#990000";
+
+    var changeEstado = function (value) {
+        var template = '<span style="color:{0};">{1}</span>';
+        if (value == 2)
+            return Ext.String.format(template, COLOR_BLUE01, "DISPONIBLE");
+        if (value == 1)
+            return Ext.String.format(template, COLOR_RED01, "OCUPADO");
+    };
+
+    var seleccionRecordActual = null;
+
+
+    function setSeleccion(record) {
+        seleccionRecordActual = record;
+    }
+
+
+    function enviarSeleccion() {
+        if (seleccionRecordActual != null) {
+            enviarSeleccionDirect(seleccionRecordActual);
+        } else {
+            Ext.Msg.show({
+                title: "Advertencia",
+                msg: "Debe Seleccionar un elemento.",
+                icon: Ext.Msg.WARNING,
+                minWidth: 200,
+                buttons: Ext.Msg.OK
+            });
+        }
+
+    }
+
+    function enviarSeleccionDirect(record) {
+        var status = record.data.IdEstablecimientoSalud;
+        var status2 = record.data.IdUnidadServicio;
+        var status3 = record.data.Codigo;
+        var status4 = record.data.Descripcion;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action(Model.ACCION))',
+            params: {
+                MODO: 'get',
+                idEstab: status,
+                idUnidadServicio: status2,
+                cod: status3,
+                descripcion: status4,
+                idWindow: "WindowSelecUnidadServicio"
+            }
+        });
+    }
+
+    var eventoCheckFiltro = function (check, componente) {
+        var checkAll = check.getValue();
+        if (checkAll) {
+            componente.setDisabled(true);
+            componente.setValue(null);
+        } else {
+            componente.setDisabled(false);
+        }
+    };
+
+    var accionBuscarFiltroSelecc = function (tipo) {
+        varTipoBuscar = tipo;
+        App.GridPanelDetalleHorario.getStore().reload();
+        varTipoBuscar = 'LOAD';
+    };
+</script>
+
+
+
+@(Html.X().Window()
+    .Width(450)
+    .Height(380)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+     .ID(idWindow)
+    .Title("Detalle del día")
+    .Padding(4)
+        //.X(0)
+        //.Y(0)
+    .TopBar(
+                                     X.Toolbar()
+                                     .Height(30)
+                                         .Items(
+                                       X.Button()
+                                        .Text("Buscar")
+                                            .Icon(Icon.Find)
+                                             .Handler("accionBuscarFiltroSelecc('FILTRO');"),
+                                                    X.ToolbarFill(),
+                                        X.Button()
+                                            .Text("Aceptar")
+                                            .Icon(Icon.Accept)
+                                                .Handler("enviarSeleccion();")
+
+                                                 ,
+                                        X.Button()
+                                            .Text("Cancelar")
+                                            .Icon(Icon.Cancel)
+                                             .DirectEvents(de =>
+                                              {
+                                                  de.Click.Url = Url.Action("cerrarWindow");
+                                                  de.Click.ExtraParams.Add(new Parameter(
+                                                        "id", "WindowSelecUnidadServicio", ParameterMode.Value));
+                                              })
+                                         )
+
+    )
+    .Items(
+                        X.GridPanel()
+
+                            .TopBar(
+                                X.Toolbar()
+                                .Items(
+                                   /*X.Checkbox().FieldLabel("Descripción").ID("chkId").Checked(true)
+                                           .Handler("eventoCheckFiltro(App.chkId,App.tfBuscarSeleccDesc);").LabelWidth(70),
+                                            X.TextField()
+                                        .ID("tfBuscarSeleccDesc").Disabled(true)
+                                    .FieldLabel(""),*/
+                                    X.ToolbarFill()
+                                )
+                            )
+                            .Border(false)
+                            .Scroll(ScrollMode.Both)
+                            .AutoScroll(true)
+                                .ID("GridPanelDetalleHorario")
+                        // .DefaultAnchor("100%")
+                        //.Anchor("100% 100%")
+                            .Margins("0 0 0 0")
+
+                            // CONFIGURAR EL STORE
+                            .Store(store => store.Add(
+                                     Html.X().Store()
+                                         .ID("StoreDetalleHorario")
+                                         .AutoLoad(true)
+                                         .RemoteSort(false)
+                                         .IsPagingStore(true)
+                                         .RemotePaging(true)
+                                         .PageSize(10)////CAMBIAR DE ACUERDO A ALGÚN UN CRITERIO
+                                         .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                                .Url("getGrillaDetalleHorario")
+                                             //.Url("../LPacientes/GrillaListadoPacientes")
+                                             //.Url("../Controllers/Maestros/Usuario/UsuarioController/GrillaListadoPacientes")
+                                                .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                .Root("data")
+                                                .TotalProperty("total")
+                                                 .IDProperty("IdEstablecimientoSalud")
+                                                 .IDProperty("IdUnidadServicio")
+                                                     )))
+                                                    )
+                                                    .Parameters(ps =>
+                                                    ps.Add(new
+                                                    {
+                                                        fecha = Model.FechaInicio, //AUX
+                                                        medico = Model.Medico, //AUX
+                                                        periodo = Model.Periodo, //AUX
+                                                        tipoBuscar = JRawValue.From("varTipoBuscar")
+                                                    })
+                                                    )
+                                         .Model(model => model.Add(Html.X().Model()
+                                                 .Fields(fields =>
+                                                 {
+                                                     fields.Add(Html.X().ModelField().Name("IdHorario"));
+                                                     fields.Add(Html.X().ModelField().Name("IdServicio"));
+                                                     fields.Add(Html.X().ModelField().Name("Medico"));
+                                                     fields.Add(Html.X().ModelField().Name("IdEspecialidad"));
+                                                     fields.Add(Html.X().ModelField().Name("IdConsultorio"));
+                                                     fields.Add(Html.X().ModelField().Name("Periodo"));
+                                                     fields.Add(Html.X().ModelField().Name("IdTurno"));
+                                                     fields.Add(Html.X().ModelField().Name("FechaInicio").Type(ModelFieldType.Date));
+                                                     fields.Add(Html.X().ModelField().Name("FechaFin").Type(ModelFieldType.Date));
+                                                     fields.Add(Html.X().ModelField().Name("HoraInicio").Type(ModelFieldType.Date));
+                                                     fields.Add(Html.X().ModelField().Name("HoraFin").Type(ModelFieldType.Date));
+
+                                                     fields.Add(Html.X().ModelField().Name("Estado"));
+
+                                                     fields.Add(Html.X().ModelField().Name("UsuarioCreacion"));
+                                                     fields.Add(Html.X().ModelField().Name("UsuarioModificacion"));
+                                                     fields.Add(Html.X().ModelField().Name("ACCION"));
+
+                                                 }))
+                                                )
+                                              )
+                                   )
+
+                                ///CONFIGURAR LAS COLUMNAS
+                                .ColumnModel(columnModel =>
+                                {
+                                    columnModel.Columns.Add(Html.X().Column().Text("IdHorario").DataIndex("IdHorario").Width(80).Hidden(true));
+                                    //columnModel.Columns.Add(Html.X().Column().Text("Periodo").DataIndex("Periodo").Width(80));
+                                    columnModel.Columns.Add(Html.X().DateColumn().Text("Fecha ").DataIndex("FechaInicio").Width(80).Format("dd/MM/yyyy"));
+                                    //columnModel.Columns.Add(Html.X().DateColumn().Text("Fecha Fin").DataIndex("FechaFin").Width(80).Format("dd/MM/yyyy"));
+                                    columnModel.Columns.Add(Html.X().DateColumn().Text("Hora Inicio").DataIndex("HoraInicio").Width(90).Format("hh:mm:ss"));
+                                    columnModel.Columns.Add(Html.X().DateColumn().Text("Hora Fin").DataIndex("HoraFin").Width(90).Format("hh:mm:ss"));
+                                    //columnModel.Columns.Add(Html.X().Column().Text("Medico").DataIndex("Medico").Width(80).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Servicio").DataIndex("IdServicio").Width(80).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("IdEspecialidad").DataIndex("IdEspecialidad").Width(80).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("IdConsultorio").DataIndex("IdConsultorio").Width(80).Hidden(true));
+
+                                    columnModel.Columns.Add(Html.X().Column().Text("UsuarioCreacion").DataIndex("UsuarioCreacion").Width(80).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("UsuarioModificacion").DataIndex("UsuarioModificacion").Width(80).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("ACCION").DataIndex("ACCION").Width(80).Hidden(true));
+                                    columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(80)
+                                        .Renderer("changeEstado")
+                                    );
+
+                                })
+                                 .View(Html.X().GridView().TrackOver(false))
+        //.View(view => view.Add(Html.X().GridView().TrackOver(false)))
+                                 .Border(false)
+                                .Listeners(l => l.CellDblClick
+                                           .Handler = "enviarSeleccionDirect(record);")
+                                .Listeners(l => l.CellClick
+                                   .Handler = "setSeleccion(record);")
+                                /*.BottomBar(bar => bar.Add(
+                                    Html.X().PagingToolbar()
+                                    //.DisplayInfo(true)
+                                    //.DisplayMsg("Displaying customers {0} - {1} of {2}"))
+                                ))*/
+
+                               /*.TopBar(X.Panel()
+                                    .Height(50)
+                                    .Title("Buscador")
+                                    .Border(false)
+                                )   */
+    )
+
+    .CloseAction(CloseAction.Destroy)
+
+)
+@(
+ X.KeyNav()
+        .Target("WindowSelecUnidadServicio")
+    .Enter(a => a.Handler = "accionBuscarFiltroSelecc('FILTRO');")
+)

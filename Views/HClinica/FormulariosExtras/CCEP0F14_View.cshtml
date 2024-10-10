@@ -1,0 +1,1852 @@
+﻿@using Region = Ext.Net.Region
+@model SoluccionSalud.Entidades.Entidades.SS_HC_Anamnesis_AP
+
+@{
+    ViewBag.Title = "Portal - Ext.NET MVC Examples";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+    var X = Html.X();
+    var indicaVisiblePrint = SoluccionSalud.Entidades.Entidades.ENTITY_GLOBAL.Instance.INDICA_VISIBLE_IMPRESION;
+    var visibleImpresion = (indicaVisiblePrint == 2/* && Model.Accion == "UPDATE"*/ ? true : false);
+    var isVista = (Model.Accion == "VISTA" ? true : false);
+    var isNuevo = (Model.Accion == "NUEVO" ? true : false);
+    //var visibleImpresion = (Model.Accion == "UPDATE" ? true : false);
+    var indicaModoLectura = !(Model.Accion == "NUEVO" ? true :
+                            (Model.Accion == "UPDATE" ? true :
+                            (Model.Accion == "DELETE" ? false :
+                            (Model.Accion == "VISTA" ? false : false))));
+
+    var COLOER_IND_OBLIGA =
+    AppSaludMVC.Controllers.UTILES_MENSAJES.getParametro_Form("COL_BCOBLI"); ;
+
+}
+@section cabecera
+{
+<link rel="stylesheet" href="@Url.Content("~/resources/css/main.css")" />
+<style>
+    html body {
+        padding: 0px;
+        background: none;
+        background: none;
+        background: none;
+        background-attachment: fixed;
+        background-position: center;
+        font-family: tahoma,verdana,sans-serif;
+        background-color: #ffffff;
+    }
+</style>
+    <script>
+        var indicaCambios = false;
+        function setIndicaCambios(value) {
+            indicaCambios = value;
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("setIndicaCambiosFormulario"))',
+                params: {
+                    indica: (value ? 1 : 0)
+                }
+            });
+
+            var val = '@visibleImpresion';
+            var vis = '@isVista';
+
+            if (vis == 'False') {
+                if (val == 'True') {
+
+                    if (value == true) {
+                        App.btnImpresion.setDisabled(true);
+                        App.btnImpresionHC.setDisabled(true);
+                        parent.App.btnGuardarFirma.setDisabled(true);
+                    } else {
+                        App.btnImpresion.setDisabled(false);
+                        App.btnImpresionHC.setDisabled(false);
+                        parent.App.btnGuardarFirma.setDisabled(false);
+                    }
+                }
+            }
+        };
+
+    function eventoValidaReglaGen(PARAM_ACCION, PARAM_REGLA, numRegla) {
+        var APMiscelaneos = new Array();
+        var MA_MiscelaneosDetalle = {
+            ValorEntero1: 1,
+            ACCION: PARAM_ACCION
+        };
+        APMiscelaneos.push(MA_MiscelaneosDetalle);
+        Ext.net.DirectMethod.request({
+            url: PARAM_REGLA,
+            params: {
+                PacienteID: 0,
+                valor: 0,
+                regla: PARAM_ACCION,
+                arrays: APMiscelaneos
+            },
+            success: function (result) { mostrarAlarmaGen(result.data, PARAM_ACCION, numRegla); }
+        });
+    };
+    var mostrarAlarmaGen = function (data, accion, numRegla) {
+        if (data != null) {
+            if (data[0].ESTADOBOOL) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("showMensajeNotifyPosi"))',
+                    params: {
+                        titulo: 'Advertencia Motor Reglas',
+                        message: data[0].DESCRIPCION,
+                        tipo: 'WARNING',
+                        offsety: -650,
+                        offsetx: 0 + ((numRegla - 1) * (-200))
+                    }
+                });
+            } else {
+            }
+        }
+    }
+
+        function eventoRenderForm() {
+
+            var kk = 195;
+            var scrH = screen.height;
+            var northH = (parent.App.PanelMainNorth != null ? (parent.App.PanelMainNorth.getHeight() != null ? parent.App.PanelMainNorth.getHeight() : 20) : 20);
+            var southH = (parent.App.PanelMainSouth != null ? (parent.App.PanelMainSouth.getHeight() != null ? parent.App.PanelMainSouth.getHeight() : 20) : 20);
+
+            if (southH == 0) {
+                southH = 30;
+            } else if (parent.App.PanelMainSouth.collapsed) {
+                southH = 30;
+            }
+            var dimCentral = (scrH - (northH + southH) - kk);
+            App.formactual.setHeight(545);
+
+            var v = '@isNuevo';
+            if (v == 'True') {
+                App.btnImpresion.setVisible(false);
+                App.btnImpresionHC.setVisible(false);
+            }
+        }
+           
+    function deleteActual(record, grid, tipo) {
+        if (record != null) {
+            var store = grid.store;
+            setIndicaCambios(true);
+            var par1 = record.data.ValorCodigo1;
+            var par2 = record.data.CodigoElemento;
+            store.remove(record);
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("addEliminar_SS_HC_Anamnesis_AP"))',
+                params: {
+                    MODO: 'DELETEDETALLE',
+                    codigo: '' + par1,
+                    secuencia: par2,
+                    tipoRegistro: tipo
+                }
+            });
+            seleccRecordActual = null;
+        }
+
+    };
+
+    var grillaActiva = null;
+
+    function eventoDesactivarSeleccion(btnComponente, btnComponenteMostrar) {
+        btnComponente.setVisible(false);
+        btnComponenteMostrar.setVisible(true);
+        grillaActiva = null;
+    };
+    function eventoActivarSeleccion(btnComponente, btnComponenteMostrar, idGrillaActiva) {
+        App.btnSelDesactivo_Patolo.setVisible(true);
+        App.btnSelActivo_Patolo.setVisible(false);
+
+        App.btnSelDesactivo_APTrabajo.setVisible(true);
+        App.btnSelActivo_APTrabajo.setVisible(false);
+
+        App.btnSelDesactivo_APQuirurgicaso.setVisible(true);
+        App.btnSelActivo_APQuirurgicaso.setVisible(false);
+
+        App.btnSelDesactivo_APEpidomiologia.setVisible(true);
+        App.btnSelActivo_APEpidomiologia.setVisible(false);
+
+        App.btnSelDesactivo_APGenerales.setVisible(true);
+        App.btnSelActivo_APGenerales.setVisible(false);
+
+
+        btnComponente.setVisible(false);
+        btnComponenteMostrar.setVisible(true);
+
+        grillaActiva = idGrillaActiva;
+    };
+    var count = 0; // a counter for new records
+
+    function InsertRow(valor, estado, soloLectura) {
+        if (soloLectura == '1') {
+            setIndicaCambios(false);
+        } else {
+            if (grillaActiva != null) {
+                if (valor.getValue() != '') {
+                    var obj = JSON.parse(valor.getValue());
+                    var DescripcionLocalVar = obj.DescripcionLocal;
+                    var grid = Ext.getCmp("" + grillaActiva);
+                    if (validaDuplicado(DescripcionLocalVar, grid)) {
+                        Ext.net.DirectMethod.request({
+                            url: '@(Url.Action("showMensajeNotify"))',
+                            params: {
+                                titulo: 'Advertencia',
+                                message: 'Ya existe registro',
+                                tipo: 'WARNING'
+                            }
+                        });
+                        valor.setValue('');
+                        return;
+                    }
+                    valor.setValue('');
+                    setIndicaCambios(true);
+                    grid.store.insert(0, {
+                        CodigoElemento: count--,
+                        ValorCodigo1: DescripcionLocalVar,
+                        ACCION: 'NUEVO'
+                    });
+                    Ext.Function.defer(function () {
+                        grid.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+                    }, 100);
+                    valor.setValue('');
+                }
+            } else {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("showMensajeNotify"))',
+                    params: {
+                        titulo: 'Advertencia',
+                        message: 'Debe activar la selección de una de las Tablas.',
+                        tipo: 'WARNING'
+                    }
+                });
+                return;
+            }
+        }
+    }
+
+    function validaDuplicado(valor, grid) {
+        var store = grid.store;
+        var estados = false;
+        var valor1;
+        var valor2;
+        store.each(function (r) {
+            if (trim(r.get('ValorCodigo1')) == trim(valor)) estados = true;
+        });        
+        return estados;
+    }
+    function trim(str) {
+        return str.replace(/^\s+|\s+$/g, "");
+    }
+
+
+    var onSuccess = function (data) {
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+        App.formactual.setDisabled(true);
+        var reload = true;
+        if (data != null) {
+            if (data.length > 0) {
+                reload = false
+                App.cmdGuardar.setDisabled(false);
+                App.formactual.setDisabled(false);
+                if (data[0].TIPOMSG == 'EXCEPTION') {
+                    Ext.net.DirectMethod.request({
+                        url: '@(Url.Action("showMensajeNotify"))',
+                        params: {
+                            titulo: data[0].TITULO,
+                            message: data[0].DESCRIPCION,
+                            tipo: 'ERROR'
+                        }
+                    });
+                } else {
+                    accionMensajes(data);
+                }
+            }
+        }
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+            parent.App.txtRecargarNorth.setValue('RECARGA');
+        }
+    };
+    var onFailure = function (data) {
+        App.cmdGuardar.setDisabled(false);
+    };
+
+    </script>
+    <script>
+    var hhValidation = function (h) {
+        str = h.value;
+        tempo = "'";
+        str = str.replace('javascript:myFunction(' + tempo, '');
+        str = str.replace('%20', ' ');
+        str = str.replace('%C3%B3', 'ó');
+        str = str.replace('%C3%A1', 'á');
+        str = str.replace('%C3%A9', 'é');
+        str = str.replace('%C3%AD', 'í');
+        str = str.replace('%C3%BA', 'ú');
+        str = str.replace('%C3%B1', 'ñ');
+
+        str = str.replace('%C3%8D', 'Í');
+        str = str.replace('%C3%93', 'Ó');
+        str = str.replace('%C3%81', 'Á');
+        str = str.replace('%C3%91', 'Ñ');
+        str = str.replace('%C3%9A', 'Ú');
+
+        str = str.replace(tempo + ')', '');
+        h.setValue(str);
+
+    }
+    var mmValidation = function (m) {
+        if (m.getValue() > 59) {
+            m.setValue(59);
+        }
+
+    }
+    var eventoOnEditar = function (btn) {
+        App.cmdGuardar.setDisabled(false);
+        App.btnOnEdit.setVisible(false);
+        App.btnCancel.setVisible(true);
+
+    };
+
+    function EnviarData(grid) {
+        beforeSave(App.formactual);        
+        if (App.formactual.getForm().isValid()) {
+            var APPatologicosy = new Array();
+            App.STORE_APPatologicos.each(function (r) {
+                var MA_MiscelaneosDetalle = {
+                    ValorCodigo1: r.get('ValorCodigo1'),
+                    CodigoElemento: r.get('CodigoElemento'),
+                    ACCION: (r.get('ACCION') == 'NUEVO' ? 'DETALLE' : 'UPDATEDETALLE')
+                };
+                APPatologicosy.push(MA_MiscelaneosDetalle);
+            });
+            var APTrabajoy = new Array();
+            App.STORE_APTrabajo.each(function (r) {
+                var MA_MiscelaneosDetalle = {
+                    ValorCodigo1: r.get('ValorCodigo1'),
+                    CodigoElemento: r.get('CodigoElemento'),
+                    ACCION: (r.get('ACCION') == 'NUEVO' ? 'DETALLE' : 'UPDATEDETALLE')
+
+                };
+                APTrabajoy.push(MA_MiscelaneosDetalle);
+            });
+            var APQuirurgicasy = new Array();
+            App.STORE_APQuirurgicas.each(function (r) {
+                var MA_MiscelaneosDetalle = {
+                    ValorCodigo1: r.get('ValorCodigo1'),
+                    CodigoElemento: r.get('CodigoElemento'),
+                    ACCION: (r.get('ACCION') == 'NUEVO' ? 'DETALLE' : 'UPDATEDETALLE')
+
+                };
+                APQuirurgicasy.push(MA_MiscelaneosDetalle);
+            });
+
+            var APEpidomiologiay = new Array();
+            App.STORE_APEpidomiologia.each(function (r) {
+                var MA_MiscelaneosDetalle = {
+                    ValorCodigo1: r.get('ValorCodigo1'),
+                    ValorFecha: r.get('ValorFecha'),
+                    ValorCodigo2: r.get('ValorCodigo2'),
+                    CodigoElemento: r.get('CodigoElemento'),
+                    ACCION: (r.get('ACCION') == 'NUEVO' ? 'DETALLE' : 'UPDATEDETALLE')
+
+                };
+                APEpidomiologiay.push(MA_MiscelaneosDetalle);
+            });
+
+            var APGeneralesy = new Array();
+            App.STORE_APGenerales.each(function (r) {
+                var MA_MiscelaneosDetalle = {
+                    ValorCodigo1: r.get('ValorCodigo1'),
+                    ValorFecha: r.get('ValorFecha'),
+                    ValorCodigo2: r.get('ValorCodigo2'),
+                    CodigoElemento: r.get('CodigoElemento'),
+                    ACCION: (r.get('ACCION') == 'NUEVO' ? 'DETALLE' : 'UPDATEDETALLE')
+
+                };
+                APGeneralesy.push(MA_MiscelaneosDetalle);
+            });
+
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("Save_SS_HC_Anamnesis_AP"))',
+                params: {
+                    APPatologicos: APPatologicosy,
+                    APTrabajo: APTrabajoy,
+                    APQuirurgicas: APQuirurgicasy,
+                    APEpidomiologia: APEpidomiologiay,
+                    APGenerales: APGeneralesy,
+                    text:'0'
+                }
+            });
+            return true;
+        } else {
+            App.cmdGuardar.setDisabled(false);
+            return false;
+        }
+    }
+
+    var accionMensajes = function (data) {
+        var mensajes = "";
+        if (data.length > 0) {
+            for (var i = 0; i < data.length; i++) {
+                mensajes = mensajes + "*" + data[i].DESCRIPCION + "\n";
+            }
+            App.taAlerts.setVisible(true);
+            App.taAlerts.setValue(mensajes);
+            App.conthbIndicaError.setVisible(true);
+            App.taAlerts.focus();
+        } else {
+            App.taAlerts.setVisible(false);
+            App.conthbIndicaError.setVisible(false);
+        }
+
+    };
+
+    var getInvalidFields = function (form) {
+        var invalidFields = new Array();
+        var fields = form.getForm().getFields();
+        fields.filterBy(function (field) {
+            if (!field.isValid()) {
+                var VW_SS_HC_TABLAFORMATO_VALIDACION = {
+                    NombreCampo: field.name,
+                    IdEvento: (field.isValid() ? 1 : 0),
+                    ValorTexto: field.name + ': ' + field.getErrors()
+                };
+                invalidFields.push(VW_SS_HC_TABLAFORMATO_VALIDACION);
+            }
+        });
+        return invalidFields;
+    };
+
+    var beforeSave = function (form) {
+        App.taAlerts.setVisible(false);
+        App.taAlerts.setValue(null);
+        App.conthbIndicaError.setVisible(false);
+        var FieldsInvalidos = getInvalidFields(form);
+        if (FieldsInvalidos.length > 0) {
+            Ext.net.DirectMethod.request({
+                url: '@(Url.Action("addRecursosValidacion"))',
+                params: {
+                    data: FieldsInvalidos,
+                    indica: 'VALIDAR',
+                },
+                success: function (result) { accionMensajes(result.data); }
+            });
+        }
+    };
+
+    function eventoCancelar(form) {
+        //form.getForm().reset();
+        //App.taAlerts.setVisible(false);
+        //App.conthbIndicaError.setVisible(false);
+        //App.STORE_APPatologicos.reload();
+        //App.STORE_APTrabajo.reload();
+        //App.STORE_APQuirurgicas.reload();
+        //App.STORE_APEpidomiologia.reload();
+        //App.STORE_APGenerales.reload();
+
+        //setIndicaCambios(false);
+
+        App.bar.setDisabled(true);
+        var reload = true;
+        if (reload) {
+            parent.App.txtRecargarX.setValue('RELOAD');
+            // beforeSave(form);
+        }
+    };
+
+    var eventoKey = function (tf, e) {
+        if (e.getKey() == '110' || e.getKey() == '190' || e.getKey() == '100') {
+            var str = tf.getRawValue().replace('.', '');
+            tf.setValue(str);
+        } else if (e.getKey() == '109' || e.getKey() == '189') {
+            var str = tf.getRawValue().replace('-', '');
+            tf.setValue(str);
+        }
+    };
+
+    function eventoVisorReporte(param1) {
+        if (param1 == 'HC') {
+            window.location.href = '@Url.Action("HCEReportesView_total", "HClinica")';
+        } else {
+            window.location.href = '@Url.Action("HCEReportesView", "HClinica")';
+        }
+    }
+
+    function addRecordMain(grid) {
+        var CodigoElementoMAx = 0;
+        App.STORE_APPatologicos.each(function (r) {
+            var temp = r.get('CodigoElemento');
+            if (temp > CodigoElementoMAx) {
+                CodigoElementoMAx = temp;
+            }
+        });
+
+        App.STORE_APPatologicos.insert(0, { CodigoElemento: CodigoElementoMAx + 1, ValorCodigo1: 'Hipertension Arteriial', Accion: 'NUEVO' });
+        Ext.Function.defer(function () {
+            App.GRILLA_APPatologicos.editingPlugin.startEditByPosition({ row: 0, column: 0 })
+        }, 100);
+    };
+
+    </script>
+
+}
+
+
+@section cuerpo
+{
+
+
+    @(Html.X().Viewport().ID("ViewportXD")
+        .Layout(LayoutType.VBox)
+
+        .LayoutConfig(
+            new VBoxLayoutConfig { Align = VBoxAlign.Stretch }
+        )
+        .Listeners(l =>
+        {
+            l.AfterLayout.BroadcastOnBus = "App.resize";
+            l.AfterLayout.Single = true;
+        })
+        .Items(regions =>
+        {
+
+            regions.Add(Html.X().FormPanel()
+                    .ID("formactual")
+                    .DefaultAnchor("100%")
+                    .Title("Example Wizard")
+                    .BodyPadding(5)
+                    .AutoScroll(true)
+                    .Height(340)
+                    .Header(false)
+                    .Border(true)
+                    .Layout(LayoutType.Form)
+                    .ActiveIndex(0)
+                    .Listeners(l =>
+                    {
+                        l.Render.Handler = "eventoRenderForm();";
+                        l.AfterRender.Handler =
+                            "eventoValidaReglaGen('POSaludControlGinecologia', '" + (Url.Action("POSaludControlGinecologia")) + "',1);" +
+                            "eventoValidaReglaGen('POSaludExamenLaboratorio', '" + (Url.Action("POSaludExamenLaboratorio")) + "',2);" +
+                            "";
+                    })
+                    .Items(
+                             X.TextField()
+                             .ID("RecepcionaRecurso")
+                             .Listeners(l =>
+                             {
+                                 l.Change.Handler = "InsertRow(this,'Logico','" + (indicaModoLectura ? 1 : 0) + "');";
+                             })
+                            .Hidden(true),
+                            X.FormPanel()
+                                .ID("Panel1")                
+                                .BodyPadding(5)                
+                                .Border(false)
+                                .Header(false)
+                                .Items(
+                                      X.FieldSet().ID("fsAntecedenteGestacion")
+                                            .ColumnWidth(0.4).Collapsible(true)
+                                            .Title("<b>Antecedentes de gestación</b>")
+                
+                                            .MarginSpec("0 05 0 05")
+                                            .Defaults(d =>
+                                            {
+                                                d.Add(new Parameter("LabelWidth", "170"));
+                                                d.Add(new Parameter("DefaultAnchor", "100%"));
+                                                d.Add(new Parameter("LabelAlign", "Left"));
+                                            })
+
+                                            .DefaultAnchor("100%")
+                                            .FieldDefaults(d =>
+                                            {
+                                                d.LabelAlign = LabelAlign.Left;
+                                            })
+                                            .Items(
+                                                     X.CheckboxGroupFor(c => c.IdTipoEmbarazo, new List<Checkbox.Config> {
+                                                                new Checkbox.Config{BoxLabel = "Embarazo Normal", InputValue = "1" ,ReadOnly =indicaModoLectura},
+                                                                new Checkbox.Config{BoxLabel = "Complicado", InputValue = "2",ReadOnly =indicaModoLectura}
+                                                            })
+                                                            .FieldLabel("Antecedentes de gestación")
+                                                            .DefaultAnchor("100%")
+                                                            .Defaults(d =>
+                                                            {
+                                                                d.Add(new Parameter("LabelWidth", "170"));
+                                                            }),
+
+                                                 X.TextAreaFor(c => c.PatologiaGestacion).ReadOnly(indicaModoLectura)
+                                                    .Rows(1)
+                                                    .FieldLabel("Patología en la gestación"),
+
+                                                 X.CheckboxGroupFor(c => c.IdControlPrenatal, new List<Checkbox.Config> {
+                                                                new Checkbox.Config{BoxLabel = "Si", InputValue = "1" ,ReadOnly =indicaModoLectura},
+                                                                new Checkbox.Config{BoxLabel = "No", InputValue = "2" ,ReadOnly =indicaModoLectura}
+                                                            })
+
+                                                   .FieldLabel("Control prenatal")
+                                                   .Defaults(d =>
+                                                   {
+                                                       d.Add(new Parameter("LabelWidth", "170"));
+                                                   })
+                                                   .DefaultAnchor("100%"),
+
+                                                   X.Container()
+                                                        .Layout(LayoutType.HBox)
+                                                        .Defaults(d =>
+                                                        {
+                                                            d.Add(new Parameter("LabelWidth", "170"));
+                                                        })
+                
+                                                        .Items(
+                                                            X.NumberFieldFor(c => c.CPnumeroControles).ReadOnly(indicaModoLectura)
+                                                             .FieldLabel("Número de controles"),
+                                                            X.Component().Width(20),
+                                                            X.NumberFieldFor(c => c.CPnumeroEmbarazos).ReadOnly(indicaModoLectura)
+                                                              .FieldLabel("Número de embarazos")
+                                                            ),
+                                                      X.TextFieldFor(c => c.LugarControl).ReadOnly(indicaModoLectura)
+                                                            .FieldLabel("Lugar de control")
+
+                                                ),
+                                      X.FieldSet().ID("fsAntecedenteParto")
+                                            .ColumnWidth(0.4).Collapsible(true)
+                                            .Title("<b>Antecedentes de parto</b>")
+                
+                                            .MarginSpec("0 05 0 05")
+                                            .Defaults(d =>
+                                            {
+                                                d.Add(new Parameter("LabelWidth", "170"));
+                                                d.Add(new Parameter("DefaultAnchor", "100%"));
+                                                d.Add(new Parameter("LabelAlign", "Left"));
+                                            })
+
+                                            .DefaultAnchor("100%")
+                                            .FieldDefaults(d =>
+                                            {
+                                                d.LabelAlign = LabelAlign.Left;
+                                            })
+                                            .Items(
+                                                    X.CheckboxGroupFor(c => c.IdTipoParto, new List<Checkbox.Config> {
+                                                                new Checkbox.Config{BoxLabel = "Normal", InputValue = "1" ,ReadOnly =indicaModoLectura},
+                                                                new Checkbox.Config{BoxLabel = "Complicado", InputValue = "0" ,ReadOnly =indicaModoLectura}
+                                                            })
+                                                           .FieldLabel("Antecedente de parto")
+                                                           .DefaultAnchor("100%")
+                                                           .Defaults(d =>
+                                                           {
+                                                               d.Add(new Parameter("LabelWidth", "170"));
+                                                           }),
+                                                      X.TextAreaFor(c => c.ComplicacionesParto).ReadOnly(indicaModoLectura)
+                                                            .Rows(1)
+                                                            .FieldLabel("Complicaciones de parto"),
+                                                     X.CheckboxGroupFor(c => c.IdLugarParto, new List<Checkbox.Config> {
+                                                                new Checkbox.Config{BoxLabel = "Establecimiento", InputValue = "1" ,ReadOnly =indicaModoLectura},
+                                                                new Checkbox.Config{BoxLabel = "Atendido por profesional", InputValue = "2",ReadOnly =indicaModoLectura},
+                                                                new Checkbox.Config{BoxLabel = "Domicilio", InputValue = "3",ReadOnly =indicaModoLectura},
+                                                                new Checkbox.Config{BoxLabel = "Empirico", InputValue = "4",ReadOnly =indicaModoLectura}
+                                                             })
+                                                           .FieldLabel("Lugar de parto")
+                                                           .DefaultAnchor("100%")
+                                                            .Defaults(d =>
+                                                            {
+                                                                d.Add(new Parameter("LabelWidth", "170"));
+                                                            })
+                                                           .ColumnsNumber(2)
+                                        )
+                                     ),
+                        X.FormPanel()
+                            .ID("Panel2")
+                                .BodyPadding(5)
+                
+                                .Border(false)
+                                .Header(false)
+                                .Items(
+                                      X.FieldSet().ID("fsAntecedenteNacimiento")
+                                            .ColumnWidth(0.4).Collapsible(true)
+                                            .Title("<b>Antecedentes de nacimiento</b>")
+                
+                                            .MarginSpec("0 05 0 05")
+                                            .Defaults(d =>
+                                            {
+                                                d.Add(new Parameter("LabelWidth", "170"));
+                                                d.Add(new Parameter("DefaultAnchor", "100%"));
+                                                d.Add(new Parameter("LabelAlign", "Left"));
+                                            })
+
+                                            .DefaultAnchor("100%")
+                                            .FieldDefaults(d =>
+                                            {
+                                                d.LabelAlign = LabelAlign.Left;
+                                            })
+                                             .Items(
+                                                  X.Container()
+                                                        .Layout(LayoutType.HBox)
+                                                        .Defaults(d =>
+                                                        {
+                                                            d.Add(new Parameter("LabelWidth", "170"));
+                                                        })
+                                                        .Items(
+                                                            X.NumberFieldFor(c => c.EdadInicioAblactanciaMeses).ReadOnly(indicaModoLectura).EnableKeyEvents(true).FieldLabel("Edad gestación al nacer").Listeners(l => { l.KeyUp.Fn = "eventoKey"; }),
+                                                            X.Component().Width(20),
+                                                            X.NumberFieldFor(c => c.PesoAlNacerGR).ReadOnly(indicaModoLectura).EnableKeyEvents(true).FieldLabel("Peso al nacer").Listeners(l => { l.KeyUp.Fn = "eventoKey"; })
+                                                            ),
+                                                  X.Container()
+                                                        .Layout(LayoutType.HBox)
+                                                        .Defaults(d =>
+                                                        {
+                                                            d.Add(new Parameter("LabelWidth", "170"));
+                                                        })
+                                                        .Items(
+                                                            X.NumberFieldFor(c => c.TallaAlNacerCM).ReadOnly(indicaModoLectura)
+                                                             .FieldLabel("Talla al nacer"),
+                                                            X.Component().Width(20),
+                                                            X.NumberFieldFor(c => c.PerimetroCefalicoCM).ReadOnly(indicaModoLectura)
+                                                              .FieldLabel("Perimetro cafalico")
+                                                            ),
+                                                    X.Label("Respiración y llanto al nacer"),
+                                                    X.RadioGroupFor(c => c.IdValoracionFuncional1, new List<Radio.Config> {
+                                                                new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura},
+                                                                new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura}
+                                                            })
+                                                         .Vertical(true)
+                                                         .FieldLabel("Fue inmediato")
+                                                         .Defaults(d =>
+                                                         {
+                                                             d.Add(new Parameter("LabelWidth", "100"));
+                                                         })
+                                                         .AnchorVertical("100%"),
+                                                    X.RadioGroupFor(c => c.IdValoracionFuncional2, new List<Radio.Config> {
+                                                                new Radio.Config{BoxLabel = "1'", InputValue = "1", ReadOnly =indicaModoLectura},
+                                                                new Radio.Config{BoxLabel = "5'", InputValue = "5", ReadOnly =indicaModoLectura}
+                                                            })
+                                                         .Vertical(true)
+                                                         .FieldLabel("APGAR")
+                                                         .Defaults(d =>
+                                                         {
+                                                             d.Add(new Parameter("LabelWidth", "100"));
+                                                         })
+                                                         .AnchorVertical("100%"),
+
+                                                    X.RadioGroupFor(c => c.IdValoracionFuncional3, new List<Radio.Config> {
+                                                                new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura},
+                                                                new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura}
+                                                            })
+                                                         .Vertical(true)
+                                                         .FieldLabel("Deprimido")
+                                                         .Defaults(d =>
+                                                         {
+                                                             d.Add(new Parameter("LabelWidth", "100"));
+                                                         })
+                                                         .AnchorVertical("100%"),
+
+                                                  X.RadioGroupFor(c => c.IdValoracionFuncional4, new List<Radio.Config> {
+                                                                new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly =indicaModoLectura},
+                                                                new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly =indicaModoLectura}
+                                                            })
+                                                         .Vertical(true)
+                                                         .FieldLabel("Reanimación")
+                                                         .Defaults(d =>
+                                                         {
+                                                             d.Add(new Parameter("LabelWidth", "100"));
+                                                         })
+                                                         .AnchorVertical("100%"),
+
+                                                     X.TextAreaFor(c => c.PatologiasPernatales).ReadOnly(indicaModoLectura)
+                                                           .Rows(1)
+                                                           .FieldLabel("Patologías perinatales"),
+                                                     X.NumberFieldFor(c => c.DiasHospitalizacion).ReadOnly(indicaModoLectura)
+                                                            .FieldLabel("Tiempo de hospitalización")
+                                                 ),
+                                        X.FieldSet().ID("fsAntecedentePatologico")
+                                                .ColumnWidth(0.4).Collapsible(true)
+                                                .Title("<b>Antecedentes patologicos</b>")
+                
+                                                .MarginSpec("0 05 0 05")
+                                                .Defaults(d =>
+                                                {
+                                                    d.Add(new Parameter("LabelWidth", "170"));
+                                                    d.Add(new Parameter("DefaultAnchor", "100%"));
+                                                    d.Add(new Parameter("LabelAlign", "Left"));
+                                                })
+
+                                                .DefaultAnchor("100%")
+                                                .FieldDefaults(d =>
+                                                {
+                                                    d.LabelAlign = LabelAlign.Left;
+                                                })
+                                                 .Items(
+                                                        X.TextAreaFor(c => c.AntecentesPatologicos).ReadOnly(indicaModoLectura)
+                                                               .Rows(1)
+                                                               .FieldLabel("Antec. patologicos")
+                                                 )
+                                        ),
+                        X.FormPanel()
+                               .ID("Panel3")
+                               .BodyPadding(5)
+                
+                                .Border(false)
+                                .Header(false)
+                                .Items(
+
+                                     X.FieldSet().ID("fsAntecedenteLactancia")
+                                            .ColumnWidth(0.4).Collapsible(true)
+                                            .Title("<b>Antecedentes de lactancia</b>")
+                
+                                            .MarginSpec("0 05 0 05")
+                                            .Defaults(d =>
+                                            {
+                                                d.Add(new Parameter("LabelWidth", "170"));
+                                                d.Add(new Parameter("DefaultAnchor", "100%"));
+                                                d.Add(new Parameter("LabelAlign", "Left"));
+                                            })
+                                            .DefaultAnchor("100%")
+                                            .FieldDefaults(d =>
+                                            {
+                                                d.LabelAlign = LabelAlign.Left;
+                                            })
+                                             .Items(
+                                                 X.CheckboxGroupFor(c => c.IdTipoLecheHasta6meses, new List<Checkbox.Config> {
+                                                                new Checkbox.Config{BoxLabel = "LM exc.", InputValue = "1", ReadOnly = indicaModoLectura},
+                                                                new Checkbox.Config{BoxLabel = "Artificial", InputValue = "2", ReadOnly = indicaModoLectura},
+                                                                new Checkbox.Config{BoxLabel = "Mixta", InputValue = "3", ReadOnly = indicaModoLectura}
+                                                             })
+                                                           .FieldLabel("Tipo de leche hasta 6 meses")
+                                                           .DefaultAnchor("100%")
+                                                            .Defaults(d =>
+                                                            {
+                                                                d.Add(new Parameter("LabelWidth", "170"));
+                                                            })
+                                                           .ColumnsNumber(2),
+
+                                                     X.TextAreaFor(c => c.AntecLactancia).ReadOnly(indicaModoLectura) //--
+                                                           .Rows(1)
+                                                           .FieldLabel("Antec. lactancia")
+
+                                             ),
+                                      X.FieldSet().ID("fsEsferaSexual")
+                                            .ColumnWidth(0.4).Collapsible(true)
+                                            .Title("<b>De esfera sexual y reproductiva</b>")
+                                            .MarginSpec("0 05 0 05")
+                                            .Defaults(d =>
+                                            {
+                                                d.Add(new Parameter("LabelWidth", "170"));
+
+                                            })
+                                            .DefaultAnchor("100%")
+                                            .FieldDefaults(d =>
+                                            {
+                                                d.LabelAlign = LabelAlign.Left;
+                                            })
+
+                                                .Items(
+                                                       X.Container()
+                                                            .Layout(LayoutType.HBox)
+                                                            .Defaults(d =>
+                                                                {
+                                                                    d.Add(new Parameter("LabelWidth", "170"));
+                                                                })
+                                                            .Items(
+                                                                    X.DateFieldFor(c => c.FechaUltimaRegla).FieldLabel("FUR").ReadOnly(indicaModoLectura), //--
+                                                                    X.DateFieldFor(c => c.FechaUltimoPeriodo).FieldLabel("FUP").ReadOnly(indicaModoLectura)
+                                                                   ),
+                                                        X.TextFieldFor(c => c.MetodosAnticonceptivos).FieldLabel("Métodos anticonceptivos").ReadOnly(indicaModoLectura)
+                                            ),
+                                      X.FieldSet().ID("fsGinecoObstetrico")
+                                                .ColumnWidth(0.4).Collapsible(true)
+                                                .Title("<b>Gineco-obstétricos</b>")
+                                                .MarginSpec("0 05 0 05")
+                                                .Defaults(d =>
+                                                {
+                                                    d.Add(new Parameter("LabelWidth", "170"));
+                                                })
+
+                                                .DefaultAnchor("100%")
+                                                .FieldDefaults(d =>
+                                                {
+                                                    d.LabelAlign = LabelAlign.Left;
+                                                })
+                                                    .Items(
+
+                                                            X.TextFieldFor(c => c.Menarquia).FieldLabel("Menarquía").ReadOnly(indicaModoLectura),
+                                                            X.TextFieldFor(c => c.Menopausia).FieldLabel("Menopausia").ReadOnly(indicaModoLectura),
+                                                            X.TextFieldFor(c => c.CaracteristicasMenstruaciones).FieldLabel("Características de menstruaciones").ReadOnly(indicaModoLectura)                
+                                                )
+                                  ),
+                                  
+                       X.FormPanel()
+                               .ID("Panel4")
+                                .DefaultAnchor("100%")
+                               .BodyPadding(5)
+                
+                               .Border(false)
+                               .Header(false)
+                               .Items(
+                                     X.FieldSet()
+                                            .ColumnWidth(0.4).Collapsible(true)
+                                            .Title("<b>PADRE</b>")
+                                            .MarginSpec("0 05 0 05")
+                                            .Defaults(d =>
+                                            {
+                                                d.Add(new Parameter("LabelWidth", "170"));
+                                            })
+                                            .DefaultAnchor("100%")
+                                            .FieldDefaults(d =>
+                                            {
+                                                d.LabelAlign = LabelAlign.Left;
+                                            })
+                                             .Items(
+
+                                                 X.ComboBoxFor(c => c.Accion).ReadOnly(indicaModoLectura)
+                                                .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboMiscelaneoLista.GetComboGenerico("ESTACTUAL").Select(d => new ListItem(d.Name, d.ID)))
+                                                .FieldLabel("Estado Actual")
+                                                .SimpleSubmit(true),
+
+                                                 X.Component().Width(20),
+
+                                                 X.NumberFieldFor(c => c.Estado).FieldLabel("Edad").ReadOnly(indicaModoLectura),  
+                                                 
+                                             
+                                                // Grilla 1
+                                                    X.GridPanel()
+                                                         .ID("GRILLA_APPatologicos")
+                                                         .Border(false)
+                                                         .Store(
+                                                             Html.X().Store()
+                                                                     .ID("STORE_APPatologicos")
+                                                                   .Model(
+                                                                     Html.X().Model()
+                                                                         .IDProperty("CodigoElemento")
+                                                                         .Fields(
+                                                                             Html.X().ModelField().Name("CodigoElemento"),
+                                                                             Html.X().ModelField().Name("ValorCodigo1"),
+                                                                             Html.X().ModelField().Name("ACCION")
+                                                                             
+                                                                         )
+                                                                 )
+                                                                  .AutoLoad(true)
+                                                                  .RemoteSort(false)
+                                                                  .IsPagingStore(true)
+                                                                  .RemotePaging(true)
+                                                                  .PageSize(5)
+                                                                  .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                                                    .Url("EVENTO_APPatologicos")
+                                                                                    .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                                                                   .Root("data")
+                                                                                                   .TotalProperty("total")
+                                                                                                   .IDProperty("CodigoElemento")))
+                                                                                    .ExtraParams(e => e.Add(new Parameter("Tipo", "AP")))
+                                                                                                   ))
+                                                                )
+                                                         .ColumnModel(
+                                                                Html.X().ComponentColumn()
+                                                                    .Editor(true)
+                                                                    .Text("Enfermerdad que padece y/o padecio")
+                                                                    .DataIndex("ValorCodigo1")
+                                                                    .Flex(1)
+                                                                    .Component(
+                                                                        Html.X().TextField().ReadOnly(indicaModoLectura)
+                                                                            .Listeners(l => { l.Change.Handler = "hhValidation(this);"; })
+                                                                    )
+                                                                ,
+
+                                                        Html.X().ComponentColumn().Editor(true)
+                                                                                    .DataIndex("IdTipoInterConsulta")
+                                                                                    .Text("Tipo")
+                                                                                    .Flex(1)
+                                                                                    .Component(
+                                                                                        Html.X().ComboBox().ReadOnly(indicaModoLectura)
+                                                                                        .Editable(true)
+                                                                                        .QueryMode(DataLoadMode.Local)
+                                                                                        .TriggerAction(TriggerAction.All)
+                                                                                        .EmptyText("Seleccione tipo")
+                                                                                        .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboMiscelaneoLista.GetComboGenerico("INTERCONFE").Select(d => new ListItem(d.Name, d.ID)))
+
+                                                                                    ),                                                                 
+                                                                
+                                                                
+                                                                Html.X().CommandColumn()
+                                                                .Width(70)
+                                                                .Text("Acción")
+                                                                .Commands(
+                                                                Html.X().GridCommand().Disabled(indicaModoLectura)
+                                                                    .CommandName("Delete")
+                                                                    .Icon(Icon.Delete)
+                                                                    .Text("Eliminar")
+                                                                    )
+                                                                .Listeners(ls => ls.Command.Handler = "deleteActual(record,this.up('grid'),'AP');")
+                                                                )
+                                                         .SelectionModel(Html.X().RowSelectionModel().Mode(SelectionMode.Multi))
+                                                         .Plugins(Html.X().CellEditing())
+                                                         .TopBar(
+                                                                 Html.X().Toolbar().Hidden(indicaModoLectura)
+                                                                     .Items(
+                                                                        /*
+                                                                         Html.X().Button().ID("btnSelDesactivo_Patolo")
+                                                                         .Html("<b>Activar Selección</b>")
+                                                                         .Icon(Icon.PluginDisabled)
+                                                                         .Handler("eventoActivarSeleccion(App.btnSelDesactivo_Patolo,App.btnSelActivo_Patolo,'GRILLA_APPatologicos')")
+                                                                         ,
+                                                                         
+                                                                         Html.X().Button().ID("btnSelActivo_Patolo")
+                                                                         .Html("<b>Desactivar Selección</b>")
+                                                                         .Icon(Icon.PluginGo).Hidden(true)
+                                                                         .Handler("eventoDesactivarSeleccion(App.btnSelActivo_Patolo,App.btnSelDesactivo_Patolo)")
+                                                                         ,
+                                                                         */
+                                                                        Html.X().Button().Disabled(indicaModoLectura)
+                                                                         .Text("Agregar")
+                                                                         .Icon(Icon.Add)
+                                                                         .Handler("addRecordMain(this.up('grid'));")                                                                         
+                                                                     )
+                                                           ),
+                                                           
+                                                  // Grilla 2 
+                                                  /*                                                           
+                                                   X.GridPanel()
+                                                         .ID("GRILLA_APTrabajo")
+                                                         .Border(false)
+                                                         .Store(
+                                                             Html.X().Store()
+                                                                     .ID("STORE_APTrabajo")
+                                                                   .Model(
+                                                                     Html.X().Model()
+                                                                         .IDProperty("CodigoElemento")
+                                                                         .Fields(
+                                                                             Html.X().ModelField().Name("CodigoElemento"),
+                                                                             Html.X().ModelField().Name("ValorCodigo1"),
+                                                                             Html.X().ModelField().Name("ACCION")
+                                                                         )
+                                                                 )
+                                                                  .AutoLoad(true)
+                                                                  .RemoteSort(false)
+                                                                  .IsPagingStore(true)
+                                                                  .RemotePaging(true)
+                                                                  .PageSize(5)
+                                                                  .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                                                    .Url("EVENTO_APPatologicos")
+                                                                                    .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                                                                   .Root("data")
+                                                                                                   .TotalProperty("total")
+                                                                                                   .IDProperty("CodigoElemento")))
+                                                                                    .ExtraParams(e => e.Add(new Parameter("Tipo", "AT")))
+                                                                                                   ))
+                                                                )
+                                                         .ColumnModel(
+                                                             Html.X().ComponentColumn()
+                                                                 .Editor(true)
+                                                                 .Text("Madre")
+                                                                 .DataIndex("ValorCodigo1")
+                                                                 .Flex(1)
+                                                                 .Component(
+                                                                     Html.X().TextField().ReadOnly(indicaModoLectura)
+                                                                            .Listeners(l => { l.Change.Handler = "hhValidation(this);"; })
+                                                                     )
+                                                            ,
+                                                            Html.X().CommandColumn()
+                                                            .Width(70)
+                                                            .Text("Acción")
+                                                            .Commands(
+                                                                Html.X().GridCommand().Disabled(indicaModoLectura)
+                                                                    .CommandName("Delete")
+                                                                    .Icon(Icon.Delete)
+                                                                    .Text("Eliminar")
+                                                            )
+                                                            .Listeners(ls => ls.Command.Handler = "deleteActual(record,this.up('grid'),'AT');")
+                                                         )
+                                                         .SelectionModel(Html.X().RowSelectionModel().Mode(SelectionMode.Multi))
+                                                         .Plugins(Html.X().CellEditing())
+                                                         .TopBar(
+                                                                 Html.X().Toolbar().Hidden(indicaModoLectura)
+                                                                     .Items(
+                                                                         Html.X().Button().ID("btnSelDesactivo_APTrabajo")
+                                                                         .Html("<b>Activar Selección</b>")
+                                                                         .Icon(Icon.PluginDisabled)
+                                                                         .Handler("eventoActivarSeleccion(App.btnSelDesactivo_APTrabajo,App.btnSelActivo_APTrabajo,'GRILLA_APTrabajo')"),
+                                                                         Html.X().Button().ID("btnSelActivo_APTrabajo")
+                                                                         .Html("<b>Desactivar Selección</b>")
+                                                                         .Icon(Icon.PluginGo).Hidden(true)
+                                                                         .Handler("eventoDesactivarSeleccion(App.btnSelActivo_APTrabajo,App.btnSelDesactivo_APTrabajo)")
+
+                                                                     )
+                                                           ),
+                                                        */
+                                                       // Grilla 3
+                                                       /*    
+                                                       X.GridPanel()
+                                                         .ID("GRILLA_APQuirurgicas")
+                                                         .Border(false)
+                                                         .Store(
+                                                             Html.X().Store()
+                                                                     .ID("STORE_APQuirurgicas")
+                                                                   .Model(
+                                                                     Html.X().Model()
+                                                                         .IDProperty("CodigoElemento")
+                                                                         .Fields(
+                                                                             Html.X().ModelField().Name("CodigoElemento"),
+                                                                             Html.X().ModelField().Name("ValorCodigo1"),
+                                                                             Html.X().ModelField().Name("ACCION")
+                                                                         )
+                                                                 )
+                                                                  .AutoLoad(true)
+                                                                  .RemoteSort(false)
+                                                                  .IsPagingStore(true)
+                                                                  .RemotePaging(true)
+                                                                  .PageSize(5)
+                                                                  .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                                                    .Url("EVENTO_APPatologicos")
+                                                                                    .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                                                                   .Root("data")
+                                                                                                   .TotalProperty("total")
+                                                                                                   .IDProperty("CodigoElemento")))
+                                                                                    .ExtraParams(e => e.Add(new Parameter("Tipo", "AQ")))
+                                                                                                   ))
+                                                                )
+                                                         .ColumnModel(
+                                                                Html.X().ComponentColumn()
+                                                                    .Editor(true)
+                                                                    .Text("Abuela Materna")
+                                                                    .DataIndex("ValorCodigo1")
+                                                                    .Flex(1)
+                                                                    .Component(
+                                                                        Html.X().TextField()
+                                                                            .Listeners(l => { l.Change.Handler = "hhValidation(this);"; })
+                                                                        )
+                                                                ,
+                                                                Html.X().CommandColumn()
+                                                                .Width(70)
+                                                                .Text("Acción")
+                                                                .Commands(
+                                                                Html.X().GridCommand().Disabled(indicaModoLectura)
+                                                                    .CommandName("Delete")
+                                                                    .Icon(Icon.Delete)
+                                                                    .Text("Eliminar")
+                                                                )
+                                                                .Listeners(ls => ls.Command.Handler = "deleteActual(record,this.up('grid'),'AQ');")
+                                                                 )
+                                                         .SelectionModel(Html.X().RowSelectionModel().Mode(SelectionMode.Multi))
+                                                         .Plugins(Html.X().CellEditing())
+                                                         .TopBar(
+                                                                 Html.X().Toolbar().Hidden(indicaModoLectura)
+                                                                     .Items(
+                                                                         Html.X().Button().ID("btnSelDesactivo_APQuirurgicaso")
+                                                                         .Html("<b>Activar Selección</b>")
+                                                                         .Icon(Icon.PluginDisabled)
+                                                                         .Handler("eventoActivarSeleccion(App.btnSelDesactivo_APQuirurgicaso,App.btnSelActivo_APQuirurgicaso,'GRILLA_APQuirurgicas')"),
+                                                                         Html.X().Button().ID("btnSelActivo_APQuirurgicaso")
+                                                                         .Html("<b>Desactivar Selección</b>")
+                                                                         .Icon(Icon.PluginGo).Hidden(true)
+                                                                         .Handler("eventoDesactivarSeleccion(App.btnSelActivo_APQuirurgicaso,App.btnSelDesactivo_APQuirurgicaso)")
+
+                                                                     )
+                                                           ),
+                                                        */
+                                                         X.TextFieldFor(c => c.Transfusiones).FieldLabel("Transfusiones").ReadOnly(indicaModoLectura)
+                                                 )
+                                 ),
+                          X.FormPanel()
+                               .ID("Panel5")
+                               .DefaultAnchor("100%")
+                               .BodyPadding(5)
+                
+                               .Border(false)
+                               .Header(false)
+                               .Items(
+                                         X.FieldSet().ID("fsInmunizaciones")
+                                                .ColumnWidth(0.4).Collapsible(true)
+                                                .Title("<b>De inmunizaciones</b>")
+                                                .MarginSpec("0 05 0 05")
+                                                .Defaults(d =>
+                                                {
+                                                    d.Add(new Parameter("LabelWidth", "170"));
+                                                })
+
+                                                .DefaultAnchor("100%")
+                                                .FieldDefaults(d =>
+                                                {
+                                                    d.LabelAlign = LabelAlign.Left;
+                                                })
+                                                    .Items(
+                                                         X.Container()
+                                                                .Layout(LayoutType.HBox)
+                                                                .Defaults(d =>
+                                                                {
+                                                                    d.Add(new Parameter("LabelWidth", "170"));
+                                                                })
+                                                                .Items(
+                                                                        X.DateFieldFor(c => c.DeinmunizFechaAproximada).FieldLabel("Fecha").ReadOnly(indicaModoLectura),  //--
+                                                                        X.NumberFieldFor(c => c.DeinmunizEdadAproximada).FieldLabel("Edad").ReadOnly(indicaModoLectura)
+                                                                       ),
+                                                            X.ComboBoxFor(c => c.ValoracionSocioFamiliar).ReadOnly(indicaModoLectura)
+                                                                .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenerico("TIPOVACUNA").Select(d => new ListItem(d.Name, d.ID)))
+                                                                .FieldLabel("Tabla de Vacuna")
+                                                                .SimpleSubmit(true)
+                                                )
+                                          /*
+                                          X.FieldSet().ID("fsHabitos")
+                                                .ColumnWidth(0.4).Collapsible(true)
+                                                .Title("<b>De hábitos nocivos (uso y abuso de sustancias)</b>")
+                                                .MarginSpec("0 05 0 05")
+                                                .Defaults(d =>
+                                                    { d.Add(new Parameter("LabelWidth", "170")); })
+                                                .DefaultAnchor("100%")
+                                                .FieldDefaults(d =>
+                                                    { d.LabelAlign = LabelAlign.Left; })
+                                               .Items(
+                                                      X.TextFieldFor(c => c.Alcohol).FieldLabel("Alcohol").ReadOnly(indicaModoLectura),
+                                                      X.TextFieldFor(c => c.Tabaco).FieldLabel("Tabaco").ReadOnly(indicaModoLectura),
+                                                      X.TextFieldFor(c => c.Drogas).FieldLabel("Drogas").ReadOnly(indicaModoLectura)
+                                                    ),
+                                            */  
+                                                
+                                          /*
+                                          X.FieldSet()
+                                                .ColumnWidth(0.4).Collapsible(true)
+                                                .Title("<b>De buenos hábitos</b>")
+                                                .MarginSpec("0 05 0 05")
+                                                .Defaults(d =>
+                                                { d.Add(new Parameter("LabelWidth", "170")); })
+                                                .DefaultAnchor("100%")
+                                                .FieldDefaults(d =>
+                                                    { d.LabelAlign = LabelAlign.Left; })
+                                               .Items(
+                                                      X.TextFieldFor(c => c.ActividadFisica).FieldLabel("Actividad fisica").ReadOnly(indicaModoLectura),
+                                                      X.TextFieldFor(c => c.ConsumoVerduras).FieldLabel("Consumo de verduras").ReadOnly(indicaModoLectura),
+                                                      X.TextFieldFor(c => c.ConsumoFrutas).FieldLabel("Consumo de Frutas").ReadOnly(indicaModoLectura)
+                                                    ),
+                                           * /
+                                           /* 
+                                          X.FieldSet()
+                                                .ColumnWidth(0.4).Collapsible(true)
+                                                .Title("<b>De Alergias</b>")
+                                                .MarginSpec("0 05 0 05")
+                                                .Defaults(d =>
+                                                { d.Add(new Parameter("LabelWidth", "170")); })
+                                                .DefaultAnchor("100%")
+                                                .FieldDefaults(d =>
+                                                { d.LabelAlign = LabelAlign.Left; })
+                                               .Items(
+                                                      X.TextFieldFor(c => c.Medicamentos).FieldLabel("Medicamentos").ReadOnly(indicaModoLectura), //--
+                                                      X.TextFieldFor(c => c.Alimentos).FieldLabel("Alimentos").ReadOnly(indicaModoLectura),
+                                                      X.TextFieldFor(c => c.SustanciasEnElAmbiente).FieldLabel("Sustancias que están en el ambiente").ReadOnly(indicaModoLectura),
+                                                      X.TextFieldFor(c => c.SustanciasContactoConPiel).FieldLabel("Sustancias que entran en contacto con la piel").ReadOnly(indicaModoLectura)
+                                                      )
+                                            */
+                                   ),
+                                   
+                          X.FormPanel()
+                               .ID("Panel6")
+                               .BodyPadding(5)
+                
+                               .Border(false)
+                               .Header(false)
+                               .Items(
+                                        X.FieldSet()
+                                                .ColumnWidth(0.4).Collapsible(true)
+                                                .Title("<b>MADRE</b>")
+                                                .MarginSpec("0 05 0 05")
+                                                .Defaults(d =>
+                                                { d.Add(new Parameter("LabelWidth", "170")); })
+                                                .DefaultAnchor("100%")
+                                                .FieldDefaults(d =>
+                                                { d.LabelAlign = LabelAlign.Left; })
+                                               .Items(
+                                                       X.GridPanel()
+                                                         .ID("GRILLA_APEpidomiologia")
+                                                         .Border(false)
+                                                         .Store(
+                                                             Html.X().Store()
+                                                                     .ID("STORE_APEpidomiologia")
+                                                                   .Model(
+                                                                     Html.X().Model()
+                                                                         .IDProperty("CodigoElemento")
+       
+                                                                         .Fields(
+                                                                            new ModelField("CodigoElemento", ModelFieldType.String),
+                                                                            new ModelField("ValorCodigo1", ModelFieldType.String),
+                                                                            new ModelField("ValorFecha", ModelFieldType.Date),
+                                                                            new ModelField("ValorCodigo2", ModelFieldType.String),
+                                                                            new ModelField("ACCION", ModelFieldType.String)
+                                                                             ))
+
+                                                                  .AutoLoad(true)
+                                                                  .RemoteSort(false)
+                                                                  .IsPagingStore(true)
+                                                                  .RemotePaging(true)
+                                                                  .PageSize(5)
+                                                                  .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                                                    .Url("EVENTO_APPatologicos")
+                                                                                    .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                                                                   .Root("data")
+                                                                                                   .TotalProperty("total")
+                                                                                                   .IDProperty("CodigoElemento")))
+                                                                                    .ExtraParams(e => e.Add(new Parameter("Tipo", "AE")))
+                                                                                                   ))
+                                                         )
+                                                         .ColumnModel(
+                                                             Html.X().ComponentColumn()
+                                                                 .Editor(true)
+                                                                 .Text("Enfermedades Anteriores -  Epidémicas")
+                                                                 .DataIndex("ValorCodigo1")
+                                                                 .Flex(1)
+                                                                 .Component(
+                                                                     Html.X().TextField().ReadOnly(indicaModoLectura)
+                                                                            .Listeners(l => { l.Change.Handler = "hhValidation(this);"; })
+                                                                     ),
+                                                            Html.X().ComponentColumn()
+                                                                 .Editor(true)
+                                                                 .Text("Fecha")
+                                                                 .DataIndex("ValorFecha")
+                                                                 .Flex(1)
+                                                                 .Component(
+                                                                     Html.X().DateField().ReadOnly(indicaModoLectura)
+                                                                     ),
+                                                            Html.X().ComponentColumn()
+                                                                 .Editor(true)
+                                                                 .Text("Lugar")
+                                                                 .DataIndex("ValorCodigo2")
+                                                                 .Flex(1)
+                                                                 .Component(
+                                                                     Html.X().TextField().ReadOnly(indicaModoLectura)
+                                                                     )
+                                                            ,
+                                                            Html.X().CommandColumn()
+                                                            .Width(70)
+                                                            .Text("Acción")
+                                                            .Commands(
+                                                                Html.X().GridCommand().Disabled(indicaModoLectura)
+                                                                    .CommandName("Delete")
+                                                                    .Icon(Icon.Delete)
+                                                                    .Text("Eliminar")
+                                                            )
+                                                            .Listeners(ls => ls.Command.Handler = "deleteActual(record,this.up('grid'),'AE');")
+                                                         )
+                                                         .SelectionModel(Html.X().RowSelectionModel().Mode(SelectionMode.Multi))
+                                                         .Plugins(Html.X().CellEditing())
+                                                         .TopBar(
+                                                                 Html.X().Toolbar().Hidden(indicaModoLectura)
+                                                                     .Items(
+                                                                         Html.X().Button().ID("btnSelDesactivo_APEpidomiologia")
+                                                                         .Html("<b>Activar Selección</b>")
+                                                                         .Icon(Icon.PluginDisabled)
+                                                                         .Handler("eventoActivarSeleccion(App.btnSelDesactivo_APEpidomiologia,App.btnSelActivo_APEpidomiologia,'GRILLA_APEpidomiologia')"),
+                                                                         Html.X().Button().ID("btnSelActivo_APEpidomiologia")
+                                                                         .Html("<b>Desactivar Selección</b>")
+                                                                         .Icon(Icon.PluginGo).Hidden(true)
+                                                                         .Handler("eventoDesactivarSeleccion(App.btnSelActivo_APEpidomiologia,App.btnSelDesactivo_APEpidomiologia)")
+
+                                                                     )
+                                                           ),
+                                                    X.TextFieldFor(c => c.CrianzaAnimalesDomesticos).FieldLabel("Crianza de animales domésticos").ReadOnly(indicaModoLectura)
+                                                ),
+                                          X.FieldSet()
+                                                .ColumnWidth(0.4).Collapsible(true)
+                                                .Title("<b>Socio-económicos</b>")
+                                                .MarginSpec("0 05 0 05")
+                                                .Defaults(d =>
+                                                { d.Add(new Parameter("LabelWidth", "170")); })
+                                                .DefaultAnchor("100%")
+                                                .FieldDefaults(d =>
+                                                { d.LabelAlign = LabelAlign.Left; })
+                                               .Items(
+                                                        X.TextFieldFor(c => c.AguaPotable).FieldLabel("Agua potable").ReadOnly(indicaModoLectura),
+                                                        X.TextFieldFor(c => c.DisposicionExcretas).FieldLabel("Disposición de excretas").ReadOnly(indicaModoLectura)
+                                                        ),
+                                        X.FieldSet()
+                                                .ColumnWidth(0.4).Collapsible(true)
+                                                .Title("<b>Generales</b>")
+                                                .MarginSpec("0 05 0 05")
+                                                .Defaults(d =>
+                                                { d.Add(new Parameter("LabelWidth", "170")); })
+                                                .DefaultAnchor("100%")
+                                                .FieldDefaults(d =>
+                                                { d.LabelAlign = LabelAlign.Left; })
+                                               .Items(
+                                                    X.GridPanel()
+                                                         .ID("GRILLA_APGenerales")
+                                                         .Border(false)
+                                                         .Store(
+                                                             Html.X().Store()
+                                                                     .ID("STORE_APGenerales")
+                                                                   .Model(
+                                                                     Html.X().Model()
+                                                                         .IDProperty("CodigoElemento")
+
+                                                                        .Fields(
+                                                                            new ModelField("CodigoElemento", ModelFieldType.String),
+                                                                            new ModelField("ValorCodigo1", ModelFieldType.String),
+                                                                            new ModelField("ValorFecha", ModelFieldType.Date),
+                                                                            new ModelField("ValorCodigo2", ModelFieldType.String),
+                                                                            new ModelField("ACCION", ModelFieldType.String)
+                                                                             ))
+                                                                  .AutoLoad(true)
+                                                                  .RemoteSort(false)
+                                                                  .IsPagingStore(true)
+                                                                  .RemotePaging(true)
+                                                                  .PageSize(5)
+                                                                  .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                                                    .Url("EVENTO_APPatologicos")
+                                                                                    .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                                                                   .Root("data")
+                                                                                                   .TotalProperty("total")
+                                                                                                   .IDProperty("CodigoElemento")))
+                                                                                    .ExtraParams(e => e.Add(new Parameter("Tipo", "AG")))
+                                                                                                   ))
+                                                         )
+                                                         .ColumnModel(
+                                                             Html.X().ComponentColumn()
+                                                                 .Editor(true)
+                                                                 .Text("Enfermedades Anteriores - Generales")
+                                                                 .DataIndex("ValorCodigo1")
+                                                                 .Flex(1)
+                                                                 .Component(
+                                                                     Html.X().TextField().ReadOnly(indicaModoLectura)
+                                                                            .Listeners(l => { l.Change.Handler = "hhValidation(this);"; })
+                                                                     ),
+                                                            Html.X().ComponentColumn()
+                                                                 .Editor(true)
+                                                                 .Text("Fecha")
+                                                                 .DataIndex("ValorFecha")
+                                                                 .Flex(1)
+                                                                 .Component(
+                                                                     Html.X().DateField().ReadOnly(indicaModoLectura)
+                                                                     ),
+                                                            Html.X().ComponentColumn()
+                                                                 .Editor(true)
+                                                                 .Text("Lugar")
+                                                                 .DataIndex("ValorCodigo2")
+                                                                 .Flex(1)
+                                                                 .Component(
+                                                                     Html.X().TextField().ReadOnly(indicaModoLectura)
+                                                                     )
+                                                            ,
+                                                            Html.X().CommandColumn()
+                                                            .Width(70)
+                                                            .Text("Acción")
+                                                            .Commands(
+                                                                Html.X().GridCommand().Disabled(indicaModoLectura)
+                                                                    .CommandName("Delete")
+                                                                    .Icon(Icon.Delete)
+                                                                    .Text("Eliminar")
+                                                            )
+                                                            .Listeners(ls => ls.Command.Handler = "deleteActual(record,this.up('grid'),'AG');")
+                                                         )
+                                                         .SelectionModel(Html.X().RowSelectionModel().Mode(SelectionMode.Multi))
+                                                         .Plugins(Html.X().CellEditing())
+                                                         .TopBar(
+                                                                 Html.X().Toolbar().Hidden(indicaModoLectura)
+                                                                     .Items(
+                                                                         Html.X().Button().ID("btnSelDesactivo_APGenerales")
+                                                                         .Html("<b>Activar Selección</b>")
+                                                                         .Icon(Icon.PluginDisabled)
+                                                                         .Handler("eventoActivarSeleccion(App.btnSelDesactivo_APGenerales,App.btnSelActivo_APGenerales,'GRILLA_APGenerales')"),
+                                                                         Html.X().Button().ID("btnSelActivo_APGenerales")
+                                                                         .Html("<b>Desactivar Selección</b>")
+                                                                         .Icon(Icon.PluginGo).Hidden(true)
+                                                                         .Handler("eventoDesactivarSeleccion(App.btnSelActivo_APGenerales,App.btnSelDesactivo_APGenerales)")
+                                                                     )
+                                                           ),
+                                                          X.RadioGroupFor(c => c.DiagnosticoFuncional, new List<Radio.Config> {
+                                                                    new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly=indicaModoLectura},
+                                                                    new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly=indicaModoLectura}
+                                                                    })
+                                                                 .Vertical(true)
+                                                                 .FieldLabel("Reacción adversa a medicamentos")
+                                                                 .Defaults(d =>
+                                                                 {
+                                                                     d.Add(new Parameter("LabelWidth", "100"));
+                                                                 })
+                                                                .AnchorVertical("100%"),
+                                                            X.TextFieldFor(c => c.ReaccionAdversaMedicamentos).FieldLabel("Reacción adversa a medicamentos").ReadOnly(indicaModoLectura),
+                                                            X.TextFieldFor(c => c.SaludBucal).FieldLabel("Salud bucal").ReadOnly(indicaModoLectura)
+                                                        ),
+                                        X.FieldSet()
+                                                .ColumnWidth(0.4).Collapsible(true)
+                                                .Title("<b>Atención del niño</b>")
+                                                .MarginSpec("0 05 0 05")
+                                                .Defaults(d =>
+                                                { d.Add(new Parameter("LabelWidth", "170")); })
+                                                .DefaultAnchor("100%")
+                                                .FieldDefaults(d =>
+                                                { d.LabelAlign = LabelAlign.Left; })
+                                               .Items(
+
+                                                    X.TextFieldFor(c => c.VigilanciaDeCrecimiento).FieldLabel("Vigilancia de crecimiento").ReadOnly(indicaModoLectura),
+                                                    X.TextFieldFor(c => c.VigilanciaDelDesarrollo).FieldLabel("Vigilancia del desarrollo").ReadOnly(indicaModoLectura)
+                                               )
+                               ),
+                          X.FormPanel()
+                               .ID("Panel7")
+                               .BodyPadding(5)
+                
+                               .Border(false)
+                               .Header(false)
+                               .Items(
+                                        X.Label("Valoración clínica de adulto mayor").ID("lbActividades"),
+                                        X.FieldSet().ID("fsActividades")
+                                                .ColumnWidth(0.4).Collapsible(true)
+                                                .Title("<b>Funcional </b>")
+                                                .MarginSpec("0 05 0 05")
+                                                .Defaults(d =>
+                                                { d.Add(new Parameter("LabelWidth", "170")); })
+                                                .DefaultAnchor("100%")
+                                                .FieldDefaults(d =>
+                                                { d.LabelAlign = LabelAlign.Left; })
+                                               .Items(
+                                                       X.Label("Actividades Básicas de la Vida Diaria (ABVD)"),
+                                                       X.CheckboxGroupFor(c => c.IdValoracionFuncional1, new List<Checkbox.Config> {
+                                                                new Checkbox.Config{BoxLabel = "Dependiente", InputValue = "1" , ReadOnly=indicaModoLectura},
+                                                                new Checkbox.Config{BoxLabel = "Independiente", InputValue = "2" , ReadOnly = indicaModoLectura}
+                                                            })
+                                                            .FieldLabel("Lavarse")
+                                                            .DefaultAnchor("100%")
+                                                            .Defaults(d =>
+                                                            {
+                                                                d.Add(new Parameter("LabelWidth", "170"));
+                                                            }),
+                                                       X.CheckboxGroupFor(c => c.IdValoracionFuncional2, new List<Checkbox.Config> {
+                                                                new Checkbox.Config{BoxLabel = "Dependiente", InputValue = "1", ReadOnly = indicaModoLectura},
+                                                                new Checkbox.Config{BoxLabel = "Independiente", InputValue = "2", ReadOnly = indicaModoLectura}
+                                                            })
+                                                            .FieldLabel("Vestirse")
+                                                            .DefaultAnchor("100%")
+                                                            .Defaults(d =>
+                                                            {
+                                                                d.Add(new Parameter("LabelWidth", "170"));
+                                                            }),
+                                                       X.CheckboxGroupFor(c => c.IdValoracionFuncional3, new List<Checkbox.Config> {
+                                                                new Checkbox.Config{BoxLabel = "Dependiente", InputValue = "1", ReadOnly = indicaModoLectura},
+                                                                new Checkbox.Config{BoxLabel = "Independiente", InputValue = "2", ReadOnly = indicaModoLectura}
+                                                            })
+                                                            .FieldLabel("Uso de Serv. Higiénico")
+                                                            .DefaultAnchor("100%")
+                                                            .Defaults(d =>
+                                                            {
+                                                                d.Add(new Parameter("LabelWidth", "170"));
+                                                            }),
+                                                        X.CheckboxGroupFor(c => c.IdValoracionFuncional4, new List<Checkbox.Config> {
+                                                                new Checkbox.Config{BoxLabel = "Dependiente", InputValue = "1", ReadOnly = indicaModoLectura},
+                                                                new Checkbox.Config{BoxLabel = "Independiente", InputValue = "2", ReadOnly = indicaModoLectura}
+                                                            })
+                                                            .FieldLabel("Movilizarse")
+                                                            .DefaultAnchor("100%")
+                                                            .Defaults(d =>
+                                                            {
+                                                                d.Add(new Parameter("LabelWidth", "170"));
+                                                            }),
+                                                        X.CheckboxGroupFor(c => c.IdValoracionFuncional5, new List<Checkbox.Config> {
+                                                                new Checkbox.Config{BoxLabel = "Dependiente", InputValue = "1", ReadOnly = indicaModoLectura},
+                                                                new Checkbox.Config{BoxLabel = "Independiente", InputValue = "2", ReadOnly = indicaModoLectura}
+                                                            })
+                                                            .FieldLabel("Continencia")
+                                                            .DefaultAnchor("100%")
+                                                            .Defaults(d =>
+                                                            {
+                                                                d.Add(new Parameter("LabelWidth", "170"));
+                                                            }),
+                                                        X.CheckboxGroupFor(c => c.IdValoracionFuncional6, new List<Checkbox.Config> {
+                                                                new Checkbox.Config{BoxLabel = "Dependiente", InputValue = "1", ReadOnly = indicaModoLectura},
+                                                                new Checkbox.Config{BoxLabel = "Independiente", InputValue = "2", ReadOnly = indicaModoLectura}
+                                                            })
+                                                            .FieldLabel("Alimentarse")
+                                                            .DefaultAnchor("100%")
+                                                            .Defaults(d =>
+                                                            {
+                                                                d.Add(new Parameter("LabelWidth", "170"));
+                                                            })
+                                                  ),
+                                        X.FieldSet().ID("fsEstadoCognitivo")
+                                                .ColumnWidth(0.4).Collapsible(true)
+                                                .Title("<b>Estado Cognitivo </b>")
+                                                .MarginSpec("0 05 0 05")
+                                                .Defaults(d =>
+                                                { d.Add(new Parameter("LabelWidth", "170")); })
+                                                .DefaultAnchor("100%")
+                                                .FieldDefaults(d =>
+                                                { d.LabelAlign = LabelAlign.Left; })
+                                               .Items(
+                                                      X.Container()
+                                                                .Layout(LayoutType.HBox)
+                                                                .Defaults(d =>
+                                                                {
+                                                                    d.Add(new Parameter("LabelWidth", "170"));
+                                                                })
+                                                                .Items(
+                                                                        X.NumberFieldFor(c => c.IdEstadoCognitivo1).FieldLabel("¿Cuál es la fecha de hoy? (dia, mes, año)").ReadOnly(indicaModoLectura),  //--
+                                                                        X.Component().Width(20),
+                                                                        X.NumberFieldFor(c => c.IdEstadoCognitivo2).FieldLabel("¿Qué día de la semana?").ReadOnly(indicaModoLectura)
+                                                                       ),
+
+                                                      X.Container()
+                                                                .Layout(LayoutType.HBox)
+                                                                .Defaults(d =>
+                                                                {
+                                                                    d.Add(new Parameter("LabelWidth", "170"));
+                                                                })
+                                                                .Items(
+                                                                        X.NumberFieldFor(c => c.IdEstadoCognitivo3).FieldLabel("¿En qué lugar estamos? (vale cualquier descripción correcta del lugar)").ReadOnly(indicaModoLectura),
+                                                                        X.Component().Width(20),
+                                                                        X.NumberFieldFor(c => c.IdEstadoCognitivo4).FieldLabel("¿Cuál es su número de teléfono?").ReadOnly(indicaModoLectura)
+                                                                       ),
+                                                      X.Container()
+                                                                .Layout(LayoutType.HBox)
+                                                                .Defaults(d =>
+                                                                {
+                                                                    d.Add(new Parameter("LabelWidth", "170"));
+                                                                })
+                                                                .Items(
+                                                                        X.NumberFieldFor(c => c.IdEstadoCognitivo5).FieldLabel("Cuál es su dirección completa?").ReadOnly(indicaModoLectura),
+                                                                        X.Component().Width(20),
+                                                                        X.NumberFieldFor(c => c.IdEstadoCognitivo6).FieldLabel("¿Cuántos años tiene?").ReadOnly(indicaModoLectura)
+                                                                       ),
+                                                         X.Container()
+                                                                .Layout(LayoutType.HBox)
+                                                                .Defaults(d =>
+                                                                {
+                                                                    d.Add(new Parameter("LabelWidth", "170"));
+                                                                })
+                                                                .Items(
+                                                                        X.NumberFieldFor(c => c.IdEstadoCognitivo7).FieldLabel("¿Dónde nació?").ReadOnly(indicaModoLectura),
+                                                                        X.Component().Width(20),
+                                                                        X.NumberFieldFor(c => c.IdEstadoCognitivo8).FieldLabel("¿Cuál es el nombre del presidente del Perú?").ReadOnly(indicaModoLectura)
+                                                                       ),
+                                                         X.Container()
+                                                                .Layout(LayoutType.HBox)
+                                                                .Defaults(d =>
+                                                                {
+                                                                    d.Add(new Parameter("LabelWidth", "170"));
+                                                                })
+                                                                .Items(
+                                                                        X.NumberFieldFor(c => c.IdEstadoCognitivo9).FieldLabel("Digame el primer apellido de su madre").ReadOnly(indicaModoLectura),
+                                                                        X.Component().Width(20),
+                                                                        X.NumberFieldFor(c => c.IdEstadoCognitivo10).FieldLabel("Restar de 3 en 3 desde 30 (cualquier error hace errónea la respuesta)").ReadOnly(indicaModoLectura)
+                                                                       ),
+                                                          X.CheckboxGroupFor(c => c.ValoracionCognitiva, new List<Checkbox.Config> {
+                                                                   new Checkbox.Config{BoxLabel = "NORMAL", InputValue = "1", ReadOnly=indicaModoLectura},
+                                                                    new Checkbox.Config{BoxLabel = "DC LEVE", InputValue = "2", ReadOnly=indicaModoLectura},
+                                                                    new Checkbox.Config{BoxLabel = "DC MODERADO", InputValue = "3", ReadOnly=indicaModoLectura},
+                                                                    new Checkbox.Config{BoxLabel = "DC SEVERO", InputValue = "4", ReadOnly=indicaModoLectura}
+                                                                 })
+                                                               .FieldLabel("VALORACION COGNITIVA")
+                                                               .DefaultAnchor("100%")
+                                                                .Defaults(d =>
+                                                                {
+                                                                    d.Add(new Parameter("LabelWidth", "170"));
+                                                                })
+                                                               .ColumnsNumber(2)
+                                                              ),
+                                                X.FieldSet().ID("fsEstadoAfectivo")
+                                                                .ColumnWidth(0.4).Collapsible(true)
+                                                                .Title("<b>Estado Afectivo </b>")
+                                                                .MarginSpec("0 05 0 05")
+                                                                .Defaults(d =>
+                                                                { d.Add(new Parameter("LabelWidth", "170")); })
+                                                                .DefaultAnchor("100%")
+                                                                .FieldDefaults(d =>
+                                                                { d.LabelAlign = LabelAlign.Left; })
+                                                               .Items(
+                                                                       X.RadioGroupFor(c => c.IdEstadoAfectivo1, new List<Radio.Config> {
+                                                                                        new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly=indicaModoLectura},
+                                                                                        new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly=indicaModoLectura}
+                                                                                    })
+                                                                                 .Vertical(true)
+                                                                                 .FieldLabel("¿Está satisfecho con su vida?")
+                                                                                 .Defaults(d =>
+                                                                                     {
+                                                                                         d.Add(new Parameter("LabelWidth", "100"));
+                                                                                     }),
+                                                                        X.RadioGroupFor(c => c.IdEstadoAfectivo2, new List<Radio.Config> {
+                                                                                        new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly=indicaModoLectura},
+                                                                                        new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly=indicaModoLectura}
+                                                                                    })
+                                                                                 .Vertical(true)
+                                                                                 .FieldLabel("¿Se siente impotente o indefenso?")
+                                                                                 .Defaults(d =>
+                                                                                     {
+                                                                                         d.Add(new Parameter("LabelWidth", "100"));
+                                                                                     }),
+                                                                        X.RadioGroupFor(c => c.IdEstadoAfectivo3, new List<Radio.Config> {
+                                                                                        new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly=indicaModoLectura},
+                                                                                        new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly=indicaModoLectura}
+                                                                                    })
+                                                                                 .Vertical(true)
+                                                                                 .FieldLabel("¿Tiene problemas de memoria?")
+                                                                                 .Defaults(d =>
+                                                                                     {
+                                                                                         d.Add(new Parameter("LabelWidth", "100"));
+                                                                                     }),
+
+                                                                       X.RadioGroupFor(c => c.IdEstadoAfectivo4, new List<Radio.Config> {
+                                                                                        new Radio.Config{BoxLabel = "Si", InputValue = "1", ReadOnly=indicaModoLectura},
+                                                                                        new Radio.Config{BoxLabel = "No", InputValue = "2", ReadOnly=indicaModoLectura}
+                                                                                    })
+                                                                                 .Vertical(true)
+                                                                                 .FieldLabel("¿Siente desgano o se siente imposibilitado respecto a actividaes e intereses?")
+                                                                                 .Defaults(d =>
+                                                                                     {
+                                                                                         d.Add(new Parameter("LabelWidth", "100"));
+                                                                                     })
+                                                                      )
+                                                        ),
+                                        X.FormPanel()
+                                                   .ID("Panel8")
+                                                   .BodyPadding(5)
+                
+                                                   .Border(false)
+                                                   .Header(false)
+                                                   .Items(
+                                                         X.FieldSet().ID("fsValoracionSocio")
+                                                           .ColumnWidth(0.4).Collapsible(true)
+                                                           .Title("<b>VALORACION SOCIO - FAMILIAR </b>")
+                                                           .MarginSpec("0 05 0 05")
+                                                           .Defaults(d =>
+                                                           { d.Add(new Parameter("LabelWidth", "170")); })
+                                                           .DefaultAnchor("100%")
+                                                           .FieldDefaults(d =>
+                                                           { d.LabelAlign = LabelAlign.Left; })
+                                                          .Items(
+                                                                X.CheckboxGroupFor(c => c.ValoracionSocioFamiliar1, new List<Checkbox.Config> {
+                                                                                new Checkbox.Config{BoxLabel = "Vive con familia, sin conflicto familiar", InputValue="1", ReadOnly=indicaModoLectura},
+                                                                                 new Checkbox.Config{BoxLabel = "Vive con familiar, presenta algún grado de dependencia física/psíquica", InputValue="2", ReadOnly=indicaModoLectura},
+                                                                                 new Checkbox.Config{BoxLabel = "Vive con cónyoge de similar edad", InputValue="3", ReadOnly=indicaModoLectura},
+                                                                                 new Checkbox.Config{BoxLabel = "Vive solo y tiene hijos con vivienda próxima", InputValue="4", ReadOnly=indicaModoLectura},
+                                                                                 new Checkbox.Config{BoxLabel = "Vive solo y carece de hijos o viven lejos(interior del país o extranjero)", InputValue="5", ReadOnly=indicaModoLectura}
+
+                                                                             })
+                                                                           .FieldLabel("SITUACION FAMILIAR")
+                                                                           .DefaultAnchor("100%")
+                                                                            .Defaults(d =>
+                                                                            {
+                                                                                d.Add(new Parameter("LabelWidth", "170"));
+                                                                            })
+                                                                           .ColumnsNumber(1),
+                                                                  X.CheckboxGroupFor(c => c.ValoracionSocioFamiliar2, new List<Checkbox.Config> {
+                                                                                 new Checkbox.Config{BoxLabel = "Dos veces el salario mínimo vital", InputValue="1", ReadOnly=indicaModoLectura},
+                                                                                 new Checkbox.Config{BoxLabel = "Menos de 2, pero más de 1, salarios minimos vitales", InputValue="2", ReadOnly=indicaModoLectura},
+                                                                                 new Checkbox.Config{BoxLabel = "Un salario mínimo vital", InputValue="3", ReadOnly=indicaModoLectura},
+                                                                                 new Checkbox.Config{BoxLabel = "Ingreso irregular(menos de mínimo vital)", InputValue="4", ReadOnly=indicaModoLectura},
+                                                                                 new Checkbox.Config{BoxLabel = "Sin pensión, sin otros ingresos", InputValue="5", ReadOnly=indicaModoLectura}
+                                                                             })
+                                                                           .FieldLabel("SITUACION ECONÓMICA")
+                                                                           .DefaultAnchor("100%")
+                                                                            .Defaults(d =>
+                                                                            {
+                                                                                d.Add(new Parameter("LabelWidth", "170"));
+                                                                            })
+                                                                           .ColumnsNumber(1),
+                                                                  X.CheckboxGroupFor(c => c.ValoracionSocioFamiliar3, new List<Checkbox.Config> {
+                                                                                 new Checkbox.Config{BoxLabel = "Mantiene relaciones sociales en la comunidad", InputValue="1", ReadOnly=indicaModoLectura},
+                                                                                 new Checkbox.Config{BoxLabel = "Relación social sólo con familia y vecinos", InputValue="2", ReadOnly=indicaModoLectura},
+                                                                                 new Checkbox.Config{BoxLabel = "Relación social solo con la familia", InputValue="3", ReadOnly=indicaModoLectura},
+                                                                                 new Checkbox.Config{BoxLabel = "No sale del domicilio pero recibe visitas de familia", InputValue="4", ReadOnly=indicaModoLectura},
+                                                                                 new Checkbox.Config{BoxLabel = "No sale del domicilio y no recibe visitas", InputValue="5", ReadOnly=indicaModoLectura}
+                                                                             })
+                                                                           .FieldLabel("RELACIONES SOCIALES")
+                                                                           .DefaultAnchor("100%")
+                                                                            .Defaults(d =>
+                                                                            {
+                                                                                d.Add(new Parameter("LabelWidth", "170"));
+                                                                            })
+                                                                           .ColumnsNumber(1),
+                                                                  X.CheckboxGroupFor(c => c.ValoracionSocioFamiliar4, new List<Checkbox.Config> {
+                                                                                 new Checkbox.Config{BoxLabel = "No necesita apoyo", InputValue="1", ReadOnly=indicaModoLectura},
+                                                                                 new Checkbox.Config{BoxLabel = "Requiere apoyo familiar o vecinal", InputValue="2", ReadOnly=indicaModoLectura},
+                                                                                 new Checkbox.Config{BoxLabel = "Tienes seguro, pero necesita mayor apoyo de éste o voluntariado social", InputValue="3", ReadOnly=indicaModoLectura},
+                                                                                 new Checkbox.Config{BoxLabel = "No cuenta con Seguro Social", InputValue="4", ReadOnly=indicaModoLectura},
+                                                                                 new Checkbox.Config{BoxLabel = "Situación de abandono familiar.", InputValue="5", ReadOnly=indicaModoLectura}
+
+                                                                             })
+                                                                           .FieldLabel("APOYO DE LA RED SOCIAL (MUNICIPIO, CLUBES, ONG, SEGURO SOCIAL, VIVIENDA)")
+                                                                           .DefaultAnchor("100%")
+                                                                           .Vertical(true)
+                                                                           .ColumnsNumber(1),
+                                                                  X.CheckboxGroupFor(c => c.ValoracionSocioFamiliar5, new List<Checkbox.Config> {
+                                                                                 new Checkbox.Config{BoxLabel = "Buena/aceptable situación social", InputValue="1", ReadOnly=indicaModoLectura},
+                                                                                 new Checkbox.Config{BoxLabel = "Existe riesgo social", InputValue="2", ReadOnly=indicaModoLectura},
+                                                                                 new Checkbox.Config{BoxLabel = "Existe problema social", InputValue="3", ReadOnly=indicaModoLectura}
+                                                                             })
+                                                                           .FieldLabel("VALORACION SOCIO - FAMILIAR")
+                                                                           .DefaultAnchor("100%")
+                                                                           .Vertical(true)
+                                                                           .ColumnsNumber(1)
+
+                                                      )
+                                      )
+                                ,
+                                X.TextArea().ID("taAlerts")
+                                    .Border(false)
+                                    .StyleSpec("background:white;border:1px solid gray;")
+                                    .FieldStyle("color: red")
+                                    .Hidden(true)
+                                    .ReadOnly(true)
+                        )
+
+                .TopBar(X.Toolbar().ID("bar").Items(
+                                X.ToolbarSpacer(20),
+                                X.TextField().Width(15).FieldStyle("border-color: " + COLOER_IND_OBLIGA).ReadOnly(true).Hidden(indicaModoLectura),
+                                X.Label().Html("<b><font color='" + COLOER_IND_OBLIGA + "'>Campos Obligatorios</font></b>").Hidden(indicaModoLectura),
+                                X.ToolbarSpacer(20)
+                                ,
+                                Html.X().Container().Layout(LayoutType.HBox)
+                                .ID("conthbIndicaError").Hidden(true).Items(
+                                    X.Label().Html("<font  size='1.9em'; color='red'>(</font>"),
+                                    X.Label().Html("<font  size='3.9em'; color='red'><b>&#161;</b></font>"),
+                                    X.Label().Html("<font  size='1.9em'; color='red'>) Verificar los errores presentados</font>")
+                                ),
+
+                    X.ToolbarFill(),
+
+                      X.ToolbarFill(),
+                                X.Button()
+                                .Text("Imprimir")
+                                .Icon(Icon.Report)
+                                .Hidden(!visibleImpresion)
+                                .ID("btnImpresion")
+                                .Handler("eventoVisorReporte('');")
+                                ,
+                                X.Button()
+                                .Text("Imprimir Todos")
+                                .Icon(Icon.ReportGo)
+                                .Hidden(!visibleImpresion)
+                                .ID("btnImpresionHC")
+                                .Handler("eventoVisorReporte('HC');")
+                                ,
+                                X.ToolbarSpacer().Width(40)
+                                ,
+                      X.Button()
+                          .Text("Guardar")
+                          .ID("cmdGuardar")
+                          .Icon(Icon.Disk)
+                          .Hidden(indicaModoLectura)
+                
+                           .DirectEvents(de =>
+                           {
+                               de.Click.Url = Url.Action("Save_SS_HC_Anamnesis_AP");
+                               de.Click.EventMask.ShowMask = true;
+                               de.Click.Before = "return EnviarData('grid');";
+                               
+                               de.Click.Success = "onSuccess(result.data);";
+                               de.Click.Failure = "onFailure();";
+                           }),
+                
+                      X.Button()
+                          .Text("Cancelar")
+                          .ID("btnCancel")
+                          .Hidden(indicaModoLectura)
+                          .Icon(Icon.Cancel)
+                
+                          .Handler("eventoCancelar(this.up('form'));")
+                                ,
+                      X.Button()
+                        .Text("Editar")
+                        .ID("btnOnEdit")
+                        .Icon(Icon.ApplicationFormEdit)
+                        .Hidden(true)
+                        .Handler("eventoOnEditar(App.btnOnEdit);")
+                      ))
+                        .Listeners(l => l.FieldChange
+                            .Handler = "setIndicaCambios(true);"
+                            )
+                );
+        }
+    )
+
+
+    )
+}

@@ -1,0 +1,328 @@
+﻿@model SoluccionSalud.Entidades.Entidades.HC_Medicamento
+
+
+@{
+
+    var X = Html.X();
+}
+
+<script>
+    var onSuccess = function (grid, data) {
+        grid.show();
+        grid.getStore().loadData(data);
+    };
+
+    var onFailure = function (modo) {
+        Ext.Msg.notify("EVENTO: FAILURE", "MODEL::" + modo);
+    };
+    function SelectDobleClik(linea, familia, subFamilia, descripcion, ValorCodigo7, ValorCodigo6) {
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action("ReturnFindMedicamento"))',
+            params: {
+                modo: 'set',
+                linea: linea,
+                familia: familia,
+                subFamilia: subFamilia,
+                descripcion: descripcion,
+                descripLinea: ValorCodigo7,
+                descripFamilia: ValorCodigo6,
+                idWindow: "IdBuscadorMedicamento"
+            }
+        });
+    };
+
+
+</script>
+
+
+
+@(Html.X().Window()
+    .Width(500)
+    .Height(350)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Card)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("IdBuscadorMedicamento")
+    .Title("Selección de Medicamentos")
+    .Padding(-10)
+    .Items(
+        Html.X().Panel()
+            .Layout(LayoutType.VBox)
+            .LayoutConfig(
+                new VBoxLayoutConfig { Align = VBoxAlign.Stretch }
+            )
+            .Listeners(l =>
+            {
+                l.AfterLayout.BroadcastOnBus = "App.resize";
+                l.AfterLayout.Single = true;
+            })
+
+            .Items(regions =>
+            {
+                regions.Add(Html.X().Panel()
+                        .ItemID("north")
+                        .Margins("0 2 0 2")
+                        .Header(true)
+                        .Border(false)
+                        .Layout(LayoutType.Card)
+                        .Items(
+                                 Html.X().FieldSet()
+                                   .ColumnWidth(0.4)
+                                   .Title("Filtro de Busqueda")
+                                   //.Border(false)
+                                   .MarginSpec("0 05 0 05")
+                                   .Defaults(d =>
+                                   {
+                                       d.Add(new Parameter("LabelWidth", "170"));
+                                       d.Add(new Parameter("DefaultAnchor", "100%"));
+                                       d.Add(new Parameter("LabelAlign", "Left"));
+                                   })
+
+                                   .DefaultAnchor("100%")
+                                   .FieldDefaults(d =>
+                                   {
+                                       d.LabelAlign = LabelAlign.Left;
+                                   })
+                                    .Items(
+
+                                        Html.X().Container()
+                                           .Layout(LayoutType.HBox)
+                                           .Defaults(d =>
+                                           {
+                                               d.Add(new Parameter("LabelWidth", "110"));
+                                           })
+                                           .Items(
+                                               X.Checkbox()
+                                                 .FieldLabel("Linea")
+                                                 .ID("chHC")
+                                                 /* .Listeners(l => l.Change.Handler = @"var checkAll = #{chHC}.getValue();
+                                                    if(checkAll){            
+                                                        #{Linea}.setDisabled(true);
+                                                    }else{
+                                                        #{Linea}.setDisabled(false);                        
+                                                    }")*/
+                                                 .Checked(false),
+                                               X.ComboBoxFor(c => c.LineaBusqueda)
+                                                .FieldLabel("")
+                                                .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenericoTxt("MEDLINEA").Select(d => new ListItem(d.Name, d.Codigo)))
+                                                .Listeners(ls =>
+                                                            ls.Select.Handler = "App.cbFamilia.clearValue(); App.cbFamilia.getStore().load()"
+                                                        )
+                                                 .Width(200)
+                                                 .SimpleSubmit(true),
+                                                 //.Disabled(true),
+                                               X.Component().Width(30),
+                                               X.Button()
+                                                 .Text("Buscar")
+                                                 .Icon(Icon.Find)
+                                                 .Width(70)
+                                             
+                                                 .DirectEvents(directEvents =>
+                                                             { 
+                                                                 directEvents.Click.Url = "MedicamentoListado";
+                                                                 directEvents.Click.CleanRequest = true;
+                                                                 directEvents.Click.Method = HttpMethod.POST;
+                                                                // directEvents.Click.Confirmation.ConfirmRequest = true; 
+                                                                 directEvents.Click.Success = "onSuccess(App.GridPanel1, result.data);";
+                                                                 directEvents.Click.EventMask.ShowMask = true;
+                                                                 directEvents.Click.EventMask.Msg = "Loading...";
+                                                                 directEvents.Click.ExtraParams.Add(new
+                                                                        {
+                                                                            start =1,
+                                                                            limit = 5,
+                                                                            Linea = JRawValue.From("App.LineaBusqueda.getValue()"),
+                                                                            Familia = JRawValue.From("App.cbFamilia.getValue()"),
+                                                                            SubFamilia = JRawValue.From("App.txtSubFamilia.getValue()"),
+                                                                            CodigoMedicamento = "",
+                                                                            Descripcion = "",
+                                                                            Accion = "MEDSUBFAMILIA"
+                                                                        });
+                                                     })
+                                             ),
+                                      Html.X().Container()
+                                           .Layout(LayoutType.HBox)
+                                           .Defaults(d =>
+                                           {
+                                               d.Add(new Parameter("LabelWidth", "110"));
+                                           })
+                                           .Items(
+                                                   X.Checkbox()
+                                                     .FieldLabel("Familia")
+                                                     .ID("chHCA")
+                                                     /*.Listeners(l => l.Change.Handler = @"var checkAll = #{chHCA}.getValue();
+                                                        if(checkAll){            
+                                                            #{Familia}.setDisabled(true);
+                                                        }else{
+                                                            #{Familia}.setDisabled(false);                        
+                                                        }")    */                                             
+                                                     .Checked(false),
+                                                    //X.ComboBoxFor(c => c.Familia)
+                                                    //    .FieldLabel("")
+                                                    //    .Items(SoluccionSalud.Service.MiscelaneosService.SvcMiscelaneos.comboModelGenerico.GetComboGenericoTxt("MEDLINEA").Select(d => new ListItem(d.Name, d.Codigo)))
+                                                    //    .SimpleSubmit(true)
+                                                    //    .Disabled(true),
+                                                    X.ComboBox()
+                                                        .ID("cbFamilia")
+                                                        .TypeAhead(true)
+                                                        .QueryMode(DataLoadMode.Local)
+                                                        .ForceSelection(true)
+                                                        .TriggerAction(TriggerAction.All)
+                                                        .DisplayField("name")
+                                                        .ValueField("codigo")
+                                                        .EmptyText("Loading...")
+                                                        .ValueNotFoundText("Loading...")
+                                                        .Width(200)
+                                                        .Store(Html.X().Store()
+                                                            .AutoLoad(false)
+                                                            .Model(Html.X().Model()
+                                                                .IDProperty("Codigo")
+                                                                .Fields(
+                                                                    new ModelField("codigo", ModelFieldType.String) { Mapping = "Codigo" },
+                                                                    new ModelField("name", ModelFieldType.String) { Mapping = "Name" }
+                                                                )
+                                                            )
+                                                            .Proxy(Html.X().AjaxProxy()
+                                                                .Url(Url.Action("Familias"))
+                                                                .Reader(Html.X().JsonReader().Root("data"))
+                                                            )
+                                                            .Parameters(ps =>
+                                                                 ps.Add(new
+                                                                 {
+                                                                     Linea = JRawValue.From("App.LineaBusqueda.getValue()"),
+                                                                     Familia= "",
+                                                                     Accion = "MEDFAMILIA"
+                                                                 })
+                                                                //ps.Add(new StoreParameter("linea", "App.Linea.getValue()", ParameterMode.Raw)) 
+
+                                                            )
+                                                            .Listeners(ls =>
+                                                                ls.Load.Handler = @"var combo = App.cbFamilia;
+                                                                                    combo.setValue(records[0].get(combo.valueField));"
+                                                            )
+                                                        ) 
+                                            ),
+                                         Html.X().Container()
+                                           .Layout(LayoutType.HBox)
+                                           .Defaults(d =>
+                                           {
+                                               d.Add(new Parameter("LabelWidth", "110"));
+                                           })
+                                           .Items(
+                                           X.Checkbox()
+                                                     .FieldLabel("Sub Familia")
+                                                     .ID("chPaciente")
+                                                     .Listeners(l => l.Change.Handler = @"var checkAll = #{chPaciente}.getValue();
+                                                        if(checkAll){            
+                                                            #{txtSubFamilia}.setDisabled(true);
+                                                        }else{
+                                                            #{txtSubFamilia}.setDisabled(false);                        
+                                                        }") 
+                                                     .Checked(true),
+                                                   X.TextField()
+                                                     .ID("txtSubFamilia")
+                                                     .Width(350)
+                                                     .Disabled(true)
+                                           )
+                                     )
+                           )
+                    );
+                regions.Add(Html.X().Panel()
+                    .ItemID("center")
+                   //.Height(600)
+                   .Header(false)
+                   .Border(false)
+                   .Items(
+                            Html.X().GridPanel()
+                                            .Title("Listado de Medicamento")
+                                             .Scroll(ScrollMode.Both)
+                                             .AutoScroll(true)
+                                            .Layout(LayoutType.Anchor)
+                    // .DefaultAnchor("100%")
+                                             .Anchor("100% 100%")
+                    // .Width(100)
+                    //.Width(600)
+                                           // .Height(500)
+                                            .ID("GridPanel1")
+                                            //.Frame(true)
+                    //.Layout(Ext.Net.LayoutType.Auto)
+                                            .Margins("0 0 2 2")
+                                            .Border(false)
+
+                                           .Store(store => store.Add(
+                                               Html.X().Store()
+                                                        .ID("StoreTasks")
+
+                                           .AutoLoad(true)
+                                           .RemoteSort(false)
+                                           .IsPagingStore(true)
+                                           .RemotePaging(true)
+                                           .PageSize(5)
+
+                                           .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                               .Url("MedicamentoListado")
+                                                               .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                                                                      .Root("data")
+                                                                                                      .TotalProperty("total")
+                                                                                                      .IDProperty("SubFamilia"))))) 
+                                          .Model(model => model.Add(Html.X().Model()
+                                                           .Fields(fields =>
+                                                           {
+
+                                                               fields.Add(Html.X().ModelField().Name("ValorCodigo1"));
+                                                               fields.Add(Html.X().ModelField().Name("ValorCodigo2"));
+                                                               fields.Add(Html.X().ModelField().Name("ValorCodigo3"));
+                                                               fields.Add(Html.X().ModelField().Name("DescripcionLocal"));
+                                                               fields.Add(Html.X().ModelField().Name("ValorCodigo4"));
+                                                               fields.Add(Html.X().ModelField().Name("ValorCodigo5"));
+                                                               fields.Add(Html.X().ModelField().Name("ValorCodigo6"));
+                                                               fields.Add(Html.X().ModelField().Name("ValorCodigo7")); 
+
+                                                           })))))
+
+
+                                           .ColumnModel(columnModel =>
+                                           {
+
+                                               columnModel.Columns.Add(Html.X().Column().Text("Linea").DataIndex("ValorCodigo1").Width(50));
+                                               columnModel.Columns.Add(Html.X().Column().Text("Familia").DataIndex("ValorCodigo2").Width(60));
+                                               columnModel.Columns.Add(Html.X().Column().Text("Sub Familia").DataIndex("ValorCodigo3").Width(70));
+                                               columnModel.Columns.Add(Html.X().Column().Text("Descripción").DataIndex("DescripcionLocal").Width(200));
+                                               columnModel.Columns.Add(Html.X().Column().Text("Tipo").DataIndex("ValorCodigo4").Width(50));
+                                               columnModel.Columns.Add(Html.X().Column().Text("desLi").DataIndex("ValorCodigo6").Width(50).Hidden(true));
+                                               columnModel.Columns.Add(Html.X().Column().Text("desFa ").DataIndex("ValorCodigo7").Width(50).Hidden(true)); 
+                                           })
+                                           //.SelectionModel(Html.X().RowSelectionModel().Mode(SelectionMode.Single))
+                                           .BottomBar(bar => bar.Add(Html.X().PagingToolbar()
+                                                                             .DisplayInfo(true)
+                                                                             .DisplayMsg("Displaying customers {0} - {1} of {2}")))
+                                           //.View(view => view.Add(Html.X().GridView()))
+                                           .View(view => view.Add(Html.X().GridView().TrackOver(false)))
+                                           .Border(false)
+                                           //.Plugins(
+                                           //     Html.X().SelectedRow().RecordID().(ls => ls.Edit.Fn = "edit")
+                                          //  )
+                                          //.Listeners(ls =>
+                                            //    ls.SelectionChange.Handler = "selected.length && App.BookTpl.overwrite(App.DetailPanel.body, selected[0].data);"
+                                            //   ) this.getSelected().id
+
+
+
+                                           //.Listeners(l => l.CellDblClick.Handler = "aRecordSelector.add(App.GridPanel1.getSelectionSubmit().getSelectionModelField().getValue());")
+                                            .Listeners(l => l.CellClick.Handler = "SelectDobleClik(record.data.ValorCodigo1,record.data.ValorCodigo2,record.data.ValorCodigo3,record.data.DescripcionLocal, record.data.ValorCodigo6, record.data.ValorCodigo7);")
+                                      
+                                      
+                                          // .Listeners(ls =>
+                                          //      ls.SelectionChange.Handler = "#{DirectMethods}.LegData(App.OrderSummary.getRowsValues({selectedOnly:true}).Persona);"
+                                          //  )
+                        )
+                    );
+            })
+        )
+    
+    )
+    .CloseAction(CloseAction.Destroy)
+

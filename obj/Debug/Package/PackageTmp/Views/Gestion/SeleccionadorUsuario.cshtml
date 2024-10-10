@@ -1,0 +1,192 @@
+﻿@model SoluccionSalud.Entidades.Entidades.USUARIO
+
+
+@{
+
+    var X = Html.X();
+}
+
+<script>
+    var onSuccess = function (grid, data) {
+        grid.show();
+        grid.getStore().loadData(data);
+    };
+
+    var onFailure = function (modo) {
+        Ext.Msg.notify("EVENTO: FAILURE", "MODEL::" + modo);
+    };
+
+    function enviarSeleccion(grid) {
+        var campo = 'USUARIO1';
+        var rango = grid.split('RowIndex');
+        var rango = rango[1].split(':');
+        var rango = rango[1].split('}');
+        source = App.GridPanel2;
+        var i = 0;
+        var store = App.Store2;
+        var status;
+        if (source.getSelectionModel().hasSelection()) {
+            var records = source.getSelectionModel().getSelection();
+            store.each(function (record) {
+                if (rango[0] == i) {
+                    status = record.get(campo);
+                }
+                i = i + 1;
+            }
+            );
+        }
+
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action(Model.ACCION))',
+            params: {
+                MODO: 'get',
+                usuario: status,
+                idWindow: "WindowSelecUser"
+            }
+        });
+    }
+
+    function enviarSeleccionDirect(param1) {
+        var status = param1;
+        Ext.net.DirectMethod.request({
+            url: '@(Url.Action(Model.ACCION))',
+            params: {
+                MODO: 'get',
+                usuario: status,
+                idWindow: "WindowSelecUser"
+            }
+        });
+    }
+
+</script>
+
+
+
+@(Html.X().Window()
+    .Width(450)
+    .Height(500)
+    .Maximizable(true)
+    .Modal(true)
+    .OnEsc("false")
+    .AutoScroll(true)
+    .Layout(LayoutType.Fit)
+    .CloseAction(CloseAction.Destroy)
+    .Icon(Icon.ApplicationForm)
+    .ID("WindowSelecUser")
+    .Title("Seleccionar Usuario")
+    .Padding(4)
+        //.X(0)
+        //.Y(0)
+    .TopBar(
+                                     X.Toolbar()
+                                     .Height(30)
+                                     .Items(
+                                        X.ToolbarFill(),
+                                        X.Button()
+                                            .Text("Aceptar")
+                                            .Icon(Icon.Accept)
+                                    .Handler("enviarSeleccion(App.GridPanel2.getSelectionSubmit().getSelectionModelField().getValue());")
+
+                                                 ,
+                                        X.Button()
+                                            .Text("Cancelar")
+                                            .Icon(Icon.Cancel)
+                                             .DirectEvents(de =>
+                                              {
+                                                  de.Click.Url = Url.Action("cerrarWindow");
+                                                  //de.Click.EventMask.ShowMask = true;
+                                                  de.Click.ExtraParams.Add(new Parameter(
+                                                        "id", "WindowSelecUser", ParameterMode.Value));
+                                                  //de.Click.Success = "onSuccess(result.data,'" + Model.ACCION + "');";
+                                                  //de.Click.Failure = "onSuccess(result.data,'"+ Model.ACCION + "');";
+                                              })
+                                         )
+
+    )
+    .Items(
+                      X.GridPanel()
+                            .Border(false)
+                            .Scroll(ScrollMode.Both)
+                            .AutoScroll(true)
+                            .ID("GridPanel2")
+        // .DefaultAnchor("100%")
+        //.Anchor("100% 100%")
+                            .Margins("0 0 0 0")
+                            .TopBar(
+                                        X.Toolbar()
+                                        .Items(
+                                            X.TextField()
+                                            .FieldLabel("Descripción"),
+                                            X.ToolbarFill(),
+                                            X.Button()
+                                            .Border(true)
+                                            .Text("Buscar")
+                                            .Icon(Icon.Find)
+
+                                        )
+                                    )
+
+        ///CONFIGURAR EL STORE
+                            .Store(store => store.Add(
+                                     Html.X().Store()
+                                        .ID("Store2")
+                                         .AutoLoad(true)
+                                         .RemoteSort(false)
+                                         .IsPagingStore(true)
+                                         .RemotePaging(true)
+                                         .PageSize(20)////CAMBIAR DE ACUERDO A ALGÚN UN CRITERIO
+                                         .Proxy(proxy => proxy.Add(Html.X().AjaxProxy()
+                                                        .Url("getGrillaListadoUsuariosSeleccionar")
+                                             //.Url("../LPacientes/GrillaListadoPacientes")
+                                             //.Url("../Controllers/Maestros/Usuario/UsuarioController/GrillaListadoPacientes")
+                                                .Reader(reader => reader.Add(Html.X().JsonReader()
+                                                .Root("data")
+                                                .TotalProperty("total")
+                                                    .IDProperty("USUARIO1"))))
+                                                )
+                                //.Reader(reader => reader.Add(Html.X().JsonReader().Root("data").IDProperty("P_ID")))
+                                // .Writer(writer => writer.Add(Html.X().JsonWriter().AllowSingle(true)))
+                                         .Model(model => model.Add(Html.X().Model()
+                                                 .Fields(fields =>
+                                                 {
+                                                     fields.Add(Html.X().ModelField().Name("USUARIO1"));
+                                                     fields.Add(Html.X().ModelField().Name("NOMBRE"));
+                                                     fields.Add(Html.X().ModelField().Name("Estado"));
+                                                     fields.Add(Html.X().ModelField().Name("USUARIOPERFIL"));
+                                                 }))
+                                                )
+                                              )
+                                   )
+
+                                ///CONFIGURAR LAS COLUMNAS
+                                .ColumnModel(columnModel =>
+                                 {
+                                     columnModel.Columns.Add(Html.X().Column().Text("ID").DataIndex("USUARIO1").Width(150));
+                                     columnModel.Columns.Add(Html.X().Column().Text("Usuario").DataIndex("NOMBRE").Width(300));
+                                     columnModel.Columns.Add(Html.X().Column().Text("Estado").DataIndex("Estado").Width(100)
+                                             .Renderer("change")
+                                             );
+                                     columnModel.Columns.Add(Html.X().Column().Text("Perfil/Usuario").DataIndex("USUARIOPERFIL").Width(100));
+                                 })
+                                 .View(Html.X().GridView().TrackOver(false))
+        //.View(view => view.Add(Html.X().GridView().TrackOver(false)))
+                                 .Border(false)
+                                 .Listeners(l => l.CellDblClick
+                                      .Handler = "enviarSeleccionDirect(record.data.USUARIO1);")
+
+                                .BottomBar(bar => bar.Add(
+                                    Html.X().PagingToolbar()
+                                    //.DisplayInfo(true)
+                                    //.DisplayMsg("Displaying customers {0} - {1} of {2}"))
+                                ))
+
+                               /*.TopBar(X.Panel()
+                                    .Height(50)
+                                    .Title("Buscador")
+                                    .Border(false)
+                                )   */
+    )
+
+    .CloseAction(CloseAction.Destroy)
+
+)
